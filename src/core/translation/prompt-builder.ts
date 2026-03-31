@@ -25,6 +25,10 @@ export interface PromptContext {
   ambiguities: AmbiguityReport[];
   /** Max prompt token budget (default: 8000). */
   maxPromptTokens?: number;
+  /** When true, include only needsAiAssist constructs in the prompt (partial translation). */
+  ambiguousOnly?: boolean;
+  /** Already-translated deterministic code to include as context. */
+  deterministicCode?: string;
 }
 
 /**
@@ -74,10 +78,13 @@ export function buildTranslationPrompt(ctx: PromptContext): string {
   const maxTokens = ctx.maxPromptTokens ?? DEFAULT_MAX_PROMPT_TOKENS;
   let truncated = false;
 
-  // Possibly truncate scores to top N by count (we don't have count here, so limit by total)
-  let effectiveScores = ctx.scores;
+  // Filter to ambiguous-only if requested (partial translation mode)
+  let effectiveScores = ctx.ambiguousOnly
+    ? ctx.scores.filter((s) => s.needsAiAssist)
+    : ctx.scores;
+
+  // Possibly truncate scores to top N
   if (effectiveScores.length > MAX_CONSTRUCTS_ON_TRUNCATE) {
-    // Sort by finalConfidence desc, keep top N
     effectiveScores = [...effectiveScores]
       .sort((a, b) => b.finalConfidence - a.finalConfidence)
       .slice(0, MAX_CONSTRUCTS_ON_TRUNCATE);
@@ -99,6 +106,14 @@ export function buildTranslationPrompt(ctx: PromptContext): string {
     sourceBlock,
     "```",
     ``,
+    ...(ctx.deterministicCode ? [
+      `### Already Translated (Deterministic)`,
+      `The following constructs have been translated deterministically. Only translate the remaining ambiguous constructs listed below.`,
+      "```" + ctx.targetLanguage,
+      ctx.deterministicCode,
+      "```",
+      ``,
+    ] : []),
     `### Construct Analysis`,
     `- **Deterministic mappings**: ${deterministicCount} (high confidence, direct translation)`,
     `- **AI-assisted mappings**: ${aiAssistCount} (require judgment)`,

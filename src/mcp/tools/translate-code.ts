@@ -113,7 +113,7 @@ export function registerTranslateCode(server: McpServer, store: SqliteStore): vo
         if (!projectId) {
           return mcpError("No active project. Use init or activate a project first.");
         }
-        const prepareResult = orchestrator.prepareTranslation({
+        const prepareResult = await orchestrator.prepareTranslation({
           projectId,
           sourceCode: resolvedCode,
           sourceLanguage: resolvedSourceLanguage,

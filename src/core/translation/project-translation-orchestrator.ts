@@ -204,10 +204,10 @@ export class ProjectTranslationOrchestrator {
    * Prepare a single file for translation.
    * Validates file status, creates a translation job, and returns the prompt.
    */
-  prepareFile(
+  async prepareFile(
     translationProjectId: string,
     fileId: string,
-  ): { jobId: string; prompt: string } {
+  ): Promise<{ jobId: string; prompt: string }> {
     const project = this.projectStore.getProject(translationProjectId);
     if (!project) {
       throw new TranslationError(`Translation project not found: ${translationProjectId}`);
@@ -230,7 +230,7 @@ export class ProjectTranslationOrchestrator {
       );
     }
 
-    const result = this.orchestrator.prepareTranslation({
+    const result = await this.orchestrator.prepareTranslation({
       projectId: project.projectId,
       sourceCode: file.sourceCode,
       sourceLanguage: file.sourceLanguage,
@@ -350,7 +350,7 @@ export class ProjectTranslationOrchestrator {
   /**
    * Generate a downloadable ZIP with translated files and prompts for untranslated ones.
    */
-  generateDownloadZip(translationProjectId: string): Buffer {
+  async generateDownloadZip(translationProjectId: string): Promise<Buffer> {
     const project = this.projectStore.getProject(translationProjectId);
     if (!project) {
       throw new TranslationError(`Translation project not found: ${translationProjectId}`);
@@ -379,7 +379,7 @@ export class ProjectTranslationOrchestrator {
       zip.addFile(file.filePath, Buffer.from(file.sourceCode, "utf-8"));
 
       try {
-        const prepared = this.orchestrator.prepareTranslation({
+        const prepared = await this.orchestrator.prepareTranslation({
           projectId: project.projectId,
           sourceCode: file.sourceCode,
           sourceLanguage: file.sourceLanguage,

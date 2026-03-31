@@ -116,7 +116,7 @@ describe("ProjectTranslationOrchestrator", () => {
     expect(summary.failedFiles).toBe(1); // failed
   });
 
-  it("should generate download zip buffer", () => {
+  it("should generate download zip buffer", async () => {
     // Arrange
     const project = projectStore.createProject({
       projectId: "test-proj",
@@ -151,14 +151,14 @@ describe("ProjectTranslationOrchestrator", () => {
     });
 
     // Act
-    const zipBuffer = projectOrchestrator.generateDownloadZip(project.id);
+    const zipBuffer = await projectOrchestrator.generateDownloadZip(project.id);
 
     // Assert
     expect(Buffer.isBuffer(zipBuffer)).toBe(true);
     expect(zipBuffer.length).toBeGreaterThan(0);
   });
 
-  it("should return empty zip for project with no files", () => {
+  it("should return empty zip for project with no files", async () => {
     // Arrange
     const project = projectStore.createProject({
       projectId: "test-proj",
@@ -167,7 +167,7 @@ describe("ProjectTranslationOrchestrator", () => {
     });
 
     // Act
-    const zipBuffer = projectOrchestrator.generateDownloadZip(project.id);
+    const zipBuffer = await projectOrchestrator.generateDownloadZip(project.id);
 
     // Assert
     expect(Buffer.isBuffer(zipBuffer)).toBe(true);

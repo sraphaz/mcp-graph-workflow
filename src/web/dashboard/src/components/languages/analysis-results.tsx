@@ -2,8 +2,17 @@ import { Cpu, AlertTriangle } from "lucide-react";
 import type { TranslationAnalysis } from "@/lib/types";
 import { DeterministicIndicator } from "./deterministic-indicator";
 
+const LANG_EXT: Record<string, string> = {
+  python: ".py", typescript: ".ts", javascript: ".js", java: ".java",
+  go: ".go", rust: ".rs", csharp: ".cs", ruby: ".rb", php: ".php",
+  swift: ".swift", kotlin: ".kt", scala: ".scala", cpp: ".cpp",
+  lua: ".lua", dart: ".dart", elixir: ".ex", haskell: ".hs",
+};
+
 interface AnalysisResultsProps {
   analysis: TranslationAnalysis | null;
+  deterministicCode?: string;
+  targetLanguage?: string;
 }
 
 function ScoreBar({ value, max = 100, label }: { value: number; max?: number; label: string }): React.JSX.Element {
@@ -23,7 +32,7 @@ function ScoreBar({ value, max = 100, label }: { value: number; max?: number; la
   );
 }
 
-export function AnalysisResults({ analysis }: AnalysisResultsProps): React.JSX.Element | null {
+export function AnalysisResults({ analysis, deterministicCode, targetLanguage }: AnalysisResultsProps): React.JSX.Element | null {
   if (!analysis) return null;
 
   return (
@@ -73,7 +82,19 @@ export function AnalysisResults({ analysis }: AnalysisResultsProps): React.JSX.E
         )}
 
         {/* Deterministic indicator */}
-        <DeterministicIndicator analysis={analysis} />
+        <DeterministicIndicator
+          analysis={analysis}
+          onDownload={deterministicCode ? () => {
+            const blob = new Blob([deterministicCode], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const ext = targetLanguage ? (LANG_EXT[targetLanguage] ?? ".txt") : ".txt";
+            a.download = `translated${ext}`;
+            a.click();
+            URL.revokeObjectURL(url);
+          } : undefined}
+        />
 
         {/* Ambiguous constructs warning */}
         {analysis.ambiguousConstructs && analysis.ambiguousConstructs.length > 0 && (

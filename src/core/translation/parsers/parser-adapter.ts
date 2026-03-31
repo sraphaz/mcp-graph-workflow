@@ -13,6 +13,10 @@ export interface ParsedConstruct {
   startLine: number;
   /** 1-based end line in source */
   endLine: number;
+  /** Raw source text for this construct (populated by SourceTextExtractor or AST) */
+  sourceText?: string;
+  /** Resolved placeholder values from AST extraction (name, params, body, etc.) */
+  resolvedPlaceholders?: Record<string, string>;
 }
 
 /** Adapter interface for language-specific parsers. */

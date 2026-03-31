@@ -101,7 +101,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
   });
 
   /** POST /jobs — create a translation job (prepare) */
-  router.post("/jobs", (req, res) => {
+  router.post("/jobs", async (req, res) => {
     try {
       const parsed = CreateJobSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -111,7 +111,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
 
       const { sourceCode, sourceLanguage, targetLanguage, scope } = parsed.data;
       const projectId = requireProjectId();
-      const result = getOrchestrator().prepareTranslation({
+      const result = await getOrchestrator().prepareTranslation({
         projectId,
         sourceCode,
         sourceLanguage,

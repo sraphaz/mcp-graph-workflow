@@ -34,6 +34,9 @@ import { detectAmbiguities } from "./confidence/ambiguity-detector.js";
 import { buildTranslationPrompt } from "./prompt-builder.js";
 import type { PromptContext } from "./prompt-builder.js";
 import { TranslationError } from "../utils/errors.js";
+import { extractPlaceholdersFromAst } from "./generators/ast-placeholder-extractor.js";
+import { UniversalGenerator } from "./generators/universal-generator.js";
+import { logger } from "../utils/logger.js";
 
 /**
  * Mapping of equivalent constructs across languages.
@@ -95,6 +98,7 @@ interface PrepareResult {
   jobId: string;
   prompt: string;
   analysis: TranslationAnalysis;
+  deterministicCode?: string;
 }
 
 interface EvidencePack {
@@ -230,7 +234,7 @@ export class TranslationOrchestrator {
   /**
    * Prepare a translation job — creates the job, analyzes source, builds prompt.
    */
-  prepareTranslation(input: PrepareInput): PrepareResult {
+  async prepareTranslation(input: PrepareInput): Promise<PrepareResult> {
     const sourceCode = input.sourceCode ?? "";
     const analysis = this.analyzeSource(sourceCode, {
       languageHint: input.sourceLanguage,
@@ -274,7 +278,29 @@ export class TranslationOrchestrator {
 
     const prompt = buildTranslationPrompt(promptCtx);
 
-    return { jobId: job.id, prompt, analysis };
+    // Generate deterministic code via AST extraction + UniversalGenerator
+    // Works for ALL cases: 100% deterministic and partial (generates code for matched constructs)
+    let deterministicCode: string | undefined;
+
+    if (parsed.length > 0) {
+      try {
+        const enriched = await extractPlaceholdersFromAst(sourceCode, parsed, analysis.detectedLanguage);
+        const generator = new UniversalGenerator(
+          this.registry,
+          input.targetLanguage,
+          sourceCode,
+          analysis.detectedLanguage,
+        );
+        const genResult = generator.generate(enriched);
+        if (genResult.code.trim().length > 0) {
+          deterministicCode = genResult.code;
+        }
+      } catch (err) {
+        logger.warn("Deterministic translation failed, falling back to AI prompt", { error: String(err) });
+      }
+    }
+
+    return { jobId: job.id, prompt, analysis, deterministicCode };
   }
 
   /**

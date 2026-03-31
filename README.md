@@ -116,7 +116,7 @@ mcp-graph serve --port 3000    # or: npm run dev
 | | Count | Reference |
 |---|---|---|
 | **MCP Tools** | 45 + 6 deprecated | [MCP-TOOLS-REFERENCE.md](docs/reference/MCP-TOOLS-REFERENCE.md) |
-| **REST Endpoints** | 128 (25 routers) | [REST-API-REFERENCE.md](docs/reference/REST-API-REFERENCE.md) |
+| **REST Endpoints** | 135 (26 routers) | [REST-API-REFERENCE.md](docs/reference/REST-API-REFERENCE.md) |
 <!-- mcp-graph:readme-stats:end -->
 | **CLI Commands** | 6 | `init`, `import`, `index`, `stats`, `serve`, `doctor` |
 

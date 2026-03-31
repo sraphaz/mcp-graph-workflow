@@ -167,7 +167,7 @@ export function LanguagesTab(): React.JSX.Element {
   }, [historyActions, translationPhase]));
 
   const handleAnalyze = (): void => {
-    void translationActions.analyze(sourceCode, targetLanguage, scope);
+    void translationActions.analyze(sourceCode, targetLanguage, "module");
   };
 
   const handleFinalize = (): void => {
@@ -235,8 +235,6 @@ export function LanguagesTab(): React.JSX.Element {
                   setSourceCode={setSourceCode}
                   targetLanguage={targetLanguage}
                   setTargetLanguage={setTargetLanguage}
-                  scope={scope}
-                  setScope={setScope}
                   generatedCode={generatedCode}
                   setGeneratedCode={setGeneratedCode}
                   translation={translation}
@@ -286,7 +284,7 @@ export function LanguagesTab(): React.JSX.Element {
                 {/* Results with fade-in */}
                 {translation.analysis && (
                   <div className="animate-in fade-in-0 duration-300" style={{ animationFillMode: "both" }}>
-                    <AnalysisResults analysis={translation.analysis} />
+                    <AnalysisResults analysis={translation.analysis} deterministicCode={translation.prepareResult?.deterministicCode} targetLanguage={persistedForm.targetLanguage} />
                   </div>
                 )}
                 {translation.finalizeResult && (

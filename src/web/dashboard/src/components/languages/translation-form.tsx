@@ -1,22 +1,21 @@
 import { useState } from "react";
 import { Play, CheckCircle, RotateCcw, Copy, Check, Loader2, Download } from "lucide-react";
 import type { UseTranslationState } from "@/hooks/use-translation";
-import type { TranslationScope } from "@/lib/types";
+// TranslationScope import removed — scope selector simplified to always "module"
 
 const LANGUAGES = [
   "python", "javascript", "typescript", "java", "csharp", "go",
   "rust", "ruby", "php", "swift", "kotlin", "scala", "cpp",
 ];
 
-const SCOPES: TranslationScope[] = ["snippet", "function", "module"];
+// Scope selector removed — always "module" internally
 
 interface TranslationFormProps {
   sourceCode: string;
   setSourceCode: (v: string) => void;
   targetLanguage: string;
   setTargetLanguage: (v: string) => void;
-  scope: TranslationScope;
-  setScope: (v: TranslationScope) => void;
+  // scope/setScope removed — always "module" internally
   generatedCode: string;
   setGeneratedCode: (v: string) => void;
   translation: UseTranslationState;
@@ -28,7 +27,6 @@ interface TranslationFormProps {
 export function TranslationForm({
   sourceCode, setSourceCode,
   targetLanguage, setTargetLanguage,
-  scope, setScope,
   generatedCode, setGeneratedCode,
   translation, onAnalyze, onFinalize, onReset,
 }: TranslationFormProps): React.JSX.Element | null {
@@ -95,22 +93,7 @@ export function TranslationForm({
                 ))}
               </select>
 
-              <div className="flex gap-1">
-                {SCOPES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setScope(s)}
-                    disabled={!isIdle}
-                    className={`flex-1 px-2 py-1.5 text-[10px] font-medium rounded-md border transition-colors disabled:opacity-50 ${
-                      scope === s
-                        ? "border-accent bg-accent/10 text-accent"
-                        : "border-edge bg-surface text-muted hover:text-foreground"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+              {/* Scope selector removed — always "module" internally */}
             </div>
 
             {/* Action buttons */}

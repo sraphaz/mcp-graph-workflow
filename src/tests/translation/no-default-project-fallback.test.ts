@@ -47,7 +47,7 @@ function createTestDb(): Database.Database {
 }
 
 describe("C3: No default project ID fallback in MCP tools", () => {
-  it("should use projectId from store.getProject() when available", () => {
+  it("should use projectId from store.getProject() when available", async () => {
     // Arrange
     const db = createTestDb();
     const registry = new ConstructRegistry(db);
@@ -56,7 +56,7 @@ describe("C3: No default project ID fallback in MCP tools", () => {
     const orchestrator = new TranslationOrchestrator(registry, translationStore);
 
     // Act — prepare with a real project ID
-    const result = orchestrator.prepareTranslation({
+    const result = await orchestrator.prepareTranslation({
       projectId: "real-project-id",
       sourceCode: "def hello():\n  return 42",
       targetLanguage: "typescript",
@@ -69,7 +69,7 @@ describe("C3: No default project ID fallback in MCP tools", () => {
     expect(job!.projectId).toBe("real-project-id");
   });
 
-  it("should NOT create jobs with projectId 'default'", () => {
+  it("should NOT create jobs with projectId 'default'", async () => {
     // Arrange
     const db = createTestDb();
     const registry = new ConstructRegistry(db);
@@ -78,7 +78,7 @@ describe("C3: No default project ID fallback in MCP tools", () => {
     const orchestrator = new TranslationOrchestrator(registry, translationStore);
 
     // Act — prepare with "default" explicitly
-    const result = orchestrator.prepareTranslation({
+    const result = await orchestrator.prepareTranslation({
       projectId: "default",
       sourceCode: "def hello():\n  return 42",
       targetLanguage: "typescript",

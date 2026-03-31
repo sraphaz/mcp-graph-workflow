@@ -191,7 +191,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
 
       const results: Array<{ fileId: string; jobId: string; prompt: string }> = [];
       for (const fileId of fileIds) {
-        const result = projectOrchestrator.prepareFile(id, fileId);
+        const result = await projectOrchestrator.prepareFile(id, fileId);
         results.push({ fileId, ...result });
       }
 
@@ -267,7 +267,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
 
       logger.info("Generating download ZIP", { projectId: id });
 
-      const buffer = projectOrchestrator.generateDownloadZip(id);
+      const buffer = await projectOrchestrator.generateDownloadZip(id);
 
       res.setHeader("Content-Type", "application/zip");
       res.setHeader("Content-Disposition", `attachment; filename="translation-project-${id}.zip"`);

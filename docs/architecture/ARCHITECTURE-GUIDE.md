@@ -44,7 +44,7 @@ Tool categories:
 **Framework:** Express v5
 
 <!-- mcp-graph:arch-api:start -->
-25 routers, 128 endpoints. Modular router architecture:
+26 routers, 135 endpoints. Modular router architecture:
 <!-- mcp-graph:arch-api:end -->
 
 ```

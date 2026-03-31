@@ -384,6 +384,7 @@ export interface TranslationPrepareResult {
   jobId: string;
   prompt: string;
   analysis: TranslationAnalysis;
+  deterministicCode?: string;
 }
 
 export interface TranslationFinalizeResult {
