@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.32.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.31.1...mcp-graph-v5.32.0) (2026-03-31)
+
+
+### Features
+
+* **translation:** add universal deterministic code translation ([#118](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/118)) ([2ee27ab](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/2ee27abc3f2ca4712534dacabc4115be44d5173d))
+
 ## [5.31.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.31.0...mcp-graph-v5.31.1) (2026-03-30)
 
 
