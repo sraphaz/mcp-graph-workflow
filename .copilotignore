@@ -34,6 +34,7 @@ out/
 *.js.map
 *.d.ts.map
 src/web/dashboard/dist/
+sdk/
 
 # === TESTES (ler sob demanda, não carregar no contexto) ===
 src/tests/
