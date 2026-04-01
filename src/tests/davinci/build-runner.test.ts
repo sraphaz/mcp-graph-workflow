@@ -115,7 +115,8 @@ describe("build-runner", () => {
         className: "MyPlugin",
       });
 
-      expect(result.javaPath).toContain("com/pingidentity/plugin/MyPlugin.java");
+      const normalizedPath = result.javaPath.replace(/\\/g, "/");
+      expect(normalizedPath).toContain("com/pingidentity/plugin/MyPlugin.java");
     });
   });
 
