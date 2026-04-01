@@ -63,6 +63,7 @@ function extractVariables(
   const seen = new Set<string>();
 
   let match: RegExpExecArray | null;
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const regex = new RegExp(TEMPLATE_VAR_REGEX.source, "g");
 
   while ((match = regex.exec(code)) !== null) {

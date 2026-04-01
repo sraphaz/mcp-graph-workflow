@@ -124,7 +124,9 @@ export class DaVinciStore {
     `).run(id, input.sourceCode, input.pluginType, input.pluginName, input.packageName, input.className, input.targetSdk, now, now);
 
     logger.info("davinci-store: job created", { id, pluginName: input.pluginName });
-    return this.getJob(id)!;
+    const job = this.getJob(id);
+    if (!job) throw new Error(`Failed to retrieve created job ${id}`);
+    return job;
   }
 
   getJob(id: string): DaVinciJob | undefined {
