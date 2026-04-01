@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.33.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.33.0...mcp-graph-v5.33.1) (2026-04-01)
+
+
+### Bug Fixes
+
+* **davinci:** normalize path separators in build-runner test for Windows ([13a1f51](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/13a1f51a701702c71330c0c716c0b970c9d514ca))
+* **siebel:** resolve ENTITY EXPANSION LIMIT for large SIF files ([22e6ce6](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/22e6ce68fafa8a594d26e41c63a7dfabcf1766fe))
+
 ## [5.33.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.32.0...mcp-graph-v5.33.0) (2026-04-01)
 
 
