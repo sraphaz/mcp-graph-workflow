@@ -206,7 +206,8 @@ function filterTopLevelConstructs(constructs: ParsedConstruct[]): ParsedConstruc
   const topLevel: ParsedConstruct[] = [];
 
   for (const { construct: current } of withEffectiveEnd) {
-    const currentEnd = withEffectiveEnd.find((w) => w.construct === current)!.effectiveEnd;
+    const found = withEffectiveEnd.find((w) => w.construct === current);
+    const currentEnd = found ? found.effectiveEnd : current.endLine;
 
     // Check if this construct is contained within ANY other construct
     const isChild = withEffectiveEnd.some(
@@ -304,6 +305,7 @@ function stripTypeAnnotations(params: string, sourceLang: string): string {
       }
 
       // Java/C# style: `Type name` or `final Type name`
+      // eslint-disable-next-line security/detect-unsafe-regex
       const javaMatch = trimmed.match(/^(?:(?:final|const)\s+)?(\w+(?:<[^>]+>)?)\s+(\w+)$/);
       if (javaMatch) return javaMatch[2];
 
@@ -342,6 +344,7 @@ function mapParamTypes(params: string, sourceLang: string, targetLang: string, t
       }
 
       // Java/C# style: `Type name` → target style
+      // eslint-disable-next-line security/detect-unsafe-regex
       const javaMatch = trimmed.match(/^(\w+(?:<[^>]+>)?)\s+(\w+)$/);
       if (javaMatch) {
         const [, type, name] = javaMatch;
