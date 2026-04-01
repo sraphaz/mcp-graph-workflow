@@ -24,7 +24,7 @@ export function createApp(options: AppFactoryOptions): Express {
   const { store, basePath, eventBus, mcp, storeManager } = options;
 
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: "50mb" }));
 
   // MCP HTTP transport (optional — only when MCP server is provided)
   if (mcp) {

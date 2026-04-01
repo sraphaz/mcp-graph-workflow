@@ -279,6 +279,12 @@ export function parseWsdlContent(content: string): SwaggerParseResult {
     ignoreAttributes: false,
     attributeNamePrefix: "@_",
     parseAttributeValue: false,
+    processEntities: {
+      maxEntityCount: 100_000,
+      maxTotalExpansions: 100_000,
+      maxExpandedLength: 10_000_000,
+      maxEntitySize: 100_000,
+    },
     isArray: () => true,
   });
 

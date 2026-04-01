@@ -92,6 +92,12 @@ export function parseSifContent(content: string, fileName: string): SiebelSifPar
     parseAttributeValue: false,
     textNodeName: "#text",
     trimValues: false,
+    processEntities: {
+      maxEntityCount: 100_000,
+      maxTotalExpansions: 100_000,
+      maxExpandedLength: 10_000_000,
+      maxEntitySize: 100_000,
+    },
     isArray: () => {
       // Force array for repeating elements
       return true;
