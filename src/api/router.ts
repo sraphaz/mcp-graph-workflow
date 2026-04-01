@@ -28,6 +28,7 @@ import { createTranslationRouter } from "./routes/translation.js";
 import { createTranslationProjectRouter } from "./routes/translation-project.js";
 import { createDocsReferenceRouter } from "./routes/docs-reference.js";
 import { createDreamRouter } from "./routes/dream.js";
+import { createDavinciRouter } from "./routes/davinci.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -83,6 +84,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/translation/projects", createTranslationProjectRouter(storeRef, eventBus ?? undefined));
   router.use("/docs-reference", createDocsReferenceRouter(getBasePath));
   router.use("/dream", createDreamRouter(storeRef, eventBus ?? undefined));
+  router.use("/davinci", createDavinciRouter());
 
   if (storeManager) {
     router.use("/folder", createFolderRouter(storeManager));

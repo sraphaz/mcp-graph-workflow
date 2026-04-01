@@ -26,6 +26,7 @@ const SiebelTab = lazy(() => import("@/components/siebel/siebel-tab").then((m) =
 const LspTab = lazy(() => import("@/components/tabs/lsp-tab").then((m) => ({ default: m.LspTab })));
 const LanguagesTab = lazy(() => import("@/components/tabs/languages-tab").then((m) => ({ default: m.LanguagesTab })));
 const DocsTab = lazy(() => import("@/components/tabs/docs-tab").then((m) => ({ default: m.DocsTab })));
+const DavinciTab = lazy(() => import("@/components/davinci/davinci-tab").then((m) => ({ default: m.DavinciTab })));
 
 const TAB_LABELS: Record<TabId, string> = {
   graph: "Graph",
@@ -40,6 +41,7 @@ const TAB_LABELS: Record<TabId, string> = {
   context: "Context",
   benchmark: "Benchmark",
   languages: "Languages",
+  davinci: "DaVinci",
   docs: "Docs",
   logs: "Logs",
 };
@@ -188,6 +190,7 @@ function AppContent(): React.JSX.Element {
                   {activeTab === "siebel" && <SiebelTab />}
                   {activeTab === "lsp" && <LspTab />}
                   {activeTab === "languages" && <LanguagesTab />}
+                  {activeTab === "davinci" && <DavinciTab />}
                   {activeTab === "docs" && <DocsTab />}
                 </Suspense>
               </ErrorBoundary>

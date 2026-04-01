@@ -1,0 +1,98 @@
+import type { DaVinciVariable } from "./davinci-types.js";
+import { PF_INF_DIRECTORY_MAP } from "./davinci-types.js";
+import type { PfPluginType } from "./davinci-types.js";
+
+// ── GUI Descriptor Generation ─────────────────────────────────────────
+
+export interface GuiDescriptorResult {
+  fieldDeclarations: string;
+  fieldRegistrations: string;
+  instanceFields: string;
+}
+
+export function generateGuiDescriptor(
+  variables: DaVinciVariable[],
+): GuiDescriptorResult {
+  const configVars = variables.filter((v) => v.kind !== "local");
+  const seen = new Set<string>();
+  const declarations: string[] = [];
+  const registrations: string[] = [];
+  const instanceFields: string[] = [];
+
+  for (const v of configVars) {
+    if (seen.has(v.fieldName)) continue;
+    seen.add(v.fieldName);
+
+    declarations.push(
+      `        TextFieldDescriptor ${v.fieldName}Field = new TextFieldDescriptor("${v.fieldName}", "DaVinci variable: ${v.fieldName}");`,
+    );
+    registrations.push(
+      `        guiDescriptor.addField(${v.fieldName}Field);`,
+    );
+    instanceFields.push(
+      `    private String ${v.fieldName};`,
+    );
+  }
+
+  return {
+    fieldDeclarations: declarations.join("\n"),
+    fieldRegistrations: registrations.join("\n"),
+    instanceFields: instanceFields.join("\n"),
+  };
+}
+
+// ── Attribute Contract Generation ─────────────────────────────────────
+
+export function generateAttributeContract(attributes: string[]): string {
+  if (attributes.length === 0) {
+    return "        Set<String> contract = new HashSet<>();";
+  }
+
+  const lines = [
+    "        Set<String> contract = new HashSet<>();",
+    ...attributes.map((a) => `        contract.add("${a}");`),
+  ];
+
+  return lines.join("\n");
+}
+
+// ── PF-INF Descriptor ─────────────────────────────────────────────────
+
+export interface PfInfDescriptor {
+  directoryName: string;
+  content: string;
+  fullPath: string;
+}
+
+export function generatePfInfDescriptor(
+  pluginType: string,
+  packageName: string,
+  className: string,
+): PfInfDescriptor {
+  const fqcn = `${packageName}.${className}`;
+
+  // PingFederate uses PF_INF_DIRECTORY_MAP
+  const pfDirectory = PF_INF_DIRECTORY_MAP[pluginType as PfPluginType];
+
+  // PingAccess uses META-INF/services/{interface}
+  const directoryName = pfDirectory ?? pluginType;
+
+  return {
+    directoryName,
+    content: fqcn,
+    fullPath: `PF-INF/${directoryName}`,
+  };
+}
+
+// ── META-INF/services for PingAccess ──────────────────────────────────
+
+export function generateMetaInfServices(
+  serviceInterface: string,
+  packageName: string,
+  className: string,
+): { filePath: string; content: string } {
+  return {
+    filePath: `META-INF/services/${serviceInterface}`,
+    content: `${packageName}.${className}`,
+  };
+}

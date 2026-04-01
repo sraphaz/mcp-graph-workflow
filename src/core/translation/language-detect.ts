@@ -252,6 +252,22 @@ const PROFILES: LanguageProfile[] = [
       /\bif\b/, /\bend\b/, /\bprint\s*\(/,
     ],
   },
+  {
+    id: "davinci-js",
+    unique: [
+      /module\.exports\s*=\s*\w+\s*=\s*async\s*\(\s*\{params\}\s*\)/,
+      /\{\{global\.variables\.\w+\}\}/,
+      /\{\{local\.\w+\.\w+\.output\.\w+\}\}/,
+    ],
+    strong: [
+      /\{\{global\.company\.variables\.\w+\}\}/,
+      /\{\{global\.flow\.variables\.\w+\}\}/,
+      /params\.\w+/,
+    ],
+    weak: [
+      /module\.exports/, /async\s*\(\s*\{params\}\s*\)/,
+    ],
+  },
 ];
 
 const UNIQUE_WEIGHT = 3;

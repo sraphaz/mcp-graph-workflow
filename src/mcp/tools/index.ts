@@ -37,6 +37,10 @@ import { registerSiebelImportDocs } from "./siebel-import-docs.js";
 import { registerTranslateCode } from "./translate-code.js";
 import { registerAnalyzeTranslation } from "./analyze-translation.js";
 import { registerTranslationJobs } from "./translation-jobs.js";
+// DaVinci converter tools
+import { registerDavinciAnalyze } from "./davinci-analyze.js";
+import { registerDavinciConvert } from "./davinci-convert.js";
+import { registerDavinciBuild } from "./davinci-build.js";
 // RAG knowledge tools
 import { registerKnowledgeFeedback } from "./knowledge-feedback.js";
 import { registerKnowledgeStats } from "./knowledge-stats.js";
@@ -98,6 +102,11 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerTranslateCode(server, store);
   registerAnalyzeTranslation(server, store);
   registerTranslationJobs(server, store);
+
+  // DaVinci converter tools
+  registerDavinciAnalyze(server, store);
+  registerDavinciConvert(server, store);
+  registerDavinciBuild(server, store);
 
   // RAG knowledge tools
   registerKnowledgeFeedback(server, store);
