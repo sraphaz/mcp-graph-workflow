@@ -93,8 +93,11 @@ export class UniversalGenerator implements GeneratorAdapter {
       return { code: "", mappedConstructs: [], unmappedConstructs: [] };
     }
 
-    // Step 1: Enrich constructs with source text
-    const enriched = extractSourceText(this.sourceCode, constructs, this.sourceLanguageId);
+    // Step 1: Enrich constructs with source text (only if not already enriched by AST extractor)
+    const needsEnrichment = constructs.length > 0 && !constructs[0].sourceText;
+    const enriched = needsEnrichment
+      ? extractSourceText(this.sourceCode, constructs, this.sourceLanguageId)
+      : constructs;
 
     const lines: string[] = [];
     const mapped: string[] = [];
@@ -109,10 +112,12 @@ export class UniversalGenerator implements GeneratorAdapter {
         continue;
       }
 
-      // Step 3: Resolve placeholders from source text
-      const resolved = construct.sourceText
-        ? resolvePlaceholders(construct.sourceText, construct.constructId, this.sourceLanguageId)
-        : {};
+      // Step 3: Use pre-resolved placeholders (from AST) or resolve from source text (regex fallback)
+      const resolved = construct.resolvedPlaceholders
+        ? { ...construct.resolvedPlaceholders }
+        : construct.sourceText
+          ? resolvePlaceholders(construct.sourceText, construct.constructId, this.sourceLanguageId)
+          : {};
 
       // Always include name from construct if available and not already resolved
       if (construct.name && !resolved.name) {
