@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.33.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.32.0...mcp-graph-v5.33.0) (2026-04-01)
+
+
+### Features
+
+* **davinci:** add DaVinci JS to PingAccess/PingFederate Java plugin converter ([a2381d0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a2381d0676fdcd01f086e971d4a6bd834b94f0c4))
+* enhance UniversalGenerator with top-level construct filtering and parameter transformation ([05c65b9](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/05c65b936be8ebd5d66570cfa76e1abd9b53b9b4))
+
+
+### Bug Fixes
+
+* **davinci:** resolve lint warnings for CI pipeline compliance ([260131f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/260131fddd535c1b3d03440d00143c3d0d64e51d))
+* **deps:** resolve high severity xmldom vulnerability ([3a2d00f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3a2d00fde9de92c8988af3e5101d4c28af183840))
+* **translation:** fix language detection collisions across 6 languages ([e1f262d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/e1f262d371d70a4492588f4379c87f8298062522))
+* **translation:** resolve 3 lint warnings in universal generator ([faa032a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/faa032a3470b859a0c0163e870d2e4aea279a8bc))
+* **translation:** use pre-resolved AST placeholders in UniversalGenerator ([c5ee67d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c5ee67ddc189772713ab22060d2438f32f16e155))
+
 ## [5.32.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.31.1...mcp-graph-v5.32.0) (2026-03-31)
 
 
