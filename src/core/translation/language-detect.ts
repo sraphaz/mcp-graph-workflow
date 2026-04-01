@@ -31,6 +31,7 @@ const PROFILES: LanguageProfile[] = [
     strong: [
       /\bconst\s+\w+\s*[:=]/, /\bimport\s*\{[^}]+\}\s*from\s*['"]/, /\bexport\s+(function|class|const|interface|type)\b/,
       /=>\s*\{/, /\bPromise</, /\bconsole\.\w+\(/,
+      /\bfunction\s+\w+\s*\(/, /\brequire\s*\(\s*["']/, /\bdocument\.\w+/,
     ],
     weak: [
       /\bfunction\s+\w+/, /\bclass\s+\w+/, /\breturn\s+/, /\bnew\s+\w+/,
@@ -41,12 +42,13 @@ const PROFILES: LanguageProfile[] = [
     unique: [
       /^(\s*)def\s+\w+\s*\(/m, /^(\s*)class\s+\w+.*:\s*$/m,
       /^from\s+\S+\s+import\s+/m, /^\s*elif\s+/m,
-      /\bprint\s*\(/, /\bTrue\b/, /\bFalse\b/, /\bNone\b/,
+      /\bTrue\b/, /\bFalse\b/, /\bNone\b/,
       /^\s*@\w+/m, /\basync\s+def\b/,
     ],
     strong: [
       /^import\s+\w+\s*$/m, /\bself\.\w+/, /\bpass\b/,
       /:\s*$\n\s+/m, /\bf["']/, /\braise\s+\w+/,
+      /\bprint\s*\(/,
     ],
     weak: [
       /\bif\s+.*:\s*$/m, /\bfor\s+\w+\s+in\s+/m, /\bwhile\s+/m,
@@ -55,12 +57,12 @@ const PROFILES: LanguageProfile[] = [
   {
     id: "go",
     unique: [
-      /^package\s+\w+/m, /\bfunc\s+\w*\s*\(/, /\b:=\s*/,
+      /^package\s+\w+/m, /\b:=\s*/,
       /\bgo\s+func\b/, /\bdefer\s+/, /\bchan\s+/,
       /\bfmt\.\w+/, /\bgoroutine/,
     ],
     strong: [
-      /\bvar\s+\w+\s+\w+/, /\bstruct\s*\{/, /\binterface\s*\{/,
+      /\bfunc\s+\w*\s*\(/, /\bvar\s+\w+\s+\w+/, /\bstruct\s*\{/, /\binterface\s*\{/,
       /\berr\s*!=\s*nil/, /\brange\s+/,
     ],
     weak: [
@@ -130,11 +132,12 @@ const PROFILES: LanguageProfile[] = [
   {
     id: "php",
     unique: [
-      /<\?php/, /\$\w+/, /->/, /\bfunction\s+\w+\s*\(/,
-      /\becho\b/,
+      /<\?php/, /\becho\b/, /\$this->/, /\$\w+->\w+/,
+      /\barray\s*\(/, /\b__construct\b/,
     ],
     strong: [
-      /\bnamespace\b/, /\buse\s+/, /\barray\(/,
+      /\$\w+/, /\bfunction\s+\w+\s*\(/, /->/,
+      /\bnamespace\b/, /\buse\s+\w+\\/, /\bnew\s+\w+\s*\(/,
     ],
     weak: [
       /\bclass\b/, /\breturn\b/,
@@ -143,14 +146,16 @@ const PROFILES: LanguageProfile[] = [
   {
     id: "swift",
     unique: [
-      /\bfunc\s+\w+.*->/, /\blet\s+\w+\s*:/, /\bvar\s+\w+\s*:/,
-      /\bguard\b/, /\bprotocol\b/,
+      /\bfunc\s+\w+.*->/, /\bguard\s+let\b/, /\bprotocol\s+\w+/,
+      /\blet\s+\w+\s*:\s*\w+\s*=/, /\bvar\s+\w+\s*:\s*\w+/,
+      /\bimport\s+(Foundation|UIKit|SwiftUI)\b/,
     ],
     strong: [
-      /\bstruct\b/, /\benum\b.*\bcase\b/, /\bimport\s+Foundation/,
+      /\bstruct\s+\w+/, /\benum\b.*\bcase\b/, /\bguard\b/,
+      /\blet\s+\w+\s*:/, /\bvar\s+\w+\s*:/,
     ],
     weak: [
-      /\bif\b/, /\breturn\b/,
+      /\bif\b/, /\breturn\b/, /\bfunc\s+\w+/,
     ],
   },
   {
@@ -235,14 +240,16 @@ const PROFILES: LanguageProfile[] = [
   {
     id: "lua",
     unique: [
-      /\bfunction\s+\w+.*\)\s*$/, /\blocal\s+\w+\s*=/,
-      /\btable\.\w+/, /\brequire\s*\(/, /\bself\.\w+/,
+      /\blocal\s+function\s+\w+/, /\blocal\s+\w+\s*=/,
+      /\btable\.\w+/, /\bipairs\b/, /\bpairs\b/,
+      /\btostring\b/, /\btonumber\b/,
     ],
     strong: [
-      /\bfor\s+\w+\s*,/, /\bipairs\b/, /\bpairs\b/,
+      /\brequire\s*\(["']/, /\bself\.\w+/, /\bfor\s+\w+\s*,/,
+      /\bfunction\s+\w+.*\)\s*$/m,
     ],
     weak: [
-      /\bif\b/, /\bend\b/,
+      /\bif\b/, /\bend\b/, /\bprint\s*\(/,
     ],
   },
 ];
