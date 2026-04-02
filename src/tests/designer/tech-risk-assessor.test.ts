@@ -141,4 +141,75 @@ describe("assessTechRisks", () => {
       + report.inferredRisks.reduce((sum, r) => sum + r.score, 0);
     expect(report.riskScore).toBe(expectedTotal);
   });
+
+  // --- Graduated mitigation levels (task 1.4) ---
+
+  it("should return mitigationLevel 'mitigated' when risk linked to decision", () => {
+    const doc = makeDoc(
+      [
+        { id: "r1", type: "risk", description: "Performance bottleneck" },
+        { id: "dec1", type: "decision" },
+      ],
+      [{ from: "dec1", to: "r1", relationType: "implements" }],
+    );
+    const report = assessTechRisks(doc);
+    expect(report.risks[0].mitigated).toBe(true);
+    expect(report.risks[0].mitigationLevel).toBe("mitigated");
+  });
+
+  it("should return mitigationLevel 'partially_mitigated' when risk linked to epic", () => {
+    const doc = makeDoc(
+      [
+        { id: "r1", type: "risk", description: "Scaling risk" },
+        { id: "e1", type: "epic" },
+      ],
+      [{ from: "r1", to: "e1", relationType: "related_to" }],
+    );
+    const report = assessTechRisks(doc);
+    expect(report.risks[0].mitigated).toBe(true);
+    expect(report.risks[0].mitigationLevel).toBe("partially_mitigated");
+  });
+
+  it("should return mitigationLevel 'partially_mitigated' when metadata.mitigation is set", () => {
+    const doc = makeDoc([
+      { id: "r1", type: "risk", description: "Integration risk", metadata: { mitigation: "Use circuit breaker pattern" } },
+    ]);
+    const report = assessTechRisks(doc);
+    expect(report.risks[0].mitigated).toBe(true);
+    expect(report.risks[0].mitigationLevel).toBe("partially_mitigated");
+  });
+
+  it("should return mitigationLevel 'unmitigated' when no edges and no metadata.mitigation", () => {
+    const doc = makeDoc([
+      { id: "r1", type: "risk", description: "Unmitigated risk" },
+    ]);
+    const report = assessTechRisks(doc);
+    expect(report.risks[0].mitigated).toBe(false);
+    expect(report.risks[0].mitigationLevel).toBe("unmitigated");
+  });
+
+  it("should prefer 'mitigated' over 'partially_mitigated' when both decision edge and epic edge exist", () => {
+    const doc = makeDoc(
+      [
+        { id: "r1", type: "risk", description: "Complex risk" },
+        { id: "dec1", type: "decision" },
+        { id: "e1", type: "epic" },
+      ],
+      [
+        { from: "dec1", to: "r1", relationType: "implements" },
+        { from: "r1", to: "e1", relationType: "related_to" },
+      ],
+    );
+    const report = assessTechRisks(doc);
+    expect(report.risks[0].mitigationLevel).toBe("mitigated");
+  });
+
+  it("should not count empty string metadata.mitigation as partial mitigation", () => {
+    const doc = makeDoc([
+      { id: "r1", type: "risk", description: "Risk with empty mitigation", metadata: { mitigation: "" } },
+    ]);
+    const report = assessTechRisks(doc);
+    expect(report.risks[0].mitigated).toBe(false);
+    expect(report.risks[0].mitigationLevel).toBe("unmitigated");
+  });
 });

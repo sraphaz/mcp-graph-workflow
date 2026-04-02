@@ -104,6 +104,10 @@ export function classifySectionTitle(title: string, level: number): { type: Bloc
   if (level === 1 || matchesAny(lower, EPIC_TITLE_PATTERNS)) return { type: "epic", confidence: 0.8 };
   if (/\btask\b/i.test(lower) || /\bentrega/i.test(lower)) return { type: "task", confidence: 0.85 };
 
+  // Heading-level fallback: promote by structural position (only for actual headings)
+  if (level >= 1 && level <= 2) return { type: "epic", confidence: 0.7 };
+  if (level === 3) return { type: "task", confidence: 0.65 };
+  if (level >= 4) return { type: "subtask", confidence: 0.6 };
   return { type: "unknown", confidence: 0.3 };
 }
 
@@ -190,4 +194,13 @@ export function classifySection(
     confidence: finalConf,
     level,
   };
+}
+
+export function classifyTableRows(tableBody: string): { type: BlockType; confidence: number } {
+  const lower = tableBody.toLowerCase();
+  const headerLine = lower.split("\n")[0] ?? "";
+  if (/\brisco\b|\brisk\b/.test(headerLine)) return { type: "risk", confidence: 0.8 };
+  if (/\brequisito\b|\brequirement\b/.test(headerLine)) return { type: "requirement", confidence: 0.8 };
+  if (/\bconstraint\b|\brestrição\b/.test(headerLine)) return { type: "constraint", confidence: 0.8 };
+  return { type: "unknown", confidence: 0.4 };
 }

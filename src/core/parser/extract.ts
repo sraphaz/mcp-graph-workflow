@@ -5,7 +5,8 @@
 
 import { normalize } from "./normalize.js";
 import { segment } from "./segment.js";
-import { classifySection, classifyText } from "./classify.js";
+import { extractTableSections } from "./segment.js";
+import { classifySection, classifyText, classifyTableRows } from "./classify.js";
 import type { ClassifiedBlock, ClassifiedItem, BlockType } from "./classify.js";
 import { logger } from "../utils/logger.js";
 
@@ -33,12 +34,27 @@ function countByType(blocks: ClassifiedBlock[], items: ClassifiedItem[], type: B
 export function extractEntities(rawText: string): ExtractionResult {
   logger.info(`Extracting entities from ${rawText.length} chars`);
   const normalized = normalize(rawText);
-  const sections = segment(normalized);
-  logger.info(`Segmented into ${sections.length} sections`);
+  const rawSections = segment(normalized);
+  const sections = extractTableSections(rawSections);
+  logger.info(`Segmented into ${sections.length} sections (${rawSections.length} raw + ${sections.length - rawSections.length} tables)`);
 
-  const blocks: ClassifiedBlock[] = sections.map((sec) =>
-    classifySection(sec.title, sec.body, sec.level, sec.startLine, sec.endLine),
-  );
+  const blocks: ClassifiedBlock[] = sections.map((sec) => {
+    // Classify table sections using table-specific heuristics
+    if (sec.title === "[table]") {
+      const tableClassification = classifyTableRows(sec.body);
+      return {
+        type: tableClassification.type,
+        title: sec.title,
+        description: sec.body,
+        items: [],
+        startLine: sec.startLine,
+        endLine: sec.endLine,
+        confidence: tableClassification.confidence,
+        level: sec.level,
+      };
+    }
+    return classifySection(sec.title, sec.body, sec.level, sec.startLine, sec.endLine);
+  });
 
   // Detect items following bold AC labels (e.g., **Critérios de aceite:**)
   const acLabelPattern = /\*\*(?:crit[eé]rios?\s+de\s+aceite|acceptance\s+criteria|definition\s+of\s+done)\s*:?\s*\*\*/i;

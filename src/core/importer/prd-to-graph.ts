@@ -239,7 +239,15 @@ export function convertToGraph(
   for (let bi = 0; bi < extraction.blocks.length; bi++) {
     const block = extraction.blocks[bi];
     const node = createNodeFromBlock(block, sourceFile);
-    if (!node) continue;
+    if (!node) {
+      logger.warn("prd-to-graph:skipped-block", {
+        blockIndex: bi,
+        blockType: block.type,
+        title: block.title?.slice(0, 80),
+        reason: "unmappable block type",
+      });
+      continue;
+    }
 
     // Validate node with Zod schema — skip malformed nodes instead of crashing downstream
     const parsed = GraphNodeSchema.safeParse(node);

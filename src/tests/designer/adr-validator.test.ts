@@ -160,4 +160,78 @@ describe("validateAdrs", () => {
     expect(report.decisions).toHaveLength(1);
     expect(report.decisions[0].grade).toBe("A");
   });
+
+  // --- Metadata support (task 1.3) ---
+
+  it("should grade A when decision has all 4 sections in metadata (no description)", () => {
+    const doc = makeDoc([{
+      type: "decision",
+      title: "ADR via metadata",
+      description: "",
+      metadata: {
+        status: "Accepted",
+        context: "Need a database for persistence",
+        decision: "Use PostgreSQL with connection pooling",
+        consequences: "Need DBA skills and monitoring",
+      },
+    }]);
+    const report = validateAdrs(doc);
+    expect(report.decisions[0].grade).toBe("A");
+    expect(report.decisions[0].hasStatus).toBe(true);
+    expect(report.decisions[0].hasContext).toBe(true);
+    expect(report.decisions[0].hasDecision).toBe(true);
+    expect(report.decisions[0].hasConsequences).toBe(true);
+    expect(report.decisions[0].missingFields).toHaveLength(0);
+  });
+
+  it("should grade A when decision has mix of metadata + description sections", () => {
+    const doc = makeDoc([{
+      type: "decision",
+      title: "ADR mixed",
+      description: "## Context\nNeed auth\n## Decision\nUse JWT",
+      metadata: {
+        status: "Accepted",
+        consequences: "Token management complexity",
+      },
+    }]);
+    const report = validateAdrs(doc);
+    expect(report.decisions[0].grade).toBe("A");
+    expect(report.decisions[0].hasStatus).toBe(true);
+    expect(report.decisions[0].hasContext).toBe(true);
+    expect(report.decisions[0].hasDecision).toBe(true);
+    expect(report.decisions[0].hasConsequences).toBe(true);
+  });
+
+  it("should grade B when decision has 3 sections via metadata only", () => {
+    const doc = makeDoc([{
+      type: "decision",
+      title: "ADR partial metadata",
+      metadata: {
+        status: "Proposed",
+        context: "Performance concerns",
+        decision: "Add Redis cache layer",
+      },
+    }]);
+    const report = validateAdrs(doc);
+    expect(report.decisions[0].grade).toBe("B");
+    expect(report.decisions[0].hasConsequences).toBe(false);
+    expect(report.decisions[0].missingFields).toContain("Consequences");
+  });
+
+  it("should not count empty string metadata fields as present", () => {
+    const doc = makeDoc([{
+      type: "decision",
+      title: "ADR empty metadata",
+      metadata: {
+        status: "",
+        context: "Real context",
+        decision: "",
+        consequences: "Real consequences",
+      },
+    }]);
+    const report = validateAdrs(doc);
+    expect(report.decisions[0].grade).toBe("C");
+    expect(report.decisions[0].hasStatus).toBe(false);
+    expect(report.decisions[0].hasDecision).toBe(false);
+  });
 });

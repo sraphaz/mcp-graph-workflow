@@ -3,7 +3,7 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import type { TechRiskReport, TechRiskEntry, TechRiskCategory, TechRiskProbability } from "../../schemas/designer-schema.js";
+import type { TechRiskReport, TechRiskEntry, TechRiskCategory, TechRiskProbability, MitigationLevel } from "../../schemas/designer-schema.js";
 import { logger } from "../utils/logger.js";
 
 const CATEGORY_KEYWORDS: Record<TechRiskCategory, string[]> = {
@@ -40,15 +40,49 @@ function priorityToProbability(priority: number): TechRiskProbability {
 
 const PROBABILITY_VALUE: Record<TechRiskProbability, number> = { low: 1, medium: 2, high: 3 };
 
-function isRiskMitigated(doc: GraphDocument, riskId: string): boolean {
-  const mitigationTypes = new Set(["decision", "constraint"]);
+/** Full mitigation: decision or constraint edge */
+const FULL_MITIGATION_TYPES = new Set(["decision", "constraint"]);
+/** Partial mitigation: epic edge */
+const PARTIAL_MITIGATION_TYPES = new Set(["epic"]);
+
+export function assessMitigationLevel(doc: GraphDocument, riskNode: { id: string; metadata?: Record<string, unknown> }): MitigationLevel {
   const nodeTypeMap = new Map(doc.nodes.map((n) => [n.id, n.type]));
 
-  return doc.edges.some((edge) => {
-    if (edge.from === riskId && mitigationTypes.has(nodeTypeMap.get(edge.to) ?? "")) return true;
-    if (edge.to === riskId && mitigationTypes.has(nodeTypeMap.get(edge.from) ?? "")) return true;
-    return false;
-  });
+  let hasFullMitigation = false;
+  let hasPartialMitigation = false;
+
+  for (const edge of doc.edges) {
+    const connectedType = edge.from === riskNode.id
+      ? nodeTypeMap.get(edge.to)
+      : edge.to === riskNode.id
+        ? nodeTypeMap.get(edge.from)
+        : undefined;
+
+    if (!connectedType) continue;
+
+    if (FULL_MITIGATION_TYPES.has(connectedType)) {
+      hasFullMitigation = true;
+      break;
+    }
+    if (PARTIAL_MITIGATION_TYPES.has(connectedType)) {
+      hasPartialMitigation = true;
+    }
+  }
+
+  if (hasFullMitigation) return "mitigated";
+
+  // Check metadata.mitigation as partial mitigation
+  const meta = riskNode.metadata as Record<string, unknown> | undefined;
+  if (meta) {
+    const mitigation = meta.mitigation;
+    if (typeof mitigation === "string" && mitigation.trim().length > 0) {
+      hasPartialMitigation = true;
+    }
+  }
+
+  if (hasPartialMitigation) return "partially_mitigated";
+
+  return "unmitigated";
 }
 
 export function assessTechRisks(doc: GraphDocument): TechRiskReport {
@@ -59,9 +93,10 @@ export function assessTechRisks(doc: GraphDocument): TechRiskReport {
     const probability = priorityToProbability(node.priority);
     const impact: TechRiskProbability = node.priority <= 2 ? "high" : node.priority <= 3 ? "medium" : "low";
     const score = PROBABILITY_VALUE[probability] * PROBABILITY_VALUE[impact];
-    const mitigated = isRiskMitigated(doc, node.id);
+    const mitigationLevel = assessMitigationLevel(doc, node);
+    const mitigated = mitigationLevel !== "unmitigated";
 
-    return { nodeId: node.id, category, probability, impact, score, mitigated };
+    return { nodeId: node.id, category, probability, impact, score, mitigated, mitigationLevel };
   });
 
   // Infer risks from graph structure

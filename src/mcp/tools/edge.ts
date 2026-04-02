@@ -12,9 +12,9 @@ import { mcpText, mcpError } from "../response-helpers.js";
 export function registerEdge(server: McpServer, store: SqliteStore): void {
   server.tool(
     "edge",
-    "Manage edges: add, delete, or list relationships between nodes",
+    "Manage edges: add, delete, list, or batch_add relationships between nodes",
     {
-      action: z.enum(["add", "delete", "list"]).describe("Action to perform"),
+      action: z.enum(["add", "delete", "list", "batch_add"]).describe("Action to perform"),
       // add params
       from: z.string().optional().describe("Source node ID (required for add)"),
       to: z.string().optional().describe("Target node ID (required for add)"),
@@ -23,11 +23,19 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
       weight: z.number().min(0).max(1).optional().describe("Edge weight 0-1 (add only)"),
       // delete params
       id: z.string().optional().describe("Edge ID (required for delete)"),
+      // batch_add params
+      edges: z.array(z.object({
+        from: z.string(),
+        to: z.string(),
+        relationType: RelationTypeSchema,
+        reason: z.string().optional(),
+        weight: z.number().min(0).max(1).optional(),
+      })).max(50).optional().describe("Array of edges for batch_add (max 50)"),
       // list params
       nodeId: z.string().optional().describe("Filter edges by node ID (list only)"),
       direction: z.enum(["from", "to", "both"]).optional().describe("Edge direction relative to nodeId (list only, default: both)"),
     },
-    async ({ action, from, to, relationType, reason, weight, id, nodeId, direction }) => {
+    async ({ action, from, to, relationType, reason, weight, id, edges: batchEdges, nodeId, direction }) => {
       logger.debug("tool:edge", { action, from, to, relationType });
       if (action === "add") {
         if (!from || !to || !relationType) {
@@ -82,6 +90,75 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
 
         logger.info("tool:edge:ok", { action: "add", edgeId: edge.id, from, to, relationType });
         return mcpText({ ok: true, edge });
+      }
+
+      if (action === "batch_add") {
+        if (!batchEdges || batchEdges.length === 0) {
+          return mcpError("edges array is required for batch_add action");
+        }
+
+        if (batchEdges.length > 50) {
+          return mcpError("batch_add supports at most 50 edges");
+        }
+
+        const inserted: string[] = [];
+        const errors: { index: number; message: string }[] = [];
+        const validEdges: GraphEdge[] = [];
+
+        for (let i = 0; i < batchEdges.length; i++) {
+          const entry = batchEdges[i];
+
+          // Check from node exists
+          const fromNode = store.getNodeById(entry.from);
+          if (!fromNode) {
+            errors.push({ index: i, message: `Node not found: ${entry.from}` });
+            continue;
+          }
+
+          // Check to node exists
+          const toNode = store.getNodeById(entry.to);
+          if (!toNode) {
+            errors.push({ index: i, message: `Node not found: ${entry.to}` });
+            continue;
+          }
+
+          // Prevent self-reference
+          if (entry.from === entry.to) {
+            errors.push({ index: i, message: "Self-referencing edges are not allowed" });
+            continue;
+          }
+
+          // Check duplicates
+          const existingEdges = store.getEdgesFrom(entry.from);
+          const duplicate = existingEdges.find(
+            (e) => e.to === entry.to && e.relationType === (entry.relationType as RelationType),
+          );
+          if (duplicate) {
+            errors.push({ index: i, message: `Duplicate edge: ${entry.from} → ${entry.to} (${entry.relationType})` });
+            continue;
+          }
+
+          const edgeId = generateId("edge");
+          const edge: GraphEdge = {
+            id: edgeId,
+            from: entry.from,
+            to: entry.to,
+            relationType: entry.relationType as RelationType,
+            reason: entry.reason,
+            weight: entry.weight,
+            createdAt: now(),
+          };
+
+          validEdges.push(edge);
+          inserted.push(edgeId);
+        }
+
+        if (validEdges.length > 0) {
+          store.mergeInsert([], validEdges);
+        }
+
+        logger.info("tool:edge:batch_add:ok", { inserted: inserted.length, errors: errors.length });
+        return mcpText({ ok: true, inserted, errors });
       }
 
       if (action === "delete") {

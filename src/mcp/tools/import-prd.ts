@@ -22,8 +22,13 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
         .optional()
         .default(false)
         .describe("Force re-import: delete nodes from previous import of this file before importing"),
+      dryRun: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Preview import without persisting — returns nodes that would be created"),
     },
-    async ({ filePath, force }) => {
+    async ({ filePath, force, dryRun }) => {
       logger.info("tool:import_prd", { filePath, force });
       // 1. Read and parse
       const { content, absolutePath, sizeBytes } = await readPrdFile(filePath);
@@ -48,6 +53,26 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       // 5. Convert to graph
       const { nodes, edges, stats } = convertToGraph(extraction, sourceFileName);
       logger.debug("tool:import_prd:converted", { nodes: nodes.length, edges: edges.length });
+
+      // 5.5 Dry-run: return preview without persisting
+      if (dryRun) {
+        const preview = nodes.slice(0, 30).map((n) => ({
+          type: n.type,
+          title: n.title,
+          status: n.status,
+          priority: n.priority,
+          parentId: n.parentId ?? null,
+        }));
+        logger.info("tool:import_prd:dry_run", { nodesPreview: preview.length, totalNodes: nodes.length });
+        return mcpText({
+          ok: true,
+          dryRun: true,
+          sourceFile: sourceFileName,
+          originalSizeChars: sizeBytes,
+          ...stats,
+          preview,
+        });
+      }
 
       // 6. Bulk insert into SQLite (atomic)
       store.bulkInsert(nodes, edges);

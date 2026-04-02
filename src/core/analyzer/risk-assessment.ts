@@ -8,6 +8,7 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { RiskMatrix, RiskEntry, RiskLevel } from "../../schemas/analyzer-schema.js";
+import { assessMitigationLevel } from "../designer/tech-risk-assessor.js";
 import { logger } from "../utils/logger.js";
 
 const HIGH_PROBABILITY_KEYWORDS = ["sempre", "provável", "frequente", "common", "likely"];
@@ -55,6 +56,13 @@ export function assessRisks(doc: GraphDocument): RiskMatrix {
       const someProgress = childTasks.some((t) => t.status === "in_progress" || t.status === "done");
       if (allDone) mitigationStatus = "mitigated";
       else if (someProgress) mitigationStatus = "partial";
+    }
+
+    // Also check edge-based mitigation (unified with tech_risk analyzer)
+    if (mitigationStatus === "unmitigated") {
+      const edgeLevel = assessMitigationLevel(doc, node);
+      if (edgeLevel === "mitigated") mitigationStatus = "mitigated";
+      else if (edgeLevel === "partially_mitigated") mitigationStatus = "partial";
     }
 
     const suggestedMitigation = mitigationStatus === "unmitigated"

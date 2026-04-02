@@ -22,6 +22,13 @@ function hasSection(text: string, section: string): boolean {
   });
 }
 
+/** Check if a metadata field exists and is a non-empty string */
+function hasMetadataField(meta: Record<string, unknown> | undefined, field: string): boolean {
+  if (!meta) return false;
+  const value = meta[field];
+  return typeof value === "string" && value.trim().length > 0;
+}
+
 function sectionCountToGrade(count: number): AdrGrade {
   if (count >= 4) return "A";
   if (count === 3) return "B";
@@ -37,10 +44,11 @@ export function validateAdrs(doc: GraphDocument): AdrReport {
 
   const decisions: AdrValidationResult[] = decisionNodes.map((node) => {
     const text = node.description ?? "";
-    const hasStatus = hasSection(text, "Status");
-    const hasContext = hasSection(text, "Context");
-    const hasDecision = hasSection(text, "Decision");
-    const hasConsequences = hasSection(text, "Consequences");
+    const meta = node.metadata as Record<string, unknown> | undefined;
+    const hasStatus = hasMetadataField(meta, "status") || hasSection(text, "Status");
+    const hasContext = hasMetadataField(meta, "context") || hasSection(text, "Context");
+    const hasDecision = hasMetadataField(meta, "decision") || hasSection(text, "Decision");
+    const hasConsequences = hasMetadataField(meta, "consequences") || hasSection(text, "Consequences");
 
     const sectionFlags = { Status: hasStatus, Context: hasContext, Decision: hasDecision, Consequences: hasConsequences };
     const missingFields = ADR_SECTIONS.filter((s) => !sectionFlags[s]);

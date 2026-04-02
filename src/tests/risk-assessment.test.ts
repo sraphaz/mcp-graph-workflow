@@ -100,4 +100,76 @@ describe("assessRisks", () => {
 
     expect(result.risks[0].score).toBeGreaterThanOrEqual(result.risks[1].score);
   });
+
+  // --- Unified edge-based mitigation (task 8.1) ---
+
+  it("should mark risk as mitigated when linked to decision via edge (unified with tech_risk)", () => {
+    const risk = makeNode({ type: "risk", title: "Scaling risk" });
+    const decision = makeNode({ type: "decision", title: "ADR: Use caching" });
+    store.insertNode(risk);
+    store.insertNode(decision);
+    store.insertEdge({
+      id: "edge_test_1",
+      from: decision.id,
+      to: risk.id,
+      relationType: "implements",
+      createdAt: "2025-01-01T00:00:00Z",
+    });
+
+    const doc = store.toGraphDocument();
+    const result = assessRisks(doc);
+
+    expect(result.risks[0].mitigationStatus).toBe("mitigated");
+  });
+
+  it("should mark risk as partial when linked to epic via edge (unified with tech_risk)", () => {
+    const risk = makeNode({ type: "risk", title: "Integration risk" });
+    const epic = makeNode({ type: "epic", title: "API Integration" });
+    store.insertNode(risk);
+    store.insertNode(epic);
+    store.insertEdge({
+      id: "edge_test_2",
+      from: risk.id,
+      to: epic.id,
+      relationType: "related_to",
+      createdAt: "2025-01-01T00:00:00Z",
+    });
+
+    const doc = store.toGraphDocument();
+    const result = assessRisks(doc);
+
+    expect(result.risks[0].mitigationStatus).toBe("partial");
+  });
+
+  it("should mark risk as partial when metadata.mitigation is set (unified with tech_risk)", () => {
+    const risk = makeNode({ type: "risk", title: "Deployment risk", metadata: { mitigation: "Blue-green deployment strategy" } });
+    store.insertNode(risk);
+
+    const doc = store.toGraphDocument();
+    const result = assessRisks(doc);
+
+    expect(result.risks[0].mitigationStatus).toBe("partial");
+  });
+
+  it("should prefer child task mitigation over edge mitigation", () => {
+    const risk = makeNode({ type: "risk", title: "Security risk" });
+    const task = makeNode({ type: "task", title: "Audit", parentId: risk.id, status: "done" });
+    const epic = makeNode({ type: "epic", title: "Security Epic" });
+    store.insertNode(risk);
+    store.insertNode(task);
+    store.insertNode(epic);
+    store.insertEdge({
+      id: "edge_test_3",
+      from: risk.id,
+      to: epic.id,
+      relationType: "related_to",
+      createdAt: "2025-01-01T00:00:00Z",
+    });
+
+    const doc = store.toGraphDocument();
+    const result = assessRisks(doc);
+
+    // Child task done = "mitigated", should not be downgraded by epic edge (partial)
+    expect(result.risks[0].mitigationStatus).toBe("mitigated");
+  });
 });

@@ -188,8 +188,10 @@ describe("classifySectionTitle", () => {
     expect(classifySectionTitle("Project Vision", 2).type).toBe("epic");
   });
 
-  it("returns unknown for non-matching level 2+ titles", () => {
-    expect(classifySectionTitle("Random Section", 2).type).toBe("unknown");
+  it("returns epic fallback for non-matching level 2 titles", () => {
+    const result = classifySectionTitle("Random Section", 2);
+    expect(result.type).toBe("epic");
+    expect(result.confidence).toBe(0.7);
   });
 
   it("returns higher confidence for section titles than text", () => {
@@ -221,12 +223,23 @@ describe("classifySection", () => {
     expect(block.items).toHaveLength(2);
   });
 
-  it("promotes unknown section with mostly task items", () => {
+  it("heading fallback takes precedence: h2 becomes epic even with task items", () => {
     const block = classifySection(
       "Steps",
       "- Implementar cache\n- Criar endpoint\n- Build pipeline",
       2, 1, 4,
     );
+    // h2 heading fallback → epic (confidence 0.7), overrides item-based promotion
+    expect(block.type).toBe("epic");
+  });
+
+  it("promotes unknown section (level 0) with mostly task items to task", () => {
+    const block = classifySection(
+      "Steps",
+      "- Implementar cache\n- Criar endpoint\n- Build pipeline",
+      0, 1, 4,
+    );
+    // level 0 has no heading fallback → unknown → promotion to task via items
     expect(block.type).toBe("task");
   });
 });

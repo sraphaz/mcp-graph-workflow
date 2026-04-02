@@ -292,6 +292,130 @@ describe("MCP Tools: Edge, UpdateStatus, Metrics, Init", () => {
       expect(parsed.edge.relationType).toBe("related_to");
     });
 
+    // ── action: "batch_add" ────────────────────────────────
+
+    describe('action: "batch_add"', () => {
+      it("should insert multiple edges atomically", async () => {
+        const n1 = makeNode({ title: "A" });
+        const n2 = makeNode({ title: "B" });
+        const n3 = makeNode({ title: "C" });
+        store.insertNode(n1);
+        store.insertNode(n2);
+        store.insertNode(n3);
+
+        const result = await handler(server, "edge")({
+          action: "batch_add",
+          edges: [
+            { from: n1.id, to: n2.id, relationType: "depends_on" },
+            { from: n2.id, to: n3.id, relationType: "blocks" },
+          ],
+        });
+
+        const parsed = parseResult(result) as { ok: boolean; inserted: string[]; errors: unknown[] };
+        expect(parsed.ok).toBe(true);
+        expect(parsed.inserted).toHaveLength(2);
+        expect(parsed.errors).toHaveLength(0);
+      });
+
+      it("should validate from/to nodes exist", async () => {
+        const n1 = makeNode({ title: "Exists" });
+        store.insertNode(n1);
+
+        const result = await handler(server, "edge")({
+          action: "batch_add",
+          edges: [
+            { from: n1.id, to: "nonexistent", relationType: "depends_on" },
+            { from: "also-missing", to: n1.id, relationType: "blocks" },
+          ],
+        });
+
+        const parsed = parseResult(result) as { ok: boolean; inserted: string[]; errors: { index: number; message: string }[] };
+        expect(parsed.ok).toBe(true);
+        expect(parsed.inserted).toHaveLength(0);
+        expect(parsed.errors).toHaveLength(2);
+        expect(parsed.errors[0].index).toBe(0);
+        expect(parsed.errors[1].index).toBe(1);
+      });
+
+      it("should prevent self-referencing edges", async () => {
+        const n1 = makeNode({ title: "Self" });
+        store.insertNode(n1);
+
+        const result = await handler(server, "edge")({
+          action: "batch_add",
+          edges: [
+            { from: n1.id, to: n1.id, relationType: "depends_on" },
+          ],
+        });
+
+        const parsed = parseResult(result) as { ok: boolean; inserted: string[]; errors: { index: number; message: string }[] };
+        expect(parsed.ok).toBe(true);
+        expect(parsed.inserted).toHaveLength(0);
+        expect(parsed.errors).toHaveLength(1);
+        expect(parsed.errors[0].message).toContain("Self-referencing");
+      });
+
+      it("should return errors for invalid entries without blocking valid ones", async () => {
+        const n1 = makeNode({ title: "A" });
+        const n2 = makeNode({ title: "B" });
+        store.insertNode(n1);
+        store.insertNode(n2);
+
+        const result = await handler(server, "edge")({
+          action: "batch_add",
+          edges: [
+            { from: n1.id, to: n2.id, relationType: "depends_on" },
+            { from: n1.id, to: "missing", relationType: "blocks" },
+          ],
+        });
+
+        const parsed = parseResult(result) as { ok: boolean; inserted: string[]; errors: { index: number; message: string }[] };
+        expect(parsed.ok).toBe(true);
+        expect(parsed.inserted).toHaveLength(1);
+        expect(parsed.errors).toHaveLength(1);
+        expect(parsed.errors[0].index).toBe(1);
+      });
+
+      it("should require edges param", async () => {
+        const result = await handler(server, "edge")({
+          action: "batch_add",
+        });
+
+        const parsed = parseResult(result) as { error: string };
+        expect(result.isError).toBe(true);
+        expect(parsed.error).toContain("edges");
+      });
+
+      it("should skip duplicate edges", async () => {
+        const n1 = makeNode({ title: "A" });
+        const n2 = makeNode({ title: "B" });
+        store.insertNode(n1);
+        store.insertNode(n2);
+
+        // Insert one edge first
+        await handler(server, "edge")({
+          action: "add",
+          from: n1.id,
+          to: n2.id,
+          relationType: "depends_on",
+        });
+
+        // Now try batch_add with the same edge
+        const result = await handler(server, "edge")({
+          action: "batch_add",
+          edges: [
+            { from: n1.id, to: n2.id, relationType: "depends_on" },
+          ],
+        });
+
+        const parsed = parseResult(result) as { ok: boolean; inserted: string[]; errors: { index: number; message: string }[] };
+        expect(parsed.ok).toBe(true);
+        expect(parsed.inserted).toHaveLength(0);
+        expect(parsed.errors).toHaveLength(1);
+        expect(parsed.errors[0].message).toContain("Duplicate");
+      });
+    });
+
     it("should filter listed edges by relationType", async () => {
       const n1 = makeNode();
       const n2 = makeNode();

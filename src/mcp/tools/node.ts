@@ -7,8 +7,8 @@
 import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
-import type { RelationType } from "../../core/graph/graph-types.js";
-import { NodeTypeSchema, NodeStatusSchema, XpSizeSchema, PrioritySchema } from "../../schemas/node.schema.js";
+import type { GraphEdge, GraphNode, RelationType } from "../../core/graph/graph-types.js";
+import { NodeTypeSchema, NodeStatusSchema, XpSizeSchema, PrioritySchema, GraphNodeSchema } from "../../schemas/node.schema.js";
 import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { DEFAULT_NODE_STATUS, DEFAULT_NODE_PRIORITY } from "../../core/utils/constants.js";
 import { generateId } from "../../core/utils/id.js";
@@ -21,9 +21,9 @@ import { indexNodeAsKnowledge, removeNodeFromKnowledge } from "../../core/rag/no
 export function registerNode(server: McpServer, store: SqliteStore): void {
   server.tool(
     "node",
-    "Manage graph nodes: add, update, or delete",
+    "Manage graph nodes: add, update, delete, or batch_add",
     {
-      action: z.enum(["add", "update", "delete"]).describe("Action to perform"),
+      action: z.enum(["add", "update", "delete", "batch_add"]).describe("Action to perform"),
       // add params
       type: NodeTypeSchema.optional().describe("Node type — required for add (epic, task, subtask, etc.)"),
       title: z.string().optional().describe("Node title — required for add"),
@@ -40,8 +40,24 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
       metadata: z.record(z.string(), z.unknown()).optional().describe("Custom metadata (add)"),
       // update/delete params
       id: z.string().min(1).optional().describe("Node ID — required for update/delete"),
+      // batch_add params
+      nodes: z.array(z.object({
+        type: NodeTypeSchema,
+        title: z.string(),
+        description: z.string().optional(),
+        status: NodeStatusSchema.optional(),
+        priority: PrioritySchema.optional(),
+        xpSize: XpSizeSchema.optional(),
+        estimateMinutes: z.number().optional(),
+        tags: z.array(z.string()).optional(),
+        parentId: z.string().nullable().optional(),
+        sprint: z.string().nullable().optional(),
+        acceptanceCriteria: z.array(z.string()).optional(),
+        blocked: z.boolean().optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+      })).max(50).optional().describe("Array of nodes for batch_add (max 50)"),
     },
-    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, blocked, metadata }) => {
+    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, blocked, metadata, nodes }) => {
       logger.debug("tool:node", { action, id, type, title });
 
       if (action === "add") {
@@ -178,6 +194,97 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         indexNodeAsKnowledge(store.getDb(), updated);
         logger.info("tool:node:update:ok", { id });
         return mcpText({ ok: true, node: updated });
+      }
+
+      if (action === "batch_add") {
+        if (!nodes || nodes.length === 0) {
+          return mcpError("nodes array is required for batch_add action");
+        }
+
+        if (nodes.length > 50) {
+          return mcpError("batch_add supports at most 50 nodes");
+        }
+
+        const inserted: string[] = [];
+        const errors: { index: number; message: string }[] = [];
+        const validNodes: GraphNode[] = [];
+        const autoEdges: GraphEdge[] = [];
+
+        const batchNodeSchema = GraphNodeSchema.omit({ id: true, createdAt: true, updatedAt: true }).extend({
+          status: NodeStatusSchema.optional(),
+          priority: PrioritySchema.optional(),
+        });
+
+        for (let i = 0; i < nodes.length; i++) {
+          const entry = nodes[i];
+
+          const parsed = batchNodeSchema.safeParse(entry);
+          if (!parsed.success) {
+            errors.push({ index: i, message: parsed.error.message });
+            continue;
+          }
+
+          // Validate parentId exists
+          if (entry.parentId) {
+            const parent = store.getNodeById(entry.parentId);
+            if (!parent) {
+              errors.push({ index: i, message: `Parent not found: ${entry.parentId}` });
+              continue;
+            }
+          }
+
+          const timestamp = now();
+          const nodeId = generateId("node");
+          const node: GraphNode = {
+            id: nodeId,
+            type: entry.type,
+            title: entry.title,
+            description: normalizeNewlines(entry.description),
+            status: entry.status ?? DEFAULT_NODE_STATUS,
+            priority: entry.priority ?? DEFAULT_NODE_PRIORITY,
+            xpSize: entry.xpSize,
+            estimateMinutes: entry.estimateMinutes,
+            tags: entry.tags,
+            parentId: entry.parentId,
+            sprint: entry.sprint,
+            acceptanceCriteria: entry.acceptanceCriteria,
+            blocked: entry.blocked,
+            metadata: entry.metadata as GraphNode["metadata"],
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          };
+
+          validNodes.push(node);
+          inserted.push(nodeId);
+
+          if (entry.parentId) {
+            autoEdges.push({
+              id: generateId("edge"),
+              from: entry.parentId,
+              to: nodeId,
+              relationType: "parent_of" as RelationType,
+              createdAt: timestamp,
+            });
+            autoEdges.push({
+              id: generateId("edge"),
+              from: nodeId,
+              to: entry.parentId,
+              relationType: "child_of" as RelationType,
+              createdAt: timestamp,
+            });
+          }
+        }
+
+        if (validNodes.length > 0) {
+          store.mergeInsert(validNodes, autoEdges);
+
+          for (const node of validNodes) {
+            indexNodeAsKnowledge(store.getDb(), node);
+          }
+        }
+
+        logger.info("tool:node:batch_add:ok", { inserted: inserted.length, errors: errors.length });
+        return mcpText({ ok: true, inserted, errors });
       }
 
       // action === "delete"

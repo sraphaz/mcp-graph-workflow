@@ -107,6 +107,8 @@ export const TechRiskCategorySchema = z.enum([
 
 export const TechRiskProbabilitySchema = z.enum(["low", "medium", "high"]);
 
+export const MitigationLevelSchema = z.enum(["unmitigated", "partially_mitigated", "mitigated"]);
+
 export const TechRiskEntrySchema = z.object({
   nodeId: z.string(),
   category: TechRiskCategorySchema,
@@ -114,6 +116,7 @@ export const TechRiskEntrySchema = z.object({
   impact: TechRiskProbabilitySchema,
   score: z.number().min(1).max(9),
   mitigated: z.boolean(),
+  mitigationLevel: MitigationLevelSchema.optional(),
 });
 
 export const TechRiskReportSchema = z.object({
@@ -125,6 +128,7 @@ export const TechRiskReportSchema = z.object({
 
 export type TechRiskCategory = z.infer<typeof TechRiskCategorySchema>;
 export type TechRiskProbability = z.infer<typeof TechRiskProbabilitySchema>;
+export type MitigationLevel = z.infer<typeof MitigationLevelSchema>;
 export type TechRiskEntry = z.infer<typeof TechRiskEntrySchema>;
 export type TechRiskReport = z.infer<typeof TechRiskReportSchema>;
 

@@ -65,3 +65,78 @@ export function segment(text: string): Section[] {
 
   return sections;
 }
+
+const TABLE_ROW_PATTERN = /^\|.+\|$/;
+const TABLE_SEP_PATTERN = /^\|\s*[-:]+[-| :]*\|$/;
+
+/**
+ * Post-process sections to extract embedded markdown tables into separate sections.
+ * Each table block (header + separator + data rows) becomes a Section with title "[table]" and level 0.
+ */
+export function extractTableSections(sections: Section[]): Section[] {
+  const result: Section[] = [];
+
+  for (const section of sections) {
+    const lines = section.body.split("\n");
+    const nonTableLines: string[] = [];
+    const tables: string[][] = [];
+    let currentTable: string[] = [];
+    let inTable = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (!inTable) {
+        // Detect table start: current line matches row pattern AND next line is separator
+        if (TABLE_ROW_PATTERN.test(line) && i + 1 < lines.length && TABLE_SEP_PATTERN.test(lines[i + 1])) {
+          inTable = true;
+          currentTable = [line];
+        } else {
+          nonTableLines.push(line);
+        }
+      } else {
+        // Inside a table: keep collecting rows that match the pipe pattern
+        if (TABLE_ROW_PATTERN.test(line)) {
+          currentTable.push(line);
+        } else {
+          // Table ended
+          tables.push(currentTable);
+          currentTable = [];
+          inTable = false;
+          nonTableLines.push(line);
+        }
+      }
+    }
+
+    // Close any remaining table
+    if (inTable && currentTable.length > 0) {
+      tables.push(currentTable);
+    }
+
+    if (tables.length === 0) {
+      result.push(section);
+    } else {
+      // Push original section with table lines removed
+      const cleanBody = nonTableLines.join("\n").trim();
+      if (cleanBody || section.title !== "[table]") {
+        result.push({
+          ...section,
+          body: cleanBody,
+        });
+      }
+
+      // Push each table as a separate section
+      for (const tableLines of tables) {
+        result.push({
+          level: 0,
+          title: "[table]",
+          body: tableLines.join("\n"),
+          startLine: section.startLine,
+          endLine: section.endLine,
+        });
+      }
+    }
+  }
+
+  return result;
+}

@@ -296,6 +296,157 @@ describe("MCP node tool (consolidated)", () => {
     });
   });
 
+  // ── action: "batch_add" ─────────────────────────────────
+
+  describe('action: "batch_add"', () => {
+    it("should insert multiple nodes atomically", async () => {
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: [
+          { type: "task", title: "Task A" },
+          { type: "task", title: "Task B" },
+          { type: "epic", title: "Epic C" },
+        ],
+      });
+      const parsed = parseResult(result);
+
+      expect(parsed.ok).toBe(true);
+      expect((parsed.inserted as string[]).length).toBe(3);
+      expect((parsed.errors as unknown[]).length).toBe(0);
+
+      // Verify nodes actually exist in store
+      for (const id of parsed.inserted as string[]) {
+        expect(store.getNodeById(id)).not.toBeNull();
+      }
+    });
+
+    it("should return inserted IDs array", async () => {
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: [
+          { type: "task", title: "Task 1" },
+          { type: "task", title: "Task 2" },
+        ],
+      });
+      const parsed = parseResult(result);
+
+      expect(parsed.ok).toBe(true);
+      const ids = parsed.inserted as string[];
+      expect(ids.length).toBe(2);
+      for (const id of ids) {
+        expect(typeof id).toBe("string");
+        expect(id.startsWith("node_")).toBe(true);
+      }
+    });
+
+    it("should report errors for invalid entries without blocking valid ones", async () => {
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: [
+          { type: "task", title: "Valid Task" },
+          { type: "invalid_type" as "task", title: "Bad Type" },
+          { type: "task", title: "Another Valid" },
+        ],
+      });
+      const parsed = parseResult(result);
+
+      expect(parsed.ok).toBe(true);
+      expect((parsed.inserted as string[]).length).toBe(2);
+      const errors = parsed.errors as { index: number; message: string }[];
+      expect(errors.length).toBe(1);
+      expect(errors[0].index).toBe(1);
+      expect(typeof errors[0].message).toBe("string");
+    });
+
+    it("should auto-create parent/child edges when parentId is set", async () => {
+      const epic = makeEpic();
+      store.insertNode(epic);
+
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: [
+          { type: "task", title: "Child A", parentId: epic.id },
+          { type: "task", title: "Child B", parentId: epic.id },
+        ],
+      });
+      const parsed = parseResult(result);
+
+      expect(parsed.ok).toBe(true);
+      const ids = parsed.inserted as string[];
+      expect(ids.length).toBe(2);
+
+      // Check parent_of/child_of edges
+      for (const childId of ids) {
+        const edgesFromParent = store.getEdgesFrom(epic.id);
+        expect(edgesFromParent.some((e) => e.to === childId && e.relationType === "parent_of")).toBe(true);
+
+        const edgesFromChild = store.getEdgesFrom(childId);
+        expect(edgesFromChild.some((e) => e.to === epic.id && e.relationType === "child_of")).toBe(true);
+      }
+    });
+
+    it("should reject batch > 50 nodes via schema validation", async () => {
+      const bigBatch = Array.from({ length: 51 }, (_, i) => ({
+        type: "task" as const,
+        title: `Task ${i}`,
+      }));
+
+      // Zod max(50) should reject at the schema level, so the handler won't receive it.
+      // But since MCP SDK may handle schema validation, we test what we can:
+      // If the SDK passes it through, the handler should still reject it.
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: bigBatch,
+      });
+      const _parsed = parseResult(result);
+
+      // Either the SDK rejects it or our handler does
+      expect(result.isError).toBe(true);
+    });
+
+    it("should require nodes param", async () => {
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+      });
+      const parsed = parseResult(result);
+
+      expect(result.isError).toBe(true);
+      expect((parsed.error as string)).toContain("nodes");
+    });
+
+    it("should apply default status=backlog and priority=3", async () => {
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: [{ type: "task", title: "Defaults" }],
+      });
+      const parsed = parseResult(result);
+
+      expect(parsed.ok).toBe(true);
+      const ids = parsed.inserted as string[];
+      const node = store.getNodeById(ids[0]);
+      expect(node!.status).toBe("backlog");
+      expect(node!.priority).toBe(3);
+    });
+
+    it("should skip nodes with non-existent parentId and report error", async () => {
+      const result = await tools(server)["node"].handler({
+        action: "batch_add",
+        nodes: [
+          { type: "task", title: "Valid Task" },
+          { type: "task", title: "Bad Parent", parentId: "nonexistent-parent" },
+        ],
+      });
+      const parsed = parseResult(result);
+
+      expect(parsed.ok).toBe(true);
+      expect((parsed.inserted as string[]).length).toBe(1);
+      const errors = parsed.errors as { index: number; message: string }[];
+      expect(errors.length).toBe(1);
+      expect(errors[0].index).toBe(1);
+      expect(errors[0].message).toContain("Parent not found");
+    });
+  });
+
   // ── Logger coverage ─────────────────────────────────────
 
   describe("logger coverage", () => {
