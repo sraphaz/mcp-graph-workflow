@@ -3,6 +3,8 @@ import { z } from "zod/v4";
 export const RelationTypeSchema = z.enum([
   "parent_of", "child_of", "depends_on", "blocks",
   "related_to", "priority_over", "implements", "derived_from",
+  // Game-specific / advanced relation types
+  "provides", "consumes", "requires_asset",
 ]);
 
 export const GraphEdgeSchema = z.object({

@@ -17,7 +17,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
       format: z.enum(["flowchart", "mindmap", "gantt"]).optional().describe("Mermaid diagram format (default: flowchart)"),
       direction: z.enum(["TD", "LR"]).optional().describe("Flow direction for flowchart (default: TD)"),
       filterStatus: z.array(z.enum(["backlog", "ready", "in_progress", "blocked", "done"])).optional().describe("Only include nodes with these statuses"),
-      filterType: z.array(z.enum(["epic", "task", "subtask", "requirement", "constraint", "milestone", "acceptance_criteria", "risk", "decision"])).optional().describe("Only include nodes with these types"),
+      filterType: z.array(z.enum(["epic", "task", "subtask", "requirement", "constraint", "milestone", "acceptance_criteria", "risk", "decision", "interface", "formula", "state_machine", "contract", "scenario", "performance_budget", "asset", "data_table", "metric", "config_schema"])).optional().describe("Only include nodes with these types"),
     },
     async ({ action, format, direction, filterStatus, filterType }) => {
       logger.debug("tool:export", { format: action });

@@ -7,7 +7,18 @@ export type NodeType =
   | "milestone"
   | "acceptance_criteria"
   | "risk"
-  | "decision";
+  | "decision"
+  // Game-specific / advanced node types
+  | "interface"
+  | "formula"
+  | "state_machine"
+  | "contract"
+  | "scenario"
+  | "performance_budget"
+  | "asset"
+  | "data_table"
+  | "metric"
+  | "config_schema";
 
 export type NodeStatus =
   | "backlog"
@@ -26,7 +37,11 @@ export type RelationType =
   | "related_to"
   | "priority_over"
   | "implements"
-  | "derived_from";
+  | "derived_from"
+  // Game-specific / advanced relation types
+  | "provides"
+  | "consumes"
+  | "requires_asset";
 
 export interface SourceRef {
   file: string;

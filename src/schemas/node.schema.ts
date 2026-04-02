@@ -3,6 +3,9 @@ import { z } from "zod/v4";
 export const NodeTypeSchema = z.enum([
   "epic", "task", "subtask", "requirement", "constraint",
   "milestone", "acceptance_criteria", "risk", "decision",
+  // Game-specific / advanced node types
+  "interface", "formula", "state_machine", "contract", "scenario",
+  "performance_budget", "asset", "data_table", "metric", "config_schema",
 ]);
 
 export const NodeStatusSchema = z.enum([
