@@ -90,22 +90,50 @@ function resolveGrammarPath(languageId: string): string | null {
   const entry = GRAMMAR_REGISTRY[languageId];
   if (!entry) return null;
 
+  // Strategy 1: require.resolve from CWD
   try {
-    // Resolve the package path via require.resolve
     const pkgMain = require.resolve(`${entry.pkg}/package.json`);
     const pkgDir = pkgMain.replace(/[/\\]package\.json$/, "");
     const wasmPath = join(pkgDir, entry.wasm);
+    if (existsSync(wasmPath)) return wasmPath;
+  } catch {
+    // Not found at CWD level — try relative to this package
+  }
 
+  // Strategy 2: resolve relative to this file (for nested node_modules)
+  try {
+    const thisDir = new URL(".", import.meta.url).pathname;
+    const pkgMain = require.resolve(`${entry.pkg}/package.json`, { paths: [thisDir] });
+    const pkgDir = pkgMain.replace(/[/\\]package\.json$/, "");
+    const wasmPath = join(pkgDir, entry.wasm);
     if (existsSync(wasmPath)) {
+      logger.debug("treesitter-manager:resolved-relative", { languageId, wasmPath });
       return wasmPath;
     }
-
-    logger.debug("treesitter-manager:wasm-not-found", { languageId, wasmPath });
-    return null;
   } catch {
-    logger.debug("treesitter-manager:pkg-not-found", { languageId, pkg: entry.pkg });
-    return null;
+    // Not found relative to this file either
   }
+
+  // Strategy 3: walk up from __dirname to find node_modules with the grammar
+  try {
+    const thisDir = new URL(".", import.meta.url).pathname;
+    let searchDir = thisDir;
+    for (let i = 0; i < 10; i++) {
+      const candidate = join(searchDir, "node_modules", entry.pkg, entry.wasm);
+      if (existsSync(candidate)) {
+        logger.debug("treesitter-manager:resolved-walk", { languageId, path: candidate });
+        return candidate;
+      }
+      const parent = join(searchDir, "..");
+      if (parent === searchDir) break;
+      searchDir = parent;
+    }
+  } catch {
+    // Walk failed
+  }
+
+  logger.debug("treesitter-manager:pkg-not-found", { languageId, pkg: entry.pkg });
+  return null;
 }
 
 // ── TreeSitterManager class ──────────────────────────────
