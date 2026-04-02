@@ -28,6 +28,11 @@ import { checkListeningReadiness } from "../../core/listener/feedback-readiness.
 import { analyzeBacklogHealth } from "../../core/listener/backlog-health.js";
 import { analyzeSprintHealth } from "../../core/planner/sprint-health.js";
 import { analyzeAutoReady } from "../../core/planner/auto-ready.js";
+import { analyzeContractCoverage } from "../../core/analyzer/contract-coverage.js";
+import { analyzeDataIntegrity } from "../../core/analyzer/data-integrity.js";
+import { analyzeFormulaConsistency } from "../../core/analyzer/formula-consistency.js";
+import { analyzePerformanceBudgets } from "../../core/analyzer/performance-budget-check.js";
+import { analyzeStateCompleteness } from "../../core/analyzer/state-completeness.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { checkDefinitionOfDone } from "../../core/implementer/definition-of-done.js";
@@ -44,8 +49,11 @@ const ANALYZE_MODES = z.enum([
   "blockers",
   "cycles",
   "critical_path",
+  "contract_coverage",
+  "data_integrity",
   "decompose",
   "adr",
+  "formula_consistency",
   "traceability",
   "coupling",
   "interfaces",
@@ -53,7 +61,9 @@ const ANALYZE_MODES = z.enum([
   "design_ready",
   "implement_done",
   "tdd_check",
+  "performance_budget",
   "progress",
+  "state_completeness",
   "validate_ready",
   "done_integrity",
   "status_flow",
@@ -71,7 +81,7 @@ const ANALYZE_MODES = z.enum([
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
-    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, decompose, adr, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, progress, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready).",
+    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready).",
     {
       mode: ANALYZE_MODES.describe("Analysis mode"),
       nodeId: z.string().optional().describe("Node ID (required for 'blockers'/'implement_done', optional for 'decompose'/'tdd_check'. For 'progress' mode, used as sprint name filter)"),
@@ -339,6 +349,36 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         case "auto_ready": {
           const readyReport = analyzeAutoReady(doc);
           return mcpText({ ok: true, mode: "auto_ready", ...readyReport });
+        }
+
+        case "contract_coverage": {
+          const ccReport = analyzeContractCoverage(doc);
+          logger.info("tool:analyze:contract_coverage:ok", { totalContracts: ccReport.totalContracts, coveragePercent: ccReport.coveragePercent });
+          return mcpText({ ok: true, mode, ...ccReport });
+        }
+
+        case "data_integrity": {
+          const diReport = analyzeDataIntegrity(doc);
+          logger.info("tool:analyze:data_integrity:ok", { totalTables: diReport.totalTables, validCount: diReport.validCount });
+          return mcpText({ ok: true, mode, ...diReport });
+        }
+
+        case "formula_consistency": {
+          const fcReport = analyzeFormulaConsistency(doc);
+          logger.info("tool:analyze:formula_consistency:ok", { totalFormulas: fcReport.totalFormulas, validCount: fcReport.validCount, conflicts: fcReport.conflicts.length });
+          return mcpText({ ok: true, mode, ...fcReport });
+        }
+
+        case "performance_budget": {
+          const pbReport = analyzePerformanceBudgets(doc);
+          logger.info("tool:analyze:performance_budget:ok", { totalBudgets: pbReport.totalBudgets, untestedCount: pbReport.untestedCount });
+          return mcpText({ ok: true, mode, ...pbReport });
+        }
+
+        case "state_completeness": {
+          const scReport = analyzeStateCompleteness(doc);
+          logger.info("tool:analyze:state_completeness:ok", { totalMachines: scReport.totalMachines, validCount: scReport.validCount });
+          return mcpText({ ok: true, mode, ...scReport });
         }
 
         default: {
