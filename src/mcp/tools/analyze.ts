@@ -38,6 +38,7 @@ import { analyzeAssetBlockers } from "../../core/analyzer/asset-blockers.js";
 import { analyzeConfigCoverage } from "../../core/analyzer/config-coverage.js";
 import { analyzeMetricCoverage } from "../../core/analyzer/metric-coverage.js";
 import { analyzeConcurrencyRisk } from "../../core/analyzer/concurrency-risk.js";
+import { simulateEconomy } from "../../core/analyzer/economy-simulator.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { checkDefinitionOfDone } from "../../core/implementer/definition-of-done.js";
@@ -86,12 +87,13 @@ const ANALYZE_MODES = z.enum([
   "config_coverage",
   "metric_coverage",
   "concurrency_risk",
+  "economy_simulation",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
-    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk.",
+    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk, economy_simulation (gold inflow vs outflow inflation detector — pass JSON params via nodeId: {playerCount, avgSessionHours, avgLevel}).",
     {
       mode: ANALYZE_MODES.describe("Analysis mode"),
       nodeId: z.string().optional().describe("Node ID (required for 'blockers'/'implement_done', optional for 'decompose'/'tdd_check'. For 'progress' mode, used as sprint name filter)"),
@@ -419,6 +421,20 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const crReport = analyzeConcurrencyRisk(doc);
           logger.info("tool:analyze:concurrency_risk:ok", { totalRisks: crReport.totalRisks, entityConflicts: crReport.entityConflicts.length });
           return mcpText({ ok: true, mode, ...crReport });
+        }
+
+        case "economy_simulation": {
+          let simParams = { playerCount: 1000, avgSessionHours: 3, avgLevel: 30 };
+          if (nodeId) {
+            try {
+              simParams = { ...simParams, ...JSON.parse(nodeId) };
+            } catch {
+              /* use defaults when nodeId is not valid JSON */
+            }
+          }
+          const simReport = simulateEconomy(doc, simParams);
+          logger.info("tool:analyze:economy_simulation:ok", { risk: simReport.inflationRisk, net: simReport.netFlowPerDay });
+          return mcpText({ ok: true, mode: "economy_simulation", ...simReport });
         }
 
         default: {
