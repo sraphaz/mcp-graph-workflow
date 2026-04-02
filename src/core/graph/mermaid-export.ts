@@ -1,7 +1,7 @@
 import type { GraphNode, GraphEdge, NodeStatus, NodeType } from "./graph-types.js";
 
 export interface MermaidExportOptions {
-  format?: "flowchart" | "mindmap" | "gantt";
+  format?: "flowchart" | "mindmap" | "gantt" | "stateDiagram";
   filterStatus?: NodeStatus[];
   filterType?: NodeType[];
   direction?: "TD" | "LR";
@@ -142,6 +142,45 @@ function buildMindmap(nodes: GraphNode[]): string {
   return lines.join("\n") + "\n";
 }
 
+function sanitizeStateName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_]/g, "_");
+}
+
+function buildStateDiagram(nodes: GraphNode[], _edges: GraphEdge[]): string {
+  const stateMachines = nodes.filter((n) => n.type === "state_machine");
+  if (stateMachines.length === 0) {
+    return "stateDiagram-v2\n    [*] --> Empty : No state machines found";
+  }
+
+  const lines: string[] = ["stateDiagram-v2"];
+
+  for (const machine of stateMachines) {
+    const meta = machine.metadata as Record<string, unknown> | undefined;
+    if (!meta) continue;
+
+    const states = (meta.states as string[]) ?? [];
+    const transitions = (meta.transitions as Array<{ from: string; to: string; trigger?: string }>) ?? [];
+    const initialState = (meta.initialState as string) ?? states[0];
+
+    lines.push(`    %% ${escapeMermaid(machine.title)}`);
+
+    // Initial state
+    if (initialState) {
+      lines.push(`    [*] --> ${sanitizeStateName(initialState)}`);
+    }
+
+    // Transitions
+    for (const t of transitions) {
+      const label = t.trigger ? ` : ${t.trigger}` : "";
+      lines.push(`    ${sanitizeStateName(t.from)} --> ${sanitizeStateName(t.to)}${label}`);
+    }
+
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
 export function graphToMermaid(
   nodes: GraphNode[],
   edges: GraphEdge[],
@@ -155,6 +194,10 @@ export function graphToMermaid(
 
   if (options?.format === "mindmap") {
     return buildMindmap(filteredNodes);
+  }
+
+  if (options?.format === "stateDiagram") {
+    return buildStateDiagram(filteredNodes, edges);
   }
 
   const direction = options?.direction ?? "TD";

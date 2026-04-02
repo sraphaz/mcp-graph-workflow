@@ -33,6 +33,11 @@ import { analyzeDataIntegrity } from "../../core/analyzer/data-integrity.js";
 import { analyzeFormulaConsistency } from "../../core/analyzer/formula-consistency.js";
 import { analyzePerformanceBudgets } from "../../core/analyzer/performance-budget-check.js";
 import { analyzeStateCompleteness } from "../../core/analyzer/state-completeness.js";
+import { analyzeScenarioCoverage } from "../../core/analyzer/scenario-coverage.js";
+import { analyzeAssetBlockers } from "../../core/analyzer/asset-blockers.js";
+import { analyzeConfigCoverage } from "../../core/analyzer/config-coverage.js";
+import { analyzeMetricCoverage } from "../../core/analyzer/metric-coverage.js";
+import { analyzeConcurrencyRisk } from "../../core/analyzer/concurrency-risk.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { checkDefinitionOfDone } from "../../core/implementer/definition-of-done.js";
@@ -76,12 +81,17 @@ const ANALYZE_MODES = z.enum([
   "backlog_health",
   "sprint_health",
   "auto_ready",
+  "scenario_coverage",
+  "asset_blockers",
+  "config_coverage",
+  "metric_coverage",
+  "concurrency_risk",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
-    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready).",
+    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk.",
     {
       mode: ANALYZE_MODES.describe("Analysis mode"),
       nodeId: z.string().optional().describe("Node ID (required for 'blockers'/'implement_done', optional for 'decompose'/'tdd_check'. For 'progress' mode, used as sprint name filter)"),
@@ -379,6 +389,36 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const scReport = analyzeStateCompleteness(doc);
           logger.info("tool:analyze:state_completeness:ok", { totalMachines: scReport.totalMachines, validCount: scReport.validCount });
           return mcpText({ ok: true, mode, ...scReport });
+        }
+
+        case "scenario_coverage": {
+          const scenReport = analyzeScenarioCoverage(doc);
+          logger.info("tool:analyze:scenario_coverage:ok", { totalScenarios: scenReport.totalScenarios, coveragePercent: scenReport.coveragePercent });
+          return mcpText({ ok: true, mode, ...scenReport });
+        }
+
+        case "asset_blockers": {
+          const abReport = analyzeAssetBlockers(doc);
+          logger.info("tool:analyze:asset_blockers:ok", { pendingAssets: abReport.pendingAssets, blockedTaskCount: abReport.blockedTaskCount });
+          return mcpText({ ok: true, mode, ...abReport });
+        }
+
+        case "config_coverage": {
+          const ccfReport = analyzeConfigCoverage(doc);
+          logger.info("tool:analyze:config_coverage:ok", { totalConfigs: ccfReport.totalConfigs, coveragePercent: ccfReport.coveragePercent });
+          return mcpText({ ok: true, mode, ...ccfReport });
+        }
+
+        case "metric_coverage": {
+          const mcReport = analyzeMetricCoverage(doc);
+          logger.info("tool:analyze:metric_coverage:ok", { totalMetrics: mcReport.totalMetrics, coveragePercent: mcReport.coveragePercent });
+          return mcpText({ ok: true, mode, ...mcReport });
+        }
+
+        case "concurrency_risk": {
+          const crReport = analyzeConcurrencyRisk(doc);
+          logger.info("tool:analyze:concurrency_risk:ok", { totalRisks: crReport.totalRisks, entityConflicts: crReport.entityConflicts.length });
+          return mcpText({ ok: true, mode, ...crReport });
         }
 
         default: {

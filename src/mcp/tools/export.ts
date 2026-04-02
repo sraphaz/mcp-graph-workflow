@@ -14,7 +14,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
     {
       action: z.enum(["json", "mermaid", "csv"]).describe("Export format"),
       // mermaid params
-      format: z.enum(["flowchart", "mindmap", "gantt"]).optional().describe("Mermaid diagram format (default: flowchart)"),
+      format: z.enum(["flowchart", "mindmap", "gantt", "stateDiagram"]).optional().describe("Mermaid diagram format (default: flowchart)"),
       direction: z.enum(["TD", "LR"]).optional().describe("Flow direction for flowchart (default: TD)"),
       filterStatus: z.array(z.enum(["backlog", "ready", "in_progress", "blocked", "done"])).optional().describe("Only include nodes with these statuses"),
       filterType: z.array(z.enum(["epic", "task", "subtask", "requirement", "constraint", "milestone", "acceptance_criteria", "risk", "decision", "interface", "formula", "state_machine", "contract", "scenario", "performance_budget", "asset", "data_table", "metric", "config_schema"])).optional().describe("Only include nodes with these types"),
@@ -78,7 +78,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
 
       // action === "mermaid"
       const mermaid = graphToMermaid(doc.nodes, doc.edges, {
-        format: format as "flowchart" | "mindmap" | "gantt" | undefined,
+        format: format as "flowchart" | "mindmap" | "gantt" | "stateDiagram" | undefined,
         direction: direction as "TD" | "LR" | undefined,
         filterStatus: filterStatus as NodeStatus[] | undefined,
         filterType: filterType as NodeType[] | undefined,
