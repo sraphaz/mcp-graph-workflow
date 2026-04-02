@@ -9,8 +9,11 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
   server.tool(
     "show",
     "Show detailed information about a specific node, including its edges and children",
-    { id: z.string().min(1).describe("The node ID to inspect") },
-    async ({ id }) => {
+    {
+      id: z.string().min(1).describe("The node ID to inspect"),
+      includeHistory: z.boolean().optional().describe("Include node changelog (audit trail) in response"),
+    },
+    async ({ id, includeHistory }) => {
       logger.debug("tool:show", { id });
       const node = store.getNodeById(id);
       if (!node) {
@@ -23,8 +26,7 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
       const edgesTo = store.getEdgesTo(id);
       const children = store.getChildNodes(id);
 
-      logger.info("tool:show:ok", { id, edgesOut: edgesFrom.length, edgesIn: edgesTo.length, children: children.length });
-      return mcpText({
+      const result: Record<string, unknown> = {
         node,
         outgoingEdges: edgesFrom,
         incomingEdges: edgesTo,
@@ -34,7 +36,14 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
           title: c.title,
           status: c.status,
         })),
-      });
+      };
+
+      if (includeHistory) {
+        result.changelog = store.getNodeHistory(id);
+      }
+
+      logger.info("tool:show:ok", { id, edgesOut: edgesFrom.length, edgesIn: edgesTo.length, children: children.length, includeHistory: !!includeHistory });
+      return mcpText(result);
     },
   );
 }

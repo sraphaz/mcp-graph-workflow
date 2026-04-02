@@ -625,14 +625,71 @@ export class SqliteStore {
     params.push(timestamp);
     params.push(id, pid);
 
-    this.db
-      .prepare(
-        `UPDATE nodes SET ${setClauses.join(", ")} WHERE id = ? AND project_id = ?`,
-      )
-      .run(...params);
+    // ── Changelog: diff old vs new for each changed field ──
+    const changelogEntries: Array<{ field: string; oldValue: string | null; newValue: string | null }> = [];
+    const serialize = (v: unknown): string | null => {
+      if (v === undefined || v === null) return null;
+      if (typeof v === "object") return JSON.stringify(v);
+      return String(v);
+    };
+
+    const fieldMap: Record<string, (n: GraphNode) => unknown> = {
+      title: (n) => n.title,
+      description: (n) => n.description,
+      type: (n) => n.type,
+      priority: (n) => n.priority,
+      xpSize: (n) => n.xpSize,
+      estimateMinutes: (n) => n.estimateMinutes,
+      tags: (n) => n.tags,
+      parentId: (n) => n.parentId,
+      sprint: (n) => n.sprint,
+      blocked: (n) => n.blocked,
+      acceptanceCriteria: (n) => n.acceptanceCriteria,
+      metadata: (n) => n.metadata,
+    };
+
+    for (const key of Object.keys(fields) as Array<keyof typeof fields>) {
+      const getter = fieldMap[key];
+      if (!getter) continue;
+      const oldVal = serialize(getter(existing));
+      const newVal = serialize(fields[key]);
+      if (oldVal !== newVal) {
+        changelogEntries.push({ field: key, oldValue: oldVal, newValue: newVal });
+      }
+    }
+
+    this.db.transaction(() => {
+      this.db
+        .prepare(
+          `UPDATE nodes SET ${setClauses.join(", ")} WHERE id = ? AND project_id = ?`,
+        )
+        .run(...params);
+
+      if (changelogEntries.length > 0) {
+        const insertChangelog = this.db.prepare(
+          `INSERT INTO node_changelog (project_id, node_id, field, old_value, new_value, changed_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        );
+        for (const entry of changelogEntries) {
+          insertChangelog.run(pid, id, entry.field, entry.oldValue, entry.newValue, timestamp);
+        }
+      }
+    })();
 
     this._eventBus?.emitTyped("node:updated", { nodeId: id, fields: Object.keys(fields) });
     return this.getNodeById(id);
+  }
+
+  getNodeHistory(nodeId: string): Array<{ field: string; oldValue: string | null; newValue: string | null; changedAt: string }> {
+    const pid = this.ensureProject();
+    const rows = this.db.prepare(
+      `SELECT field, old_value, new_value, changed_at FROM node_changelog WHERE project_id = ? AND node_id = ? ORDER BY changed_at DESC, id DESC`,
+    ).all(pid, nodeId) as Array<{ field: string; old_value: string | null; new_value: string | null; changed_at: string }>;
+    return rows.map((r) => ({
+      field: r.field,
+      oldValue: r.old_value,
+      newValue: r.new_value,
+      changedAt: r.changed_at,
+    }));
   }
 
   deleteNode(id: string): boolean {

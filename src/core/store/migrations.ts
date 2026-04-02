@@ -787,6 +787,23 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_dream_archive_reason ON dream_archive(reason);
     `,
   },
+  {
+    version: 23,
+    description: "Node changelog for audit trail",
+    sql: `
+      CREATE TABLE IF NOT EXISTS node_changelog (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id TEXT NOT NULL,
+        node_id TEXT NOT NULL,
+        field TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_changelog_node ON node_changelog(node_id);
+      CREATE INDEX IF NOT EXISTS idx_changelog_project ON node_changelog(project_id);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

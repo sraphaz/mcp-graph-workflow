@@ -2,6 +2,7 @@ import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { graphToMermaid, filterNodes } from "../../core/graph/mermaid-export.js";
+import { graphToCsv } from "../../core/graph/csv-export.js";
 import type { NodeStatus, NodeType } from "../../core/graph/graph-types.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
@@ -9,11 +10,11 @@ import { mcpText } from "../response-helpers.js";
 export function registerExport(server: McpServer, store: SqliteStore): void {
   server.tool(
     "export",
-    "Export the graph as JSON or Mermaid diagram",
+    "Export the graph as JSON, Mermaid diagram, or CSV",
     {
-      action: z.enum(["json", "mermaid"]).describe("Export format"),
+      action: z.enum(["json", "mermaid", "csv"]).describe("Export format"),
       // mermaid params
-      format: z.enum(["flowchart", "mindmap"]).optional().describe("Mermaid diagram format (default: flowchart)"),
+      format: z.enum(["flowchart", "mindmap", "gantt"]).optional().describe("Mermaid diagram format (default: flowchart)"),
       direction: z.enum(["TD", "LR"]).optional().describe("Flow direction for flowchart (default: TD)"),
       filterStatus: z.array(z.enum(["backlog", "ready", "in_progress", "blocked", "done"])).optional().describe("Only include nodes with these statuses"),
       filterType: z.array(z.enum(["epic", "task", "subtask", "requirement", "constraint", "milestone", "acceptance_criteria", "risk", "decision"])).optional().describe("Only include nodes with these types"),
@@ -62,9 +63,22 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
         return mcpText(filteredDoc);
       }
 
+      if (action === "csv") {
+        const csv = graphToCsv(doc, {
+          filterStatus: filterStatus as string[] | undefined,
+          filterType: filterType as string[] | undefined,
+        });
+        logger.info("tool:export:ok", { format: "csv", nodes: doc.nodes.length });
+        return {
+          content: [
+            { type: "text" as const, text: csv },
+          ],
+        };
+      }
+
       // action === "mermaid"
       const mermaid = graphToMermaid(doc.nodes, doc.edges, {
-        format: format as "flowchart" | "mindmap" | undefined,
+        format: format as "flowchart" | "mindmap" | "gantt" | undefined,
         direction: direction as "TD" | "LR" | undefined,
         filterStatus: filterStatus as NodeStatus[] | undefined,
         filterType: filterType as NodeType[] | undefined,

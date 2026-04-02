@@ -1,7 +1,7 @@
 import type { GraphNode, GraphEdge, NodeStatus, NodeType } from "./graph-types.js";
 
 export interface MermaidExportOptions {
-  format?: "flowchart" | "mindmap";
+  format?: "flowchart" | "mindmap" | "gantt";
   filterStatus?: NodeStatus[];
   filterType?: NodeType[];
   direction?: "TD" | "LR";
@@ -39,6 +39,81 @@ export function filterNodes(
   return filtered;
 }
 
+const MINUTES_PER_DAY = 480;
+const DEFAULT_DURATION_DAYS = 3;
+
+function sanitizeGanttTitle(text: string): string {
+  return text.replace(/[:#;!'"]/g, "").trim();
+}
+
+function ganttStatusPrefix(status: NodeStatus): string {
+  if (status === "done") return "done, ";
+  if (status === "in_progress") return "active, ";
+  return "";
+}
+
+function estimateToDays(estimateMinutes?: number): number {
+  if (estimateMinutes == null) return DEFAULT_DURATION_DAYS;
+  const days = Math.ceil(estimateMinutes / MINUTES_PER_DAY);
+  return Math.max(days, 1);
+}
+
+function extractDate(isoString: string): string {
+  return isoString.slice(0, 10);
+}
+
+function buildGantt(nodes: GraphNode[], edges: GraphEdge[]): string {
+  const lines: string[] = [
+    "gantt",
+    "    dateFormat YYYY-MM-DD",
+    "    title Sprint Timeline",
+  ];
+
+  // Group nodes by sprint
+  const sprintMap = new Map<string, GraphNode[]>();
+  for (const node of nodes) {
+    const sprint = node.sprint ?? "Unassigned";
+    const group = sprintMap.get(sprint) ?? [];
+    group.push(node);
+    sprintMap.set(sprint, group);
+  }
+
+  // Build dependency map: nodeId -> list of dependency nodeIds (what it depends on)
+  const dependsOn = new Map<string, string[]>();
+  for (const edge of edges) {
+    if (edge.relationType === "depends_on") {
+      const deps = dependsOn.get(edge.from) ?? [];
+      deps.push(edge.to);
+      dependsOn.set(edge.from, deps);
+    }
+  }
+
+  const nodeIds = new Set(nodes.map((n) => n.id));
+
+  for (const [sprint, sprintNodes] of sprintMap) {
+    lines.push(`    section ${sprint}`);
+    for (const node of sprintNodes) {
+      const title = sanitizeGanttTitle(node.title);
+      const statusPrefix = ganttStatusPrefix(node.status);
+      const days = estimateToDays(node.estimateMinutes);
+
+      // Check if this node has dependencies within the current node set
+      const deps = (dependsOn.get(node.id) ?? []).filter((d) => nodeIds.has(d));
+
+      let startClause: string;
+      if (deps.length > 0) {
+        startClause = `after ${deps.join(" ")}`;
+      } else {
+        startClause = extractDate(node.createdAt);
+      }
+
+      lines.push(`    ${title} :${statusPrefix}${node.id}, ${startClause}, ${days}d`);
+    }
+  }
+
+  return lines.join("\n") + "\n";
+}
+
 function buildMindmap(nodes: GraphNode[]): string {
   const lines: string[] = ["mindmap"];
 
@@ -73,6 +148,10 @@ export function graphToMermaid(
   options?: MermaidExportOptions,
 ): string {
   const filteredNodes = filterNodes(nodes, options);
+
+  if (options?.format === "gantt") {
+    return buildGantt(filteredNodes, edges);
+  }
 
   if (options?.format === "mindmap") {
     return buildMindmap(filteredNodes);
