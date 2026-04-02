@@ -144,6 +144,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         // Handle acceptanceCriteria_append: merge with existing
         let mergedAC = acceptanceCriteria;
         if (acceptanceCriteria_append && acceptanceCriteria_append.length > 0 && !acceptanceCriteria) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- id validated at line ~120
           const existing = store.getNodeById(id!);
           if (existing) {
             mergedAC = [...(existing.acceptanceCriteria ?? []), ...acceptanceCriteria_append];

@@ -49,6 +49,7 @@ const IGNORED_DIRS = new Set([
 ]);
 
 /** Matches test files across all supported languages and TS declaration files. */
+// eslint-disable-next-line security/detect-non-literal-regexp
 export const TEST_OR_DECL_PATTERN = new RegExp([
   // TypeScript/JavaScript: .test.ts, .spec.js, .d.ts
   /\.(test|spec)\.(ts|tsx|js|jsx|mts|cts)$/.source,
