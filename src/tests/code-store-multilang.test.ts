@@ -52,7 +52,7 @@ describe("CodeStore — multi-language fields", () => {
       expect(row.visibility).toBe("public");
     });
 
-    it("should default language to 'typescript' and visibility to 'public' when omitted", () => {
+    it("should default language to null and visibility to 'public' when omitted", () => {
       store.insertSymbolsBulk([
         {
           projectId,
@@ -67,9 +67,9 @@ describe("CodeStore — multi-language fields", () => {
 
       const row = db.prepare(
         "SELECT language, visibility FROM code_symbols WHERE name = 'foo'",
-      ).get() as { language: string; visibility: string };
+      ).get() as { language: string | null; visibility: string };
 
-      expect(row.language).toBe("typescript");
+      expect(row.language).toBeNull();
       expect(row.visibility).toBe("public");
     });
   });
@@ -121,7 +121,7 @@ describe("CodeStore — multi-language fields", () => {
 
       const symbols = store.findSymbolsByName("bar", projectId);
       const sym = symbols[0];
-      expect(sym.language).toBe("typescript");
+      expect(sym.language).toBeUndefined();
       expect(sym.docstring).toBeUndefined();
       expect(sym.sourceSnippet).toBeUndefined();
       expect(sym.visibility).toBe("public");

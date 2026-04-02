@@ -34,6 +34,8 @@ const GRAMMAR_REGISTRY: Record<string, { pkg: string; wasm: string }> = {
   php:     { pkg: "tree-sitter-php",     wasm: "tree-sitter-php.wasm" },
   csharp:  { pkg: "tree-sitter-c-sharp", wasm: "tree-sitter-c_sharp.wasm" },
   lua:     { pkg: "tree-sitter-lua",     wasm: "tree-sitter-lua.wasm" },
+  kotlin:  { pkg: "tree-sitter-kotlin",  wasm: "tree-sitter-kotlin.wasm" },
+  swift:   { pkg: "tree-sitter-swift",   wasm: "tree-sitter-swift.wasm" },
 };
 
 // ── Lazy loader state ────────────────────────────────────

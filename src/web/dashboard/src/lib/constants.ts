@@ -84,14 +84,34 @@ export const CODE_SYMBOL_COLORS: Record<string, string> = {
   module: "#b39ddb",
   file: "#90a4ae",
   folder: "#78909c",
+  // Multi-language symbol kinds
+  struct: "#ef9a9a",
+  enum: "#ffcc80",
+  trait: "#a5d6a7",
+  property: "#80deea",
+  constant: "#ffe082",
+  package: "#c5e1a5",
+  annotation: "#f48fb1",
+  macro: "#ffab91",
+  type_alias: "#b0bec5",
+  constructor: "#9fa8da",
+  field: "#bcaaa4",
+  delegate: "#80cbc4",
+  event: "#ce93d8",
+  namespace: "#b39ddb",
 };
 
 export const CODE_RELATION_COLORS: Record<string, string> = {
+  belongs_to: "#546e7a",
   imports: "#546e7a",
   calls: "#4fc3f7",
-  belongs_to: "#ce93d8",
   extends: "#81c784",
   implements: "#4dd0e1",
+  // Multi-language relation types
+  exports: "#66bb6a",
+  uses: "#78909c",
+  overrides: "#ffb74d",
+  decorates: "#f48fb1",
 };
 
 export const CODE_RELATION_LABELS: Record<string, string> = {
@@ -100,6 +120,28 @@ export const CODE_RELATION_LABELS: Record<string, string> = {
   calls: "Calls",
   extends: "Extends",
   implements: "Implements",
+  // Multi-language
+  exports: "Exports",
+  uses: "Uses",
+  overrides: "Overrides",
+  decorates: "Decorates",
+};
+
+export const LANGUAGE_COLORS: Record<string, string> = {
+  typescript: "#3178c6",
+  javascript: "#f7df1e",
+  python: "#3776ab",
+  go: "#00add8",
+  rust: "#dea584",
+  java: "#ed8b00",
+  csharp: "#68217a",
+  c: "#a8b9cc",
+  cpp: "#00599c",
+  ruby: "#cc342d",
+  php: "#777bb4",
+  kotlin: "#7f52ff",
+  swift: "#fa7343",
+  lua: "#000080",
 };
 
 // ── Siebel ─────────────────────────────────

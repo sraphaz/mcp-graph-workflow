@@ -23,10 +23,56 @@ function getGitHash(basePath: string): string | null {
 }
 
 const TS_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]);
-const IGNORED_DIRS = new Set(["node_modules", "dist", ".git", "coverage", ".next", ".nuxt"]);
+const IGNORED_DIRS = new Set([
+  // JavaScript/Node.js
+  "node_modules", "dist", ".next", ".nuxt",
+  // General
+  ".git", "coverage",
+  // Go
+  "vendor",
+  // Python
+  "__pycache__", "venv", ".venv", ".mypy_cache", ".pytest_cache", ".tox",
+  // C#/.NET
+  "bin", "obj", ".vs",
+  // Java/Kotlin
+  "target", ".gradle", ".idea",
+  // C/C++
+  "cmake-build-debug", "cmake-build-release",
+  // Rust
+  // "target" already listed under Java/Kotlin
+  // Ruby
+  ".bundle",
+  // Swift
+  ".build", "DerivedData", "Pods", ".swiftpm",
+  // Lua
+  "lua_modules", ".luarocks",
+]);
 
-/** Matches test files (.test.*, .spec.*) and declaration files (.d.*) across all supported extensions. */
-export const TEST_OR_DECL_PATTERN = /\.(test|spec)\.(ts|tsx|js|jsx|mts|cts)$|\.d\.(ts|mts|cts)$/;
+/** Matches test files across all supported languages and TS declaration files. */
+export const TEST_OR_DECL_PATTERN = new RegExp([
+  // TypeScript/JavaScript: .test.ts, .spec.js, .d.ts
+  /\.(test|spec)\.(ts|tsx|js|jsx|mts|cts)$/.source,
+  /\.d\.(ts|mts|cts)$/.source,
+  // Go: _test.go
+  /_test\.go$/.source,
+  // Python: test_*.py, *_test.py, conftest.py
+  /(^|[/\\])test_[^/\\]+\.py$/.source,
+  /_test\.py$/.source,
+  /(^|[/\\])conftest\.py$/.source,
+  // C#: *Tests.cs, *Test.cs
+  /Tests?\.cs$/.source,
+  // Java/Kotlin: *Test.java, *Tests.java, *IT.java, *Test.kt
+  /(Tests?|IT)\.(java|kt|kts)$/.source,
+  // Ruby: *_spec.rb, *_test.rb
+  /_(spec|test)\.rb$/.source,
+  // PHP: *Test.php
+  /Test\.php$/.source,
+  // Rust: already in src/tests/ convention, no file pattern needed
+  // Swift: *Tests.swift
+  /Tests?\.swift$/.source,
+  // Lua: _test.lua, _spec.lua
+  /_(test|spec)\.lua$/.source,
+].join("|"));
 
 export class CodeIndexer {
   private readonly extensionMap: Map<string, CodeAnalyzer>;
