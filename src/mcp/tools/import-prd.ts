@@ -8,6 +8,7 @@ import { convertToGraph } from "../../core/importer/prd-to-graph.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexPrdContent } from "../../core/rag/prd-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
+import { diffPrd } from "../../core/parser/prd-diff.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
@@ -27,12 +28,66 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
         .optional()
         .default(false)
         .describe("Preview import without persisting — returns nodes that would be created"),
+      diff: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Compare with previous import and show changes (sections added/removed/modified)"),
     },
-    async ({ filePath, force, dryRun }) => {
-      logger.info("tool:import_prd", { filePath, force });
+    async ({ filePath, force, dryRun, diff }) => {
+      logger.info("tool:import_prd", { filePath, force, diff });
       // 1. Read and parse
       const { content, absolutePath, sizeBytes } = await readPrdFile(filePath);
       const sourceFileName = path.basename(absolutePath);
+
+      // 1.5 Diff-only mode: compare with previous import without modifying anything
+      if (diff) {
+        const rawSourceId = `prd_raw:${sourceFileName}`;
+        try {
+          const knowledgeStore = new KnowledgeStore(store.getDb());
+          const previousDocs = knowledgeStore.getBySourceId(rawSourceId);
+          if (previousDocs.length === 0) {
+            return mcpText({
+              ok: true,
+              diff: true,
+              message: `No previous import found for "${sourceFileName}". Import the file first, then use diff=true to compare future changes.`,
+            });
+          }
+          const oldContent = previousDocs.map((d) => d.content).join("");
+          const diffResult = diffPrd(oldContent, content);
+
+          // Find impacted graph nodes by matching modified/added/removed section titles
+          const changedSections = diffResult.sections.filter((s) => s.status !== "unchanged");
+          const allNodes = store.getAllNodes();
+          const impactedNodes = changedSections.flatMap((section) => {
+            const lowerTitle = section.title.toLowerCase();
+            return allNodes.filter((n) => n.title.toLowerCase().includes(lowerTitle) || lowerTitle.includes(n.title.toLowerCase()));
+          });
+          const uniqueImpacted = [...new Map(impactedNodes.map((n) => [n.id, n])).values()];
+
+          return mcpText({
+            ok: true,
+            diff: true,
+            sourceFile: sourceFileName,
+            summary: {
+              added: diffResult.addedCount,
+              removed: diffResult.removedCount,
+              modified: diffResult.modifiedCount,
+              unchanged: diffResult.unchangedCount,
+            },
+            sections: diffResult.sections.filter((s) => s.status !== "unchanged"),
+            impactedNodes: uniqueImpacted.map((n) => ({
+              id: n.id,
+              title: n.title,
+              type: n.type,
+              status: n.status,
+            })),
+          });
+        } catch (err) {
+          logger.warn("tool:import_prd:diff_failed", { error: String(err) });
+          return mcpError(`Diff failed: ${String(err)}`);
+        }
+      }
 
       // 2. Check for previous import
       const alreadyImported = store.hasImport(sourceFileName);
@@ -87,6 +142,17 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
         const indexResult = indexPrdContent(knowledgeStore, content, sourceFileName, "ANALYZE");
         knowledgeDocsIndexed = indexResult.documentsIndexed;
         indexEntitiesForSource(store.getDb(), "prd");
+
+        // 8.1 Store raw PRD text for future diff comparisons
+        const rawSourceId = `prd_raw:${sourceFileName}`;
+        knowledgeStore.deleteBySource("prd", rawSourceId);
+        knowledgeStore.insert({
+          sourceType: "prd",
+          sourceId: rawSourceId,
+          title: `PRD Raw: ${sourceFileName}`,
+          content,
+          metadata: { sourceFile: sourceFileName, purpose: "diff_tracking", storedAt: new Date().toISOString() },
+        });
       } catch (err) {
         logger.warn("tool:import_prd:knowledge_index_failed", { error: String(err) });
       }

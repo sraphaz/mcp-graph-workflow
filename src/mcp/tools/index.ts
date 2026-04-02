@@ -48,6 +48,8 @@ import { registerKnowledgeExport } from "./knowledge-export.js";
 // Consolidated tools
 import { registerNode } from "./node.js";
 import { registerValidate } from "./validate.js";
+// Task templates
+import { registerTemplate } from "./template.js";
 // LSP Code Intelligence
 import { registerCodeIntelligence } from "./code-intelligence.js";
 // Deprecated tools (backward compat — will be removed in v7.0)
@@ -116,6 +118,9 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   // Consolidated tools
   registerNode(server, store);
   registerValidate(server, store);
+
+  // Task templates
+  registerTemplate(server, store);
 
   // LSP Code Intelligence
   registerCodeIntelligence(server, store);
