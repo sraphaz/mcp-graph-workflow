@@ -8,13 +8,14 @@ import { generateId } from "../../core/utils/id.js";
 import { now } from "../../core/utils/time.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+import { sequenceSubtasks } from "../../core/graph/auto-sequence.js";
 
 export function registerEdge(server: McpServer, store: SqliteStore): void {
   server.tool(
     "edge",
     "Manage edges: add, delete, list, or batch_add relationships between nodes",
     {
-      action: z.enum(["add", "delete", "list", "batch_add"]).describe("Action to perform"),
+      action: z.enum(["add", "delete", "list", "batch_add", "sequence"]).describe("Action to perform"),
       // add params
       from: z.string().optional().describe("Source node ID (required for add)"),
       to: z.string().optional().describe("Target node ID (required for add)"),
@@ -33,9 +34,11 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
       })).max(50).optional().describe("Array of edges for batch_add (max 50)"),
       // list params
       nodeId: z.string().optional().describe("Filter edges by node ID (list only)"),
+      // sequence params
+      parentId: z.string().optional().describe("Parent node ID for sequence action"),
       direction: z.enum(["from", "to", "both"]).optional().describe("Edge direction relative to nodeId (list only, default: both)"),
     },
-    async ({ action, from, to, relationType, reason, weight, id, edges: batchEdges, nodeId, direction }) => {
+    async ({ action, from, to, relationType, reason, weight, id, edges: batchEdges, nodeId, direction, parentId }) => {
       logger.debug("tool:edge", { action, from, to, relationType });
       if (action === "add") {
         if (!from || !to || !relationType) {
@@ -159,6 +162,20 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
 
         logger.info("tool:edge:batch_add:ok", { inserted: inserted.length, errors: errors.length });
         return mcpText({ ok: true, inserted, errors });
+      }
+
+      if (action === "sequence") {
+        if (!parentId) {
+          return mcpError("parentId is required for sequence action");
+        }
+        const parent = store.getNodeById(parentId);
+        if (!parent) {
+          return mcpError(new NodeNotFoundError(parentId));
+        }
+
+        const result = sequenceSubtasks(store, parentId);
+        logger.info("tool:edge:sequence:ok", { parentId, edgesCreated: result.edgesCreated });
+        return mcpText({ ok: true, ...result });
       }
 
       if (action === "delete") {

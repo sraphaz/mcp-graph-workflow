@@ -131,6 +131,39 @@ describe("MCP node tool (consolidated)", () => {
       expect(result.isError).toBe(true);
       expect(parsed.error).toContain("type and title are required");
     });
+
+    it("should auto-create depends_on edge when autoSequence is true", async () => {
+      // Arrange — create parent
+      const parentResult = await tools(server)["node"].handler({ action: "add", type: "epic", title: "Parent" });
+      const parentId = (parseResult(parentResult).node as Record<string, unknown>).id as string;
+
+      // Create first child (no autoSequence needed for the first)
+      const child1Result = await tools(server)["node"].handler({ action: "add", type: "task", title: "Child 1", parentId });
+      const child1Id = (parseResult(child1Result).node as Record<string, unknown>).id as string;
+
+      // Create second child with autoSequence
+      const child2Result = await tools(server)["node"].handler({ action: "add", type: "task", title: "Child 2", parentId, autoSequence: true });
+      const child2Id = (parseResult(child2Result).node as Record<string, unknown>).id as string;
+
+      // Assert — depends_on edge from child2 to child1
+      const edges = store.getEdgesFrom(child2Id);
+      const depEdge = edges.find(e => e.relationType === "depends_on" && e.to === child1Id);
+      expect(depEdge).toBeDefined();
+      expect(depEdge!.reason).toBe("Auto-sequenced");
+    });
+
+    it("should not create depends_on edge when autoSequence is true but no siblings", async () => {
+      const parentResult = await tools(server)["node"].handler({ action: "add", type: "epic", title: "Parent" });
+      const parentId = (parseResult(parentResult).node as Record<string, unknown>).id as string;
+
+      // First child with autoSequence — no previous sibling
+      const child1Result = await tools(server)["node"].handler({ action: "add", type: "task", title: "Child 1", parentId, autoSequence: true });
+      const child1Id = (parseResult(child1Result).node as Record<string, unknown>).id as string;
+
+      const edges = store.getEdgesFrom(child1Id);
+      const depEdges = edges.filter(e => e.relationType === "depends_on");
+      expect(depEdges).toHaveLength(0);
+    });
   });
 
   // ── action: "update" ────────────────────────────────────
@@ -236,6 +269,62 @@ describe("MCP node tool (consolidated)", () => {
       // Assert — old edges removed, no new edges
       expect(store.getEdgesFrom(epic.id).some((e) => e.to === childId && e.relationType === "parent_of")).toBe(false);
       expect(store.getEdgesFrom(childId).some((e) => e.to === epic.id && e.relationType === "child_of")).toBe(false);
+    });
+
+    it("should append acceptance criteria without replacing existing ones", async () => {
+      // Arrange — create node with ACs
+      const addResult = await tools(server)["node"].handler({
+        action: "add", type: "task", title: "AC Test",
+        acceptanceCriteria: ["AC1", "AC2"],
+      });
+      const nodeId = (parseResult(addResult).node as Record<string, unknown>).id as string;
+
+      // Act — append new ACs
+      const updateResult = await tools(server)["node"].handler({
+        action: "update", id: nodeId,
+        acceptanceCriteria_append: ["AC3", "AC4"],
+      });
+      const updated = parseResult(updateResult).node as Record<string, unknown>;
+
+      // Assert
+      expect(updated.acceptanceCriteria).toEqual(["AC1", "AC2", "AC3", "AC4"]);
+    });
+
+    it("should use full replace when acceptanceCriteria is provided (not _append)", async () => {
+      // Arrange
+      const addResult = await tools(server)["node"].handler({
+        action: "add", type: "task", title: "AC Replace Test",
+        acceptanceCriteria: ["AC1", "AC2"],
+      });
+      const nodeId = (parseResult(addResult).node as Record<string, unknown>).id as string;
+
+      // Act — full replace
+      const updateResult = await tools(server)["node"].handler({
+        action: "update", id: nodeId,
+        acceptanceCriteria: ["NEW_AC"],
+      });
+      const updated = parseResult(updateResult).node as Record<string, unknown>;
+
+      // Assert
+      expect(updated.acceptanceCriteria).toEqual(["NEW_AC"]);
+    });
+
+    it("should handle acceptanceCriteria_append on node with no existing ACs", async () => {
+      // Arrange — create node without ACs
+      const addResult = await tools(server)["node"].handler({
+        action: "add", type: "task", title: "No AC Test",
+      });
+      const nodeId = (parseResult(addResult).node as Record<string, unknown>).id as string;
+
+      // Act — append to empty
+      const updateResult = await tools(server)["node"].handler({
+        action: "update", id: nodeId,
+        acceptanceCriteria_append: ["First AC"],
+      });
+      const updated = parseResult(updateResult).node as Record<string, unknown>;
+
+      // Assert
+      expect(updated.acceptanceCriteria).toEqual(["First AC"]);
     });
 
     it("should not touch edges when update does not include parentId", async () => {

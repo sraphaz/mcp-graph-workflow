@@ -114,4 +114,73 @@ describe("analyzeBacklogHealth", () => {
     const report = analyzeBacklogHealth(doc);
     expect(report.cleanForNewCycle).toBe(false);
   });
+
+  describe("tech debt false positive prevention", () => {
+    it("should NOT detect 'preco fixo' as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Configurar preco fixo para assinatura" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(0);
+    });
+
+    it("should NOT detect 'fixed timestep' as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Implement fixed timestep for physics engine" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(0);
+    });
+
+    it("should NOT detect PT-BR words fixar, fixação as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Fixar barra lateral na tela" },
+        { type: "task", description: "Fixação de componentes no layout" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(0);
+    });
+
+    it("should detect 'fix authentication bug' as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Fix authentication bug" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(1);
+      expect(report.techDebtIndicators[0].keywords).toContain("fix");
+    });
+
+    it("should detect 'hotfix for crash' as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Hotfix for crash on login" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(1);
+    });
+
+    it("should detect 'bugfix' as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Bugfix: memory leak in parser" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(1);
+    });
+
+    it("should detect 'fix' as standalone word in description", () => {
+      const doc = makeDoc([
+        { type: "task", title: "Normal task", description: "Need to fix the broken API" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(1);
+    });
+
+    it("should detect 'fixes' and 'fixing' as tech debt", () => {
+      const doc = makeDoc([
+        { type: "task", title: "This fixes the broken pipeline" },
+        { type: "task", title: "Fixing memory issue in worker" },
+      ]);
+      const report = analyzeBacklogHealth(doc);
+      expect(report.techDebtIndicators).toHaveLength(2);
+    });
+  });
 });

@@ -17,8 +17,12 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
         .enum(["report", "next"])
         .optional()
         .describe("Mode: 'report' for full planning report, 'next' for enhanced next task (default: report)"),
+      capacityPoints: z
+        .number()
+        .optional()
+        .describe("Max points per sprint — tasks exceeding this go to overflow"),
     },
-    async ({ mode }) => {
+    async ({ mode, capacityPoints }) => {
       logger.debug("tool:plan_sprint", { mode: mode ?? "report" });
       const doc = store.toGraphDocument();
 
@@ -45,7 +49,7 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
       }
 
       // Default: full planning report
-      const report = generatePlanningReport(doc, store);
+      const report = generatePlanningReport(doc, store, mode === "report" || mode === undefined ? capacityPoints : undefined);
 
       // Index sprint plan into knowledge store for cross-phase RAG
       try {

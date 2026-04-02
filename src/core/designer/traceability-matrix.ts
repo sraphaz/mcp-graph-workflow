@@ -65,14 +65,25 @@ export function buildTraceabilityMatrix(doc: GraphDocument): TraceabilityReport 
 
   const coveredCount = matrix.filter((e) => e.coverage !== "none").length;
 
-  // Find orphan decisions: not linked to any requirement
+  // Find orphan decisions: not linked to any requirement OR epic
   const linkedDecisionIds = new Set(matrix.flatMap((e) => e.linkedDecisions));
+  const epicTypes = new Set(["epic"]);
   const orphanDecisions = decisions
-    .filter((d) => !linkedDecisionIds.has(d.id))
+    .filter((d) => {
+      if (linkedDecisionIds.has(d.id)) return false;
+      // Decision linked to an epic counts as covered (partial)
+      const linkedEpics = findLinked(doc, d.id, epicTypes);
+      return linkedEpics.length === 0;
+    })
     .map((d) => d.id);
 
+  // Decisions linked to epics (but not requirements) also count as linked
+  const epicLinkedDecisionCount = decisions
+    .filter((d) => !linkedDecisionIds.has(d.id) && findLinked(doc, d.id, epicTypes).length > 0)
+    .length;
+
   // Include orphan decisions in coverage calculation
-  const linkedDecisionCount = decisions.length - orphanDecisions.length;
+  const linkedDecisionCount = linkedDecisionIds.size + epicLinkedDecisionCount;
   const totalItems = requirements.length + decisions.length;
   const linkedItems = coveredCount + linkedDecisionCount;
   const coverageRate = totalItems > 0

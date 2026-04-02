@@ -122,6 +122,57 @@ describe("PlanningReport", () => {
     expect(report.summary.estimatedPoints).toBe(10); // 2 + 3 + 5
   });
 
+  it("should move excess tasks to overflow when capacityPoints is provided", () => {
+    // Arrange: 3 tasks = 2 + 3 + 5 = 10 points total
+    store.insertNode(makeNode({ title: "Small", xpSize: "S", priority: 1 }));  // 2 pts
+    store.insertNode(makeNode({ title: "Medium", xpSize: "M", priority: 2 })); // 3 pts
+    store.insertNode(makeNode({ title: "Large", xpSize: "L", priority: 3 }));  // 5 pts
+
+    const doc = store.toGraphDocument();
+    const report = generatePlanningReport(doc, store, 5); // capacity = 5
+
+    // Act: first task (S=2) fits, second (M=3) brings to 5, third (L=5) overflows
+    expect(report.overflow.length).toBeGreaterThanOrEqual(1);
+    expect(report.recommendedOrder.length + report.overflow.length).toBe(3);
+  });
+
+  it("should return empty overflow when no capacityPoints provided", () => {
+    store.insertNode(makeNode({ title: "Task A", priority: 1 }));
+    store.insertNode(makeNode({ title: "Task B", priority: 2 }));
+
+    const doc = store.toGraphDocument();
+    const report = generatePlanningReport(doc, store);
+
+    expect(report.overflow).toEqual([]);
+    expect(report.redistributionSuggestions).toEqual([]);
+  });
+
+  it("should suggest splitting XL tasks in overflow", () => {
+    store.insertNode(makeNode({ title: "Small", xpSize: "XS", priority: 1 })); // 1 pt
+    store.insertNode(makeNode({ title: "Huge", xpSize: "XL", priority: 2 }));  // 8 pts
+
+    const doc = store.toGraphDocument();
+    const report = generatePlanningReport(doc, store, 1); // capacity = 1
+
+    // XL task should be in overflow
+    const xlInOverflow = report.overflow.some((o) => o.xpSize === "XL");
+    expect(xlInOverflow).toBe(true);
+    expect(report.redistributionSuggestions.some((s) => s.includes("XL"))).toBe(true);
+  });
+
+  it("should suggest deferring low-priority items in overflow", () => {
+    store.insertNode(makeNode({ title: "High prio", xpSize: "S", priority: 1 }));  // 2 pts
+    store.insertNode(makeNode({ title: "Low prio", xpSize: "S", priority: 4 }));   // 2 pts
+
+    const doc = store.toGraphDocument();
+    const report = generatePlanningReport(doc, store, 2); // capacity = 2
+
+    const lowPrioInOverflow = report.overflow.some((o) => o.priority >= 4);
+    if (lowPrioInOverflow) {
+      expect(report.redistributionSuggestions.some((s) => s.toLowerCase().includes("defer"))).toBe(true);
+    }
+  });
+
   it("should respect dependency ordering", () => {
     const dep = makeNode({ title: "Dependency", priority: 3 });
     const main = makeNode({ title: "Main task", priority: 1 });

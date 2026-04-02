@@ -26,6 +26,8 @@ import { checkDocCompleteness } from "../../core/handoff/doc-completeness.js";
 import { checkDeployReadiness } from "../../core/deployer/deploy-readiness.js";
 import { checkListeningReadiness } from "../../core/listener/feedback-readiness.js";
 import { analyzeBacklogHealth } from "../../core/listener/backlog-health.js";
+import { analyzeSprintHealth } from "../../core/planner/sprint-health.js";
+import { analyzeAutoReady } from "../../core/planner/auto-ready.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { checkDefinitionOfDone } from "../../core/implementer/definition-of-done.js";
@@ -62,12 +64,14 @@ const ANALYZE_MODES = z.enum([
   "release_check",
   "listening_ready",
   "backlog_health",
+  "sprint_health",
+  "auto_ready",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
-    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, decompose, adr, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, progress, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health.",
+    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, decompose, adr, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, progress, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready).",
     {
       mode: ANALYZE_MODES.describe("Analysis mode"),
       nodeId: z.string().optional().describe("Node ID (required for 'blockers'/'implement_done', optional for 'decompose'/'tdd_check'. For 'progress' mode, used as sprint name filter)"),
@@ -324,6 +328,17 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const healthReport = analyzeBacklogHealth(doc);
           logger.info("tool:analyze:backlog_health:ok", { clean: healthReport.cleanForNewCycle, stale: healthReport.staleTasks.length });
           return mcpText({ ok: true, mode, ...healthReport });
+        }
+
+        case "sprint_health": {
+          const sprintHealthReport = analyzeSprintHealth(doc, nodeId);
+          logger.info("tool:analyze:sprint_health:ok", { health: sprintHealthReport.health, tasks: sprintHealthReport.metrics.taskCount });
+          return mcpText({ ok: true, mode, ...sprintHealthReport });
+        }
+
+        case "auto_ready": {
+          const readyReport = analyzeAutoReady(doc);
+          return mcpText({ ok: true, mode: "auto_ready", ...readyReport });
         }
 
         default: {

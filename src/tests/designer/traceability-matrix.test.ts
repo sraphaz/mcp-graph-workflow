@@ -171,6 +171,84 @@ describe("buildTraceabilityMatrix", () => {
     expect(report.orphanDecisions).toHaveLength(1);
   });
 
+  it("should NOT count decision linked to epic as orphan", () => {
+    const doc = makeDoc(
+      [
+        { id: "epic1", type: "epic" },
+        { id: "dec1", type: "decision" },
+      ],
+      [
+        { from: "dec1", to: "epic1", relationType: "related_to" },
+      ],
+    );
+    const report = buildTraceabilityMatrix(doc);
+    expect(report.orphanDecisions).not.toContain("dec1");
+    expect(report.orphanDecisions).toHaveLength(0);
+  });
+
+  it("should NOT count decision linked to requirement as orphan", () => {
+    const doc = makeDoc(
+      [
+        { id: "req1", type: "requirement" },
+        { id: "dec1", type: "decision" },
+      ],
+      [
+        { from: "req1", to: "dec1", relationType: "implements" },
+      ],
+    );
+    const report = buildTraceabilityMatrix(doc);
+    expect(report.orphanDecisions).not.toContain("dec1");
+    expect(report.orphanDecisions).toHaveLength(0);
+  });
+
+  it("should count decision with no links as orphan", () => {
+    const doc = makeDoc(
+      [
+        { id: "req1", type: "requirement" },
+        { id: "dec1", type: "decision" },
+        { id: "dec2", type: "decision" },
+      ],
+      [
+        { from: "req1", to: "dec1", relationType: "implements" },
+      ],
+    );
+    const report = buildTraceabilityMatrix(doc);
+    expect(report.orphanDecisions).toContain("dec2");
+    expect(report.orphanDecisions).toHaveLength(1);
+  });
+
+  it("should not decrease coverageRate when adding decision linked to epic", () => {
+    // Baseline: 1 req + 1 dec linked to req = 100%
+    const baseDoc = makeDoc(
+      [
+        { id: "req1", type: "requirement" },
+        { id: "dec1", type: "decision" },
+      ],
+      [
+        { from: "req1", to: "dec1", relationType: "implements" },
+      ],
+    );
+    const baseReport = buildTraceabilityMatrix(baseDoc);
+
+    // Add a new decision linked to an epic — should NOT decrease coverage
+    const extDoc = makeDoc(
+      [
+        { id: "req1", type: "requirement" },
+        { id: "dec1", type: "decision" },
+        { id: "dec2", type: "decision" },
+        { id: "epic1", type: "epic" },
+      ],
+      [
+        { from: "req1", to: "dec1", relationType: "implements" },
+        { from: "dec2", to: "epic1", relationType: "related_to" },
+      ],
+    );
+    const extReport = buildTraceabilityMatrix(extDoc);
+
+    expect(extReport.coverageRate).toBeGreaterThanOrEqual(baseReport.coverageRate);
+    expect(extReport.orphanDecisions).not.toContain("dec2");
+  });
+
   it("should not count non-traceability edge types for coverage", () => {
     const doc = makeDoc(
       [

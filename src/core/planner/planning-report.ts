@@ -21,6 +21,17 @@ export interface PlanningReport {
     xpSize: string;
     reason: string;
   }>;
+  /** Tasks that exceed sprint capacity */
+  overflow: Array<{
+    id: string;
+    title: string;
+    type: string;
+    priority: number;
+    xpSize: string;
+    points: number;
+  }>;
+  /** Suggestions for handling overflow tasks */
+  redistributionSuggestions: string[];
   /** Libraries or topics with missing documentation */
   missingDocs: string[];
   /** Risk assessment */
@@ -36,6 +47,7 @@ export interface PlanningReport {
     totalBlocked: number;
     estimatedPoints: number;
     avgVelocity: number | null;
+    suggestedCapacity: number | null;
   };
 }
 
@@ -45,6 +57,7 @@ export interface PlanningReport {
 export function generatePlanningReport(
   doc: GraphDocument,
   store: SqliteStore,
+  capacityPoints?: number,
 ): PlanningReport {
   const eligibleNodes = doc.nodes.filter(
     (n) =>
@@ -76,14 +89,53 @@ export function generatePlanningReport(
     0,
   );
 
+  // Capacity overflow: split recommendedOrder when capacityPoints is set
+  let finalOrder = recommendedOrder;
+  let overflow: PlanningReport["overflow"] = [];
+  let redistributionSuggestions: string[] = [];
+
+  if (capacityPoints !== undefined) {
+    let cumulative = 0;
+    const withinCapacity: typeof recommendedOrder = [];
+    const overflowItems: PlanningReport["overflow"] = [];
+
+    for (const item of recommendedOrder) {
+      const points = XP_SIZE_POINTS[item.xpSize] ?? 3;
+      if (cumulative + points <= capacityPoints) {
+        cumulative += points;
+        withinCapacity.push(item);
+      } else {
+        overflowItems.push({
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          priority: item.priority,
+          xpSize: item.xpSize,
+          points,
+        });
+      }
+    }
+
+    finalOrder = withinCapacity;
+    overflow = overflowItems;
+    redistributionSuggestions = buildRedistributionSuggestions(overflowItems);
+  }
+
+  const suggestedCapacity = velocity.overall.avgPointsPerSprint > 0
+    ? velocity.overall.avgPointsPerSprint
+    : null;
+
   logger.info("Planning report generated", {
     ready: eligibleNodes.length,
     blocked: blockedNodes.length,
     points: estimatedPoints,
+    overflow: overflow.length,
   });
 
   return {
-    recommendedOrder,
+    recommendedOrder: finalOrder,
+    overflow,
+    redistributionSuggestions,
     missingDocs,
     risks,
     summary: {
@@ -91,6 +143,7 @@ export function generatePlanningReport(
       totalBlocked: blockedNodes.length,
       estimatedPoints,
       avgVelocity: velocity.overall.avgPointsPerSprint,
+      suggestedCapacity,
     },
   };
 }
@@ -219,4 +272,26 @@ function assessRisks(
   }
 
   return risks;
+}
+
+function buildRedistributionSuggestions(
+  overflow: PlanningReport["overflow"],
+): string[] {
+  const suggestions: string[] = [];
+
+  const hasXL = overflow.some((o) => o.xpSize === "XL");
+  if (hasXL) {
+    suggestions.push("Consider splitting XL tasks into smaller units before next sprint");
+  }
+
+  const hasLowPriority = overflow.some((o) => o.priority >= 4);
+  if (hasLowPriority) {
+    suggestions.push("Defer low-priority items (priority >= 4) to a future sprint");
+  }
+
+  if (overflow.length > 0 && suggestions.length === 0) {
+    suggestions.push(`${overflow.length} task(s) exceed sprint capacity — review scope or increase capacity`);
+  }
+
+  return suggestions;
 }

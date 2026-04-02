@@ -6,7 +6,15 @@ import type { GraphDocument } from "../graph/graph-types.js";
 import type { BacklogHealthReport } from "../../schemas/listener-schema.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { logger } from "../utils/logger.js";
-const TECH_DEBT_KEYWORDS = ["tech-debt", "refactor", "fix", "debt", "cleanup", "deprecat"];
+/** Simple string keywords matched via `.includes()` */
+const TECH_DEBT_SIMPLE_KEYWORDS = ["tech-debt", "refactor", "debt", "cleanup", "deprecat"];
+
+/**
+ * Regex-based keyword for "fix" — uses word boundaries to avoid false positives
+ * with Portuguese words like "fixo", "fixar", "fixação" and English adjectives
+ * like "fixed timestep". Matches: fix, fixes, fixing, hotfix, bugfix.
+ */
+const FIX_PATTERN = /\b(?:hot|bug)?fix(?:es|ing)?\b/i;
 const STALE_THRESHOLD_DAYS = 30;
 
 export function analyzeBacklogHealth(doc: GraphDocument): BacklogHealthReport {
@@ -39,7 +47,9 @@ export function analyzeBacklogHealth(doc: GraphDocument): BacklogHealthReport {
         (n.description ?? "").toLowerCase(),
         ...(n.tags ?? []).map((t) => t.toLowerCase()),
       ].join(" ");
-      return TECH_DEBT_KEYWORDS.some((kw) => searchText.includes(kw));
+      const hasSimple = TECH_DEBT_SIMPLE_KEYWORDS.some((kw) => searchText.includes(kw));
+      const hasFix = FIX_PATTERN.test(searchText);
+      return hasSimple || hasFix;
     })
     .map((n) => {
       const searchText = [
@@ -47,7 +57,10 @@ export function analyzeBacklogHealth(doc: GraphDocument): BacklogHealthReport {
         (n.description ?? "").toLowerCase(),
         ...(n.tags ?? []).map((t) => t.toLowerCase()),
       ].join(" ");
-      const matchedKeywords = TECH_DEBT_KEYWORDS.filter((kw) => searchText.includes(kw));
+      const matchedKeywords = TECH_DEBT_SIMPLE_KEYWORDS.filter((kw) => searchText.includes(kw));
+      if (FIX_PATTERN.test(searchText)) {
+        matchedKeywords.push("fix");
+      }
       return {
         nodeId: n.id,
         title: n.title,

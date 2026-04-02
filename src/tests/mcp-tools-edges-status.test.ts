@@ -416,6 +416,55 @@ describe("MCP Tools: Edge, UpdateStatus, Metrics, Init", () => {
       });
     });
 
+    // ── action: "sequence" ────────────────────────────────
+
+    describe('action: "sequence"', () => {
+      it("should sequence children of a parent via sequence action", async () => {
+        // Arrange — parent with 3 children
+        const parent = makeNode({ id: "parent-seq", type: "epic", title: "Parent" });
+        store.insertNode(parent);
+        store.insertNode(makeNode({ id: "c1-seq", type: "task", title: "C1", parentId: "parent-seq" }));
+        store.insertNode(makeNode({ id: "c2-seq", type: "task", title: "C2", parentId: "parent-seq" }));
+        store.insertNode(makeNode({ id: "c3-seq", type: "task", title: "C3", parentId: "parent-seq" }));
+
+        // Act
+        const result = await handler(server, "edge")({ action: "sequence", parentId: "parent-seq" });
+        const parsed = parseResult(result) as { ok: boolean; edgesCreated: number; chain: string[] };
+
+        // Assert
+        expect(parsed.ok).toBe(true);
+        expect(parsed.edgesCreated).toBe(2); // c2→c1, c3→c2
+        expect(parsed.chain).toHaveLength(3);
+      });
+
+      it("should return error when parentId is missing", async () => {
+        const result = await handler(server, "edge")({ action: "sequence" });
+        const parsed = parseResult(result) as { error: string };
+        expect(result.isError).toBe(true);
+        expect(parsed.error).toContain("parentId is required");
+      });
+
+      it("should return error when parent node not found", async () => {
+        const result = await handler(server, "edge")({ action: "sequence", parentId: "nonexistent" });
+        const parsed = parseResult(result) as { error: string };
+        expect(result.isError).toBe(true);
+        expect(parsed.error).toContain("nonexistent");
+      });
+
+      it("should handle parent with less than 2 children", async () => {
+        const parent = makeNode({ id: "parent-one", type: "epic", title: "Parent" });
+        store.insertNode(parent);
+        store.insertNode(makeNode({ id: "only-child", type: "task", title: "Only", parentId: "parent-one" }));
+
+        const result = await handler(server, "edge")({ action: "sequence", parentId: "parent-one" });
+        const parsed = parseResult(result) as { ok: boolean; edgesCreated: number; chain: string[] };
+
+        expect(parsed.ok).toBe(true);
+        expect(parsed.edgesCreated).toBe(0);
+        expect(parsed.chain).toHaveLength(1);
+      });
+    });
+
     it("should filter listed edges by relationType", async () => {
       const n1 = makeNode();
       const n2 = makeNode();

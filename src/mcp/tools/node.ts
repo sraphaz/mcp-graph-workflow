@@ -36,7 +36,9 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
       parentId: z.string().nullable().optional().describe("Parent node ID (add/update)"),
       sprint: z.string().nullable().optional().describe("Sprint identifier (add/update)"),
       acceptanceCriteria: z.array(z.string()).optional().describe("Acceptance criteria (add/update)"),
+      acceptanceCriteria_append: z.array(z.string()).optional().describe("Append to existing acceptance criteria without replacing (update only)"),
       blocked: z.boolean().optional().describe("Whether the node is blocked (add)"),
+      autoSequence: z.boolean().optional().describe("Auto-create depends_on edge to previous sibling when parentId is set (add only)"),
       metadata: z.record(z.string(), z.unknown()).optional().describe("Custom metadata (add)"),
       // update/delete params
       id: z.string().min(1).optional().describe("Node ID — required for update/delete"),
@@ -57,7 +59,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         metadata: z.record(z.string(), z.unknown()).optional(),
       })).max(50).optional().describe("Array of nodes for batch_add (max 50)"),
     },
-    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, blocked, metadata, nodes }) => {
+    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, blocked, autoSequence, metadata, nodes }) => {
       logger.debug("tool:node", { action, id, type, title });
 
       if (action === "add") {
@@ -110,6 +112,23 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
             relationType: "child_of" as RelationType,
             createdAt: timestamp,
           });
+
+          if (autoSequence) {
+            const siblings = store.toGraphDocument().nodes
+              .filter(n => n.parentId === parentId && n.id !== node.id)
+              .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+            const lastSibling = siblings[siblings.length - 1];
+            if (lastSibling) {
+              store.insertEdge({
+                id: generateId("edge"),
+                from: node.id,
+                to: lastSibling.id,
+                relationType: "depends_on" as RelationType,
+                reason: "Auto-sequenced",
+                createdAt: timestamp,
+              });
+            }
+          }
         }
 
         indexNodeAsKnowledge(store.getDb(), node);
@@ -122,6 +141,15 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
           return mcpError("id is required for update action");
         }
 
+        // Handle acceptanceCriteria_append: merge with existing
+        let mergedAC = acceptanceCriteria;
+        if (acceptanceCriteria_append && acceptanceCriteria_append.length > 0 && !acceptanceCriteria) {
+          const existing = store.getNodeById(id!);
+          if (existing) {
+            mergedAC = [...(existing.acceptanceCriteria ?? []), ...acceptanceCriteria_append];
+          }
+        }
+
         const fields: Record<string, unknown> = {};
         if (title !== undefined) fields.title = title;
         if (description !== undefined) fields.description = normalizeNewlines(description);
@@ -132,7 +160,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         if (tags !== undefined) fields.tags = tags;
         if (sprint !== undefined) fields.sprint = sprint;
         if (parentId !== undefined) fields.parentId = parentId;
-        if (acceptanceCriteria !== undefined) fields.acceptanceCriteria = acceptanceCriteria;
+        if (mergedAC !== undefined) fields.acceptanceCriteria = mergedAC;
 
         // Bug #036: reject self-parenting and circularity in update action
         const circError = checkCircularity(store, id, parentId);
