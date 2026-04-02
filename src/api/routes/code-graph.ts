@@ -7,6 +7,7 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { CodeStore } from "../../core/code/code-store.js";
 import { CodeIndexer } from "../../core/code/code-indexer.js";
+import { createAnalyzers } from "../../core/code/analyzer-factory.js";
 import { getSymbolContext, analyzeImpact, getFullGraph } from "../../core/code/graph-traversal.js";
 import { searchCodeSymbols } from "../../core/code/code-search.js";
 import { detectProcesses } from "../../core/code/process-detector.js";
@@ -97,7 +98,8 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
 
       logger.info("code-graph:reindex:start", { basePath });
 
-      const indexer = new CodeIndexer(codeStore, projectId);
+      const analyzers = await createAnalyzers(basePath);
+      const indexer = new CodeIndexer(codeStore, projectId, analyzers);
       codeStore.deleteAllSymbols(projectId);
       const result = await indexer.indexDirectory(basePath, basePath);
 
