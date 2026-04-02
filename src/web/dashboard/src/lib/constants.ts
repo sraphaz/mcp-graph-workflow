@@ -10,6 +10,17 @@ export const NODE_TYPE_COLORS: Record<NodeType, string> = {
   acceptance_criteria: "#06b6d4",
   risk: "#f97316",
   decision: "#ec4899",
+  // Game-specific / advanced node types
+  interface: "#14b8a6",
+  formula: "#a855f7",
+  state_machine: "#6366f1",
+  contract: "#0ea5e9",
+  scenario: "#22c55e",
+  performance_budget: "#eab308",
+  asset: "#f472b6",
+  data_table: "#64748b",
+  metric: "#fb923c",
+  config_schema: "#84cc16",
 };
 
 export const STATUS_COLORS: Record<NodeStatus, string> = {
@@ -37,12 +48,18 @@ export const EDGE_STYLES: Record<RelationType, { color: string; dashed: boolean;
   priority_over: { color: "#ff9800", dashed: true, label: "priority over" },
   implements: { color: "#2196f3", dashed: false, label: "implements" },
   derived_from: { color: "#06b6d4", dashed: true, label: "derived from" },
+  // Game-specific / advanced relation types
+  provides: { color: "#22c55e", dashed: false, label: "provides" },
+  consumes: { color: "#f97316", dashed: false, label: "consumes" },
+  requires_asset: { color: "#f472b6", dashed: true, label: "requires asset" },
 };
 
 export const ALL_STATUSES: NodeStatus[] = ["backlog", "ready", "in_progress", "blocked", "done"];
 export const ALL_TYPES: NodeType[] = [
   "epic", "task", "subtask", "requirement", "constraint",
   "milestone", "acceptance_criteria", "risk", "decision",
+  "interface", "formula", "state_machine", "contract", "scenario",
+  "performance_budget", "asset", "data_table", "metric", "config_schema",
 ];
 
 // ── Lifecycle Phases ──────────────────────────────
