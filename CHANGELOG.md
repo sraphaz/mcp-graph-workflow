@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.34.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.33.1...mcp-graph-v5.34.0) (2026-04-02)
+
+
+### Features
+
+* **analyzer:** economy simulation — gold inflow/outflow inflation detector ([45d8cae](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/45d8caeab6f4ed4df5c95bae8318f27fbbe18e71))
+* **analyzer:** Sprint 5 — game-specific analyzers for complex projects ([b9d156a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b9d156a7aabb1eb501d457b0f844bfeb0689041c))
+* **code-intelligence:** full multi-language support for Code Graph ([b2dc58e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b2dc58e71273efac6c9ac15c45befbabff7ab32d))
+* **core:** PRD diff tracking + task templates ([becaa7a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/becaa7ad5fbef9eebfc2358f356bac10d4267add))
+* **core:** Sprint 1 — P0 core fixes for complex projects ([102bc4f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/102bc4f1a7dce7bebba7e4e83e38ebb4d236ae34))
+* **core:** Sprint 2 — P1 precision, analysis & bug fixes ([d8c4409](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d8c440923d3ab2933837ad59a336447e2a1ac659))
+* **core:** Sprint 3 — P2 export formats, changelog & AC coverage ([d5ce925](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d5ce9256a7736e8e1c58318a02898363b1254f53))
+* **core:** Sprint 6 — state diagram export + 5 remaining game analyzers ([3af0ec5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3af0ec5f445998f87dab1ca0a9a45f40eb03aa95))
+* **dashboard:** add colors/styles for 10 new node types + 3 edge relations ([b0e7ace](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b0e7acec3dd7d6628d928225b635b7b77fd95a95))
+* **schema:** Sprint 4 — expand node types + edge relations for game projects ([9adba27](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/9adba2720628a87522fc5711914ba2da09deb4a5))
+* **support:** add set_phase command for MCP validation ([131f368](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/131f3684694b739307cadde2102e135221ca6b3f))
+
+
+### Bug Fixes
+
+* **ci:** add .npmrc with legacy-peer-deps for tree-sitter compatibility ([a7ba014](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a7ba0149919e987bc7ae14f11d0c3f639dae52ef))
+* **code-graph:** use createAnalyzers() for multi-language indexing ([28a3c17](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/28a3c17f492daf7d8a9fe12c1e9bbfcc8f442e6d))
+* **deps:** resolve tree-sitter peer dependency conflicts ([41cef6c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/41cef6ce55439e4524ebd01a77d8812ea8af75b3))
+* **lint:** suppress regex and non-null assertion warnings ([01c36ac](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/01c36ac7d584f236216827801c7ac69947a6d735))
+* **tests:** update migration count assertions to v23 ([d4634fd](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d4634fd7cf2b11d1cb666af86d5c55e2c5a955f6))
+
 ## [5.33.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.33.0...mcp-graph-v5.33.1) (2026-04-01)
 
 
