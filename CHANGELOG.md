@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.36.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.35.0...mcp-graph-v5.36.0) (2026-04-04)
+
+
+### Features
+
+* **v6.0:** CFD flow tracking, DORA metrics, forecast tool — Sprint 2 ([32dbc69](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/32dbc6907b6414cb0569fa23d8b1ad5e4370fabf))
+* **v6.0:** code-aware graph sync, cross-project learning — Sprint 3 ([0a6bc57](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/0a6bc574ef3f6ca960975b09556d761dd61fed25))
+* **v6.0:** pipeline tools, agent state machine, template updates — Sprint 1 ([b499d90](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b499d90ec2f4976cae009e0229399c2e0f672415))
+* **v6.0:** smart decompose — auto-break tasks into subtasks by AC ([0fe5f8a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/0fe5f8aa1e05b30aae51536709b398f9fb2fafd5))
+
+
+### Bug Fixes
+
+* **skills:** add DEPLOY/HANDOFF/LISTENING skills, fix ghost refs and recommender ([95026e8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/95026e8a5094102700000f99986aa198d5549bcc))
+* **test:** handle undefined detected array in LSP languages test ([f5fc1f2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f5fc1f204531dc6272e1eb3149b87177f5f00cf7))
+
 ## [6.0.0] — v6.0 Autopilot Release (2026-04-04)
 
 ### Added
