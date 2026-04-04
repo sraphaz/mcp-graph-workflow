@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.35.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.34.2...mcp-graph-v5.35.0) (2026-04-04)
+
+
+### Features
+
+* **core:** AC scoring, testFiles, task templates, velocity by category ([70a80fe](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/70a80fee28ad9c3b825158fac95b0b5023884406))
+
+
+### Bug Fixes
+
+* **test:** increase vitest testTimeout to 15s for Windows CI ([afe878d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/afe878d430605731f824bc45452a7fe43eb40486))
+
 ## [5.34.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.34.1...mcp-graph-v5.34.2) (2026-04-04)
 
 
