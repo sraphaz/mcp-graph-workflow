@@ -88,7 +88,7 @@ describe("tool completeness", () => {
 
   it("should claim correct tool count (28 + 6 deprecated)", () => {
     const section = generateClaudeMdSection("test");
-    expect(section).toContain("46 tools + 6 deprecated");
+    expect(section).toContain("48 tools + 6 deprecated");
   });
 
   it("should include deprecated tools reference", () => {
@@ -159,7 +159,7 @@ describe("copilot instructions parity", () => {
     const content = generateCopilotInstructions("test");
     expect(content).toContain("Projeto & Grafo");
     expect(content).toContain("Contexto & RAG");
-    expect(content).toContain("46 tools + 6 deprecated");
+    expect(content).toContain("48 tools + 6 deprecated");
   });
 
   it("should include analyze modes", () => {
@@ -217,18 +217,44 @@ describe("lean mode", () => {
     const section = generateClaudeMdSection("test", "lean");
     const estimatedTokens = Math.ceil(section.length / 4);
 
-    // Lean mode: behavioral rules only (~700 tokens)
-    // Full mode: ~2500 tokens — lean must be at least 60% smaller
-    expect(estimatedTokens).toBeLessThan(800);
+    // Lean mode: behavioral rules + gates + DoD + DoR + flow (~1700 tokens)
+    // Full mode: ~5000 tokens — lean must be significantly smaller
+    expect(estimatedTokens).toBeLessThan(1800);
   });
 
-  it("should include behavioral rules in lean mode", () => {
+  it("should include behavioral rules and v6.0 pipeline in lean mode", () => {
     const section = generateClaudeMdSection("test", "lean");
 
     expect(section).toContain("fonte de verdade ABSOLUTA");
     expect(section).toContain("Fluxo de trabalho");
     expect(section).toContain("Lifecycle");
     expect(section).toContain("Anti-Vibe-Coding");
+    expect(section).toContain("start_task");
+    expect(section).toContain("finish_task");
+    expect(section).toContain("Pipeline v6.0");
+  });
+
+  it("should include phase gates, DoD, DoR and flow principles in lean mode", () => {
+    const section = generateClaudeMdSection("test", "lean");
+
+    expect(section).toContain("Phase Gates");
+    expect(section).toContain("design_ready");
+    expect(section).toContain("Definition of Done");
+    expect(section).toContain("has_acceptance_criteria");
+    expect(section).toContain("Definition of Ready");
+    expect(section).toContain("has_requirements");
+    expect(section).toContain("Little's Law");
+    expect(section).toContain("WIP = 1");
+  });
+
+  it("should NOT include full-only sections in lean mode", () => {
+    const section = generateClaudeMdSection("test", "lean");
+
+    expect(section).not.toContain("Tool Prerequisites (Modo Strict)");
+    expect(section).not.toContain("Workflows Compostos");
+    expect(section).not.toContain("Erros Comuns de Agentes");
+    expect(section).not.toContain("Six Sigma");
+    expect(section).not.toContain("TDD Enforcement");
   });
 
   it("should NOT include reference tables in lean mode", () => {
@@ -259,6 +285,33 @@ describe("lean mode", () => {
     };
 
     expect(extractBody(copilot)).toBe(extractBody(claude));
+  });
+
+  it("full mode should include all operational sections", () => {
+    const section = generateClaudeMdSection("test", "full");
+
+    // Phase 1 sections
+    expect(section).toContain("Phase Gates");
+    expect(section).toContain("Definition of Done");
+    expect(section).toContain("Tool Prerequisites (Modo Strict)");
+    expect(section).toContain("Workflows Compostos");
+    expect(section).toContain("Erros Comuns de Agentes");
+    // Phase 2 sections (industrial methodologies)
+    expect(section).toContain("Definition of Ready");
+    expect(section).toContain("Little's Law");
+    expect(section).toContain("Six Sigma");
+    expect(section).toContain("DORA Metrics");
+    expect(section).toContain("TDD Enforcement");
+    expect(section).toContain("testabilityScore");
+    // Extended analyze modes
+    expect(section).toContain("sprint_health");
+    expect(section).toContain("economy_simulation");
+    // v6.0 Pipeline Tools
+    expect(section).toContain("Pipeline Tools v6.0");
+    expect(section).toContain("start_task");
+    expect(section).toContain("finish_task");
+    expect(section).toContain("nextAction");
+    expect(section).toContain("48 tools");
   });
 
   it("full mode should be much larger than lean mode", () => {

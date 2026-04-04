@@ -21,6 +21,7 @@ import { logger } from "../core/utils/logger.js";
 import { GraphEventBus } from "../core/events/event-bus.js";
 import { categorizeError, generateErrorHash } from "../core/skills/self-healing-listener.js";
 import { recommendBuiltInSkills, type SkillRecommendation } from "../core/insights/skill-recommender.js";
+import { computeNextAction, type NextAction } from "../core/planner/next-action.js";
 
 export interface PhaseKnowledgeSnippet {
   title: string;
@@ -39,6 +40,7 @@ export interface LifecycleBlock {
   suggestedSkills?: string[];
   recommendedSkills?: SkillRecommendation[];
   phaseKnowledge?: PhaseKnowledgeSnippet[];
+  nextAction?: NextAction;
 }
 
 export interface LifecycleBlockOptions {
@@ -346,6 +348,23 @@ export function wrapToolsWithLifecycle(server: McpServer, store: SqliteStore, ev
           mode,
           store,
         });
+
+        // Compute nextAction from tool result
+        try {
+          const toolResultText = result?.content
+            ?.filter((c: { type?: string }) => c.type === "text")
+            ?.map((c: { text?: string }) => c.text ?? "")
+            .join("") ?? "";
+          const parsedResult = toolResultText ? JSON.parse(toolResultText) : {};
+          const toolArgs = (Array.isArray(args) ? args[0] as Record<string, unknown> : args) ?? {};
+          const nextAction = computeNextAction(name, toolArgs, lifecycleBlock.phase, parsedResult);
+          if (nextAction) {
+            lifecycleBlock.nextAction = nextAction;
+          }
+        } catch {
+          // nextAction computation is best-effort
+          logger.debug("lifecycle-wrapper: nextAction computation skipped", { tool: name });
+        }
 
         // Append lifecycle as an additional text content item
         if (result && Array.isArray(result.content)) {

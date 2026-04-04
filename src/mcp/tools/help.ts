@@ -6,6 +6,16 @@ import {
   getSkillsByPhase,
   getCliCommands,
   getKnowledgePipeline,
+  getPhaseGates,
+  getDefinitionOfDone,
+  getDefinitionOfReady,
+  getToolPrerequisites,
+  getWorkflows,
+  getFlowPrinciples,
+  getQualityMetrics,
+  getTddEnforcement,
+  getAgentAntipatterns,
+  getPipelineTools,
   getFullReference,
 } from "../../core/config/reference-content.js";
 import { logger } from "../../core/utils/logger.js";
@@ -36,6 +46,16 @@ type HelpTopic =
   | "cli"
   | "knowledge"
   | "workflow"
+  | "gates"
+  | "dod"
+  | "dor"
+  | "prerequisites"
+  | "workflows"
+  | "flow"
+  | "quality_metrics"
+  | "tdd"
+  | "pipeline"
+  | "antipatterns"
   | "all";
 
 function getTopicContent(topic: HelpTopic, phase?: string): string {
@@ -52,6 +72,26 @@ function getTopicContent(topic: HelpTopic, phase?: string): string {
       return getKnowledgePipeline();
     case "workflow":
       return WORKFLOW_SECTION;
+    case "gates":
+      return getPhaseGates();
+    case "dod":
+      return getDefinitionOfDone();
+    case "prerequisites":
+      return getToolPrerequisites();
+    case "workflows":
+      return getWorkflows();
+    case "dor":
+      return getDefinitionOfReady();
+    case "flow":
+      return getFlowPrinciples();
+    case "quality_metrics":
+      return getQualityMetrics();
+    case "tdd":
+      return getTddEnforcement();
+    case "pipeline":
+      return getPipelineTools();
+    case "antipatterns":
+      return getAgentAntipatterns();
     case "all":
       return getFullReference();
   }
@@ -70,6 +110,16 @@ export function registerHelp(server: McpServer): void {
           "cli",
           "knowledge",
           "workflow",
+          "gates",
+          "dod",
+          "dor",
+          "prerequisites",
+          "workflows",
+          "flow",
+          "quality_metrics",
+          "tdd",
+          "pipeline",
+          "antipatterns",
           "all",
         ])
         .describe("Reference topic to query"),

@@ -9,6 +9,16 @@ import {
   ANALYZE_MODES_SECTION,
   KNOWLEDGE_PIPELINE_SECTION,
   SKILLS_SECTION,
+  PHASE_GATES_SECTION,
+  DOD_SECTION,
+  DOR_SECTION,
+  TOOL_PREREQUISITES_SECTION,
+  WORKFLOWS_SECTION,
+  FLOW_PRINCIPLES_SECTION,
+  QUALITY_METRICS_SECTION,
+  TDD_ENFORCEMENT_SECTION,
+  AGENT_ANTIPATTERNS_SECTION,
+  PIPELINE_TOOLS_SECTION,
   CLI_COMMANDS as CLI_COMMANDS_REF,
 } from "./reference-content.js";
 
@@ -20,7 +30,7 @@ const MANDATORY_EXECUTION_RULE = `### ⚠️ Regra de Execução OBRIGATÓRIA
 **O mcp-graph é a fonte de verdade ABSOLUTA. Nenhuma implementação acontece fora do grafo.**
 
 1. **Node deve existir** — antes de escrever QUALQUER código, o node correspondente DEVE existir no grafo
-2. **Fluxo obrigatório** — \`next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status → next\` — SEM EXCEÇÕES
+2. **Fluxo obrigatório** — \`start_task → [implementar com TDD] → finish_task\` (pipeline v6.0) ou \`next → context → rag_context → [TDD] → analyze(implement_done) → update_status\` (granular) — SEM EXCEÇÕES
 3. **Epic = estrutura primeiro** — criar Epic + tasks filhas + edges ANTES de implementar
 4. **Status tracking** — \`update_status → in_progress\` ANTES de codar, \`→ done\` APÓS completar
 5. **Validação** — usar \`validate\` (action: \`ac\`) após cada task para checar critérios de aceitação
@@ -49,7 +59,18 @@ const XP_PRINCIPLES = `### Princ\u00EDpios XP Anti-Vibe-Coding
 - **CLAUDE.md como spec evolutiva** \u2014 Documente padr\u00F5es e decis\u00F5es aqui.`;
 
 
-const LEAN_DISCOVERY_HINT = `> **Referências detalhadas on-demand:** Use \`help\` tool para consultar: \`tools\`, \`analyze_modes\`, \`skills\`, \`cli\`, \`knowledge\`, \`workflow\`.`;
+const MEMORY_VERIFICATION_RULE = `### Memory \u2260 Estado Atual
+
+Memory files s\u00E3o **snapshots point-in-time**, n\u00E3o estado live. Contagens de progresso ("X/Y done", "% complete") ficam stale rapidamente.
+
+**Antes de planejar baseado em memories:**
+1. Grep pelo arquivo/fun\u00E7\u00E3o \u2014 se existe com implementa\u00E7\u00E3o real, o memory \u00E9 stale
+2. **C\u00F3digo vence memory** \u2014 se memory diz "X n\u00E3o existe" mas c\u00F3digo mostra que sim, confiar no c\u00F3digo
+3. Contagens num\u00E9ricas > 48h = possivelmente stale \u2014 verificar antes de usar
+
+> **Nunca confiar em contagens de progresso de memories. Sempre verificar no c\u00F3digo antes de planejar.**`;
+
+const LEAN_DISCOVERY_HINT = `> **Referências detalhadas on-demand:** Use \`help\` tool para consultar: \`tools\`, \`analyze_modes\`, \`skills\`, \`cli\`, \`knowledge\`, \`workflow\`, \`gates\`, \`dod\`, \`dor\`, \`prerequisites\`, \`workflows\`, \`flow\`, \`quality_metrics\`, \`tdd\`, \`pipeline\`, \`antipatterns\`.`;
 
 function buildSectionBody(projectName: string, mode: "lean" | "full" = "full"): string {
   const header = `## mcp-graph — ${projectName}
@@ -61,8 +82,14 @@ ${MANDATORY_EXECUTION_RULE}`;
 
   const workflow = `### Fluxo de trabalho OBRIGATÓRIO
 
+**Pipeline v6.0 (recomendado — 2 calls):**
 \`\`\`
-next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status → next
+start_task → [implementar com TDD] → finish_task
+\`\`\`
+
+**Granular (6 calls — disponível para controle fino):**
+\`\`\`
+next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status
 \`\`\``;
 
   if (mode === "lean") {
@@ -72,7 +99,17 @@ ${workflow}
 
 ${LIFECYCLE_SUMMARY}
 
+${PHASE_GATES_SECTION}
+
+${DOD_SECTION}
+
+${DOR_SECTION}
+
+${FLOW_PRINCIPLES_SECTION}
+
 ${XP_PRINCIPLES}
+
+${MEMORY_VERIFICATION_RULE}
 
 ${LEAN_DISCOVERY_HINT}`;
   }
@@ -90,11 +127,33 @@ ${workflow}
 
 ${LIFECYCLE_SUMMARY}
 
+${PHASE_GATES_SECTION}
+
+${DOD_SECTION}
+
+${DOR_SECTION}
+
+${TOOL_PREREQUISITES_SECTION}
+
+${WORKFLOWS_SECTION}
+
+${FLOW_PRINCIPLES_SECTION}
+
+${QUALITY_METRICS_SECTION}
+
+${TDD_ENFORCEMENT_SECTION}
+
 ${KNOWLEDGE_PIPELINE_SECTION}
 
 ${SKILLS_SECTION}
 
 ${XP_PRINCIPLES}
+
+${MEMORY_VERIFICATION_RULE}
+
+${AGENT_ANTIPATTERNS_SECTION}
+
+${PIPELINE_TOOLS_SECTION}
 
 ${CLI_COMMANDS_REF}`;
 }

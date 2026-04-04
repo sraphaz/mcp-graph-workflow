@@ -44,4 +44,14 @@ next → context → rag_context → [implementar com TDD] → analyze(implement
 - **CLAUDE.md como spec evolutiva** — Documente padrões e decisões aqui.
 
 > **Referências detalhadas on-demand:** Use `help` tool para consultar: `tools`, `analyze_modes`, `skills`, `cli`, `knowledge`, `workflow`.
+### Memory ≠ Estado Atual
+
+Memory files são **snapshots point-in-time**, não estado live. Contagens de progresso ("X/Y done", "% complete") ficam stale rapidamente.
+
+**Antes de planejar baseado em memories:**
+1. Grep pelo arquivo/função — se existe com implementação real, o memory é stale
+2. **Código vence memory** — se memory diz "X não existe" mas código mostra que sim, confiar no código
+3. Contagens numéricas > 48h = possivelmente stale — verificar antes de usar
+
+> **Nunca confiar em contagens de progresso de memories. Sempre verificar no código antes de planejar.**
 <!-- mcp-graph:end -->

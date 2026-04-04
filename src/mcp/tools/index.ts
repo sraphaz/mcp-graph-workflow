@@ -52,6 +52,9 @@ import { registerValidate } from "./validate.js";
 import { registerTemplate } from "./template.js";
 // LSP Code Intelligence
 import { registerCodeIntelligence } from "./code-intelligence.js";
+// Pipeline tools (v6.0)
+import { registerStartTask } from "./start-task.js";
+import { registerFinishTask } from "./finish-task.js";
 // Deprecated tools (backward compat — will be removed in v7.0)
 import { registerAddNode } from "./add-node.js";
 import { registerUpdateNode } from "./update-node.js";
@@ -124,6 +127,10 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
 
   // LSP Code Intelligence
   registerCodeIntelligence(server, store);
+
+  // Pipeline tools (v6.0)
+  registerStartTask(server, store);
+  registerFinishTask(server, store);
 
   // Deprecated tools (backward compat — will be removed in v7.0)
   registerAddNode(server, store);
