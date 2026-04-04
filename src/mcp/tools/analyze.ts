@@ -90,6 +90,7 @@ const ANALYZE_MODES = z.enum([
   "economy_simulation",
   "cfd",
   "code_sync",
+  "smart_decompose",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
@@ -437,6 +438,15 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const simReport = simulateEconomy(doc, simParams);
           logger.info("tool:analyze:economy_simulation:ok", { risk: simReport.inflationRisk, net: simReport.netFlowPerDay });
           return mcpText({ ok: true, mode: "economy_simulation", ...simReport });
+        }
+
+        case "smart_decompose": {
+          if (!nodeId) return mcpError("smart_decompose requires a nodeId");
+          const { smartDecompose } = await import("../../core/planner/smart-decompose.js");
+          const decomposeResult = smartDecompose(store, nodeId);
+          if (!decomposeResult) return mcpText({ ok: false, mode: "smart_decompose", message: "Node not found or has no acceptance criteria" });
+          logger.info("tool:analyze:smart_decompose:ok", { subtasks: decomposeResult.subtasks.length });
+          return mcpText({ ok: true, mode: "smart_decompose", ...decomposeResult });
         }
 
         case "code_sync": {
