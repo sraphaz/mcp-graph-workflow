@@ -58,6 +58,15 @@ const ENRICHED_PHASES = new Set<string>(["IMPLEMENT", "REVIEW", "VALIDATE"]);
 
 const MAX_TOP_AFFECTED = 5;
 
+// ── Stale warning dedup (per session) ──────────────────
+
+const _emittedStaleWarnings = new Set<string>();
+
+/** Reset dedup state — for testing only. */
+export function resetStaleWarningDedup(): void {
+  _emittedStaleWarnings.clear();
+}
+
 // ── Git hash cache ──────────────────────────────────────
 
 let cachedGitHash: string | null = null;
@@ -188,13 +197,17 @@ export function buildCodeIntelBlock(
     return { mode, indexStatus, warnings };
   }
 
-  // Stale index check
+  // Stale index check (deduplicated per project per session)
   if (indexStatus.stale) {
-    warnings.push({
-      code: "index_stale",
-      message: "Code Intelligence index is stale (git hash mismatch). Consider running reindex_knowledge.",
-      severity: "warning",
-    });
+    const dedupKey = `index_stale:${projectId}`;
+    if (!_emittedStaleWarnings.has(dedupKey)) {
+      _emittedStaleWarnings.add(dedupKey);
+      warnings.push({
+        code: "index_stale",
+        message: "Code Intelligence index is stale (git hash mismatch). Consider running reindex_knowledge.",
+        severity: "warning",
+      });
+    }
   }
 
   // Build enrichment based on phase

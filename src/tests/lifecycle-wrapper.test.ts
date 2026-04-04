@@ -3,7 +3,7 @@ import { buildLifecycleBlock } from "../mcp/lifecycle-wrapper.js";
 import { detectWarnings } from "../core/planner/lifecycle-phase.js";
 import type { GraphDocument } from "../core/graph/graph-types.js";
 
-function makeDoc(nodes: Array<{ type: string; status: string; sprint?: string | null }> = []): GraphDocument {
+function makeDoc(nodes: Array<{ type: string; status: string; sprint?: string | null; acceptanceCriteria?: string[] }> = []): GraphDocument {
   return {
     version: "1.0",
     project: { id: "proj_1", name: "test", createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
@@ -14,6 +14,7 @@ function makeDoc(nodes: Array<{ type: string; status: string; sprint?: string | 
       status: n.status,
       priority: 3 as const,
       sprint: n.sprint ?? null,
+      acceptanceCriteria: n.acceptanceCriteria,
       createdAt: "2025-01-01T00:00:00Z",
       updatedAt: "2025-01-01T00:00:00Z",
     })),
@@ -77,7 +78,7 @@ describe("detectWarnings", () => {
 
   it("should emit info when tool is not in suggestedTools for current phase", () => {
     const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
-    const warnings = detectWarnings(doc, "IMPLEMENT", "export");
+    const warnings = detectWarnings(doc, "IMPLEMENT", "import_prd");
 
     expect(warnings.some((w) => w.code === "tool_not_recommended" && w.severity === "info")).toBe(true);
   });
@@ -106,6 +107,22 @@ describe("detectWarnings", () => {
     const warnings = detectWarnings(doc, "IMPLEMENT", "update_status");
 
     expect(warnings.some((w) => w.code === "no_acceptance_criteria")).toBe(false);
+  });
+
+  it("should not warn about acceptance_criteria when inline ACs exist on task nodes", () => {
+    const doc = makeDoc([
+      { type: "task", status: "done", sprint: "s1", acceptanceCriteria: ["deve retornar status 200"] },
+    ]);
+    const warnings = detectWarnings(doc, "IMPLEMENT", "update_status");
+
+    expect(warnings.some((w) => w.code === "no_acceptance_criteria")).toBe(false);
+  });
+
+  it("should not emit tool_not_recommended for update_node (deprecated exempt)", () => {
+    const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
+    const warnings = detectWarnings(doc, "IMPLEMENT", "update_node");
+
+    expect(warnings.some((w) => w.code === "tool_not_recommended")).toBe(false);
   });
 });
 

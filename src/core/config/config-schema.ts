@@ -16,11 +16,11 @@ export const ConfigSchema = z.object({
     .default({ autoOpen: true }),
   integrations: z
     .object({
-      codeGraphAutoIndex: z.boolean().default(false),
+      codeGraphAutoIndex: z.boolean().default(true),
       codeGraphReindexIntervalSec: z.number().int().min(0).default(0),
       lspServers: z.array(LspConfigOverrideSchema).default([]),
     })
-    .default({ codeGraphAutoIndex: false, codeGraphReindexIntervalSec: 0, lspServers: [] }),
+    .default({ codeGraphAutoIndex: true, codeGraphReindexIntervalSec: 0, lspServers: [] }),
 });
 
 export type McpGraphConfig = z.infer<typeof ConfigSchema>;

@@ -239,21 +239,21 @@ describe("checkDefinitionOfDone", () => {
     expect(report.title).toBe("My Task");
   });
 
-  it("should have 8 checks total", () => {
+  it("should have 9 checks total", () => {
     const doc = makeDoc([
       { id: "t1", type: "task", status: "in_progress", acceptanceCriteria: ["AC"] },
     ]);
     const report = checkDefinitionOfDone(doc, "t1");
-    expect(report.checks).toHaveLength(8);
+    expect(report.checks).toHaveLength(9);
   });
 
-  it("should have 4 required and 4 recommended checks", () => {
+  it("should have 4 required and 5 recommended checks", () => {
     const doc = makeDoc([
       { id: "t1", type: "task", status: "in_progress", acceptanceCriteria: ["AC"] },
     ]);
     const report = checkDefinitionOfDone(doc, "t1");
     expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(4);
-    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(4);
+    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
   });
 
   it("should handle non-existent nodeId gracefully", () => {

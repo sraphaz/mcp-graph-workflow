@@ -123,4 +123,56 @@ describe("MCP manage_skill tool — action list", () => {
       expect(buffer.some((e) => e.level === "info" && e.message.includes("tool:manage_skill:list:ok"))).toBe(true);
     });
   });
+
+  describe("action: create_template", () => {
+    it("should create a task template via MCP tool", async () => {
+      const result = await tools(server)["manage_skill"].handler({
+        action: "create_template",
+        template: {
+          name: "backend_ui",
+          description: "Backend + UI pattern",
+          subtasks: [
+            { title: "Backend logic", type: "subtask" },
+            { title: "UI components", type: "subtask" },
+          ],
+        },
+      });
+
+      const parsed = parseResult(result);
+      expect(parsed.ok).toBe(true);
+      const tmpl = parsed.template as Record<string, unknown>;
+      expect(tmpl.name).toBe("backend_ui");
+      expect((tmpl.subtasks as unknown[]).length).toBe(2);
+    });
+
+    it("should reject create_template without template param", async () => {
+      const result = await tools(server)["manage_skill"].handler({
+        action: "create_template",
+      });
+
+      expect(result.isError).toBe(true);
+    });
+  });
+
+  describe("action: list_templates", () => {
+    it("should list created templates", async () => {
+      await tools(server)["manage_skill"].handler({
+        action: "create_template",
+        template: {
+          name: "tmpl_1",
+          description: "First",
+          subtasks: [{ title: "S1", type: "subtask" }],
+        },
+      });
+
+      const result = await tools(server)["manage_skill"].handler({
+        action: "list_templates",
+      });
+
+      const parsed = parseResult(result);
+      expect(parsed.ok).toBe(true);
+      expect(parsed.total).toBe(1);
+      expect((parsed.templates as unknown[]).length).toBe(1);
+    });
+  });
 });

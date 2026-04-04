@@ -556,6 +556,41 @@ describe("MCP Tools: Edge, UpdateStatus, Metrics, Init", () => {
       expect(parsed.notFound).toContain("missing-1");
       expect(parsed.notFound).toContain("missing-2");
     });
+
+    it("should suggest epic promotion when all children are done", async () => {
+      const epic = makeNode({ type: "epic", status: "in_progress" });
+      const t1 = makeNode({ status: "in_progress", parentId: epic.id });
+      const t2 = makeNode({ status: "in_progress", parentId: epic.id });
+      store.insertNode(epic);
+      store.insertNode(t1);
+      store.insertNode(t2);
+
+      // Mark first child done
+      await handler(server, "update_status")({ id: t1.id, status: "done", force: true });
+      // Mark second child done — should trigger suggestion
+      const result = await handler(server, "update_status")({ id: t2.id, status: "done", force: true });
+
+      const parsed = parseResult(result) as { ok: boolean; epicPromotion?: { parentId: string; childrenDone: number; suggestion: string } };
+      expect(parsed.ok).toBe(true);
+      expect(parsed.epicPromotion).toBeDefined();
+      expect(parsed.epicPromotion!.parentId).toBe(epic.id);
+      expect(parsed.epicPromotion!.childrenDone).toBe(2);
+    });
+
+    it("should not suggest epic promotion when some children not done", async () => {
+      const epic = makeNode({ type: "epic", status: "in_progress" });
+      const t1 = makeNode({ status: "in_progress", parentId: epic.id });
+      const t2 = makeNode({ status: "backlog", parentId: epic.id });
+      store.insertNode(epic);
+      store.insertNode(t1);
+      store.insertNode(t2);
+
+      const result = await handler(server, "update_status")({ id: t1.id, status: "done", force: true });
+
+      const parsed = parseResult(result) as { ok: boolean; epicPromotion?: unknown };
+      expect(parsed.ok).toBe(true);
+      expect(parsed.epicPromotion).toBeUndefined();
+    });
   });
 
   // ── Metrics Tool ───────────────────────────────────────────────────────

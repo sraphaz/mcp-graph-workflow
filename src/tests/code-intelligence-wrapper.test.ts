@@ -12,6 +12,7 @@ import {
   buildCodeIntelBlock,
   buildBlockedResponseCodeIntel,
   wrapToolsWithCodeIntelligence,
+  resetStaleWarningDedup,
 } from "../mcp/code-intelligence-wrapper.js";
 
 // ── Helpers ─────────────────────────────────────────────
@@ -160,6 +161,7 @@ describe("buildCodeIntelBlock", () => {
   beforeEach(() => {
     store = createInMemoryStore();
     codeStore = createCodeStore(store);
+    resetStaleWarningDedup();
   });
 
   it("should return off block when mode is off", () => {
@@ -443,5 +445,41 @@ describe("buildBlockedResponseCodeIntel", () => {
 
     const parsed = JSON.parse(response.content[0].text);
     expect(parsed.hint).toContain("reindex");
+  });
+});
+
+// ── Stale warning dedup ────────────────────────────────
+
+describe("stale warning dedup", () => {
+  let store: SqliteStore;
+  let codeStore: CodeStore;
+
+  beforeEach(() => {
+    store = createInMemoryStore();
+    codeStore = createCodeStore(store);
+    resetStaleWarningDedup();
+  });
+
+  it("should emit index_stale warning only once per project across multiple calls", () => {
+    seedCodeIndex(codeStore, "test-project", "old-hash");
+
+    const block1 = buildCodeIntelBlock(codeStore, "test-project", "IMPLEMENT", "strict", "next", [], "new-hash");
+    const block2 = buildCodeIntelBlock(codeStore, "test-project", "IMPLEMENT", "strict", "next", [], "new-hash");
+    const block3 = buildCodeIntelBlock(codeStore, "test-project", "IMPLEMENT", "strict", "context", [], "new-hash");
+
+    expect(block1.warnings.some(w => w.code === "index_stale")).toBe(true);
+    expect(block2.warnings.some(w => w.code === "index_stale")).toBe(false);
+    expect(block3.warnings.some(w => w.code === "index_stale")).toBe(false);
+  });
+
+  it("should emit index_stale warning independently per project", () => {
+    seedCodeIndex(codeStore, "test-project", "old-hash");
+    seedCodeIndex(codeStore, "other-project", "old-hash");
+
+    const block1 = buildCodeIntelBlock(codeStore, "test-project", "IMPLEMENT", "strict", "next", [], "new-hash");
+    const block2 = buildCodeIntelBlock(codeStore, "other-project", "IMPLEMENT", "strict", "next", [], "new-hash");
+
+    expect(block1.warnings.some(w => w.code === "index_stale")).toBe(true);
+    expect(block2.warnings.some(w => w.code === "index_stale")).toBe(true);
   });
 });

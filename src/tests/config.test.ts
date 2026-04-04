@@ -39,7 +39,7 @@ describe("Config layer", () => {
 
     expect(config.port).toBe(3000);
     expect(config.dbPath).toBe("workflow-graph");
-    expect(config.integrations.codeGraphAutoIndex).toBe(false);
+    expect(config.integrations.codeGraphAutoIndex).toBe(true);
     expect(config.integrations.codeGraphReindexIntervalSec).toBe(0);
   });
 
@@ -109,7 +109,7 @@ describe("Config layer", () => {
     expect(config.port).toBe(3000);
     expect(config.dbPath).toBe("workflow-graph");
     expect(config.basePath).toBeUndefined();
-    expect(config.integrations.codeGraphAutoIndex).toBe(false);
+    expect(config.integrations.codeGraphAutoIndex).toBe(true);
   });
 
   // ── contextMode ───────────────────────────────────

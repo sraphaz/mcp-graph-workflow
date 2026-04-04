@@ -13,7 +13,7 @@ import { mcpText, mcpError } from "../response-helpers.js";
 export function registerUpdateNode(server: McpServer, store: SqliteStore): void {
   server.tool(
     "update_node",
-    "Update arbitrary fields of a node (DEPRECATED — use `node` with action:\"update\")",
+    "Update arbitrary fields of a node (DEPRECATED — use `node` tool with action:\"update\", id:\"<nodeId>\", plus fields to update)",
     {
       id: z.string().min(1).describe("The node ID to update"),
       title: z.string().optional().describe("New title"),
@@ -31,7 +31,7 @@ export function registerUpdateNode(server: McpServer, store: SqliteStore): void 
         .describe("New acceptance criteria"),
     },
     async ({ id, ...fields }) => {
-      logger.warn("tool:update_node:deprecated", { message: "Use 'node' tool with action:'update' instead" });
+      logger.warn("tool:update_node:deprecated", { message: "Use 'node' tool with action:'update', id:'<nodeId>', plus fields (title, description, acceptanceCriteria, tags, etc.)" });
       logger.debug("tool:update_node", { id, fields: Object.keys(fields) });
       const updated = store.updateNode(id, fields);
 
@@ -42,7 +42,7 @@ export function registerUpdateNode(server: McpServer, store: SqliteStore): void 
       }
 
       logger.info("tool:update_node:ok", { id });
-      return mcpText({ ok: true, node: updated, _deprecated: "Use 'node' tool with action:'update'" });
+      return mcpText({ ok: true, node: updated, _deprecated: "Use 'node' tool with action:'update', id:'<nodeId>', plus fields to update (title, description, acceptanceCriteria, tags, etc.)" });
     },
   );
 }

@@ -28,8 +28,16 @@ export interface VelocityTask {
   completionHours: number | null;
 }
 
+export interface CategoryVelocity {
+  category: string;
+  tasksCompleted: number;
+  totalPoints: number;
+  avgCompletionHours: number | null;
+}
+
 export interface VelocitySummary {
   sprints: SprintVelocity[];
+  byCategory: CategoryVelocity[];
   overall: {
     totalTasksCompleted: number;
     totalPoints: number;
@@ -100,10 +108,35 @@ export function calculateVelocity(doc: GraphDocument): VelocitySummary {
     .map((t) => t.completionHours)
     .filter((h): h is number => h !== null);
 
+  // Group by category (first tag)
+  const byCategoryMap = new Map<string, GraphNode[]>();
+  for (const node of doneTasks) {
+    const category = node.tags?.[0] ?? "(untagged)";
+    const group = byCategoryMap.get(category) ?? [];
+    group.push(node);
+    byCategoryMap.set(category, group);
+  }
+
+  const byCategory: CategoryVelocity[] = Array.from(byCategoryMap.entries()).map(([category, tasks]) => {
+    const catPoints = tasks.reduce((sum, t) => sum + (XP_SIZE_POINTS[t.xpSize ?? "M"] ?? 3), 0);
+    const catHours = tasks
+      .map((t) => computeCompletionHours(t))
+      .filter((h): h is number => h !== null);
+    return {
+      category,
+      tasksCompleted: tasks.length,
+      totalPoints: catPoints,
+      avgCompletionHours: catHours.length > 0
+        ? Math.round((catHours.reduce((a, b) => a + b, 0) / catHours.length) * 10) / 10
+        : null,
+    };
+  }).sort((a, b) => a.category.localeCompare(b.category));
+
   logger.info(`Velocity: ${totalTasksCompleted} tasks done, ${totalPoints} points across ${sprints.length} sprints`);
 
   return {
     sprints,
+    byCategory,
     overall: {
       totalTasksCompleted,
       totalPoints,

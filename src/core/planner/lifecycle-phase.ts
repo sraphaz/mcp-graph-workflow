@@ -384,6 +384,7 @@ const PHASE_EXEMPT_TOOLS = new Set([
   "list", "show", "search", "metrics", "export", "snapshot",
   "context", "rag_context", "next", "analyze",
   "read_memory", "list_memories", "list_skills",
+  "update_node",  // deprecated wrapper for node(action:update) — exempt from phase warnings
 ]);
 
 /**
@@ -674,8 +675,8 @@ export function detectWarnings(
   const gateWarnings = checkToolGate(doc, phase, toolName, mode);
   warnings.push(...gateWarnings);
 
-  // Warn if tool is not recommended for current phase
-  if (!guidance.suggestedTools.includes(toolName)) {
+  // Warn if tool is not recommended for current phase (exempt tools skip this)
+  if (!PHASE_EXEMPT_TOOLS.has(toolName) && !guidance.suggestedTools.includes(toolName)) {
     warnings.push({
       code: "tool_not_recommended",
       message: `Tool "${toolName}" não é recomendada para fase ${phase}. Sugeridas: ${guidance.suggestedTools.join(", ")}`,
@@ -705,7 +706,10 @@ export function detectWarnings(
   }
 
   if (phase === "IMPLEMENT" && toolName === "update_status") {
-    const hasAcceptanceCriteria = doc.nodes.some((n) => n.type === "acceptance_criteria");
+    const hasAcceptanceCriteria = doc.nodes.some(
+      (n) => n.type === "acceptance_criteria" ||
+             (n.acceptanceCriteria && n.acceptanceCriteria.length > 0),
+    );
     if (!hasAcceptanceCriteria) {
       warnings.push({
         code: "no_acceptance_criteria",

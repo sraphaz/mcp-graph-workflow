@@ -37,6 +37,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
       sprint: z.string().nullable().optional().describe("Sprint identifier (add/update)"),
       acceptanceCriteria: z.array(z.string()).optional().describe("Acceptance criteria (add/update)"),
       acceptanceCriteria_append: z.array(z.string()).optional().describe("Append to existing acceptance criteria without replacing (update only)"),
+      testFiles: z.array(z.string()).optional().describe("Test file paths that cover this node's ACs (add/update)"),
       blocked: z.boolean().optional().describe("Whether the node is blocked (add)"),
       autoSequence: z.boolean().optional().describe("Auto-create depends_on edge to previous sibling when parentId is set (add only)"),
       metadata: z.record(z.string(), z.unknown()).optional().describe("Custom metadata (add)"),
@@ -59,7 +60,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         metadata: z.record(z.string(), z.unknown()).optional(),
       })).max(50).optional().describe("Array of nodes for batch_add (max 50)"),
     },
-    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, blocked, autoSequence, metadata, nodes }) => {
+    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, testFiles, blocked, autoSequence, metadata, nodes }) => {
       logger.debug("tool:node", { action, id, type, title });
 
       if (action === "add") {
@@ -89,6 +90,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
           parentId,
           sprint,
           acceptanceCriteria,
+          testFiles,
           blocked,
           metadata,
           createdAt: timestamp,
@@ -162,6 +164,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         if (sprint !== undefined) fields.sprint = sprint;
         if (parentId !== undefined) fields.parentId = parentId;
         if (mergedAC !== undefined) fields.acceptanceCriteria = mergedAC;
+        if (testFiles !== undefined) fields.testFiles = testFiles;
         if (metadata !== undefined) fields.metadata = metadata;
 
         // Bug #036: reject self-parenting and circularity in update action

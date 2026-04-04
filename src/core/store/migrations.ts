@@ -804,6 +804,30 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_changelog_project ON node_changelog(project_id);
     `,
   },
+  {
+    version: 24,
+    description: "Add test_files column to nodes for linking test files to ACs",
+    sql: `
+      ALTER TABLE nodes ADD COLUMN test_files TEXT; -- JSON array of test file paths
+    `,
+  },
+  {
+    version: 25,
+    description: "Task templates for reusable task patterns",
+    sql: `
+      CREATE TABLE IF NOT EXISTS task_templates (
+        id          TEXT PRIMARY KEY,
+        project_id  TEXT NOT NULL REFERENCES projects(id),
+        name        TEXT NOT NULL,
+        description TEXT NOT NULL,
+        subtasks    TEXT NOT NULL, -- JSON array of template subtasks
+        created_at  TEXT NOT NULL,
+        updated_at  TEXT NOT NULL,
+        UNIQUE(project_id, name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_templates_project ON task_templates(project_id);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

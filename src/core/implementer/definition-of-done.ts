@@ -1,6 +1,6 @@
 /**
  * Definition of Done — composite gate for IMPLEMENT task completion.
- * Validates 8 checks (4 required + 4 recommended) before marking a task as done.
+ * Validates 9 checks (4 required + 5 recommended) before marking a task as done.
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
@@ -138,7 +138,19 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     severity: "recommended",
   });
 
-  // 8. has_estimate — xpSize or estimateMinutes defined
+  // 8. has_test_files — test file paths linked to ACs
+  const testFileCount = node.testFiles?.length ?? 0;
+  const hasTestFiles = testFileCount > 0;
+  checks.push({
+    name: "has_test_files",
+    passed: hasTestFiles,
+    details: hasTestFiles
+      ? `${testFileCount} test file(s) linked`
+      : "No test files linked — consider adding testFiles",
+    severity: "recommended",
+  });
+
+  // 9. has_estimate — xpSize or estimateMinutes defined
   const hasEstimate = !!(node.xpSize || node.estimateMinutes);
   checks.push({
     name: "has_estimate",

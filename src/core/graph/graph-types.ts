@@ -64,6 +64,7 @@ export interface GraphNode {
   sprint?: string | null;
   sourceRef?: SourceRef;
   acceptanceCriteria?: string[];
+  testFiles?: string[];
   blocked?: boolean;
   metadata?: {
     inferred?: boolean;

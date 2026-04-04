@@ -36,6 +36,7 @@ export const AcNodeReportSchema = z.object({
   parsedAcs: z.array(ParsedAcSchema),
   investChecks: z.array(InvestCheckSchema),
   vagueTerms: z.array(z.string()),
+  suggestions: z.array(z.string()).optional(),
 });
 
 export const AcQualityReportSchema = z.object({

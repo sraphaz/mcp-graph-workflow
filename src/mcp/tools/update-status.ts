@@ -100,6 +100,28 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
       if (status === "done" && !rationale) {
         result.hint = "Tip: provide a 'rationale' parameter when marking tasks done to capture learnings for future RAG context.";
       }
+
+      // Suggest parent promotion when all children are done
+      if (status === "done" && updated.parentId) {
+        try {
+          const siblings = store.getChildNodes(updated.parentId);
+          const allDone = siblings.length > 0 && siblings.every((s) => s.status === "done");
+          if (allDone) {
+            const parent = store.getNodeById(updated.parentId);
+            if (parent && parent.status !== "done") {
+              result.epicPromotion = {
+                parentId: parent.id,
+                parentTitle: parent.title,
+                childrenDone: siblings.length,
+                suggestion: `Todas as ${siblings.length} tasks filhas estão done. Considere marcar "${parent.title}" (${parent.id}) como done.`,
+              };
+            }
+          }
+        } catch (err) {
+          logger.debug("tool:update_status:epic_promotion_check_failed", { error: String(err) });
+        }
+      }
+
       return mcpText(result);
     },
   );

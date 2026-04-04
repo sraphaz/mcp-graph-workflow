@@ -191,7 +191,7 @@ describe("detectWarnings default strict", () => {
 
   it("should keep tool_not_recommended as info regardless of strict default", () => {
     const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
-    const warnings = detectWarnings(doc, "IMPLEMENT", "export");
+    const warnings = detectWarnings(doc, "IMPLEMENT", "import_prd");
 
     const notRecommended = warnings.find((w) => w.code === "tool_not_recommended");
     expect(notRecommended).toBeDefined();

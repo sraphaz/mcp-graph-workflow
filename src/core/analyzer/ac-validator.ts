@@ -49,9 +49,17 @@ export function validateAcQuality(doc: GraphDocument, nodeId?: string, all?: boo
     const vagueTerms = detectVagueTerms(acs);
 
     const passedChecks = investChecks.filter((c) => c.passed).length;
-    const score = investChecks.length > 0
+    const baseScore = investChecks.length > 0
       ? Math.round((passedChecks / investChecks.length) * 100)
       : 0;
+
+    // Measurability bonus: up to 15 points for ACs with concrete values
+    const measurableCount = parsedAcs.filter((p) => p.isMeasurable).length;
+    const measurableRatio = parsedAcs.length > 0 ? measurableCount / parsedAcs.length : 0;
+    const measurabilityBonus = Math.round(measurableRatio * 15);
+    const score = Math.min(100, baseScore + measurabilityBonus);
+
+    const suggestions = suggestReformulations(acs, parsedAcs);
 
     reports.push({
       nodeId: node.id,
@@ -60,6 +68,7 @@ export function validateAcQuality(doc: GraphDocument, nodeId?: string, all?: boo
       parsedAcs,
       investChecks,
       vagueTerms,
+      ...(suggestions.length > 0 ? { suggestions } : {}),
     });
   }
 
@@ -130,8 +139,8 @@ function runInvestChecks(
       : "AC descreve comportamento, não implementação",
   });
 
-  // V — Valuable (has clear outcome)
-  const hasOutcome = parsedAcs.some((p) => p.isTestable);
+  // V — Valuable (has clear outcome — testable verb or measurable assertion)
+  const hasOutcome = parsedAcs.some((p) => p.isTestable || p.isMeasurable);
   checks.push({
     criterion: "Valuable",
     passed: hasOutcome,
@@ -179,4 +188,25 @@ function runInvestChecks(
 function detectVagueTerms(acs: string[]): string[] {
   const allText = acs.join(" ").toLowerCase();
   return VAGUE_TERMS.filter((term) => allText.includes(term));
+}
+
+function suggestReformulations(acs: string[], parsedAcs: ReturnType<typeof parseAc>[]): string[] {
+  const suggestions: string[] = [];
+  for (let i = 0; i < acs.length; i++) {
+    const ac = acs[i];
+    const parsed = parsedAcs[i];
+    if (parsed.isTestable && parsed.isMeasurable) continue;
+
+    const lower = ac.toLowerCase();
+    if (/rápido|fast|performance|velocidade|speed/i.test(lower)) {
+      suggestions.push(`"${ac}" → sugestão: "deve responder em menos de <N>ms"`);
+    } else if (/fácil|easy|intuiti|simples|simple/i.test(lower)) {
+      suggestions.push(`"${ac}" → sugestão: "usuário deve completar a ação em no máximo <N> cliques"`);
+    } else if (/seguro|secure|safe/i.test(lower)) {
+      suggestions.push(`"${ac}" → sugestão: "deve rejeitar requests sem token com status 401"`);
+    } else if (!parsed.isTestable) {
+      suggestions.push(`"${ac}" → adicionar verbo concreto (deve, retorna, exibe) e valor mensurável`);
+    }
+  }
+  return suggestions;
 }

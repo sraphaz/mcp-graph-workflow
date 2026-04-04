@@ -39,6 +39,7 @@ export const GraphNodeSchema = z.object({
   sprint: z.string().nullable().optional(),
   sourceRef: SourceRefSchema.optional(),
   acceptanceCriteria: z.array(z.string()).optional(),
+  testFiles: z.array(z.string()).optional(),
   blocked: z.boolean().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),

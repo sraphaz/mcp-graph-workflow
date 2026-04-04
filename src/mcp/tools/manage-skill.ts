@@ -15,9 +15,13 @@ import {
   getCustomSkills,
   getCustomSkillByName,
 } from "../../core/skills/skill-store.js";
+import {
+  createTaskTemplate,
+  listTaskTemplates,
+} from "../../core/skills/template-store.js";
 import { getBuiltInSkills, getSkillsByPhase, getSkillByName } from "../../core/skills/built-in-skills.js";
 import type { LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
-import { CustomSkillInputSchema } from "../../schemas/skill.schema.js";
+import { CustomSkillInputSchema, TaskTemplateInputSchema } from "../../schemas/skill.schema.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
@@ -28,7 +32,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
     "Manage skills: list built-in skills, enable/disable, CRUD custom skills.",
     {
       action: z
-        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences"])
+        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates"])
         .describe("Action to perform"),
       skillName: z
         .string()
@@ -52,8 +56,22 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
         })
         .optional()
         .describe("Skill data (for create/update)"),
+      template: z
+        .object({
+          name: z.string(),
+          description: z.string(),
+          subtasks: z.array(z.object({
+            title: z.string(),
+            type: z.enum(["task", "subtask"]).optional(),
+            acceptanceCriteria: z.array(z.string()).optional(),
+            tags: z.array(z.string()).optional(),
+            xpSize: z.enum(["XS", "S", "M", "L", "XL"]).optional(),
+          })),
+        })
+        .optional()
+        .describe("Template data (for create_template)"),
     },
-    async ({ action, skillName, skillId, phase, data }) => {
+    async ({ action, skillName, skillId, phase, data, template }) => {
       logger.debug("tool:manage_skill", { action, skillName, skillId });
 
       const project = store.getProject();
@@ -167,6 +185,25 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             const obj: Record<string, boolean> = {};
             for (const [k, v] of prefs) obj[k] = v;
             return mcpText({ preferences: obj });
+          }
+
+          case "create_template": {
+            if (!template) {
+              return mcpError("template parameter required for create_template");
+            }
+            const parsed = TaskTemplateInputSchema.safeParse(template);
+            if (!parsed.success) {
+              return mcpError(`Validation failed: ${JSON.stringify(parsed.error.issues)}`);
+            }
+            const created = createTaskTemplate(db, projectId, parsed.data);
+            logger.info("tool:manage_skill:create_template", { id: created.id, name: created.name });
+            return mcpText({ ok: true, template: created });
+          }
+
+          case "list_templates": {
+            const templates = listTaskTemplates(db, projectId);
+            logger.info("tool:manage_skill:list_templates", { count: templates.length });
+            return mcpText({ ok: true, total: templates.length, templates });
           }
 
           default:

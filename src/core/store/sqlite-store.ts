@@ -51,6 +51,7 @@ interface NodeRow {
   source_end_line: number | null;
   source_confidence: number | null;
   acceptance_criteria: string | null;
+  test_files: string | null;
   blocked: number;
   metadata: string | null;
   created_at: string;
@@ -94,6 +95,7 @@ function nodeToRow(node: GraphNode, projectId: string): NodeRow {
     acceptance_criteria: node.acceptanceCriteria
       ? JSON.stringify(node.acceptanceCriteria)
       : null,
+    test_files: node.testFiles ? JSON.stringify(node.testFiles) : null,
     blocked: node.blocked ? 1 : 0,
     metadata: node.metadata ? JSON.stringify(node.metadata) : null,
     created_at: node.createdAt,
@@ -123,6 +125,9 @@ function rowToNode(row: NodeRow): GraphNode {
   if (row.sprint) node.sprint = row.sprint;
   if (row.acceptance_criteria) {
     try { node.acceptanceCriteria = JSON.parse(row.acceptance_criteria); } catch { node.acceptanceCriteria = []; }
+  }
+  if (row.test_files) {
+    try { node.testFiles = JSON.parse(row.test_files); } catch { node.testFiles = []; }
   }
   if (row.metadata) {
     try { node.metadata = JSON.parse(row.metadata); } catch { node.metadata = {}; }
@@ -467,12 +472,12 @@ export class SqliteStore {
           (id, project_id, type, title, description, status, priority,
            xp_size, estimate_minutes, tags, parent_id, sprint,
            source_file, source_start_line, source_end_line, source_confidence,
-           acceptance_criteria, blocked, metadata, created_at, updated_at)
+           acceptance_criteria, test_files, blocked, metadata, created_at, updated_at)
          VALUES
           (@id, @project_id, @type, @title, @description, @status, @priority,
            @xp_size, @estimate_minutes, @tags, @parent_id, @sprint,
            @source_file, @source_start_line, @source_end_line, @source_confidence,
-           @acceptance_criteria, @blocked, @metadata, @created_at, @updated_at)`,
+           @acceptance_criteria, @test_files, @blocked, @metadata, @created_at, @updated_at)`,
       )
       .run(row);
     this._eventBus?.emitTyped("node:created", { nodeId: node.id, title: node.title, nodeType: node.type });
@@ -554,6 +559,7 @@ export class SqliteStore {
         | "sprint"
         | "blocked"
         | "acceptanceCriteria"
+        | "testFiles"
         | "metadata"
       >
     >,
@@ -613,6 +619,10 @@ export class SqliteStore {
           : null,
       );
     }
+    if (fields.testFiles !== undefined) {
+      setClauses.push("test_files = ?");
+      params.push(fields.testFiles ? JSON.stringify(fields.testFiles) : null);
+    }
     if (fields.metadata !== undefined) {
       setClauses.push("metadata = ?");
       params.push(fields.metadata ? JSON.stringify(fields.metadata) : null);
@@ -645,6 +655,7 @@ export class SqliteStore {
       sprint: (n) => n.sprint,
       blocked: (n) => n.blocked,
       acceptanceCriteria: (n) => n.acceptanceCriteria,
+      testFiles: (n) => n.testFiles,
       metadata: (n) => n.metadata,
     };
 
