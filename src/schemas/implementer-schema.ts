@@ -28,7 +28,6 @@ export const ImplementDoneReportSchema = z.object({
   summary: z.string(),
 });
 
-export type ImplementGrade = z.infer<typeof ImplementGradeSchema>;
 export type DodSeverity = z.infer<typeof DodSeveritySchema>;
 export type DodCheck = z.infer<typeof DodCheckSchema>;
 export type ImplementDoneReport = z.infer<typeof ImplementDoneReportSchema>;

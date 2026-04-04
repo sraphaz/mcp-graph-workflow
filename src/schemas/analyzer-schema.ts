@@ -26,7 +26,6 @@ export const PrdQualityReportSchema = z.object({
 export type PrdQualityReport = z.infer<typeof PrdQualityReportSchema>;
 export type PrdQualitySection = z.infer<typeof PrdQualitySectionSchema>;
 export type SectionQuality = z.infer<typeof SectionQualitySchema>;
-export type PrdQualityGrade = z.infer<typeof PrdQualityGradeSchema>;
 
 // ── Scope Analysis ──
 

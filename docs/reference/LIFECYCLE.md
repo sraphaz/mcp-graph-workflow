@@ -6,7 +6,7 @@
 
 ## Visão Geral
 
-O mcp-graph é o **source of truth** do ciclo de desenvolvimento. Ele transforma PRDs em grafos de execução persistentes (SQLite), permitindo que agents trabalhem de forma estruturada, rastreável e eficiente em tokens. Para um resumo prático das 8 fases com gate checks e analyze modes, veja o [Advanced Guide §1](../guides/ADVANCED-GUIDE.md).
+O mcp-graph é o **source of truth** do ciclo de desenvolvimento. Ele transforma PRDs em grafos de execução persistentes (SQLite), permitindo que agents trabalhem de forma estruturada, rastreável e eficiente em tokens. Para um resumo prático das 9 fases com gate checks e analyze modes, veja o [Advanced Guide §1](../guides/ADVANCED-GUIDE.md).
 
 ```mermaid
 graph TD
@@ -131,7 +131,7 @@ capture:completed → Index captured content
 
 ---
 
-## O Ciclo Dev Flow (8 Fases)
+## O Ciclo Dev Flow (9 Fases)
 
 O `dev-flow-orchestrator` conduz o ciclo completo. Cada fase tem skills específicos, uso de agents e protocolo com o mcp-graph.
 
@@ -143,7 +143,8 @@ graph LR
     I --> V[VALIDATE]
     V --> R[REVIEW]
     R --> H[HANDOFF]
-    H --> L[LISTENING]
+    H --> DEP[DEPLOY]
+    DEP --> L[LISTENING]
     L --> |feedback| A
 
     style A fill:#2196f3,color:#fff
@@ -153,6 +154,7 @@ graph LR
     style V fill:#06b6d4,color:#fff
     style R fill:#ec4899,color:#fff
     style H fill:#10b981,color:#fff
+    style DEP fill:#ef4444,color:#fff
     style L fill:#9e9e9e,color:#fff
 ```
 
@@ -444,7 +446,66 @@ sequenceDiagram
 
 ---
 
-### Fase 8: LISTENING — Feedback loop
+### Fase 8: DEPLOY — Validar CI/CD e publicar release
+
+**Objetivo:** Garantir que o CI pipeline está verde, executar release, e validar post-release com smoke tests.
+
+**Skills:**
+- `/deployment-engineer` — Pipeline de deploy, validação de ambiente
+- `/devops-deploy` — CI/CD automation, release procedures
+- `/git-pushing` — Push seguro com verificações
+
+**Protocolo mcp-graph:**
+1. `analyze(mode: "deploy_ready")` — Verifica readiness: 100% tasks done, sem blocked nodes, snapshot existe, sem cycles, sem in_progress tasks
+2. `snapshot` — Criar snapshot pré-release para rollback
+3. `export` — Exportar grafo como documentação da release
+4. `metrics` — Velocity e stats finais do sprint
+
+**Gate check (HANDOFF → DEPLOY):** `checkDeployReadiness()` deve retornar `ready: true`.
+
+**Deploy Readiness Report — 7 checks:**
+
+| # | Check | Severity | Lógica |
+|---|-------|----------|--------|
+| 1 | `all_tasks_done` | required | 100% das tasks estão done |
+| 2 | `no_blocked_nodes` | required | Zero nodes bloqueados |
+| 3 | `has_snapshot` | required | Snapshot existe no grafo |
+| 4 | `no_cycles` | required | Sem ciclos de dependência |
+| 5 | `no_in_progress` | required | Zero tasks em in_progress |
+| 6 | `ac_coverage` | recommended | ≥80% tasks com acceptance criteria |
+| 7 | `knowledge_captured` | recommended | Knowledge store tem conteúdo |
+
+**Score e grading:** 0-100 pontos, grade A-F. Checks required devem todos passar para `ready: true`.
+
+**Princípios:**
+- CI green antes de qualquer release
+- Semantic versioning obrigatório
+- Post-release smoke tests validam deploy
+- Rollback ready — snapshot permite reverter
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant MCP as mcp-graph
+
+    A->>MCP: analyze(mode: "deploy_ready")
+    MCP-->>A: DeployReadinessReport { ready: true, score: 95, grade: "A" }
+    A->>MCP: snapshot(action: "create")
+    MCP-->>A: Snapshot #42 criado (pré-release)
+    A->>MCP: export(action: "json")
+    MCP-->>A: Graph JSON exportado
+    A->>A: CI pipeline green ✅
+    A->>A: Semantic version bump → v5.35.0
+    A->>A: Post-release smoke tests ✅
+    A->>MCP: write_memory("release-v5.35.0")
+    MCP-->>A: Memória salva
+```
+
+**Prerequisite para DEPLOY → LISTENING:** `analyze(deploy_ready)` + `snapshot` devem ser chamados antes da transição.
+
+---
+
+### Fase 9: LISTENING — Feedback loop
 
 **Objetivo:** Demo para stakeholders, coletar feedback, alimentar próxima iteração.
 
@@ -503,6 +564,17 @@ graph TB
         S19[/observability-engineer/]
     end
 
+    subgraph "HANDOFF"
+        S20[/pr-writer/]
+        S21[/track-with-mcp-graph/]
+    end
+
+    subgraph "DEPLOY"
+        S22[/deployment-engineer/]
+        S23[/devops-deploy/]
+        S24[/git-pushing/]
+    end
+
     ANALYZE --> DESIGN --> PLAN --> IMPLEMENT --> VALIDATE --> REVIEW
 
     style ANALYZE fill:#2196f3,color:#fff
@@ -521,7 +593,7 @@ graph TB
 erDiagram
     GraphNode {
         string id PK
-        enum type "epic|task|subtask|requirement|constraint|milestone|acceptance_criteria|risk|decision"
+        enum type "epic|task|subtask|requirement|constraint|milestone|acceptance_criteria|risk|decision|interface|formula|state_machine|contract|scenario|performance_budget|asset|data_table|metric|config_schema"
         string title
         string description
         enum status "backlog|ready|in_progress|blocked|done"
@@ -541,7 +613,7 @@ erDiagram
         string id PK
         string from FK
         string to FK
-        enum relationType "depends_on|blocks|parent_of|child_of|related_to|implements|derived_from"
+        enum relationType "depends_on|blocks|parent_of|child_of|related_to|priority_over|implements|derived_from|provides|consumes|requires_asset"
         int weight
         string reason
         datetime createdAt
@@ -608,6 +680,9 @@ graph TD
 | **REVIEW** | Code Intelligence `impact_analysis` | Verificar blast radius das mudanças no review |
 | **REVIEW** | `export_graph`, `export_mermaid` | Exportar para visualização |
 | **HANDOFF** | `update_status (bulk) → done` | Fechar PRD |
+| **DEPLOY** | `analyze(deploy_ready)` | Verificar readiness para release |
+| **DEPLOY** | `snapshot(create)` | Snapshot pré-release |
+| **DEPLOY** | `export`, `metrics` | Documentar release e métricas finais |
 | **LISTENING** | `node` | Registrar feedback (action: add) |
 
 ---
@@ -645,7 +720,8 @@ Ativar: `set_phase { prerequisites: "strict" }` (ou `"advisory"` / `"off"`).
 | IMPLEMENT | `update_status(done)` | `context` + `rag_context` + `analyze(implement_done)` | node |
 | VALIDATE | `update_status(done)` | `validate` + `analyze(validate_ready)` | mixed |
 | REVIEW | `set_phase(HANDOFF)` | `analyze(review_ready)` + `export` | project |
-| HANDOFF | `set_phase(LISTENING)` | `analyze(handoff_ready)` + `snapshot` + `write_memory` | project |
+| HANDOFF | `set_phase(DEPLOY)` | `analyze(handoff_ready)` + `snapshot` + `write_memory` | project |
+| DEPLOY | `set_phase(LISTENING)` | `analyze(deploy_ready)` + `snapshot` | project |
 
 ### Full Enforcement
 
@@ -667,6 +743,7 @@ O lifecycle wrapper (`_lifecycle` block) agora sugere automaticamente sistemas c
 | **VALIDATE** | — | — | — | `browser_navigate`, `browser_snapshot`, `browser_click` |
 | **REVIEW** | `read_memory` | `impact_analysis`, `find_references` | — | — |
 | **HANDOFF** | `write_memory` | — | — | — |
+| **DEPLOY** | `write_memory` | — | — | — |
 | **LISTENING** | — | — | — | — |
 
 Exemplo de `_lifecycle` response com sugestões:
@@ -876,7 +953,7 @@ graph TD
 
 ## Resumo
 
-O mcp-graph não é apenas um task tracker. É o **Hub de Inteligência Local** — motor de execução com 30 tools MCP que:
+O mcp-graph não é apenas um task tracker. É o **Hub de Inteligência Local** — motor de execução com 49 tools MCP que:
 
 1. **Parseia PRDs** automaticamente em grafos de dependência
 2. **Orquestra 3 MCPs + 2 sistemas nativos** (mcp-graph, Context7, Playwright + Native Memories, Code Intelligence) via `IntegrationOrchestrator` event-driven

@@ -55,6 +55,8 @@ import { registerCodeIntelligence } from "./code-intelligence.js";
 // Pipeline tools (v6.0)
 import { registerStartTask } from "./start-task.js";
 import { registerFinishTask } from "./finish-task.js";
+// Predictive analytics (v6.0)
+import { registerForecast } from "./forecast.js";
 // Deprecated tools (backward compat — will be removed in v7.0)
 import { registerAddNode } from "./add-node.js";
 import { registerUpdateNode } from "./update-node.js";
@@ -131,6 +133,9 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   // Pipeline tools (v6.0)
   registerStartTask(server, store);
   registerFinishTask(server, store);
+
+  // Predictive analytics (v6.0)
+  registerForecast(server, store);
 
   // Deprecated tools (backward compat — will be removed in v7.0)
   registerAddNode(server, store);

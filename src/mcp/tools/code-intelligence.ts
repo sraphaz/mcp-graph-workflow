@@ -293,12 +293,49 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
 
           case "type_hierarchy_super":
           case "type_hierarchy_sub": {
-            return mcpText({
-              ok: true,
-              mode,
-              supported: false,
-              message: "Type hierarchy not yet implemented",
-            });
+            if (!query) return mcpError(`${mode} mode requires: query (symbol name)`);
+            const { CodeStore: ThCodeStore } = await import("../../core/code/code-store.js");
+            const thStore = new ThCodeStore(store.getDb());
+            const thProject = store.getActiveProject();
+            const thProjectId = thProject?.id ?? "default";
+
+            // Find the symbol by name
+            const thSymbols = thStore.searchSymbols(query, thProjectId, 5);
+            if (thSymbols.length === 0) {
+              return mcpText({ ok: true, mode, query, hierarchy: [], message: "No symbols found matching query" });
+            }
+
+            const targetSymbol = thSymbols[0].symbol;
+            const direction = mode === "type_hierarchy_super" ? "supertypes" : "subtypes";
+            const relTypes = ["extends", "implements"];
+
+            // For supertypes: find relations FROM target TO parents
+            // For subtypes: find relations FROM children TO target
+            const hierarchy: Array<{ name: string; kind: string; file: string; relationType: string }> = [];
+
+            if (direction === "supertypes") {
+              const rels = thStore.getRelationsFrom(targetSymbol.id);
+              for (const rel of rels) {
+                if (!relTypes.includes(rel.type)) continue;
+                const parentSym = thStore.getSymbol(rel.toSymbol);
+                if (parentSym) {
+                  hierarchy.push({ name: parentSym.name, kind: parentSym.kind, file: parentSym.file, relationType: rel.type });
+                }
+              }
+            } else {
+              const rels = thStore.getRelationsTo(targetSymbol.id);
+              for (const rel of rels) {
+                if (!relTypes.includes(rel.type)) continue;
+                const childSym = thStore.getSymbol(rel.fromSymbol);
+                if (childSym) {
+                  hierarchy.push({ name: childSym.name, kind: childSym.kind, file: childSym.file, relationType: rel.type });
+                }
+              }
+            }
+
+            const thResponse = { ok: true, mode, query, direction, symbol: targetSymbol.name, hierarchy };
+            const thText = JSON.stringify(thResponse, null, 2);
+            return mcpText({ ...thResponse, estimatedTokens: estimateTokens(thText) });
           }
 
           case "diagnostics": {
@@ -329,8 +366,29 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
 
           case "workspace_symbols": {
             if (!query) return mcpError("workspace_symbols mode requires: query");
-            // Bug #042: return error instead of misleading ok:true with supported:false
-            return mcpError("workspace_symbols is not implemented. Use the 'search' tool for symbol search instead.");
+            const { CodeStore: WsCodeStore } = await import("../../core/code/code-store.js");
+            const { searchCodeSymbols } = await import("../../core/code/code-search.js");
+            const codeStore = new WsCodeStore(store.getDb());
+            const activeProject = store.getActiveProject();
+            const projectId = activeProject?.id ?? "default";
+            const symbolResults = searchCodeSymbols(codeStore, query, projectId, { limit: 30, rerank: true });
+            const wsResponse = {
+              ok: true,
+              mode: "workspace_symbols" as const,
+              query,
+              total: symbolResults.length,
+              symbols: symbolResults.map((r) => ({
+                name: r.symbol.name,
+                kind: r.symbol.kind,
+                file: r.symbol.file,
+                line: r.symbol.startLine,
+                language: r.symbol.language,
+                signature: r.symbol.signature,
+                score: r.score,
+              })),
+            };
+            const wsText = JSON.stringify(wsResponse, null, 2);
+            return mcpText({ ...wsResponse, estimatedTokens: estimateTokens(wsText) });
           }
 
           // -----------------------------------------------------------------

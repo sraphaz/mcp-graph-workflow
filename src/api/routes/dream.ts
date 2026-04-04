@@ -4,6 +4,7 @@ import { DreamEngine } from "../../core/dream/dream-engine.js";
 import { DreamCycleConfigSchema } from "../../core/dream/dream-types.js";
 import { getDreamCycle, listDreamCycles } from "../../core/dream/dream-store.js";
 import { GraphEventBus } from "../../core/events/event-bus.js";
+import { EmbeddingStore } from "../../core/rag/embedding-store.js";
 
 export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus): Router {
   const router = Router();
@@ -12,7 +13,8 @@ export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus):
 
   function getEngine(): DreamEngine {
     if (!engine) {
-      engine = new DreamEngine(storeRef.current.getDb(), bus);
+      const embeddingStore = new EmbeddingStore(storeRef.current);
+      engine = new DreamEngine(storeRef.current.getDb(), bus, embeddingStore);
     }
     return engine;
   }

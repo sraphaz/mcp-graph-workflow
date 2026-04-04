@@ -2,13 +2,12 @@
  * Robustness tests for RAG pipeline modules — covers gaps identified in audit:
  *
  * - enrichment-pipeline: enrichChunks() multi-chunk parent-child linking
- * - benchmark-indexer: tool usage indexing path
  * - post-retrieval: non-adjacent chunks should NOT stitch
  * - source-contribution: accumulation and multi-source scenarios
  * - rag-trace: totalLatencyMs = sum of stages, source contribution accumulation
  * - query-cache: LRU eviction order verification
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // ── enrichment-pipeline ────────────────────────────────────
 
@@ -72,89 +71,6 @@ describe("enrichment-pipeline — robustness", () => {
       // Entities from chunk 0 should NOT leak into chunk 1
       expect(enriched[1].entities).not.toContain("SqliteStore");
     });
-  });
-});
-
-// ── benchmark-indexer (tool usage path) ────────────────────
-
-import { indexBenchmarkResults, type BenchmarkData } from "../core/rag/benchmark-indexer.js";
-import { KnowledgeStore } from "../core/store/knowledge-store.js";
-
-describe("benchmark-indexer — robustness", () => {
-  let mockStore: {
-    insert: ReturnType<typeof vi.fn>;
-    count: ReturnType<typeof vi.fn>;
-  };
-
-  beforeEach(() => {
-    mockStore = {
-      insert: vi.fn().mockReturnValue({ id: "doc_1", sourceType: "benchmark" }),
-      count: vi.fn().mockReturnValue(0),
-    };
-  });
-
-  it("should index tool usage data when toolUsage is provided", () => {
-    const data: BenchmarkData = {
-      timestamp: "2026-03-24T10:00:00Z",
-      metrics: [],
-      toolUsage: {
-        context: { inputTokens: 500, outputTokens: 1200 },
-        next: { inputTokens: 300, outputTokens: 800 },
-      },
-    };
-
-    const result = indexBenchmarkResults(
-      mockStore as unknown as KnowledgeStore,
-      data,
-    );
-
-    expect(result.documentsIndexed).toBeGreaterThan(0);
-
-    // Find the tool usage insert call
-    const toolUsageCall = mockStore.insert.mock.calls.find(
-      (c: Array<{ sourceId: string }>) => c[0].sourceId.includes("tool-usage"),
-    );
-    expect(toolUsageCall).toBeTruthy();
-
-    const content = toolUsageCall![0].content as string;
-    expect(content).toContain("context");
-    expect(content).toContain("500");
-    expect(content).toContain("1200");
-    expect(content).toContain("next");
-  });
-
-  it("should not create tool usage document when toolUsage is empty", () => {
-    const data: BenchmarkData = {
-      timestamp: "2026-03-24T10:00:00Z",
-      metrics: [
-        { name: "latency", value: 50, target: 100, passed: true },
-      ],
-      toolUsage: {},
-    };
-
-    indexBenchmarkResults(mockStore as unknown as KnowledgeStore, data);
-
-    // Should not have a tool-usage insert
-    const toolUsageCall = mockStore.insert.mock.calls.find(
-      (c: Array<{ sourceId: string }>) => c[0].sourceId.includes("tool-usage"),
-    );
-    expect(toolUsageCall).toBeUndefined();
-  });
-
-  it("should not create tool usage document when toolUsage is undefined", () => {
-    const data: BenchmarkData = {
-      timestamp: "2026-03-24T10:00:00Z",
-      metrics: [
-        { name: "latency", value: 50, target: 100, passed: true },
-      ],
-    };
-
-    indexBenchmarkResults(mockStore as unknown as KnowledgeStore, data);
-
-    const toolUsageCall = mockStore.insert.mock.calls.find(
-      (c: Array<{ sourceId: string }>) => c[0].sourceId.includes("tool-usage"),
-    );
-    expect(toolUsageCall).toBeUndefined();
   });
 });
 

@@ -161,6 +161,15 @@ export class EmbeddingStore {
   }
 
   /**
+   * Get all embedding IDs.
+   */
+  getAllIds(): string[] {
+    const stmt = this.db.prepare("SELECT id FROM embeddings");
+    const rows = stmt.all() as Array<{ id: string }>;
+    return rows.map((r) => r.id);
+  }
+
+  /**
    * Count stored embeddings.
    */
   count(): number {

@@ -1,16 +1,17 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 45 tools + 6 deprecated organized in 6 categories — complete parameter reference.
+> 49 tools + 6 deprecated organized in 8 categories — complete parameter reference.
 
 ## Summary
 
 | Category | Tools | Count |
 |----------|-------|-------|
-| Core | analyze, clone_node, context, delete_memory, edge, export, help, import_graph, import_prd, init, journey, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, sync_stack_docs, update_status, validate, write_memory | 30 |
+| Core | analyze, clone_node, context, delete_memory, edge, export, help, import_graph, import_prd, init, journey, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, sync_stack_docs, template, update_status, validate, write_memory | 31 |
 | Translation | analyze_translation, translate_code, translation_jobs | 3 |
 | Code Intelligence | code_intelligence | 1 |
 | Knowledge | export_knowledge, knowledge_feedback, knowledge_stats | 3 |
+| DaVinci Converter | davinci_analyze, davinci_convert, davinci_build | 3 |
 | Siebel CRM | siebel_analyze, siebel_composer, siebel_env, siebel_generate_sif, siebel_import_docs, siebel_import_sif, siebel_search, siebel_validate | 8 |
 | Deprecated | add_node, delete_node, list_skills, update_node, validate_ac, validate_task | 6 |
 <!-- mcp-graph:tools-summary:end -->
@@ -133,15 +134,27 @@ Clone a node (optionally with all children).
 
 ### `export`
 
-Export the graph as JSON or Mermaid diagram.
+Export the graph as JSON, Mermaid diagram, or CSV.
 
 | Param | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `action` | "json"\|"mermaid" | Yes | — | Export format |
-| `format` | "flowchart"\|"mindmap" | No | `flowchart` | Mermaid diagram format (mermaid only) |
+| `action` | "json"\|"mermaid"\|"csv" | Yes | — | Export format |
+| `format` | "flowchart"\|"mindmap"\|"gantt"\|"stateDiagram" | No | `flowchart` | Mermaid diagram format (mermaid only) |
 | `direction` | "TD"\|"LR" | No | `TD` | Flow direction (mermaid flowchart only) |
-| `filterStatus` | NodeStatus[] | No | — | Only include nodes with these statuses (mermaid only) |
-| `filterType` | NodeType[] | No | — | Only include nodes with these types (mermaid only) |
+| `filterStatus` | NodeStatus[] | No | — | Only include nodes with these statuses (mermaid/csv) |
+| `filterType` | NodeType[] | No | — | Only include nodes with these types (mermaid/csv) |
+
+**Examples:**
+```
+export({ action: "mermaid", format: "gantt" })
+→ Gantt chart of tasks with sprint timelines
+
+export({ action: "csv" })
+→ CSV with columns: id, type, title, status, priority, xpSize, sprint, parentId, tags
+
+export({ action: "mermaid", format: "stateDiagram" })
+→ State diagram showing status transitions across all nodes
+```
 
 ---
 
@@ -234,6 +247,88 @@ Generate a sprint planning report with task order, missing docs, risk assessment
 | Param | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `mode` | "report"\|"next" | No | `report` | Full report or enhanced next task |
+
+### `template`
+
+Manage task templates: create reusable task structures, list available templates, apply templates to generate nodes with variable substitution.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `action` | "create"\|"list"\|"apply" | Yes | — | Action to perform |
+
+**action: "create"** — Create a reusable template:
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `name` | string | Yes | — | Template name |
+| `description` | string | No | — | Template description |
+| `definition` | object | Yes | — | Template definition (see below) |
+
+Template definition structure:
+```json
+{
+  "nodeDefinitions": [
+    {
+      "type": "task",
+      "titleTemplate": "Implement {{feature}} backend",
+      "description": "Backend implementation for {{feature}}",
+      "xpSize": "M",
+      "acceptanceCriteria": ["Unit tests pass", "API responds 200"],
+      "tags": ["backend"]
+    },
+    {
+      "type": "task",
+      "titleTemplate": "Implement {{feature}} frontend",
+      "xpSize": "M",
+      "tags": ["frontend"]
+    }
+  ],
+  "edgeDefinitions": [
+    { "fromIndex": 1, "toIndex": 0, "relationType": "depends_on" }
+  ]
+}
+```
+
+**action: "list"** — List all available templates. No additional parameters.
+
+**action: "apply"** — Instantiate a template:
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `templateId` | string | Yes | — | Template node ID to apply |
+| `variables` | Record<string, string> | No | — | Variable substitutions for `{{var}}` placeholders |
+| `parentId` | string | No | — | Parent node ID for created nodes |
+
+**Example workflow:**
+```
+// 1. Create template
+template({
+  action: "create",
+  name: "Feature Implementation",
+  definition: {
+    nodeDefinitions: [
+      { type: "task", titleTemplate: "Implement {{feature}} backend", xpSize: "M" },
+      { type: "task", titleTemplate: "Implement {{feature}} frontend", xpSize: "M" },
+      { type: "task", titleTemplate: "Write E2E tests for {{feature}}", xpSize: "S" }
+    ],
+    edgeDefinitions: [
+      { fromIndex: 1, toIndex: 0, relationType: "depends_on" },
+      { fromIndex: 2, toIndex: 1, relationType: "depends_on" }
+    ]
+  }
+})
+→ { ok: true, templateId: "tmpl_abc123" }
+
+// 2. Apply with variables
+template({
+  action: "apply",
+  templateId: "tmpl_abc123",
+  variables: { "feature": "Authentication" },
+  parentId: "epic_auth"
+})
+→ { ok: true, nodesCreated: 3, edgesCreated: 2 }
+// Creates: "Implement Authentication backend", "Implement Authentication frontend", "Write E2E tests for Authentication"
+```
 
 ---
 
@@ -360,24 +455,101 @@ The `analyze` tool is a gateway for all project analysis modes. Each mode provid
 | `tdd_check` | IMPLEMENT | TDD adherence report with testability score and suggested test specs from AC. Optional `nodeId` filter. |
 | `progress` | IMPLEMENT | Sprint burndown + velocity trend + blockers + critical path + ETA. Optional `nodeId` as sprint filter. |
 
-### Other modes
+### ANALYZE modes
 
-| Mode | Phase | Description |
-|------|-------|-------------|
-| `prd_quality` | ANALYZE | PRD quality assessment (score + grade) |
-| `scope` | ANALYZE | Scope analysis: orphans, cycles, coverage |
-| `ready` | ANALYZE | Definition of Ready check |
-| `risk` | ANALYZE | Risk matrix assessment |
-| `blockers` | ANY | Transitive blockers for a node (requires `nodeId`) |
-| `cycles` | ANY | Dependency cycle detection |
-| `critical_path` | ANY | Critical path through dependency DAG |
-| `decompose` | PLAN | Detect large tasks needing decomposition |
-| `adr` | DESIGN | ADR validation quality |
-| `traceability` | DESIGN | Requirement→decision traceability matrix |
-| `coupling` | DESIGN | Fan-in/out coupling analysis |
-| `interfaces` | DESIGN | Interface-first quality check |
-| `tech_risk` | DESIGN | Technical risk scoring |
-| `design_ready` | DESIGN | DESIGN→PLAN gate readiness |
+| Mode | Description |
+|------|-------------|
+| `prd_quality` | PRD quality assessment (score + grade + section analysis) |
+| `scope` | Scope analysis: orphans, cycles, coverage matrix, conflicts |
+| `ready` | Definition of Ready check |
+| `risk` | Risk matrix assessment |
+
+### DESIGN modes
+
+| Mode | Description |
+|------|-------------|
+| `adr` | ADR (Architecture Decision Record) validation quality |
+| `traceability` | Requirement→decision traceability matrix |
+| `coupling` | Fan-in/out coupling analysis |
+| `interfaces` | Interface-first quality check |
+| `tech_risk` | Technical risk scoring |
+| `design_ready` | DESIGN→PLAN gate readiness |
+| `contract_coverage` | Interface/contract completeness check |
+| `data_integrity` | Data model consistency validation |
+
+### PLAN modes
+
+| Mode | Description |
+|------|-------------|
+| `decompose` | Detect large tasks needing decomposition |
+| `auto_ready` | Auto-promote eligible tasks from backlog to ready |
+| `sprint_health` | Sprint health scoring and diagnostics |
+
+### IMPLEMENT modes
+
+| Mode | Description |
+|------|-------------|
+| `implement_done` | Definition of Done checklist (9 checks: 4 required + 5 recommended). Requires `nodeId`. |
+| `tdd_check` | TDD adherence report with testability score and suggested test specs from AC. Optional `nodeId`. |
+| `progress` | Sprint burndown + velocity trend + blockers + critical path + ETA. Optional `nodeId` as sprint filter. |
+
+### VALIDATE modes
+
+| Mode | Description |
+|------|-------------|
+| `validate_ready` | IMPLEMENT→VALIDATE gate readiness |
+| `done_integrity` | Verify all done nodes meet quality standards |
+| `status_flow` | Valid status transition check |
+| `scenario_coverage` | User scenario coverage assessment |
+
+### REVIEW modes
+
+| Mode | Description |
+|------|-------------|
+| `review_ready` | VALIDATE→REVIEW gate readiness |
+| `doc_completeness` | Documentation completeness check |
+
+### HANDOFF modes
+
+| Mode | Description |
+|------|-------------|
+| `handoff_ready` | REVIEW→HANDOFF gate readiness |
+
+### DEPLOY modes
+
+| Mode | Description |
+|------|-------------|
+| `deploy_ready` | HANDOFF→DEPLOY gate readiness (7 checks: 5 required + 2 recommended) |
+| `release_check` | Release validation: semantic versioning, changelog, CI status |
+
+### LISTENING modes
+
+| Mode | Description |
+|------|-------------|
+| `listening_ready` | DEPLOY→LISTENING gate readiness |
+| `backlog_health` | Track health and age of feedback/issue nodes |
+
+### Game/Advanced modes
+
+| Mode | Description |
+|------|-------------|
+| `formula_consistency` | Validate game formula balance and consistency |
+| `state_completeness` | State machine completeness verification |
+| `performance_budget` | Performance constraints validation (FPS, latency, memory) |
+| `economy_simulation` | Game economy balance check (gold inflow/outflow, inflation risk). Params: `playerCount`, `avgSessionHours`, `avgLevel` |
+| `concurrency_risk` | Parallel execution safety analysis |
+| `scenario_coverage` | User scenario coverage assessment |
+| `asset_blockers` | Asset dependency analysis |
+| `config_coverage` | Configuration schema completeness |
+| `metric_coverage` | Metric definition coverage |
+
+### Universal modes (any phase)
+
+| Mode | Description |
+|------|-------------|
+| `blockers` | Transitive blockers for a node (requires `nodeId`) |
+| `cycles` | Dependency cycle detection |
+| `critical_path` | Critical path through dependency DAG |
 
 ---
 
@@ -410,7 +582,7 @@ Override lifecycle phase detection, switch enforcement modes, or reset to auto-d
 
 | Param | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `phase` | string | Yes | — | Lifecycle phase (`ANALYZE`, `DESIGN`, `PLAN`, `IMPLEMENT`, `VALIDATE`, `REVIEW`, `HANDOFF`, `LISTENING`, `auto`) |
+| `phase` | string | Yes | — | Lifecycle phase (`ANALYZE`, `DESIGN`, `PLAN`, `IMPLEMENT`, `VALIDATE`, `REVIEW`, `HANDOFF`, `DEPLOY`, `LISTENING`, `auto`) |
 | `force` | boolean | No | `false` | Force phase transition even if gate conditions are not met |
 | `mode` | `"strict"` \| `"advisory"` | No | — | Lifecycle enforcement mode |
 | `codeIntelligence` | `"strict"` \| `"advisory"` \| `"off"` | No | — | Code Intelligence enforcement mode |
@@ -441,9 +613,105 @@ When `prerequisites` is `"strict"` or `"advisory"`, the system tracks tool calls
 | IMPLEMENT | `update_status(done)` | `context` + `rag_context` + `analyze(implement_done)` | node |
 | VALIDATE | `update_status(done)` | `validate` + `analyze(validate_ready)` | mixed |
 | REVIEW | `set_phase(HANDOFF)` | `analyze(review_ready)` + `export` | project |
-| HANDOFF | `set_phase(LISTENING)` | `analyze(handoff_ready)` + `snapshot` + `write_memory` | project |
+| HANDOFF | `set_phase(DEPLOY)` | `analyze(handoff_ready)` + `snapshot` + `write_memory` | project |
+| DEPLOY | `set_phase(LISTENING)` | `analyze(deploy_ready)` + `snapshot` | project |
 
 **Scope:** `node` = must be called for the specific nodeId. `project` = called once for the project. `mixed` = some node-scoped, some project-scoped.
+
+---
+
+## DaVinci Converter
+
+Convert DaVinci JavaScript (PingOne DaVinci flows) to PingFederate/PingAccess Java plugins.
+
+### `davinci_analyze`
+
+Analyze DaVinci custom code (JavaScript). Extracts variables, API calls, flow logic, detects plugin type, and resolves variable mappings to Java equivalents.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `code` | string | Yes | — | DaVinci JavaScript code to analyze |
+| `codeLocation` | "custom_function"\|"code_snippet"\|"html_template" | No | auto-detect | Code location type |
+| `targetSdk` | "pingfederate"\|"pingaccess" | No | `pingfederate` | Target SDK for plugin type detection |
+
+**Example:**
+```
+davinci_analyze({
+  code: "var firstName = properties.firstName;\nif (!firstName) { return errorConnector('missing_name'); }",
+  targetSdk: "pingfederate"
+})
+→ {
+    ok: true,
+    analysis: { variables: [...], apiCalls: [...], flowLogic: { conditionals: 1 } },
+    resolvedVariables: [{ name: "firstName", kind: "property", javaEquivalent: "..." }],
+    detection: { pluginType: "idp-adapter", confidence: 0.85 }
+  }
+```
+
+### `davinci_convert`
+
+Convert DaVinci JavaScript code to a PingFederate/PingAccess Java plugin. Generates Java class structure, POM.xml, and PF-INF descriptor. Validates input/output and persists job history.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `code` | string | Yes | — | DaVinci JavaScript code to convert |
+| `pluginName` | string | Yes | — | Plugin name (kebab-case, e.g. `my-auth-adapter`) |
+| `packageName` | string | Yes | — | Java package name (e.g. `com.example.adapter`) |
+| `className` | string | Yes | — | Java class name (e.g. `MyAuthAdapter`) |
+| `targetSdk` | "pingfederate"\|"pingaccess" | No | `pingfederate` | Target SDK |
+| `pluginType` | string | No | auto-detect | Override plugin type (e.g. `idp-adapter`, `token-generator`, `sp-adapter`, `access-grant-manager`, `notification-publisher`, `secret-manager`, `password-credential-validator`, `custom-data-store`, `identity-store-provisioner`, `token-processor`) |
+
+**Example:**
+```
+davinci_convert({
+  code: "var email = properties.email; ...",
+  pluginName: "email-verifier",
+  packageName: "com.acme.auth",
+  className: "EmailVerifierAdapter",
+  targetSdk: "pingfederate"
+})
+→ {
+    ok: true,
+    jobId: "dvj_abc123",
+    pluginType: "idp-adapter",
+    confidence: 0.9,
+    javaCode: "package com.acme.auth;\n...",
+    pomXml: "<project>...</project>",
+    pfInfDescriptor: { directoryName: "email-verifier", content: "...", fullPath: "..." },
+    guiDescriptor: { fieldDeclarations: [...], fieldRegistrations: [...] },
+    validation: { preConversion: [], postGeneration: [] },
+    hint: "Use the generated POM and Java structure to build the plugin. Run davinci_build to compile."
+  }
+```
+
+### `davinci_build`
+
+Build a DaVinci-converted Java plugin using Maven. Checks environment (JDK, Maven, SDK) and runs `mvn package`.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `projectDir` | string | Yes | — | Path to the Maven project directory containing `pom.xml` |
+| `checkOnly` | boolean | No | `false` | Only check environment, do not build |
+| `jobId` | string | No | — | DaVinci job ID to update with build results |
+
+**Example:**
+```
+// Check environment first
+davinci_build({ projectDir: "/path/to/email-verifier", checkOnly: true })
+→ {
+    ok: true,
+    action: "environment_check",
+    environment: { readyToBuild: true, jdk: { found: true, version: "17.0.2" }, maven: { found: true }, sdk: { found: true } }
+  }
+
+// Build the plugin
+davinci_build({ projectDir: "/path/to/email-verifier", jobId: "dvj_abc123" })
+→ {
+    ok: true,
+    action: "build_complete",
+    buildResult: { success: true, jarPath: "/path/to/target/email-verifier-1.0.jar", durationMs: 12500 }
+  }
+```
 
 ---
 
@@ -540,11 +808,33 @@ help({ topic: "analyze_modes", phase: "DESIGN" })
 
 ## Type Reference
 
-**NodeType:** `epic`, `task`, `subtask`, `requirement`, `constraint`, `milestone`, `acceptance_criteria`, `risk`, `decision`
+**NodeType (21 types):**
+
+| Type | Category | Description |
+|------|----------|-------------|
+| `epic` | Core | High-level feature or user story |
+| `task` | Core | Implementable unit of work |
+| `subtask` | Core | Child of a task |
+| `requirement` | Core | Functional or non-functional requirement |
+| `constraint` | Core | Technical or business constraint |
+| `milestone` | Core | Checkpoint or deliverable |
+| `acceptance_criteria` | Core | Testable success condition |
+| `risk` | Core | Identified risk or uncertainty |
+| `decision` | Core | Architecture or technical decision (ADR) |
+| `interface` | Game/Advanced | Interface or API contract definition |
+| `formula` | Game/Advanced | Game formula or calculation rule |
+| `state_machine` | Game/Advanced | State machine or FSM definition |
+| `contract` | Game/Advanced | Service or data contract |
+| `scenario` | Game/Advanced | User scenario or test scenario |
+| `performance_budget` | Game/Advanced | Performance constraint (FPS, latency, memory) |
+| `asset` | Game/Advanced | Asset dependency (art, audio, data) |
+| `data_table` | Game/Advanced | Data table or lookup definition |
+| `metric` | Game/Advanced | Observable metric or KPI |
+| `config_schema` | Game/Advanced | Configuration schema definition |
 
 **NodeStatus:** `backlog`, `ready`, `in_progress`, `blocked`, `done`
 
-**RelationType:** `parent_of`, `child_of`, `depends_on`, `blocks`, `related_to`, `priority_over`, `implements`, `derived_from`
+**RelationType (11 types):** `parent_of`, `child_of`, `depends_on`, `blocks`, `related_to`, `priority_over`, `implements`, `derived_from`, `provides`, `consumes`, `requires_asset`
 
 **XpSize:** `XS`, `S`, `M`, `L`, `XL`
 

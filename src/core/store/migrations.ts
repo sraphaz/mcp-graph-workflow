@@ -828,6 +828,26 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_templates_project ON task_templates(project_id);
     `,
   },
+  {
+    version: 26,
+    description: "Flow snapshots for Cumulative Flow Diagrams",
+    sql: `
+      CREATE TABLE IF NOT EXISTS flow_snapshots (
+        id               TEXT PRIMARY KEY,
+        project_id       TEXT NOT NULL,
+        snapshot_date    TEXT NOT NULL,
+        backlog_count    INTEGER DEFAULT 0,
+        ready_count      INTEGER DEFAULT 0,
+        in_progress_count INTEGER DEFAULT 0,
+        blocked_count    INTEGER DEFAULT 0,
+        done_count       INTEGER DEFAULT 0,
+        sprint           TEXT,
+        created_at       TEXT NOT NULL,
+        UNIQUE(project_id, snapshot_date, sprint)
+      );
+      CREATE INDEX IF NOT EXISTS idx_flow_snapshots_project_date ON flow_snapshots(project_id, snapshot_date);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

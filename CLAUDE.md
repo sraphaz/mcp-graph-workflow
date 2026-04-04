@@ -403,4 +403,26 @@ next → context → rag_context → [implementar com TDD] → analyze(implement
 - **CLAUDE.md como spec evolutiva** — Documente padrões e decisões aqui.
 
 > **Referências detalhadas on-demand:** Use `help` tool para consultar: `tools`, `analyze_modes`, `skills`, `cli`, `knowledge`, `workflow`.
+
+## Memory ≠ Estado Atual
+
+**MANDATORY — applies to every planning task.**
+
+Memories descrevem o que era verdade **quando foram escritas**. Contagens de progresso ("5/24 done", "35% complete") ficam stale rapidamente.
+
+### Verify Before Plan
+
+Antes de planejar trabalho baseado em memories ou listar features como "incompletas":
+
+1. **Grep pelo arquivo/função** mencionada no memory — verificar se existe e tem implementação real
+2. Se existe e tem implementação real (não stub), **o código vence o memory**
+3. Só listar como "incompleto" o que foi **verificado no código atual** via grep/read
+4. Memories com data > 7 dias e contagens de progresso devem ser tratadas como **possivelmente stale**
+5. **Nunca confiar em contagens numéricas** ("X/Y done") sem verificar no código
+
+> Se o memory diz "SourceTextExtractor não existe" mas o arquivo existe com 229 linhas implementadas, **o código é a fonte de verdade**.
+
+### DreamMode Safety
+
+O REM merge semântico só opera sobre source types efêmeros (`docs`, `code_context`, `benchmark`, `capture`). Tipos protegidos (`prd`, `memory`, `ai_decision`, `phase_summary`, `sprint_plan`) **nunca são tocados**. Merge é soft (quality decay + `merged_into` metadata), não hard delete.
 <!-- mcp-graph:end -->

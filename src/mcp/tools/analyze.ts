@@ -88,6 +88,7 @@ const ANALYZE_MODES = z.enum([
   "metric_coverage",
   "concurrency_risk",
   "economy_simulation",
+  "cfd",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
@@ -435,6 +436,16 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const simReport = simulateEconomy(doc, simParams);
           logger.info("tool:analyze:economy_simulation:ok", { risk: simReport.inflationRisk, net: simReport.netFlowPerDay });
           return mcpText({ ok: true, mode: "economy_simulation", ...simReport });
+        }
+
+        case "cfd": {
+          const { captureFlowSnapshot, getCfdData } = await import("../../core/insights/flow-tracker.js");
+          const project = store.getProject();
+          if (!project) return mcpError("No active project");
+          captureFlowSnapshot(store, project.id);
+          const cfdData = getCfdData(store, project.id);
+          logger.info("tool:analyze:cfd:ok", { dataPoints: cfdData.length });
+          return mcpText({ ok: true, mode: "cfd", dataPoints: cfdData.length, data: cfdData });
         }
 
         default: {

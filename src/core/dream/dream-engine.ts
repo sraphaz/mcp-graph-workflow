@@ -16,6 +16,7 @@ import { DreamCycleConfigSchema, DEFAULT_DREAM_CONFIG } from "./dream-types.js";
 import { saveDreamCycle, updateDreamCycle } from "./dream-store.js";
 import { runNremPhase } from "./phases/nrem-phase.js";
 import { runRemPhase } from "./phases/rem-phase.js";
+import type { RemEmbeddingProvider } from "./phases/rem-phase.js";
 import { runWakeReadyPhase } from "./phases/wake-ready-phase.js";
 import { GraphEventBus } from "../events/event-bus.js";
 import type { GraphEvent } from "../events/event-types.js";
@@ -25,14 +26,16 @@ import { logger } from "../utils/logger.js";
 export class DreamEngine {
   private db: Database.Database;
   private eventBus: GraphEventBus;
+  private embeddingProvider?: RemEmbeddingProvider;
   private running = false;
   private currentPhase: DreamPhase | undefined;
   private currentCycleId: string | undefined;
   private cancelled = false;
 
-  constructor(db: Database.Database, eventBus: GraphEventBus) {
+  constructor(db: Database.Database, eventBus: GraphEventBus, embeddingProvider?: RemEmbeddingProvider) {
     this.db = db;
     this.eventBus = eventBus;
+    this.embeddingProvider = embeddingProvider;
   }
 
   /**
@@ -92,7 +95,7 @@ export class DreamEngine {
       // ── Phase 2: REM ───────────────────────────────────
       this.currentPhase = "rem";
       this.emitEvent("dream:phase_started", { cycleId, phase: "rem" });
-      const remResult = runRemPhase(this.db, config, cycleId);
+      const remResult = runRemPhase(this.db, config, cycleId, this.embeddingProvider);
       this.emitEvent("dream:phase_completed", { cycleId, phase: "rem", durationMs: remResult.durationMs });
 
       if (this.cancelled) return this.buildCancelledResult(cycleId, startedAt, config, nremResult, initialResult);
