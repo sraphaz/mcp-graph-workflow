@@ -1,19 +1,16 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 55 tools + 6 deprecated organized in 9 categories — complete parameter reference.
+> 53 tools + 6 deprecated organized in 6 categories — complete parameter reference.
 
 ## Summary
 
 | Category | Tools | Count |
 |----------|-------|-------|
-| **Pipeline (v6.0)** | **start_task, finish_task** | **2** |
-| **Predictive (v6.0)** | **forecast, learn_from_project** | **2** |
-| Core | analyze, clone_node, context, delete_memory, edge, export, help, import_graph, import_prd, init, journey, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, sync_stack_docs, template, update_status, validate, write_memory | 31 |
+| Core | analyze, clone_node, context, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, help, import_graph, import_prd, init, journey, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory | 38 |
 | Translation | analyze_translation, translate_code, translation_jobs | 3 |
 | Code Intelligence | code_intelligence | 1 |
 | Knowledge | export_knowledge, knowledge_feedback, knowledge_stats | 3 |
-| DaVinci Converter | davinci_analyze, davinci_convert, davinci_build | 3 |
 | Siebel CRM | siebel_analyze, siebel_composer, siebel_env, siebel_generate_sif, siebel_import_docs, siebel_import_sif, siebel_search, siebel_validate | 8 |
 | Deprecated | add_node, delete_node, list_skills, update_node, validate_ac, validate_task | 6 |
 <!-- mcp-graph:tools-summary:end -->

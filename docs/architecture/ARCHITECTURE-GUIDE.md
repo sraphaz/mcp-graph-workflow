@@ -25,13 +25,13 @@ Thin orchestration layer. Commands call core functions and format output. No bus
 **Protocol:** Model Context Protocol (Streamable HTTP + Stdio)
 
 <!-- mcp-graph:arch-mcp:start -->
-51 tool registrations (45 active + 6 deprecated shims) via `@modelcontextprotocol/sdk`. Two transport modes:
+59 tool registrations (53 active + 6 deprecated shims) via `@modelcontextprotocol/sdk`. Two transport modes:
 
 - **HTTP** (`server.ts`) — Express server with `/mcp` endpoint + REST API + static dashboard
 - **Stdio** (`stdio.ts`) — Standard I/O transport for direct MCP client integration
 
 Tool categories:
-- **Core** (30) — analyze, clone_node, context, delete_memory, edge, export, help, import_graph, import_prd, init, journey, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, sync_stack_docs, update_status, validate, write_memory
+- **Core** (38) — analyze, clone_node, context, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, help, import_graph, import_prd, init, journey, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory
 - **Translation** (3) — analyze_translation, translate_code, translation_jobs
 - **Code Intelligence** (1) — code_intelligence
 - **Knowledge** (3) — export_knowledge, knowledge_feedback, knowledge_stats
@@ -44,7 +44,7 @@ Tool categories:
 **Framework:** Express v5
 
 <!-- mcp-graph:arch-api:start -->
-26 routers, 135 endpoints. Modular router architecture:
+27 routers, 142 endpoints. Modular router architecture:
 <!-- mcp-graph:arch-api:end -->
 
 ```

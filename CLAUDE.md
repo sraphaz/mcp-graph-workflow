@@ -368,7 +368,7 @@ Dados armazenados em `workflow-graph/graph.db` (local, gitignored).
 **O mcp-graph é a fonte de verdade ABSOLUTA. Nenhuma implementação acontece fora do grafo.**
 
 1. **Node deve existir** — antes de escrever QUALQUER código, o node correspondente DEVE existir no grafo
-2. **Fluxo obrigatório** — `next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status → next` — SEM EXCEÇÕES
+2. **Fluxo obrigatório** — `start_task → [implementar com TDD] → finish_task` (pipeline v6.0) ou `next → context → rag_context → [TDD] → analyze(implement_done) → update_status` (granular) — SEM EXCEÇÕES
 3. **Epic = estrutura primeiro** — criar Epic + tasks filhas + edges ANTES de implementar
 4. **Status tracking** — `update_status → in_progress` ANTES de codar, `→ done` APÓS completar
 5. **Validação** — usar `validate` (action: `ac`) após cada task para checar critérios de aceitação
@@ -376,119 +376,19 @@ Dados armazenados em `workflow-graph/graph.db` (local, gitignored).
 
 > **Sem node no grafo = sem código escrito.**
 
-### Ferramentas MCP disponíveis (28 tools + 6 deprecated)
-
-#### Projeto & Grafo
-
-| Tool | Quando usar |
-|------|-------------|
-| `init` | Inicializar grafo do projeto (cria DB, AI memory files, detecta MCPs) |
-| `list` | Listar nodes do grafo (filtrar por tipo/status/parent) |
-| `show` | Ver detalhes de um node específico (metadata, deps, knowledge) |
-| `search` | Busca full-text no grafo (FTS5 + BM25 ranking) |
-| `export` | Exportar grafo (JSON completo ou Mermaid diagram) |
-| `snapshot` | Criar/restaurar snapshots do grafo (backup/rollback) |
-| `metrics` | Estatísticas do grafo (`stats`) ou velocidade por sprint (`velocity`) |
-
-#### Nodes & Edges
-
-| Tool | Quando usar |
-|------|-------------|
-| `node` | CRUD de nodes: action `add` (criar), `update` (atualizar), `delete` (remover) |
-| `move_node` | Mover node para outro parent |
-| `clone_node` | Clonar node com filhos (deep copy) |
-| `edge` | Criar/remover relações entre nodes (depends_on, blocks, related_to) |
-| `update_status` | Mudar status de um node (backlog→ready→in_progress→done) |
-| `bulk_update_status` | Atualizar status de múltiplos nodes de uma vez |
-
-#### PRD & Planejamento
-
-| Tool | Quando usar |
-|------|-------------|
-| `import_prd` | Importar PRD → segmentar → classificar → extrair → inferir deps → criar grafo + indexar knowledge |
-| `plan_sprint` | Gerar relatório de planejamento de sprint (capacity, velocity, recomendações) |
-| `analyze` | 24 modos de análise por fase do lifecycle (ver modos abaixo) |
-| `set_phase` | Forçar/resetar fase do lifecycle (strict/advisory, gate checks) + Code Intelligence mode (strict/advisory/off) + Tool Prerequisites mode (strict/advisory/off) |
-
-#### Contexto & RAG
-
-| Tool | Quando usar |
-|------|-------------|
-| `next` | Próxima task recomendada (prioridade + deps + knowledge coverage 0-1 + TDD hints + velocity) |
-| `context` | Contexto comprimido da task (token-efficient, ~73% redução) |
-| `rag_context` | Contexto RAG phase-aware (tiers: summary/standard/deep, budget 60/30/10) |
-| `reindex_knowledge` | Rebuild completo do índice de knowledge (BM25 + TF-IDF) |
-| `sync_stack_docs` | Sincronizar docs das libs do projeto via Context7 |
-
-#### Memórias do Projeto
-
-| Tool | Quando usar |
-|------|-------------|
-| `write_memory` | Escrever memória em workflow-graph/memories/{name}.md (auto-indexa no RAG) |
-| `read_memory` | Ler conteúdo de uma memória específica |
-| `list_memories` | Listar todas as memórias disponíveis |
-| `delete_memory` | Remover memória do filesystem e do knowledge store |
-
-#### Validação
-
-| Tool | Quando usar |
-|------|-------------|
-| `validate` | Validação: action `task` (browser A/B com Playwright) ou `ac` (critérios de aceitação) |
-
-#### Skills
-
-| Tool | Quando usar |
-|------|-------------|
-| `manage_skill` | Gerenciar skills: action `list` (listar/filtrar por fase), `enable`/`disable`, CRUD de custom skills |
-
-#### Tools Deprecated (backward compat, removidos na v7.0)
-
-| Tool antigo | Usar no lugar |
-|-------------|---------------|
-| `add_node` | `node` com action:`add` |
-| `update_node` | `node` com action:`update` |
-| `delete_node` | `node` com action:`delete` |
-| `validate_task` | `validate` com action:`task` |
-| `validate_ac` | `validate` com action:`ac` |
-| `list_skills` | `manage_skill` com action:`list` |
-
-### Modos do analyze por fase
-
-| Fase | Modo | O que verifica |
-|------|------|----------------|
-| ANALYZE | `prd_quality` | Qualidade do PRD (completude, user stories, AC) |
-| ANALYZE | `scope` | Escopo do grafo (tipos, distribuição, cobertura) |
-| ANALYZE | `ready` | Definition of Ready (bloqueios, dependências, AC) |
-| ANALYZE | `risk` | Riscos (complexidade, deps, tamanho, AC faltantes) |
-| ANALYZE | `blockers` | Bloqueios transitivos de um node |
-| ANALYZE | `cycles` | Ciclos de dependência no grafo |
-| ANALYZE | `critical_path` | Caminho crítico (sequência mais longa de deps) |
-| PLAN | `decompose` | Tasks grandes que precisam ser decompostas |
-| DESIGN | `adr` | Validação de ADRs (Architecture Decision Records) |
-| DESIGN | `traceability` | Matriz de rastreabilidade (req → task → test) |
-| DESIGN | `coupling` | Acoplamento entre módulos |
-| DESIGN | `interfaces` | Verificação de interfaces e contratos |
-| DESIGN | `tech_risk` | Riscos técnicos (complexidade, stack, deps externas) |
-| DESIGN | `design_ready` | Gate DESIGN→PLAN (pré-requisitos atendidos?) |
-| IMPLEMENT | `implement_done` | Definition of Done (8 checks: 4 required + 4 recommended) |
-| IMPLEMENT | `tdd_check` | Aderência TDD (specs sugeridos por AC) |
-| IMPLEMENT | `progress` | Sprint burndown + velocity trend + blockers + ETA |
-| VALIDATE | `validate_ready` | Gate IMPLEMENT→VALIDATE |
-| VALIDATE | `done_integrity` | Integridade dos nodes marcados done |
-| VALIDATE | `status_flow` | Fluxo de status válido (sem pulos) |
-| REVIEW | `review_ready` | Gate VALIDATE→REVIEW |
-| HANDOFF | `handoff_ready` | Gate REVIEW→HANDOFF |
-| HANDOFF | `doc_completeness` | Completude de documentação |
-| LISTENING | `listening_ready` | Gate HANDOFF→LISTENING |
-| LISTENING | `backlog_health` | Saúde do backlog (distribuição, aging) |
-
 ### Fluxo de trabalho OBRIGATÓRIO
 
+**Pipeline v6.0 (recomendado — 2 calls):**
 ```
-next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status → next
+start_task → [implementar com TDD] → finish_task
 ```
 
-### Lifecycle (8 fases)
+**Granular (6 calls — disponível para controle fino):**
+```
+next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status
+```
+
+### Lifecycle (9 fases)
 
 1. **ANALYZE** — Criar PRD, definir requisitos (`import_prd`, `add_node`)
 2. **DESIGN** — Arquitetura, decisões técnicas (`add_node`, `edge`, `analyze`)
@@ -497,57 +397,75 @@ next → context → rag_context → [implementar com TDD] → analyze(implement
 5. **VALIDATE** — Testes E2E, critérios de aceitação (`validate_task`, `metrics`)
 6. **REVIEW** — Code review, blast radius (`export`, `metrics`)
 7. **HANDOFF** — PR, documentação, entrega (`export`, `snapshot`)
-8. **LISTENING** — Feedback, novo ciclo (`add_node`, `import_prd`)
+8. **DEPLOY** — CI pipeline, release, post-release validation (`export`, `snapshot`, `analyze`)
+9. **LISTENING** — Feedback, novo ciclo (`add_node`, `import_prd`)
 
-### Pipeline de Conhecimento (Knowledge Store + RAG)
+### Phase Gates (Transições entre Fases)
 
-Fontes indexadas automaticamente:
-- **Project memories** — ao escrever com `write_memory` (auto-indexa)
-- **PRD imports** — ao importar com `import_prd`
-- **Browser captures** — ao validar com `validate_task`
-- **Stack docs** — ao sincronizar com `sync_stack_docs`
-- **Sprint reports** — ao gerar com `plan_sprint`
+Antes de mudar de fase, rodar o analyze mode correspondente:
 
-Recuperação: `rag_context` monta contexto phase-aware com budget de tokens:
-- 60% contexto do grafo (nodes, deps, status)
-- 30% knowledge store (BM25 + TF-IDF)
-- 10% metadata de fase
+| De → Para | Gate (analyze mode) | Pré-requisitos |
+|-----------|---------------------|----------------|
+| ANALYZE → DESIGN | — | ≥1 epic/requirement no grafo |
+| DESIGN → PLAN | `design_ready` | ADRs, interfaces, coupling check |
+| PLAN → IMPLEMENT | — | `sync_stack_docs` + `plan_sprint` executados |
+| IMPLEMENT → VALIDATE | `validate_ready` | ≥50% tasks done com AC testável |
+| VALIDATE → REVIEW | `done_integrity` + `status_flow` | Todos checks passam |
+| REVIEW → HANDOFF | `review_ready` | Export + blast radius ok |
+| HANDOFF → DEPLOY | `handoff_ready` + `doc_completeness` | Snapshot + memories salvos |
+| DEPLOY → LISTENING | `deploy_ready` + `release_check` | Release validado |
 
-Manual: `reindex_knowledge` para rebuild completo do índice.
+### Definition of Done (8 Checks)
 
-### Skills Built-in (40 skills)
+Rodar `analyze(mode: "implement_done", nodeId)` antes de `update_status(done)`:
 
-40 skills mapeadas às fases do lifecycle. Use `list_skills` para descobrir por fase ou ver instruções completas.
+| # | Check | Severidade | O que verifica |
+|---|-------|------------|----------------|
+| 1 | `has_acceptance_criteria` | **required** | Task ou parent tem AC |
+| 2 | `ac_quality_pass` | **required** | Score AC ≥ 60 (INVEST) |
+| 3 | `no_unresolved_blockers` | **required** | Nenhum `depends_on` para node não-done |
+| 4 | `status_flow_valid` | **required** | Passou por `in_progress` antes de `done` |
+| 5 | `has_description` | recomendado | Descrição não-vazia |
+| 6 | `not_oversized` | recomendado | Sem L/XL sem subtasks |
+| 7 | `has_testable_ac` | recomendado | ≥1 AC testável |
+| 8 | `has_test_files` | recomendado | testFiles preenchido |
 
-#### Skills por fase
+### Definition of Ready (7 Checks — Gate ANALYZE → DESIGN)
 
-| Fase | Skills sugeridas |
-|------|-----------------|
-| ANALYZE | `create-prd-chat-mode`, `business-analyst`, `product-manager` |
-| DESIGN | `breakdown-epic-arch`, `context-architect`, `backend-architect` |
-| PLAN | `breakdown-feature-prd`, `track-with-mcp-graph` |
-| IMPLEMENT | `subagent-driven-development`, `xp-bootstrap`, `self-healing-awareness` |
-| VALIDATE | `playwright-explore-website`, `playwright-generate-test`, `e2e-testing` |
-| REVIEW | `code-reviewer`, `code-review-checklist`, `review-and-refactor`, `observability-engineer` |
+Rodar `analyze(mode: "ready")` antes de avançar para DESIGN:
 
-#### Categorias adicionais (multi-fase)
+| # | Check | O que verifica |
+|---|-------|----------------|
+| 1 | `has_requirements` | ≥1 epic ou requirement no grafo |
+| 2 | `has_acceptance_criteria` | Tasks ou AC nodes existem |
+| 3 | `no_orphans` | Sem requirements ou tasks órfãos |
+| 4 | `no_cycles` | Sem ciclos de dependência |
+| 5 | `has_constraints` | ≥1 constraint node |
+| 6 | `has_risks` | ≥1 risk node |
+| 7 | `prd_quality_score` | Score PRD ≥ 60 |
 
-| Categoria | Skills |
-|-----------|--------|
-| software-design | SOLID, KISS, YAGNI, DRY, clean-architecture, composition-over-inheritance |
-| security | `owasp-web-security`, `auth-and-secrets`, `database-and-deps-security` |
-| ddd | `domain-driven-design` (DESIGN, PLAN) |
-| testing | `comprehensive-testing-reference`, `self-healing-awareness` (IMPLEMENT, VALIDATE) |
-| cost-reducer | `cloud-infra-cost`, `code-level-savings`, `finops-services` (DESIGN, REVIEW) |
-| frontend-design | `ui-ux-patterns` (DESIGN, IMPLEMENT) |
+### Princípios de Fluxo (Little's Law + Lean + TOC)
 
-#### Custom Skills
+**WIP = 1** — Um agente deve ter no máximo 1 task `in_progress` de cada vez.
+Lei de Little: `cycle_time = WIP / throughput`. Reduzir WIP reduz cycle time sem perder throughput.
 
-Crie skills específicas do projeto via `manage_skill` (create/enable/disable). Custom skills são armazenadas no grafo e aparecem junto com as built-in em `list_skills`.
+**Pull, não Push** — Usar `next` para puxar a próxima task (pull system).
+Nunca empurrar tasks para `in_progress` sem terminar a anterior.
 
-#### Self-Healing Awareness
+**Gargalo primeiro (Theory of Constraints)** — Se VALIDATE tem tasks acumuladas,
+parar de implementar e validar. Otimizar o gargalo, não produzir mais WIP.
 
-A skill `self-healing-awareness` monitora padrões de erro recorrentes e sugere correções automaticamente. Ativa nas fases IMPLEMENT e VALIDATE.
+**Eliminar desperdício (Lean/Toyota):**
+- Overproduction: não implementar features não planejadas
+- Waiting: não deixar tasks blocked sem ação
+- Overprocessing: usar `context()` (73% menos tokens) em vez de `export()`
+- Defects: TDD Red→Green→Refactor elimina retrabalho
+
+**Métricas de fluxo (usar com `metrics` e `analyze(progress)`):**
+- Cycle time = `done_timestamp - in_progress_timestamp` por task
+- Lead time = `done_timestamp - created_at` por task
+- Throughput = tasks done / dias
+- Flow efficiency = tempo ativo / lead time total (target > 40%)
 
 ### Princípios XP Anti-Vibe-Coding
 
@@ -557,14 +475,16 @@ A skill `self-healing-awareness` monitora padrões de erro recorrentes e sugere 
 - **Code detachment** — Se a IA errou, explique o erro via prompt. Nunca edite manualmente.
 - **CLAUDE.md como spec evolutiva** — Documente padrões e decisões aqui.
 
-### Comandos essenciais
+### Memory ≠ Estado Atual
 
-```bash
-npx mcp-graph stats            # Estatísticas do grafo
-npx mcp-graph list             # Listar nodes
-npx mcp-graph update           # Atualizar configs para última versão
-npx mcp-graph doctor           # Validar ambiente de execução
-npx mcp-graph doctor --json    # Diagnóstico em JSON estruturado
-npx mcp-graph serve --port 3000  # Dashboard visual
-```
+Memory files são **snapshots point-in-time**, não estado live. Contagens de progresso ("X/Y done", "% complete") ficam stale rapidamente.
+
+**Antes de planejar baseado em memories:**
+1. Grep pelo arquivo/função — se existe com implementação real, o memory é stale
+2. **Código vence memory** — se memory diz "X não existe" mas código mostra que sim, confiar no código
+3. Contagens numéricas > 48h = possivelmente stale — verificar antes de usar
+
+> **Nunca confiar em contagens de progresso de memories. Sempre verificar no código antes de planejar.**
+
+> **Referências detalhadas on-demand:** Use `help` tool para consultar: `tools`, `analyze_modes`, `skills`, `cli`, `knowledge`, `workflow`, `gates`, `dod`, `dor`, `prerequisites`, `workflows`, `flow`, `quality_metrics`, `tdd`, `pipeline`, `antipatterns`.
 <!-- mcp-graph:end -->
