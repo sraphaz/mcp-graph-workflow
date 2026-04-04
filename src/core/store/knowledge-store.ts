@@ -166,17 +166,22 @@ export class KnowledgeStore {
   /**
    * Search knowledge documents via FTS5 with BM25 ranking.
    */
-  search(query: string, limit: number = 20): Array<KnowledgeDocument & { score: number }> {
+  search(query: string, limit: number = 20, projectId?: string): Array<KnowledgeDocument & { score: number }> {
+    const projectFilter = projectId ? " AND kd.project_id = ?" : "";
+    const params: unknown[] = [query];
+    if (projectId) params.push(projectId);
+    params.push(limit);
+
     const rows = this.db
       .prepare(
         `SELECT kd.*, bm25(knowledge_fts) AS score
          FROM knowledge_fts fts
          JOIN knowledge_documents kd ON kd.rowid = fts.rowid
-         WHERE knowledge_fts MATCH ?
+         WHERE knowledge_fts MATCH ?${projectFilter}
          ORDER BY score
          LIMIT ?`,
       )
-      .all(query, limit) as Array<KnowledgeRow & { score: number }>;
+      .all(...params) as Array<KnowledgeRow & { score: number }>;
 
     return rows.map((row) => ({
       ...rowToDoc(row),

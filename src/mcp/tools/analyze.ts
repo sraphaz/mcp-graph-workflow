@@ -89,6 +89,7 @@ const ANALYZE_MODES = z.enum([
   "concurrency_risk",
   "economy_simulation",
   "cfd",
+  "code_sync",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
@@ -436,6 +437,13 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const simReport = simulateEconomy(doc, simParams);
           logger.info("tool:analyze:economy_simulation:ok", { risk: simReport.inflationRisk, net: simReport.netFlowPerDay });
           return mcpText({ ok: true, mode: "economy_simulation", ...simReport });
+        }
+
+        case "code_sync": {
+          const { syncGraphFromCode } = await import("../../core/code/graph-sync.js");
+          const syncReport = syncGraphFromCode(store);
+          logger.info("tool:analyze:code_sync:ok", { staleRefs: syncReport.staleRefs.length, suggestions: syncReport.suggestions.length });
+          return mcpText({ ok: true, mode: "code_sync", ...syncReport });
         }
 
         case "cfd": {

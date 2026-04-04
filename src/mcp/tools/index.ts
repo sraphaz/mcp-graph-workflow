@@ -57,6 +57,8 @@ import { registerStartTask } from "./start-task.js";
 import { registerFinishTask } from "./finish-task.js";
 // Predictive analytics (v6.0)
 import { registerForecast } from "./forecast.js";
+// Cross-project learning (v6.0)
+import { registerLearnFromProject } from "./learn-from-project.js";
 // Deprecated tools (backward compat — will be removed in v7.0)
 import { registerAddNode } from "./add-node.js";
 import { registerUpdateNode } from "./update-node.js";
@@ -136,6 +138,9 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
 
   // Predictive analytics (v6.0)
   registerForecast(server, store);
+
+  // Cross-project learning (v6.0)
+  registerLearnFromProject(server, store);
 
   // Deprecated tools (backward compat — will be removed in v7.0)
   registerAddNode(server, store);
