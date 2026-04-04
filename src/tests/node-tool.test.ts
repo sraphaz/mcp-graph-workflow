@@ -210,6 +210,32 @@ describe("MCP node tool (consolidated)", () => {
       expect(parsed.error).toContain("id is required");
     });
 
+    // ── metadata persistence on update ────────────────────
+
+    it("should persist metadata fields on update", async () => {
+      // Arrange — create node without metadata
+      const node = makeNode({ title: "Decision Node", type: "decision" });
+      store.insertNode(node);
+
+      // Act — update with metadata
+      const result = await tools(server)["node"].handler({
+        action: "update",
+        id: node.id,
+        metadata: { status: "accepted", context: "Performance requirements", decision: "Use caching", consequences: "Higher memory usage" },
+      });
+      const parsed = parseResult(result);
+
+      // Assert — metadata persisted
+      expect(parsed.ok).toBe(true);
+      const updated = parsed.node as Record<string, unknown>;
+      const meta = updated.metadata as Record<string, unknown>;
+      expect(meta).toBeDefined();
+      expect(meta.status).toBe("accepted");
+      expect(meta.context).toBe("Performance requirements");
+      expect(meta.decision).toBe("Use caching");
+      expect(meta.consequences).toBe("Higher memory usage");
+    });
+
     // ── Issue #5: Update parentId syncs edges ────────────
 
     it("should update edges when parentId changes", async () => {

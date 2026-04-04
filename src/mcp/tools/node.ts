@@ -162,6 +162,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         if (sprint !== undefined) fields.sprint = sprint;
         if (parentId !== undefined) fields.parentId = parentId;
         if (mergedAC !== undefined) fields.acceptanceCriteria = mergedAC;
+        if (metadata !== undefined) fields.metadata = metadata;
 
         // Bug #036: reject self-parenting and circularity in update action
         const circError = checkCircularity(store, id, parentId);
