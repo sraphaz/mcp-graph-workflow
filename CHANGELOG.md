@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.36.0...mcp-graph-v6.0.0) (2026-04-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* v6.0 introduces pipeline tools (start_task/finish_task), agent state machine (nextAction), code-aware graph sync, cross-project learning, CFD flow tracking, DORA metrics, forecast tool, and smart decompose. All v5.x tools remain backward-compatible but the major version bump reflects the significant new capabilities and architectural evolution.
+
+### Features
+
+* v6.0 — pipeline tools, agent state machine, code-aware sync, DORA metrics ([1881cf8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/1881cf870b72a515b959d40fa0c7a9203d23b13e))
+
 ## [5.36.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.35.0...mcp-graph-v5.36.0) (2026-04-04)
 
 
