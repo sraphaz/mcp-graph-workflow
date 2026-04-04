@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/dashboard-graph.png" alt="mcp-graph dashboard" width="800">
+  <img src="docs/images/tab-graph.png" alt="mcp-graph dashboard — execution graph" width="800">
 </p>
 
 ---
@@ -210,19 +210,43 @@ Each phase has **gate checks** (`analyze` modes) that must pass before transitio
 
 ## Dashboard
 
-14 tabs: **Graph** (interactive diagram) · **PRD & Backlog** · **Code Graph** (multi-language) · **Memories** · **Insights** (bottlenecks) · **Skills** · **Context** · **Benchmark** · **Languages** · **Docs** · **Logs** · **Siebel** · **DaVinci** · **Journey**
+15 tabs covering the full development lifecycle:
+
+| Tab | Purpose |
+|-----|---------|
+| **Graph** | Interactive execution graph with hierarchy and filters |
+| **PRD & Backlog** | Progress tracking with dependency visualization |
+| **Journey** | Website journey mapping |
+| **Code Graph** | Multi-language code intelligence (13 languages) |
+| **Siebel** | SIF import/export and code generation |
+| **LSP** | Language Server Protocol status and diagnostics |
+| **Memories** | Project knowledge store |
+| **Insights** | Health score, sprint progress, knowledge coverage |
+| **Skills** | 45 built-in skills by lifecycle phase |
+| **Context** | Token management + DreamMode |
+| **Benchmark** | Compression rates, cost impact, token usage |
+| **Languages** | Code translation between languages |
+| **DaVinci** | DaVinci JS to Java plugin converter |
+| **Docs** | Live-introspected tools, APIs, guides |
+| **Logs** | Real-time structured logs |
 
 <p align="center">
-  <img src="docs/images/dashboard-prd-backlog.png" alt="PRD & Backlog" width="800">
+  <img src="docs/images/tab-insights.png" alt="Insights — health score, sprint progress" width="800">
 </p>
 
 <p align="center">
-  <img src="docs/images/dashboard-insights.png" alt="Insights" width="800">
+  <img src="docs/images/tab-code-graph.png" alt="Code Graph — 221 symbols, 177 relations" width="800">
 </p>
 
 <p align="center">
-  <img src="docs/images/dashboard-benchmark.png" alt="Benchmark" width="800">
+  <img src="docs/images/tab-benchmark.png" alt="Benchmark — 97% compression, cost savings" width="800">
 </p>
+
+<p align="center">
+  <img src="docs/images/tab-context.png" alt="Context — DreamMode + token management" width="800">
+</p>
+
+> See all 15 tabs with full screenshots in the [V6 Features Guide](docs/guides/V6-FEATURES-GUIDE.md).
 
 ```bash
 npx mcp-graph serve --port 3000    # or: npm run dev

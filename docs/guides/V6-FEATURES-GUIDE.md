@@ -2,6 +2,57 @@
 
 This guide covers all 8 features introduced in v6.0. Zero breaking changes — all v5.x tools continue working.
 
+## Dashboard Overview
+
+The mcp-graph dashboard provides 15 tabs for complete project visibility:
+
+### Graph — Interactive execution graph with hierarchy, filters, and node table
+<img src="../images/tab-graph.png" alt="Graph tab" width="800">
+
+### PRD & Backlog — Progress tracking with dependency visualization
+<img src="../images/tab-prd-backlog.png" alt="PRD & Backlog tab" width="800">
+
+### Journey — Website journey mapping with milestone tracking
+<img src="../images/tab-journey.png" alt="Journey tab" width="800">
+
+### Code Graph — Multi-language code intelligence (221 symbols, 177 relations)
+<img src="../images/tab-code-graph.png" alt="Code Graph tab" width="800">
+
+### Insights — Health score, status distribution, sprint progress, knowledge coverage
+<img src="../images/tab-insights.png" alt="Insights tab" width="800">
+
+### Skills — 45 built-in skills mapped to 9 lifecycle phases with token budget
+<img src="../images/tab-skills.png" alt="Skills tab" width="800">
+
+### Context — Token management, DreamMode (NREM→REM→Wake), session health
+<img src="../images/tab-context.png" alt="Context tab" width="800">
+
+### Benchmark — 97% compression rate, cost impact per model, token usage per tool
+<img src="../images/tab-benchmark.png" alt="Benchmark tab" width="800">
+
+### Languages — Code translation between 13 languages with construct analysis
+<img src="../images/tab-languages.png" alt="Languages tab" width="800">
+
+### DaVinci — DaVinci JS to PingAccess/PingFederate Java plugin converter
+<img src="../images/tab-davinci.png" alt="DaVinci tab" width="800">
+
+### Siebel — SIF import/export, object browser, code generation
+<img src="../images/tab-siebel.png" alt="Siebel tab" width="800">
+
+### LSP — Language Server Protocol status, symbol explorer, diagnostics
+<img src="../images/tab-lsp.png" alt="LSP tab" width="800">
+
+### Memories — Project knowledge store with export/import
+<img src="../images/tab-memories.png" alt="Memories tab" width="800">
+
+### Docs — Live-introspected MCP tools, API routes, and guides
+<img src="../images/tab-docs.png" alt="Docs tab" width="800">
+
+### Logs — Real-time structured logs with filtering and search
+<img src="../images/tab-logs.png" alt="Logs tab" width="800">
+
+---
+
 ## 1. Pipeline Tools (`start_task` / `finish_task`)
 
 ### Problem
