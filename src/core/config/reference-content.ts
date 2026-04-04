@@ -170,9 +170,9 @@ Recuperação: \`rag_context\` monta contexto phase-aware com budget de tokens:
 
 Manual: \`reindex_knowledge\` para rebuild completo do índice.`;
 
-export const SKILLS_SECTION = `### Skills Built-in (40 skills)
+export const SKILLS_SECTION = `### Skills Built-in (54 skills)
 
-40 skills mapeadas às fases do lifecycle. Use \`list_skills\` para descobrir por fase ou ver instruções completas.
+54 skills mapeadas às fases do lifecycle. Use \`list_skills\` para descobrir por fase ou ver instruções completas.
 
 #### Skills por fase
 
@@ -184,6 +184,9 @@ export const SKILLS_SECTION = `### Skills Built-in (40 skills)
 | IMPLEMENT | \`subagent-driven-development\`, \`xp-bootstrap\`, \`self-healing-awareness\` |
 | VALIDATE | \`playwright-explore-website\`, \`playwright-generate-test\`, \`e2e-testing\` |
 | REVIEW | \`code-reviewer\`, \`code-review-checklist\`, \`review-and-refactor\`, \`observability-engineer\` |
+| DEPLOY | \`deployment-engineer\`, \`devops-deploy\`, \`git-pushing\` |
+| HANDOFF | \`delivery-checklist\`, \`pr-documentation\`, \`knowledge-capture\` |
+| LISTENING | \`feedback-collector\`, \`iteration-planner\`, \`metrics-retrospective\` |
 
 #### Categorias adicionais (multi-fase)
 
@@ -374,6 +377,16 @@ const PHASE_SKILLS: Record<string, string[]> = {
     "deployment-engineer",
     "devops-deploy",
     "git-pushing",
+  ],
+  HANDOFF: [
+    "delivery-checklist",
+    "pr-documentation",
+    "knowledge-capture",
+  ],
+  LISTENING: [
+    "feedback-collector",
+    "iteration-planner",
+    "metrics-retrospective",
   ],
 };
 

@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { registerManageSkill } from "../mcp/tools/manage-skill.js";
+import { getSkillByName } from "../core/skills/built-in-skills.js";
 import { clearLogBuffer, getLogBuffer } from "../core/utils/logger.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,7 +74,7 @@ describe("MCP manage_skill tool — action list", () => {
 
   describe("list with skillName", () => {
     it("should return full instructions for skill by name", async () => {
-      // Use a known built-in skill name — "dev-flow-orchestrator" exists in the project
+      // Use a known built-in skill name — first skill from the list
       const allResult = await tools(server)["manage_skill"].handler({ action: "list" });
       const allParsed = parseResult(allResult);
       const skills = allParsed.skills as Record<string, unknown>[];
@@ -173,6 +174,37 @@ describe("MCP manage_skill tool — action list", () => {
       expect(parsed.ok).toBe(true);
       expect(parsed.total).toBe(1);
       expect((parsed.templates as unknown[]).length).toBe(1);
+    });
+  });
+
+  // ── action: recommend ──────────────────────────────────
+
+  describe("action: recommend", () => {
+    it("should return recommendations for empty graph (ANALYZE phase)", async () => {
+      const result = await tools(server)["manage_skill"].handler({ action: "recommend" });
+      const parsed = parseResult(result);
+
+      expect(parsed.phase).toBe("ANALYZE");
+      expect(parsed.recommendations).toBeInstanceOf(Array);
+      expect((parsed.recommendations as unknown[]).length).toBeGreaterThan(0);
+    });
+
+    it("should return recommendations filtered by specified phase", async () => {
+      const result = await tools(server)["manage_skill"].handler({ action: "recommend", phase: "DEPLOY" });
+      const parsed = parseResult(result);
+
+      expect(parsed.phase).toBe("DEPLOY");
+      expect(parsed.recommendations).toBeInstanceOf(Array);
+    });
+
+    it("should only recommend skills that exist in built-in registry", async () => {
+      const result = await tools(server)["manage_skill"].handler({ action: "recommend" });
+      const parsed = parseResult(result);
+
+      const recs = parsed.recommendations as Array<{ skill: string; reason: string; phase: string }>;
+      for (const rec of recs) {
+        expect(getSkillByName(rec.skill), `Ghost skill "${rec.skill}" in recommend`).toBeDefined();
+      }
     });
   });
 });

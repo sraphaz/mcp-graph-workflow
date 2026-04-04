@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildLifecycleBlock } from "../mcp/lifecycle-wrapper.js";
 import { detectWarnings } from "../core/planner/lifecycle-phase.js";
+import { getSkillByName } from "../core/skills/built-in-skills.js";
 import type { GraphDocument } from "../core/graph/graph-types.js";
 
 function makeDoc(nodes: Array<{ type: string; status: string; sprint?: string | null; acceptanceCriteria?: string[] }> = []): GraphDocument {
@@ -53,6 +54,53 @@ describe("buildLifecycleBlock", () => {
     expect(block).toHaveProperty("principles");
     expect(block).toHaveProperty("warnings");
     expect(block.warnings).toBeInstanceOf(Array);
+  });
+
+  it("should include recommendedSkills for empty graph (ANALYZE phase)", () => {
+    const doc = makeDoc();
+    const block = buildLifecycleBlock(doc);
+
+    expect(block.phase).toBe("ANALYZE");
+    expect(block.recommendedSkills).toBeDefined();
+    expect(block.recommendedSkills!.length).toBeGreaterThan(0);
+    expect(block.recommendedSkills!.length).toBeLessThanOrEqual(3);
+  });
+
+  it("should include recommendedSkills for IMPLEMENT phase with in_progress tasks", () => {
+    const doc = makeDoc([
+      { type: "task", status: "in_progress", sprint: "s1" },
+      { type: "task", status: "in_progress", sprint: "s1" },
+      { type: "task", status: "in_progress", sprint: "s1" },
+    ]);
+    const block = buildLifecycleBlock(doc);
+
+    expect(block.phase).toBe("IMPLEMENT");
+    expect(block.recommendedSkills).toBeDefined();
+    expect(block.recommendedSkills!.length).toBeLessThanOrEqual(3);
+  });
+
+  it("should only recommend skills that exist in built-in registry", () => {
+    const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
+    const block = buildLifecycleBlock(doc);
+
+    if (block.recommendedSkills) {
+      for (const rec of block.recommendedSkills) {
+        expect(getSkillByName(rec.skill), `Ghost skill "${rec.skill}" in recommendedSkills`).toBeDefined();
+      }
+    }
+  });
+
+  it("should keep suggestedSkills and recommendedSkills as distinct arrays", () => {
+    const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
+    const block = buildLifecycleBlock(doc);
+
+    // suggestedSkills = static from guidance, recommendedSkills = dynamic from graph state
+    if (block.suggestedSkills && block.recommendedSkills) {
+      expect(Array.isArray(block.suggestedSkills)).toBe(true);
+      expect(Array.isArray(block.recommendedSkills)).toBe(true);
+      // They should be different objects
+      expect(block.suggestedSkills).not.toBe(block.recommendedSkills);
+    }
   });
 });
 

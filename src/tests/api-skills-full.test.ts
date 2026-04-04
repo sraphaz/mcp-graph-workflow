@@ -78,18 +78,18 @@ describe("Skills API — full coverage", () => {
 
   it("should set skill preference enabled=false", async () => {
     const res = await request(app)
-      .patch("/api/v1/skills/dev-flow-orchestrator/preference")
+      .patch("/api/v1/skills/code-reviewer/preference")
       .send({ enabled: false });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       ok: true,
-      name: "dev-flow-orchestrator",
+      name: "code-reviewer",
       enabled: false,
     });
 
     // Verify persistence
     const prefsRes = await request(app).get("/api/v1/skills/preferences");
-    expect(prefsRes.body.preferences["dev-flow-orchestrator"]).toBe(false);
+    expect(prefsRes.body.preferences["code-reviewer"]).toBe(false);
   });
 
   it("should return 400 when enabled field is missing", async () => {

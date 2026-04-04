@@ -20,7 +20,8 @@ import {
   listTaskTemplates,
 } from "../../core/skills/template-store.js";
 import { getBuiltInSkills, getSkillsByPhase, getSkillByName } from "../../core/skills/built-in-skills.js";
-import type { LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
+import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
+import { recommendBuiltInSkills } from "../../core/insights/skill-recommender.js";
 import { CustomSkillInputSchema, TaskTemplateInputSchema } from "../../schemas/skill.schema.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
@@ -32,7 +33,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
     "Manage skills: list built-in skills, enable/disable, CRUD custom skills.",
     {
       action: z
-        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates"])
+        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates", "recommend"])
         .describe("Action to perform"),
       skillName: z
         .string()
@@ -204,6 +205,15 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             const templates = listTaskTemplates(db, projectId);
             logger.info("tool:manage_skill:list_templates", { count: templates.length });
             return mcpText({ ok: true, total: templates.length, templates });
+          }
+
+          case "recommend": {
+            const doc = store.toGraphDocument();
+            const currentPhase = detectCurrentPhase(doc);
+            const targetPhase = (phase as LifecyclePhase) ?? currentPhase;
+            const recs = recommendBuiltInSkills(doc, targetPhase);
+            logger.info("tool:manage_skill:recommend", { phase: targetPhase, count: recs.length });
+            return mcpText({ phase: targetPhase, recommendations: recs });
           }
 
           default:

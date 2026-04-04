@@ -20,6 +20,7 @@ import { estimateTokens } from "../core/context/token-estimator.js";
 import { logger } from "../core/utils/logger.js";
 import { GraphEventBus } from "../core/events/event-bus.js";
 import { categorizeError, generateErrorHash } from "../core/skills/self-healing-listener.js";
+import { recommendBuiltInSkills, type SkillRecommendation } from "../core/insights/skill-recommender.js";
 
 export interface PhaseKnowledgeSnippet {
   title: string;
@@ -36,6 +37,7 @@ export interface LifecycleBlock {
   warnings: LifecycleWarning[];
   suggestedMcpAgents?: McpAgentSuggestion[];
   suggestedSkills?: string[];
+  recommendedSkills?: SkillRecommendation[];
   phaseKnowledge?: PhaseKnowledgeSnippet[];
 }
 
@@ -97,6 +99,14 @@ export function buildLifecycleBlock(doc: GraphDocument, options?: LifecycleBlock
       ? { suggestedSkills: guidance.suggestedSkills }
       : {}),
     ...(phaseKnowledge && phaseKnowledge.length > 0 ? { phaseKnowledge } : {}),
+    ...(() => {
+      try {
+        const recs = recommendBuiltInSkills(doc, phase).slice(0, 3);
+        return recs.length > 0 ? { recommendedSkills: recs } : {};
+      } catch {
+        return {};
+      }
+    })(),
   };
 }
 

@@ -196,6 +196,7 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
     suggestedMcpAgents: [
       { name: "code-graph", action: "Scope check final antes do PR", tools: ["impact", "search"] },
     ],
+    suggestedSkills: ["delivery-checklist", "pr-documentation", "knowledge-capture"],
   },
   DEPLOY: {
     reminder: "Fase DEPLOY: Valide CI pipeline, execute release, e verifique post-release smoke tests.",
@@ -210,6 +211,7 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
     reminder: "Fase LISTENING: Colete feedback e adicione novos nodes ao grafo. Inicie novo ciclo se necessário.",
     suggestedTools: ["add_node", "import_prd", "search", "list", "analyze"],
     principles: ["Feedback contínuo", "Iteração incremental", "CLAUDE.md como spec evolutiva", "Backlog health", "Tech debt tracking"],
+    suggestedSkills: ["feedback-collector", "iteration-planner", "metrics-retrospective"],
   },
 };
 

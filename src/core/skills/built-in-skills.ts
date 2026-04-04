@@ -1,5 +1,5 @@
 /**
- * Built-in Skills Registry — 40 skills mapped to lifecycle phases.
+ * Built-in Skills Registry — 54 skills mapped to lifecycle phases.
  * Each skill is a structured instruction set for agentic workflows.
  */
 
@@ -215,6 +215,111 @@ export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
       "Configure observabilidade: métricas de aplicação, distributed tracing, health checks. " +
       "Defina SLIs/SLOs para endpoints críticos. Configure alertas para anomalias. " +
       "Garanta que logs são queryable (structured, not free-text). Output: observability setup.",
+  },
+
+  // ── DEPLOY ──────────────────────────────────
+  {
+    name: "deployment-engineer",
+    description: "Validação de pipeline CI/CD, smoke tests e rollback plan",
+    category: "deploy",
+    phases: ["DEPLOY"],
+    instructions:
+      "Valide o pipeline CI/CD antes do release: todos os checks verdes, build reproduzível. " +
+      "Execute smoke tests pós-deploy em staging. Documente rollback plan com passos concretos. " +
+      "Verifique semantic versioning (breaking changes = major). Confirme changelog atualizado. " +
+      "Post-deploy: monitore métricas de erro por 30min, valide health checks.",
+  },
+  {
+    name: "devops-deploy",
+    description: "Paridade de ambientes, secret rotation e estratégias de deploy",
+    category: "deploy",
+    phases: ["DEPLOY"],
+    instructions:
+      "Garanta paridade entre staging e produção (versões, configs, secrets). " +
+      "Verifique rotação de secrets antes do release. Escolha estratégia de deploy: " +
+      "blue-green para zero downtime, canary para validação gradual. " +
+      "Configure monitoring dashboards para o release. Valide auto-scaling policies.",
+  },
+  {
+    name: "git-pushing",
+    description: "Branch hygiene, PR completeness e tags de release",
+    category: "deploy",
+    phases: ["DEPLOY"],
+    instructions:
+      "Verifique branch hygiene: squash commits sem valor, rebase sobre main. " +
+      "PR deve estar completo: descrição, link para tasks, test evidence. " +
+      "Respeite protected branch rules. Crie tag semântica para o release (v1.2.3). " +
+      "Confirme que CI passou na branch de release antes de merge.",
+  },
+
+  // ── HANDOFF ─────────────────────────────────
+  {
+    name: "delivery-checklist",
+    description: "Checklist de entrega: snapshot, ADRs e doc completeness",
+    category: "handoff",
+    phases: ["HANDOFF"],
+    instructions:
+      "Execute checklist de entrega: 1) Exporte snapshot do grafo via `snapshot`. " +
+      "2) Verifique que todos os ADRs estão documentados. 3) Use `analyze(handoff_ready)` " +
+      "para validar gate de entrega. 4) Atualize README com instruções de setup. " +
+      "5) Confirme que knowledge base está atualizada com decisões técnicas.",
+  },
+  {
+    name: "pr-documentation",
+    description: "Estrutura de PR, evidências de teste e breaking changes",
+    category: "handoff",
+    phases: ["HANDOFF"],
+    instructions:
+      "Estruture o PR: título conciso (<70 chars), body com Summary (bullets), " +
+      "Test Plan (checklist), Breaking Changes (se houver). Link para tasks/epics no grafo. " +
+      "Inclua evidências: screenshots, coverage reports, test results. " +
+      "Defina reviewers com base no blast radius (use Code Intelligence).",
+  },
+  {
+    name: "knowledge-capture",
+    description: "Captura de decisões técnicas e lessons learned via write_memory",
+    category: "handoff",
+    phases: ["HANDOFF"],
+    instructions:
+      "Use `write_memory` para persistir: 1) Decisões arquiteturais e trade-offs. " +
+      "2) Lessons learned durante a implementação. 3) Limitações conhecidas e workarounds. " +
+      "4) Padrões de erro descobertos e suas prevenções (healing memories). " +
+      "Essas memórias alimentam o RAG para contexto futuro via `rag_context`.",
+  },
+
+  // ── LISTENING ───────────────────────────────
+  {
+    name: "feedback-collector",
+    description: "Coleta e classificação de feedback como nodes no grafo",
+    category: "listening",
+    phases: ["LISTENING"],
+    instructions:
+      "Adicione feedback como nodes no grafo via `node` (type: idea ou requirement). " +
+      "Classifique por tipo (bug, feature, improvement) e prioridade. " +
+      "Link feedback a epics/requirements existentes via `edge`. " +
+      "Use `analyze(backlog_health)` para avaliar impacto no backlog.",
+  },
+  {
+    name: "iteration-planner",
+    description: "Planejamento de próxima iteração a partir de feedback e tech debt",
+    category: "listening",
+    phases: ["LISTENING"],
+    instructions:
+      "Revise indicadores de tech debt e feedback coletado. Priorize itens contra o roadmap. " +
+      "Crie novos epics para feedback aprovado via `node` (type: epic). " +
+      "Quando o escopo justificar, inicie novo ciclo ANALYZE com `set_phase`. " +
+      "Use `plan_sprint` para projetar capacidade da próxima iteração.",
+  },
+  {
+    name: "metrics-retrospective",
+    description: "Retrospectiva baseada em métricas: velocity, burndown e bottlenecks",
+    category: "listening",
+    phases: ["LISTENING"],
+    instructions:
+      "Use `metrics` para revisar velocity trends e sprint burndown. " +
+      "Identifique bottlenecks via `analyze(blockers)` e tarefas que ficaram stuck. " +
+      "Documente melhorias para o próximo ciclo via `write_memory`. " +
+      "Compare velocity planejada vs realizada. Ajuste estimativas futuras com base no histórico.",
   },
 
   // ── SOFTWARE DESIGN PRINCIPLES ────────────────────

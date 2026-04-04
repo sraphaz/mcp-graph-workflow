@@ -8,8 +8,8 @@ import {
 } from "../core/skills/built-in-skills.js";
 
 describe("BuiltInSkills Registry", () => {
-  it("should have exactly 45 built-in skills", () => {
-    expect(BUILT_IN_SKILLS).toHaveLength(45);
+  it("should have exactly 54 built-in skills", () => {
+    expect(BUILT_IN_SKILLS).toHaveLength(54);
   });
 
   it("should have unique names across all skills", () => {
@@ -45,7 +45,7 @@ describe("BuiltInSkills Registry", () => {
     }
   });
 
-  it("should cover ANALYZE, DESIGN, PLAN, IMPLEMENT, VALIDATE, REVIEW phases", () => {
+  it("should cover all 9 lifecycle phases", () => {
     const coveredPhases = new Set(BUILT_IN_SKILLS.flatMap((s) => s.phases));
     expect(coveredPhases.has("ANALYZE")).toBe(true);
     expect(coveredPhases.has("DESIGN")).toBe(true);
@@ -53,13 +53,16 @@ describe("BuiltInSkills Registry", () => {
     expect(coveredPhases.has("IMPLEMENT")).toBe(true);
     expect(coveredPhases.has("VALIDATE")).toBe(true);
     expect(coveredPhases.has("REVIEW")).toBe(true);
+    expect(coveredPhases.has("DEPLOY")).toBe(true);
+    expect(coveredPhases.has("HANDOFF")).toBe(true);
+    expect(coveredPhases.has("LISTENING")).toBe(true);
   });
 });
 
 describe("getBuiltInSkills", () => {
   it("should return all built-in skills", () => {
     const skills = getBuiltInSkills();
-    expect(skills).toHaveLength(45);
+    expect(skills).toHaveLength(54);
   });
 });
 
@@ -95,14 +98,22 @@ describe("getSkillsByPhase", () => {
     expect(skills).toHaveLength(26);
   });
 
-  it("should return empty array for HANDOFF (no built-in skills assigned)", () => {
-    const skills = getSkillsByPhase("HANDOFF");
-    expect(skills).toHaveLength(0);
+  it("should return 3 skills for DEPLOY", () => {
+    const skills = getSkillsByPhase("DEPLOY");
+    expect(skills).toHaveLength(3);
+    expect(skills.every((s: BuiltInSkill) => s.phases.includes("DEPLOY"))).toBe(true);
   });
 
-  it("should return empty array for LISTENING (no built-in skills assigned)", () => {
+  it("should return 3 skills for HANDOFF", () => {
+    const skills = getSkillsByPhase("HANDOFF");
+    expect(skills).toHaveLength(3);
+    expect(skills.every((s: BuiltInSkill) => s.phases.includes("HANDOFF"))).toBe(true);
+  });
+
+  it("should return 3 skills for LISTENING", () => {
     const skills = getSkillsByPhase("LISTENING");
-    expect(skills).toHaveLength(0);
+    expect(skills).toHaveLength(3);
+    expect(skills.every((s: BuiltInSkill) => s.phases.includes("LISTENING"))).toBe(true);
   });
 });
 
@@ -139,6 +150,21 @@ describe("New skill categories", () => {
 
   it("should have 3 cost-reducer skills", () => {
     const skills = BUILT_IN_SKILLS.filter((s) => s.category === "cost-reducer");
+    expect(skills).toHaveLength(3);
+  });
+
+  it("should have 3 deploy skills", () => {
+    const skills = BUILT_IN_SKILLS.filter((s) => s.category === "deploy");
+    expect(skills).toHaveLength(3);
+  });
+
+  it("should have 3 handoff skills", () => {
+    const skills = BUILT_IN_SKILLS.filter((s) => s.category === "handoff");
+    expect(skills).toHaveLength(3);
+  });
+
+  it("should have 3 listening skills", () => {
+    const skills = BUILT_IN_SKILLS.filter((s) => s.category === "listening");
     expect(skills).toHaveLength(3);
   });
 
