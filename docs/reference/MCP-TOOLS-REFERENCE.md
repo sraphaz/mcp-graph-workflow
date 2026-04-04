@@ -1,12 +1,14 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 49 tools + 6 deprecated organized in 8 categories — complete parameter reference.
+> 55 tools + 6 deprecated organized in 9 categories — complete parameter reference.
 
 ## Summary
 
 | Category | Tools | Count |
 |----------|-------|-------|
+| **Pipeline (v6.0)** | **start_task, finish_task** | **2** |
+| **Predictive (v6.0)** | **forecast, learn_from_project** | **2** |
 | Core | analyze, clone_node, context, delete_memory, edge, export, help, import_graph, import_prd, init, journey, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, sync_stack_docs, template, update_status, validate, write_memory | 31 |
 | Translation | analyze_translation, translate_code, translation_jobs | 3 |
 | Code Intelligence | code_intelligence | 1 |

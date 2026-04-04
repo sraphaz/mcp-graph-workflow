@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] — v6.0 Autopilot Release (2026-04-04)
+
+### Added
+
+#### Pipeline Tools (Sprint 1)
+- **`start_task`** — compound tool: next + context + RAG + TDD hints + update_status in 1 call
+- **`finish_task`** — compound tool: DoD 9 checks + AC validation + epic promotion + next in 1 call
+- **Agent State Machine** — `_lifecycle.nextAction` in every tool response (tool, args, reason, priority, hint)
+- **Epic promotion util** — extracted reusable `checkEpicPromotion()` from update-status
+
+#### Predictive Analytics (Sprint 2)
+- **`forecast(dora)`** — DORA metrics: deployment frequency, lead time P50/P85/P95, change failure rate, MTTR, trend
+- **`analyze(cfd)`** — Cumulative Flow Diagram data with daily status snapshots
+- **Migration v26** — `flow_snapshots` table for CFD time-series data
+
+#### Code & Knowledge (Sprint 3)
+- **`analyze(code_sync)`** — validates graph nodes against code index (stale sourceRefs, missing testFiles)
+- **`learn_from_project`** — imports knowledge from another project's DB with category filtering and dedup
+- **Knowledge Store project_id filter** — `search()` now accepts optional `projectId` parameter
+
+#### Smart Decompose
+- **`analyze(smart_decompose)`** — auto-breaks tasks into subtasks (1 AC = 1 subtask) with test type inference
+
+#### Template & Documentation
+- **Pipeline v6.0 workflow** as primary flow in init-generated CLAUDE.md and copilot-instructions.md
+- **Industrial methodology sections** — Little's Law, Six Sigma, DORA, Shift-Left Testing, Theory of Constraints
+- **Definition of Ready** (7 checks), **Definition of Done** (9 checks), **Phase Gates**, **Flow Principles**
+- **48 documented analyze modes** (was 24), **52 tools** (was 46)
+- **15 help topics** including `pipeline`, `flow`, `quality_metrics`, `tdd`, `dor`
+- **Agent antipatterns** section — 9 common mistakes with corrections
+- **Memory verification rule** — "code beats memory" for stale progress counts
+
+### Changed
+- Tool count: 46 + 6 deprecated → 52 + 6 deprecated
+- Analyze modes documented: 24 → 48
+- Test suite: 5066 → 5111+ tests
+- `PHASE_TOOLS.IMPLEMENT` now includes `start_task` and `finish_task`
+
+### Migration
+- **Zero breaking changes** — all v5.x tools, APIs, and data formats remain untouched
+- Pipeline tools are new additions, not replacements
+- Migration v26 applies automatically on first DB open
+
+---
+
 ## [5.35.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.34.2...mcp-graph-v5.35.0) (2026-04-04)
 
 

@@ -4,6 +4,23 @@
 
 ---
 
+## Pipeline v6.0 (Recomendado)
+
+O fluxo v6.0 reduz de 6 tool calls para 2 por task:
+
+```
+start_task → [implementar com TDD] → finish_task
+```
+
+- **`start_task`** — compõe: next + context + rag_context + TDD hints + update_status(in_progress)
+- **`finish_task`** — compõe: DoD (9 checks) + AC validation + update_status(done) + epic promotion + next
+
+Toda resposta inclui `_lifecycle.nextAction` — o grafo diz ao agent o que fazer em seguida.
+
+O fluxo granular (v5.x) continua disponível: `next → context → rag_context → [TDD] → analyze(implement_done) → update_status`
+
+---
+
 ## Visão Geral
 
 O mcp-graph é o **source of truth** do ciclo de desenvolvimento. Ele transforma PRDs em grafos de execução persistentes (SQLite), permitindo que agents trabalhem de forma estruturada, rastreável e eficiente em tokens. Para um resumo prático das 9 fases com gate checks e analyze modes, veja o [Advanced Guide §1](../guides/ADVANCED-GUIDE.md).
