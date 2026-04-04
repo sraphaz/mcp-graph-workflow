@@ -35,7 +35,8 @@ describe("API /api/v1/code-graph/lsp", () => {
       const res = await request(ctx.app).get("/api/v1/code-graph/lsp/languages");
 
       expect(res.status).toBe(200);
-      for (const entry of res.body.detected) {
+      const detected = res.body.detected ?? [];
+      for (const entry of detected) {
         expect(entry).toHaveProperty("languageId");
         expect(entry).toHaveProperty("serverCommand");
       }
