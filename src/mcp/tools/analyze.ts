@@ -91,6 +91,10 @@ const ANALYZE_MODES = z.enum([
   "cfd",
   "code_sync",
   "smart_decompose",
+  "security_scan",
+  "code_quality",
+  "test_coverage",
+  "observability_check",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
@@ -464,6 +468,34 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const cfdData = getCfdData(store, project.id);
           logger.info("tool:analyze:cfd:ok", { dataPoints: cfdData.length });
           return mcpText({ ok: true, mode: "cfd", dataPoints: cfdData.length, data: cfdData });
+        }
+
+        case "security_scan": {
+          const { checkSecurityScan } = await import("../../core/analyzer/security-scanner.js");
+          const report = checkSecurityScan(process.cwd());
+          logger.info("tool:analyze:security_scan:ok", { score: report.score, grade: report.grade });
+          return mcpText({ ok: true, ...report });
+        }
+
+        case "code_quality": {
+          const { checkCodeQuality } = await import("../../core/analyzer/code-quality-checker.js");
+          const report = checkCodeQuality(process.cwd());
+          logger.info("tool:analyze:code_quality:ok", { score: report.score, grade: report.grade });
+          return mcpText({ ok: true, ...report });
+        }
+
+        case "test_coverage": {
+          const { checkTestCoverage } = await import("../../core/analyzer/test-coverage-checker.js");
+          const report = checkTestCoverage(process.cwd());
+          logger.info("tool:analyze:test_coverage:ok", { score: report.score, grade: report.grade });
+          return mcpText({ ok: true, ...report });
+        }
+
+        case "observability_check": {
+          const { checkObservability } = await import("../../core/analyzer/observability-checker.js");
+          const report = checkObservability(process.cwd());
+          logger.info("tool:analyze:observability_check:ok", { score: report.score, grade: report.grade });
+          return mcpText({ ok: true, ...report });
         }
 
         default: {
