@@ -91,6 +91,29 @@ npm run dev        # HTTP + dashboard at localhost:3000
 
 ---
 
+## 30 Engineering Skills
+
+mcp-graph includes 30 ready-to-use skills covering the entire software development lifecycle:
+
+| Category | Count | Examples |
+|----------|-------|---------|
+| **Lifecycle** | 9 | `/graph-implement`, `/graph-deploy`, `/graph-validate` |
+| **Quality** | 6 | `/graph-security`, `/graph-tests`, `/graph-observability` |
+| **Engineering** | 4 | `/graph-performance`, `/graph-refactor`, `/graph-api-design` |
+| **Operations** | 4 | `/graph-incident`, `/graph-cicd`, `/graph-accessibility` |
+| **Governance** | 6 | `/graph-architecture`, `/graph-release`, `/graph-docs` |
+| **PRD** | 1 | `/graph-prd` (7 methodologies: 5W2H, JTBD, Pareto, MoSCoW, INVEST) |
+
+### Install Skills
+
+```bash
+node skills-graph/install.mjs
+```
+
+Supports Claude Code, GitHub Copilot, and Codex CLI. See [skills-graph/README.md](skills-graph/README.md) for the full catalog and platform setup guides.
+
+---
+
 ## v6.0 Highlights
 
 ### Pipeline Tools: 6 calls to 2
