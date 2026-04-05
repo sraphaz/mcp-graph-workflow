@@ -848,6 +848,52 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_flow_snapshots_project_date ON flow_snapshots(project_id, snapshot_date);
     `,
   },
+  {
+    version: 27,
+    description: "Query cache table for semantic query caching",
+    sql: `
+      CREATE TABLE IF NOT EXISTS query_cache (
+        query_hash    TEXT NOT NULL UNIQUE,
+        query_text    TEXT NOT NULL,
+        embedding     BLOB,
+        result_json   TEXT NOT NULL,
+        tokens_saved  INTEGER NOT NULL DEFAULT 0,
+        hit_count     INTEGER NOT NULL DEFAULT 0,
+        created_at    TEXT NOT NULL,
+        expires_at    TEXT NOT NULL
+      );
+    `,
+  },
+  {
+    version: 28,
+    description: "Session chunks table for context delta tracking",
+    sql: `
+      CREATE TABLE IF NOT EXISTS session_chunks (
+        session_id    TEXT NOT NULL,
+        content_hash  TEXT NOT NULL,
+        tokens        INTEGER NOT NULL DEFAULT 0,
+        tracked_at    TEXT NOT NULL,
+        UNIQUE(session_id, content_hash)
+      );
+      CREATE INDEX IF NOT EXISTS idx_session_chunks_session_id ON session_chunks(session_id);
+    `,
+  },
+  {
+    version: 29,
+    description: "Relevance feedback table for implicit RAG quality signals",
+    sql: `
+      CREATE TABLE IF NOT EXISTS relevance_feedback (
+        id           TEXT PRIMARY KEY,
+        session_id   TEXT NOT NULL,
+        query        TEXT NOT NULL,
+        document_id  TEXT NOT NULL,
+        signal       TEXT NOT NULL,
+        created_at   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_relevance_feedback_session ON relevance_feedback(session_id);
+      CREATE INDEX IF NOT EXISTS idx_relevance_feedback_doc ON relevance_feedback(document_id);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

@@ -3,6 +3,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { ragBuildContext } from "../../core/context/rag-context.js";
 import { assembleContext } from "../../core/context/context-assembler.js";
+import { SessionTracker } from "../../core/context/session-tracker.js";
+import { applyRagSessionDelta } from "../../core/context/context-session.js";
+import { RagSemanticCacheLayer } from "../../core/rag/rag-semantic-cache-layer.js";
 import { multiStrategySearch } from "../../core/rag/multi-strategy-retrieval.js";
 import { recordUsage } from "../../core/rag/knowledge-quality.js";
 import { understandQuery } from "../../core/rag/query-understanding.js";
@@ -15,6 +18,19 @@ import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/life
 import { DEFAULT_TOKEN_BUDGET } from "../../core/utils/constants.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+/** Lazily instantiated SessionTracker (shared across calls). */
+let sessionTracker: SessionTracker | null = null;
+
+function getSessionTracker(store: SqliteStore): SessionTracker {
+  if (!sessionTracker) {
+    sessionTracker = new SessionTracker(store.getDb());
+  }
+  return sessionTracker;
+}
+
+/** Module-level semantic cache — shared across all rag_context calls (all paths). */
+const semanticCache = new RagSemanticCacheLayer({ ttlMs: 10 * 60 * 1000, maxEntries: 100 });
 
 /** Module-level query cache — shared across all rag_context calls (multi-strategy path). */
 const ragCache = new QueryCache({ ttlMs: 5 * 60 * 1000, maxSize: 100 });
@@ -43,17 +59,44 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
         .optional()
         .describe("Maximum token budget for the context (default: 4000)"),
       detail: z
-        .enum(["summary", "standard", "deep"])
+        .enum(["summary", "brief", "standard", "deep"])
         .optional()
         .describe("Context detail level: summary (~40-50 tok/node), standard (~150 tok/node), deep (~500+ tok/node). Default: standard"),
       strategy: z
         .enum(["fts", "multi"])
         .optional()
         .describe("Search strategy: 'fts' (traditional BM25), 'multi' (multi-strategy with query understanding, post-retrieval, citations). Default: fts"),
+      sessionId: z
+        .string()
+        .min(1)
+        .optional()
+        .describe("Session ID for delta tracking — omit for full response every time"),
     },
-    async ({ query, tokenBudget, detail, strategy }) => {
-      logger.debug("tool:rag_context", { query, detail });
+    async ({ query, tokenBudget, detail, strategy, sessionId }) => {
+      logger.debug("tool:rag_context", { query, detail, sessionId });
+
+      /** Wrap response with session delta if sessionId is present. */
+      const wrapWithSession = (data: Record<string, unknown>) => {
+        if (!sessionId) {
+          return mcpText(data);
+        }
+        const tracker = getSessionTracker(store);
+        const result = applyRagSessionDelta(tracker, sessionId, data);
+        logger.info("tool:rag_context:session", { sessionId, savings: result._session_savings });
+        return mcpText({ ...result.response, _session_savings: result._session_savings });
+      };
       const budget = tokenBudget ?? DEFAULT_TOKEN_BUDGET;
+
+      // Semantic cache — check before any pipeline execution
+      const semanticHit = semanticCache.lookup(query);
+      if (semanticHit) {
+        logger.info("tool:rag_context:semantic_cache_hit", { query, type: semanticHit.type });
+        return wrapWithSession({
+          ...(semanticHit.result as Record<string, unknown>),
+          _cache_hit: true,
+          _cache_type: semanticHit.type,
+        });
+      }
 
       // Detect current lifecycle phase for phase-aware knowledge boosting
       let currentPhase: LifecyclePhase | undefined;
@@ -74,7 +117,7 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
         const cachedDetail = contextCache.get(detailCacheKey);
         if (cachedDetail) {
           logger.debug("rag_context:detail_cache_hit", { query, detail });
-          return mcpText(cachedDetail);
+          return wrapWithSession(cachedDetail as unknown as Record<string, unknown>);
         }
 
         // Use tiered context assembler with phase awareness
@@ -85,8 +128,9 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
         });
 
         contextCache.set(detailCacheKey, ctx);
+        semanticCache.store(query, ctx);
         logger.info("tool:rag_context:ok", { query, detail, phase: currentPhase, strategy });
-        return mcpText(ctx);
+        return wrapWithSession(ctx as unknown as Record<string, unknown>);
       }
 
       // Multi-strategy search mode — full pipeline
@@ -117,7 +161,7 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
           tracer.endStage("citation", { inputCount: cached.length, outputCount: cachedCited.citations.length });
           const trace = tracer.finalize();
 
-          return mcpText({
+          return wrapWithSession({
             query,
             strategy: "multi",
             fromCache: true,
@@ -207,7 +251,7 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
           totalLatencyMs: trace.totalLatencyMs,
         });
 
-        return mcpText({
+        const multiResponse = {
           query,
           strategy: "multi",
           intent: understanding.intent,
@@ -238,7 +282,9 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
               outputCount: s.outputCount,
             })),
           },
-        });
+        };
+        semanticCache.store(query, multiResponse);
+        return wrapWithSession(multiResponse);
       }
 
       // Default: use existing RAG context builder with phase awareness
@@ -246,14 +292,15 @@ export function registerRagContext(server: McpServer, store: SqliteStore): void 
       const cachedDefault = contextCache.get(defaultCacheKey);
       if (cachedDefault) {
         logger.debug("rag_context:default_cache_hit", { query });
-        return mcpText(cachedDefault);
+        return wrapWithSession(cachedDefault as unknown as Record<string, unknown>);
       }
 
       const ctx = ragBuildContext(store, query, budget, currentPhase);
 
       contextCache.set(defaultCacheKey, ctx);
+      semanticCache.store(query, ctx);
       logger.info("tool:rag_context:ok", { query, tier: "standard", phase: currentPhase });
-      return mcpText(ctx);
+      return wrapWithSession(ctx as unknown as Record<string, unknown>);
     },
   );
 }

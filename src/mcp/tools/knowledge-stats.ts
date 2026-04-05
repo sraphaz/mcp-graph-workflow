@@ -8,6 +8,9 @@ import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
+import { generateBudgetReport } from "../../core/rag/token-budget-tracker.js";
+import { getTokenSavingsReport } from "../../core/rag/token-savings.js";
+import { DEFAULT_TOKEN_BUDGET } from "../../core/utils/constants.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
@@ -84,6 +87,12 @@ export function registerKnowledgeStats(server: McpServer, store: SqliteStore): v
 
       const totalDocs = knowledgeStore.count();
 
+      // Token budget report
+      const budgetReport = generateBudgetReport(db, DEFAULT_TOKEN_BUDGET);
+
+      // Token savings analytics
+      const savingsReport = getTokenSavingsReport(db);
+
       const stats = {
         totalDocuments: totalDocs,
         sourceCounts: sourceCounts.map((r) => ({
@@ -105,6 +114,8 @@ export function registerKnowledgeStats(server: McpServer, store: SqliteStore): v
         })),
         staleness: stalenessInfo,
         relationsCount: relationsCount?.count ?? 0,
+        budget: budgetReport,
+        tokenSavings: savingsReport,
       };
 
       logger.info("tool:knowledge_stats:ok", { totalDocs });

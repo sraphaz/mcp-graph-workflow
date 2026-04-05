@@ -45,6 +45,10 @@ import { registerDavinciBuild } from "./davinci-build.js";
 import { registerKnowledgeFeedback } from "./knowledge-feedback.js";
 import { registerKnowledgeStats } from "./knowledge-stats.js";
 import { registerKnowledgeExport } from "./knowledge-export.js";
+// Context compression
+import { registerContextCompress } from "./context-compress.js";
+// Knowledge maintenance
+import { registerKnowledgePrune } from "./knowledge-prune.js";
 // Consolidated tools
 import { registerNode } from "./node.js";
 import { registerValidate } from "./validate.js";
@@ -121,6 +125,12 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerKnowledgeFeedback(server, store);
   registerKnowledgeStats(server, store);
   registerKnowledgeExport(server, store);
+
+  // Context compression
+  registerContextCompress(server);
+
+  // Knowledge maintenance
+  registerKnowledgePrune(server, store);
 
   // Consolidated tools
   registerNode(server, store);

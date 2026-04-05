@@ -15,6 +15,7 @@ import type Database from "better-sqlite3";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { findCrossSourceContext } from "./knowledge-linker.js";
 import { EntityStore } from "./entity-store.js";
+import { applyRelevanceBoosts } from "./relevance-boost.js";
 import { decomposeQuery, understandQuery } from "./query-understanding.js";
 import { logger } from "../utils/logger.js";
 
@@ -229,6 +230,9 @@ export function multiStrategySearch(
       strategies: strategyMap.get(doc.id) ?? ["rrf"],
     });
   }
+
+  // Apply relevance feedback boosts before final ranking
+  applyRelevanceBoosts(db, results as unknown as Array<{ id: string; score: number; [key: string]: unknown }>);
 
   // Sort by final score
   results.sort((a, b) => b.score - a.score);

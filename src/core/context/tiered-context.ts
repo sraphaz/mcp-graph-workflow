@@ -13,7 +13,7 @@ import { buildTaskContext, type TaskContext } from "./compact-context.js";
 import { estimateTokens } from "./token-estimator.js";
 import { logger } from "../utils/logger.js";
 
-export type ContextTier = "summary" | "standard" | "deep";
+export type ContextTier = "summary" | "brief" | "standard" | "deep";
 
 export interface TieredNodeSummary {
   id: string;
@@ -21,6 +21,7 @@ export interface TieredNodeSummary {
   title: string;
   status: string;
   priority: number;
+  description?: string;
 }
 
 export interface TieredContext {
@@ -62,6 +63,29 @@ export function buildTieredContext(
       tier,
       nodeId,
       summary,
+      estimatedTokens: estimateTokens(text),
+    };
+  }
+
+  if (tier === "brief") {
+    // L1: summary + description + sprint + xpSize (~80 tok)
+    const briefSummary: TieredNodeSummary = {
+      ...summary,
+      description: node.description?.slice(0, 200) || undefined,
+    };
+
+    const text = JSON.stringify({
+      tier,
+      nodeId,
+      summary: briefSummary,
+      sprint: node.sprint,
+      xpSize: node.xpSize,
+    });
+
+    return {
+      tier,
+      nodeId,
+      summary: briefSummary,
       estimatedTokens: estimateTokens(text),
     };
   }

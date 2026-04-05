@@ -31,6 +31,11 @@ vi.mock("../core/rag/skill-indexer.js", () => ({
 
 vi.mock("../core/rag/rag-pipeline.js", () => ({
   indexAllEmbeddings: vi.fn().mockResolvedValue({ indexed: 0 }),
+  TfIdfVectorizer: class {
+    fit(): void { /* noop */ }
+    embed(): number[] { return [0]; }
+    get vocabSize(): number { return 0; }
+  },
 }));
 
 vi.mock("../core/parser/read-file.js", () => ({

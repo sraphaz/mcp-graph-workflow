@@ -10,6 +10,7 @@ import { GraphSnapshotCache } from "../store/graph-snapshot-cache.js";
 import { ResponseCache } from "../rag/response-cache.js";
 import { buildTieredContext, type ContextTier } from "./tiered-context.js";
 import { compressWithBm25 } from "./bm25-compressor.js";
+import { compressBullets } from "./rule-compressor.js";
 import { estimateTokens } from "./token-estimator.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
@@ -28,6 +29,12 @@ export function getAssemblerCacheStats(): { size: number; hits: number; misses: 
   return assemblerCache.getStats();
 }
 
+export interface CompressionStats {
+  inputTokens: number;
+  outputTokens: number;
+  reductionPercent: number;
+}
+
 export interface AssembledContext {
   /** The query used to assemble context */
   query: string;
@@ -44,6 +51,8 @@ export interface AssembledContext {
     remaining: number;
     breakdown: Record<string, number>;
   };
+  /** Compression stats — only present when compress:true */
+  _compression?: CompressionStats;
 }
 
 export interface ContextSection {
@@ -66,6 +75,8 @@ export interface AssemblerOptions {
   phase?: LifecyclePhase;
   /** Pre-assembled LSP symbol context string to include as a section */
   lspContext?: string;
+  /** Enable rule-based compression on knowledge sections (default: false) */
+  compress?: boolean;
 }
 
 /**
@@ -81,7 +92,8 @@ export function assembleContext(
   const maxKnowledgeChunks = options?.maxKnowledgeChunks ?? 5;
 
   // Check cache first
-  const cacheKey = `detail:${query.trim().toLowerCase()}:${tier}:${tokenBudget}`;
+  const compress = options?.compress ?? false;
+  const cacheKey = `detail:${query.trim().toLowerCase()}:${tier}:${tokenBudget}:compress=${compress}`;
   const cached = assemblerCache.get(cacheKey) as AssembledContext | undefined;
   if (cached) {
     logger.debug("assembler:context cache hit", { query: query.slice(0, 60) });
@@ -200,6 +212,29 @@ export function assembleContext(
     budget: tokenBudget,
   });
 
+  // Apply rule-based compression to knowledge sections if requested
+  let compressionStats: CompressionStats | undefined;
+  if (options?.compress) {
+    const knowledgeSections = sections.filter((s) => s.source === "knowledge");
+    const inputTokens = knowledgeSections.reduce((sum, s) => sum + s.tokens, 0);
+
+    for (const section of knowledgeSections) {
+      const compressed = compressBullets(section.content, section.tokens);
+      if (compressed.length < section.content.length && compressed.length > 0) {
+        const oldTokens = section.tokens;
+        section.content = compressed;
+        section.tokens = estimateTokens(compressed);
+        tokensUsed -= (oldTokens - section.tokens);
+      }
+    }
+
+    const outputTokens = knowledgeSections.reduce((sum, s) => sum + s.tokens, 0);
+    const reduction = inputTokens > 0 ? Math.round((1 - outputTokens / inputTokens) * 100) : 0;
+
+    compressionStats = { inputTokens, outputTokens, reductionPercent: reduction };
+    logger.debug("context:compression", { inputTokens, outputTokens, reductionPercent: reduction });
+  }
+
   const result: AssembledContext = {
     query,
     tier,
@@ -211,6 +246,7 @@ export function assembleContext(
       remaining: Math.max(0, tokenBudget - tokensUsed),
       breakdown,
     },
+    ...(compressionStats ? { _compression: compressionStats } : {}),
   };
 
   // Cache result
