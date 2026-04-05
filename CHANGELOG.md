@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v6.2.0...mcp-graph-v6.3.0) (2026-04-05)
+
+
+### Features
+
+* add design tokens, UI components, and performance utilities ([4960562](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/496056217ce18ab12d46c18585b5a9779db01df5))
+
+
+### Bug Fixes
+
+* adjust starfield and nebula parameters for improved visual quality ([7d1c3d9](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/7d1c3d96504186368f2d30b6e7fd5293ebdf739c))
+
 ## [6.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v6.1.0...mcp-graph-v6.2.0) (2026-04-05)
 
 
