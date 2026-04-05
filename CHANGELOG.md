@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v6.1.0...mcp-graph-v6.2.0) (2026-04-05)
+
+
+### Features
+
+* integrate quality gates into finish_task pipeline ([312e992](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/312e9929cf461bf2a5618f32dfd96ce370f21f89))
+* quality gates — 4 analyze modes for automated security, quality, tests, observability ([ce2557b](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ce2557b1ef4b7917d369f530ec352ce62b780a81))
+
 ## [6.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v6.0.0...mcp-graph-v6.1.0) (2026-04-05)
 
 
