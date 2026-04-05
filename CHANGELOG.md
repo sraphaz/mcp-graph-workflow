@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v6.0.0...mcp-graph-v6.1.0) (2026-04-05)
+
+
+### Features
+
+* context-hub superpowers — token economy, intelligence, maintenance ([3a3556c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3a3556caa2f4898eb76c3652165a49ffdff2f043))
+
 ## [6.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v5.36.0...mcp-graph-v6.0.0) (2026-04-04)
 
 
