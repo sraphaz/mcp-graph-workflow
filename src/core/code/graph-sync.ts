@@ -17,6 +17,11 @@ export interface SyncReport {
  * Sync graph nodes with code index state.
  * Reports stale sourceRefs, missing testFiles, and drift.
  */
+/** Normalize file paths: strip leading ./ and normalize separators */
+function normalizePath(p: string): string {
+  return p.replace(/^\.\//, "").replace(/\\/g, "/");
+}
+
 export function syncGraphFromCode(store: SqliteStore): SyncReport {
   const staleRefs: string[] = [];
   const autoFilledTestFiles: string[] = [];
@@ -47,7 +52,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
       const files = db.prepare(
         "SELECT DISTINCT file FROM code_symbols WHERE project_id = ?",
       ).all(project.id) as { file: string }[];
-      for (const f of files) indexedFiles.add(f.file);
+      for (const f of files) indexedFiles.add(normalizePath(f.file));
     } catch {
       // code_symbols table may not exist
     }
@@ -56,7 +61,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
   for (const node of doc.nodes) {
     // 1. Check stale sourceRefs
     if (node.sourceRef?.file && hasCodeIndex) {
-      if (!indexedFiles.has(node.sourceRef.file)) {
+      if (!indexedFiles.has(normalizePath(node.sourceRef.file))) {
         staleRefs.push(`${node.id} (${node.title}): sourceRef "${node.sourceRef.file}" not found in code index`);
       }
     }
@@ -71,7 +76,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
     // 3. Check testFiles existence in code index
     if (node.testFiles && node.testFiles.length > 0 && hasCodeIndex) {
       for (const tf of node.testFiles) {
-        if (!indexedFiles.has(tf)) {
+        if (!indexedFiles.has(normalizePath(tf))) {
           suggestions.push(`${node.id}: testFile "${tf}" not found in code index (may be unindexed or deleted)`);
         }
       }

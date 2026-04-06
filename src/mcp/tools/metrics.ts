@@ -48,6 +48,8 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
       const stats = store.getStats();
       const project = store.getProject();
 
+      let contextEnrichment: { avgOverheadPercent: number; sampleSize: number } | null = null;
+      // Backward compat alias
       let contextReduction: { avgReductionPercent: number; sampleSize: number } | null = null;
 
       if (stats.totalNodes > 0) {
@@ -71,8 +73,16 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
           }
 
           if (sampled > 0) {
+            const avgReduction = Math.round(totalReduction / sampled);
+            // Bug #BF6: reductionPercent is always negative because context() enriches
+            // (adds metadata) rather than compresses. Expose as positive overhead.
+            contextEnrichment = {
+              avgOverheadPercent: Math.abs(avgReduction),
+              sampleSize: sampled,
+            };
+            // Backward compat: keep old field with original (negative) value
             contextReduction = {
-              avgReductionPercent: Math.round(totalReduction / sampled),
+              avgReductionPercent: avgReduction,
               sampleSize: sampled,
             };
           }
@@ -102,6 +112,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         currentPhase,
         sprintCount: velocity.sprints.length,
         knowledgeDocCount,
+        contextEnrichment,
         contextReduction,
       });
     },
