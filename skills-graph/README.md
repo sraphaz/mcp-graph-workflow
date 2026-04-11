@@ -2,7 +2,7 @@
 
 ## O que sao
 
-30 skills de engenharia de software organizadas em 5 categorias, cobrindo o ciclo completo de desenvolvimento — da ideacao ao monitoramento pos-deploy.
+35 skills de engenharia de software organizadas em 6 categorias, cobrindo o ciclo completo de desenvolvimento — da ideacao ao monitoramento pos-deploy — incluindo 5 skills autonomas Nirvana para auto-gestao.
 
 ## Compatibilidade
 
@@ -43,7 +43,7 @@ done
 Verificar instalacao:
 ```bash
 ls ~/.claude/skills/graph-*/SKILL.md | wc -l
-# Esperado: 30
+# Esperado: 35
 ```
 
 Uso:
@@ -84,7 +84,7 @@ cat skills-graph/graph-implement.md skills-graph/graph-tests.md \
     > .codex/AGENTS.md
 ```
 
-## Catalogo de Skills (30)
+## Catalogo de Skills (35)
 
 ### Pre-Lifecycle (1)
 
@@ -145,6 +145,18 @@ cat skills-graph/graph-implement.md skills-graph/graph-tests.md \
 | `graph-monitoring` | `/graph-monitoring` | Monitoramento | SLOs, alert rules, dashboards, anomaly detection |
 | `graph-migration` | `/graph-migration` | Migracoes | Schema safety, rollback plans, drift detection |
 | `graph-docs` | `/graph-docs` | Documentacao | CLAUDE.md, JSDoc, README, API docs |
+
+### Nirvana — Auto-Gestao Autonoma (5)
+
+Skills autonomas que operam no loop MAPE-K (Monitor → Analyze → Plan → Execute → Knowledge). Diferente das skills manuais `graph-*`, as Nirvana skills sao **proativas** — disparam automaticamente, mantêm historico de tendencias e criam tasks de correcao no grafo.
+
+| Skill | Trigger | Unifica | Descricao |
+|---|---|---|---|
+| `graph-nirvana-quality-guardian` | `/graph-nirvana-quality-guardian` | code_quality + test_automation + compliance | Gates autonomos de qualidade, geracao de testes, scan de compliance |
+| `graph-nirvana-adaptive-intelligence` | `/graph-nirvana-adaptive-intelligence` | adaptive_learning + knowledge_evolver | Aprendizado continuo de resultados, evolucao da base de conhecimento |
+| `graph-nirvana-resilience-ops` | `/graph-nirvana-resilience-ops` | backup + resources + deploy | Auto-backup, otimizacao de recursos, deploy + rollback inteligente |
+| `graph-nirvana-community-engine` | `/graph-nirvana-community-engine` | feedback + docs + monetization | Loops de feedback, auto-docs, tracking de monetizacao open core |
+| `graph-nirvana-swarm-orchestrator` | `/graph-nirvana-swarm-orchestrator` | multi_agent_orchestrator | Orquestracao paralela de multiplas skills com DAG de execucao |
 
 ## Fluxo recomendado
 

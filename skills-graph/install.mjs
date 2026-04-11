@@ -2,7 +2,7 @@
 
 /**
  * mcp-graph Skills Installer
- * Interactive CLI to install 30 graph-* skills for Claude Code, GitHub Copilot, or Codex CLI.
+ * Interactive CLI to install 35 graph-* skills for Claude Code, GitHub Copilot, or Codex CLI.
  * Zero external dependencies — uses only Node.js built-in modules.
  * Cross-platform: Windows, macOS, Linux.
  */

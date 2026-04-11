@@ -619,6 +619,33 @@ export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
       "aplique a regra de prevenção ANTES de implementar. Isso evita repetição de erros " +
       "já cometidos e corrigidos anteriormente.",
   },
+
+  // ── INTERDISCIPLINARY KNOWLEDGE ─────────────────
+  {
+    name: "interdisciplinary-knowledge-intersector",
+    description: "Discover cross-domain intersections in knowledge store to generate novel skill ideas",
+    category: "analyze",
+    phases: ["ANALYZE", "DESIGN", "LISTENING"],
+    instructions:
+      "Use intersect_knowledge(discover) to find cross-domain knowledge intersections. " +
+      "Review the generated insights for novel skill ideas. Filter by concept for targeted discovery. " +
+      "Use intersect_knowledge(list) to review previous intersections. " +
+      "Use intersect_knowledge(detail, docId) to get full details of a specific intersection. " +
+      "Combine with write_memory to save promising intersection patterns.",
+  },
+  {
+    name: "self-healing-engine",
+    description: "MAPE-K self-healing engine — proactive graph scanning, diagnosis, and auto-repair",
+    category: "validate",
+    phases: ["ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE", "REVIEW", "HANDOFF", "DEPLOY", "LISTENING"],
+    instructions:
+      "Use the self_healing MCP tool to proactively scan, diagnose, and heal the execution graph. " +
+      "Run 'scan' to detect stuck tasks, broken dependencies, cycles, orphans, and oversized tasks. " +
+      "Run 'diagnose' for prioritized issues with planned actions. " +
+      "Run 'heal' with dryRun=true first, review the report, then dryRun=false to apply fixes. " +
+      "Always run before sprint planning and after bulk imports. " +
+      "Implements MAPE-K (Monitor, Analyze, Plan, Execute, Knowledge) autonomic computing loop.",
+  },
 ] as const;
 
 /**

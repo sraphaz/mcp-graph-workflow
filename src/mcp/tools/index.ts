@@ -63,6 +63,10 @@ import { registerFinishTask } from "./finish-task.js";
 import { registerForecast } from "./forecast.js";
 // Cross-project learning (v6.0)
 import { registerLearnFromProject } from "./learn-from-project.js";
+// Interdisciplinary knowledge intersector
+import { registerIntersectKnowledge } from "./intersect-knowledge.js";
+// Self-healing MAPE-K engine
+import { registerSelfHealing } from "./self-healing.js";
 // Deprecated tools (backward compat — will be removed in v7.0)
 import { registerAddNode } from "./add-node.js";
 import { registerUpdateNode } from "./update-node.js";
@@ -151,6 +155,12 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
 
   // Cross-project learning (v6.0)
   registerLearnFromProject(server, store);
+
+  // Interdisciplinary knowledge intersector
+  registerIntersectKnowledge(server, store);
+
+  // Self-healing MAPE-K engine
+  registerSelfHealing(server, store);
 
   // Deprecated tools (backward compat — will be removed in v7.0)
   registerAddNode(server, store);

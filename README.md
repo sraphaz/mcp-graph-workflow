@@ -22,8 +22,10 @@
   <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/dm/%40mcp-graph-workflow%2Fmcp-graph" alt="npm downloads"></a>
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/stargazers"><img src="https://img.shields.io/github/stars/DiegoNogueiraDev/mcp-graph-workflow" alt="GitHub stars"></a>
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/network"><img src="https://img.shields.io/github/forks/DiegoNogueiraDev/mcp-graph-workflow" alt="GitHub forks"></a>
-  <img src="https://img.shields.io/badge/tests-5111%2B-brightgreen" alt="5111+ tests">
-  <img src="https://img.shields.io/badge/MCP%20tools-52%2B-blue" alt="52+ MCP tools">
+  <img src="https://img.shields.io/badge/tests-5471%2B-brightgreen" alt="5471+ tests">
+  <img src="https://img.shields.io/badge/MCP%20tools-53-blue" alt="53 MCP tools">
+  <img src="https://img.shields.io/badge/DORA-Elite-gold" alt="DORA Elite">
+  <img src="https://img.shields.io/badge/AI%20fallback-0%25-green" alt="0% AI fallback">
 </p>
 
 <p align="center">
@@ -36,7 +38,7 @@
 
 A **local-first MCP server** that transforms product requirement documents (PRD) into persistent execution graphs (SQLite), with an integrated knowledge store, RAG pipeline, and multi-agent orchestration mesh.
 
-**v6.0** introduces **pipeline tools** that reduce the mandatory workflow from 6 tool calls to 2, an **agent state machine** that tells the agent what to do next, **DORA metrics** for delivery health, and **cross-project learning**.
+**v7.0** brings a **unified gate system** (-50% overhead per call), **deterministic-first architecture** (100% of tools are AI-free), **24 benchmark SLOs**, **155 engineering skills**, and **zero breaking regressions** across 5,471 tests. Built on the v6.0 foundation of pipeline tools, agent state machine, and DORA metrics.
 
 ## Quick Start
 
@@ -91,9 +93,53 @@ npm run dev        # HTTP + dashboard at localhost:3000
 
 ---
 
-## 30 Engineering Skills
+## v7.0 — What's New
 
-mcp-graph includes 30 ready-to-use skills covering the entire software development lifecycle:
+### Benchmark Results (Real Project: 415 nodes, 923 edges)
+
+| Metric | Value | Rating |
+|--------|-------|--------|
+| Deployment Frequency | 25.4 tasks/day | **Elite** |
+| Lead Time (P50) | 14.9 hours | **Elite** |
+| Change Failure Rate | 0% | **Elite** |
+| MTTR | 0 hours | **Elite** |
+| Tests | 5,471 passing | 0 failures |
+| Benchmark SLOs | 24/24 | 100% pass |
+| AI Fallback | 0% | **Deterministic-First** |
+
+### Key Improvements over v6
+
+| Feature | v6 | v7 | Impact |
+|---------|----|----|--------|
+| Tool gate wrapping | 2 sequential wrappers | 1 unified gate | **-50% overhead/call** |
+| Registered tools | 53 + 6 deprecated | 53 clean | **-10% surface** |
+| Security | 3 fragmented checks | 1 centralized (20 attack vectors) | **Hardened** |
+| Knowledge pruning | Manual only | Autoprune + dedup deletion + budget | **Automated** |
+| Graph diagnostics | Individual analyzers | Unified health scanner | **1 scan = 6 checks** |
+| Skills catalog | 30 lifecycle skills | **155 skills** (audio, CV, IoT, NLP, ML) | **+417%** |
+| Schema integrity | NULLs possible | Migration v30 backfill | **Zero NULLs** |
+| FTS indexes | Accumulated since v1 | Rebuilt fresh | **Clean perf** |
+
+### Deterministic-First Architecture
+
+All 58 MCP tools operate without any AI/LLM dependency:
+
+```
+L0 SQL (55%) ████████████████████████████  32 tools
+L1 Cache (5%)  ███                          3 tools
+L2 Heuristic (19%) ██████████              11 tools
+L3 Property (5%)   ███                      3 tools
+L4 Meta-Rule (3%)  ██                       2 tools
+AI Fallback (0%)                            0 tools
+```
+
+> Full benchmark: [docs/BENCHMARK-v7.md](docs/BENCHMARK-v7.md) | Migration guide: [docs/MIGRATION-v7.md](docs/MIGRATION-v7.md)
+
+---
+
+## 155 Engineering Skills
+
+mcp-graph includes 155 ready-to-use skills covering the entire software development lifecycle and beyond:
 
 | Category | Count | Examples |
 |----------|-------|---------|
@@ -102,7 +148,15 @@ mcp-graph includes 30 ready-to-use skills covering the entire software developme
 | **Engineering** | 4 | `/graph-performance`, `/graph-refactor`, `/graph-api-design` |
 | **Operations** | 4 | `/graph-incident`, `/graph-cicd`, `/graph-accessibility` |
 | **Governance** | 6 | `/graph-architecture`, `/graph-release`, `/graph-docs` |
+| **Nirvana Autonomous** | 5 | `/graph-nirvana-quality-guardian`, `/graph-nirvana-swarm-orchestrator` |
+| **Audio/Video** | 15 | `/graph-audio-speech-to-text`, `/graph-video-summarizer` |
+| **Computer Vision** | 11 | `/graph-cv-ocr-engine`, `/graph-cv-object-detection` |
+| **IoT / Sensors** | 10 | `/graph-iot-sensor-data-fusion`, `/graph-iot-predictive-maintenance` |
+| **ML / AI Ops** | 12 | `/graph-auto-ml-pipeline`, `/graph-ml-evaluation-framework` |
+| **NLP** | 8 | `/graph-nlp-entity-extractor`, `/graph-nlp-sentiment-analyzer` |
+| **Data Pipeline** | 8 | `/graph-data-lineage-tracker`, `/graph-etl-automation` |
 | **PRD** | 1 | `/graph-prd` (7 methodologies: 5W2H, JTBD, Pareto, MoSCoW, INVEST) |
+| **+ more** | 61 | Security, chaos, self-healing, observability, advanced RAG |
 
 ### Install Skills
 
@@ -217,8 +271,10 @@ Each phase has **gate checks** (`analyze` modes) that must pass before transitio
 
 | Category | Details |
 |----------|---------|
-| **MCP Tools** | 52 active + 6 deprecated across 8 categories |
+| **MCP Tools** | 53 active across 6 categories (v7: 6 deprecated removed) |
 | **Analyze Modes** | 48 modes mapped to 9 lifecycle phases |
+| **Benchmark SLOs** | 24 SLOs (chaos, RAG, DX) — all passing |
+| **Deterministic Score** | 100% — zero AI/LLM dependency in operations |
 | **Pipeline Tools** | `start_task` + `finish_task` (v6.0) |
 | **Agent State Machine** | `nextAction` in every response (v6.0) |
 | **PRD Import** | .md, .txt, .pdf, .html auto-parsed into task trees |

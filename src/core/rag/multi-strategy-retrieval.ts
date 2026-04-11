@@ -13,10 +13,13 @@
 
 import type Database from "better-sqlite3";
 import { KnowledgeStore } from "../store/knowledge-store.js";
+import type { SqliteStore } from "../store/sqlite-store.js";
 import { findCrossSourceContext } from "./knowledge-linker.js";
 import { EntityStore } from "./entity-store.js";
 import { applyRelevanceBoosts } from "./relevance-boost.js";
 import { decomposeQuery, understandQuery } from "./query-understanding.js";
+import { executionGraphSearch } from "./graph-rag-strategy.js";
+import type { StrategyName } from "./adaptive-router.js";
 import { logger } from "../utils/logger.js";
 
 export interface RankedResult {
@@ -35,6 +38,10 @@ interface SearchOptions {
   minQuality?: number;
   phase?: string;
   lspBridge?: { findReferences: (file: string, line: number, character: number) => Promise<Array<{ file: string; startLine: number }>> } | null;
+  /** Optional SqliteStore for execution graph strategy. */
+  store?: SqliteStore;
+  /** Optional subset of strategies to run (adaptive routing). If omitted, all strategies run. */
+  strategies?: StrategyName[];
 }
 
 const RRF_K = 60;
@@ -72,6 +79,10 @@ export function multiStrategySearch(
 ): RankedResult[] {
   const limit = options?.limit ?? 10;
   const knowledgeStore = new KnowledgeStore(db);
+
+  // Adaptive routing: if a strategy subset is specified, only run those strategies
+  const activeStrategies = options?.strategies ? new Set(options.strategies) : null;
+  const shouldRun = (name: StrategyName): boolean => !activeStrategies || activeStrategies.has(name);
 
   // Strategy 1: FTS5 + BM25
   let ftsResults: Array<{ id: string; score: number }> = [];
@@ -151,7 +162,7 @@ export function multiStrategySearch(
 
   // Strategy 5: LSP Symbol Resolution — precise code lookups (weight 0.5)
   const lspResults: Array<{ id: string; score: number }> = [];
-  if (options?.lspBridge) {
+  if (shouldRun("lsp") && options?.lspBridge) {
     try {
       const understanding = understandQuery(query);
       const codeEntities = understanding.entities.filter(e =>
@@ -170,17 +181,33 @@ export function multiStrategySearch(
     }
   }
 
-  if (ftsResults.length === 0 && graphResults.length === 0 && entityGraphResults.length === 0 && lspResults.length === 0) {
+  // Strategy 6: Execution Graph Topology — traverse execution graph for related knowledge
+  const execGraphResults: Array<{ id: string; score: number }> = [];
+  if (shouldRun("exec_graph") && options?.store) {
+    try {
+      const graphRagResults = executionGraphSearch(db, options.store, query, { limit: limit * 2 });
+      for (const result of graphRagResults) {
+        execGraphResults.push({ id: result.id, score: result.score });
+      }
+    } catch {
+      logger.debug("Multi-strategy execution graph search returned no results");
+    }
+  }
+
+  if (ftsResults.length === 0 && graphResults.length === 0 && entityGraphResults.length === 0 && lspResults.length === 0 && execGraphResults.length === 0) {
     return [];
   }
 
-  // Merge via RRF — add entity graph results as 4th list, LSP as 5th
+  // Merge via RRF — add entity graph results as 4th list, LSP as 5th, exec graph as 6th
   const rankedLists = [ftsResults, graphResults, recencyResults];
   if (entityGraphResults.length > 0) {
     rankedLists.push(entityGraphResults);
   }
   if (lspResults.length > 0) {
     rankedLists.push(lspResults);
+  }
+  if (execGraphResults.length > 0) {
+    rankedLists.push(execGraphResults);
   }
   const merged = reciprocalRankFusion(rankedLists);
 
@@ -207,6 +234,11 @@ export function multiStrategySearch(
     const strategies = strategyMap.get(lr.id) ?? [];
     strategies.push("lsp");
     strategyMap.set(lr.id, strategies);
+  }
+  for (const eg of execGraphResults) {
+    const strategies = strategyMap.get(eg.id) ?? [];
+    strategies.push("exec_graph");
+    strategyMap.set(eg.id, strategies);
   }
 
   for (const item of merged.slice(0, limit)) {
@@ -259,6 +291,7 @@ export function multiStrategySearch(
     graphCount: graphResults.length,
     entityGraphCount: entityGraphResults.length,
     lspCount: lspResults.length,
+    execGraphCount: execGraphResults.length,
     resultCount: results.length,
   });
 

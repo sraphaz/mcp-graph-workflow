@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Wait for CI to pass
-        uses: lewagon/wait-on-check-action@v1.3.4
+        uses: lewagon/wait-on-check-action@v1.6.0
         with:
           ref: ${{ github.sha }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,7 +72,7 @@ jobs:
 
       - name: Cache dashboard dependencies
         id: dashboard-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: src/web/dashboard/node_modules
           key: dashboard-ubuntu-latest-node22-${{ hashFiles('src/web/dashboard/package-lock.json') }}
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
       - name: Wait for npm propagation
