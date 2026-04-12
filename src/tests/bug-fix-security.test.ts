@@ -248,7 +248,7 @@ describe("Bug Fix — BOOTSTRAP_TOOLS consistency (Fase 2B)", () => {
   it("BOOTSTRAP_TOOLS should contain the 4 bootstrap tools", () => {
     expect(BOOTSTRAP_TOOLS.has("init")).toBe(true);
     expect(BOOTSTRAP_TOOLS.has("set_phase")).toBe(true);
-    expect(BOOTSTRAP_TOOLS.has("reindex_knowledge")).toBe(true);
+    expect(BOOTSTRAP_TOOLS.has("knowledge")).toBe(true);
     expect(BOOTSTRAP_TOOLS.has("sync_stack_docs")).toBe(true);
   });
 

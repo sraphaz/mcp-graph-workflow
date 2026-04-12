@@ -30,7 +30,7 @@ const MANDATORY_EXECUTION_RULE = `### ⚠️ Regra de Execução OBRIGATÓRIA
 **O mcp-graph é a fonte de verdade ABSOLUTA. Nenhuma implementação acontece fora do grafo.**
 
 1. **Node deve existir** — antes de escrever QUALQUER código, o node correspondente DEVE existir no grafo
-2. **Fluxo obrigatório** — \`start_task → [implementar com TDD] → finish_task\` (pipeline v6.0) ou \`next → context → rag_context → [TDD] → analyze(implement_done) → update_status\` (granular) — SEM EXCEÇÕES
+2. **Fluxo obrigatório** — \`start_task → [implementar com TDD] → finish_task\` (pipeline v6.0) ou \`next → context(compact) → context(rag) → [TDD] → analyze(implement_done) → update_status\` (granular) — SEM EXCEÇÕES
 3. **Epic = estrutura primeiro** — criar Epic + tasks filhas + edges ANTES de implementar
 4. **Status tracking** — \`update_status → in_progress\` ANTES de codar, \`→ done\` APÓS completar
 5. **Validação** — usar \`validate\` (action: \`ac\`) após cada task para checar critérios de aceitação
@@ -89,7 +89,7 @@ start_task → [implementar com TDD] → finish_task
 
 **Granular (6 calls — disponível para controle fino):**
 \`\`\`
-next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status
+next → context(compact) → context(rag) → [implementar com TDD] → analyze(implement_done) → update_status
 \`\`\``;
 
   if (mode === "lean") {

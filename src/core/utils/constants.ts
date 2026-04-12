@@ -36,7 +36,7 @@ export const GLOBAL_CONFIG_FILE = path.join(GLOBAL_DB_DIR, "config.json");
 export const BOOTSTRAP_TOOLS = new Set([
   "init",
   "set_phase",
-  "reindex_knowledge",
+  "knowledge",
   "sync_stack_docs",
 ]);
 
@@ -54,10 +54,10 @@ export const ALWAYS_ALLOWED_TOOLS = BOOTSTRAP_TOOLS;
 export const READ_ONLY_TOOLS = new Set([
   ...ALWAYS_ALLOWED_TOOLS,
   "list", "show", "search", "metrics", "export", "context",
-  "rag_context", "analyze", "snapshot", "next",
+  "knowledge", "analyze", "snapshot", "next",
   "list_memories", "read_memory", "manage_skill",
   "stats", "velocity", "dependencies", "plan_sprint", "validate",
-  "knowledge_stats", "knowledge_feedback", "code_intelligence", "journey",
+  "code_intelligence", "journey",
 ]);
 
 // ── Node defaults ──

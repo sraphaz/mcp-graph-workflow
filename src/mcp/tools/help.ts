@@ -24,7 +24,7 @@ import { mcpText } from "../response-helpers.js";
 const WORKFLOW_SECTION = `### Fluxo de trabalho OBRIGATÓRIO
 
 \`\`\`
-next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status → next
+next → context(compact) → context(rag) → [implementar com TDD] → analyze(implement_done) → update_status → next
 \`\`\`
 
 ### Lifecycle (9 fases)

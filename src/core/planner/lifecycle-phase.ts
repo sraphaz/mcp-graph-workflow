@@ -162,7 +162,7 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
   },
   IMPLEMENT: {
     reminder: "Fase IMPLEMENT: TDD obrigatório — Red → Green → Refactor. Escreva o teste ANTES da implementação. Use `context` para token-efficiency.",
-    suggestedTools: ["next", "context", "update_status", "rag_context", "validate_task", "analyze"],
+    suggestedTools: ["next", "context", "update_status", "validate_task", "analyze"],
     principles: ["TDD Red→Green→Refactor", "Anti-one-shot", "Code detachment", "Decomposição atômica"],
     suggestedMcpAgents: [
       { name: "code-graph", action: "Impact analysis antes de editar, busca de contexto de symbols", tools: ["impact", "context", "search"] },
@@ -372,7 +372,7 @@ const PHASE_RECOMMENDED_TOOLS: Record<LifecyclePhase, Set<string>> = {
   ANALYZE: new Set(["import_prd", "node", "edge", "search", "analyze"]),
   DESIGN: new Set(["node", "edge", "analyze", "write_memory", "read_memory"]),
   PLAN: new Set(["plan_sprint", "analyze", "sync_stack_docs", "decompose", "node", "edge"]),
-  IMPLEMENT: new Set(["next", "context", "update_status", "node", "analyze", "write_memory", "validate", "validate_task", "rag_context", "edge"]),
+  IMPLEMENT: new Set(["next", "context", "update_status", "node", "analyze", "write_memory", "validate", "validate_task", "edge"]),
   VALIDATE: new Set(["validate", "analyze", "update_status", "validate_task"]),
   REVIEW: new Set(["analyze", "export", "metrics", "validate_task"]),
   HANDOFF: new Set(["export", "snapshot", "write_memory", "validate_task"]),
@@ -384,7 +384,7 @@ const PHASE_RECOMMENDED_TOOLS: Record<LifecyclePhase, Set<string>> = {
 const PHASE_EXEMPT_TOOLS = new Set([
   ...BOOTSTRAP_TOOLS,
   "list", "show", "search", "metrics", "export", "snapshot",
-  "context", "rag_context", "next", "analyze",
+  "context", "knowledge", "next", "analyze",
   "read_memory", "list_memories", "list_skills",
   "update_node",  // deprecated wrapper for node(action:update) — exempt from phase warnings
 ]);
@@ -552,10 +552,10 @@ export const PHASE_PREREQUISITES: Record<LifecyclePhase, PrerequisiteRule[]> = {
       triggerCondition: (args) => args.status === "done",
       requiredTools: [
         { tool: "context", scope: "node" },
-        { tool: "rag_context", scope: "project" },
+        { tool: "context", scope: "project" },
         { tool: "analyze", args: "implement_done", scope: "node" },
       ],
-      description: "Antes de done: chamar `context` + `rag_context` + `analyze(implement_done)`",
+      description: "Antes de done: chamar `context` (compact + rag) + `analyze(implement_done)`",
     },
   ],
   VALIDATE: [

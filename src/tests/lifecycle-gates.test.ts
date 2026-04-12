@@ -326,8 +326,8 @@ describe("checkToolGate", () => {
 
   it("should return empty warnings for always-allowed tools in any phase", () => {
     const alwaysAllowed = ["list", "show", "search", "metrics", "export", "snapshot",
-      "add_node", "edge", "import_prd", "context", "rag_context", "next",
-      "sync_stack_docs", "reindex_knowledge", "analyze", "set_phase"];
+      "add_node", "edge", "import_prd", "context", "knowledge", "next",
+      "sync_stack_docs", "analyze", "set_phase"];
     const doc = makeDoc();
     for (const tool of alwaysAllowed) {
       const warnings = checkToolGate(doc, "ANALYZE", tool);

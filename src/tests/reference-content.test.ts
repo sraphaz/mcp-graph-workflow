@@ -104,7 +104,7 @@ describe("reference-content", () => {
     const result = getKnowledgePipeline();
 
     expect(result).toContain("Knowledge Store");
-    expect(result).toContain("rag_context");
+    expect(result).toContain("context(action:rag)");
   });
 
   // ── getFullReference ──────────────────────────────

@@ -81,12 +81,12 @@ describe("ToolCallLog", () => {
   describe("getCallsForNode", () => {
     it("should return all tool calls for a node", () => {
       log.record(projectId, "node-1", "context", undefined);
-      log.record(projectId, "node-1", "rag_context", undefined);
+      log.record(projectId, "node-1", "analyze", undefined);
       log.record(projectId, "node-2", "context", undefined);
 
       const calls = log.getCallsForNode(projectId, "node-1");
       expect(calls).toHaveLength(2);
-      expect(calls.map((c) => c.toolName).sort()).toEqual(["context", "rag_context"]);
+      expect(calls.map((c) => c.toolName).sort()).toEqual(["analyze", "context"]);
     });
 
     it("should return empty array when no calls exist", () => {

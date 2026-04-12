@@ -293,14 +293,14 @@ export function buildCodeIntelBlock(
   const warnings: CodeIntelWarning[] = [];
   const isReadOnly = READ_ONLY_TOOLS.has(toolName);
   if (!indexStatus.available) {
-    warnings.push({ code: "index_empty", message: "Code Intelligence index is empty. Run reindex_knowledge or code_intelligence to build it.", severity: mode === "strict" && !isReadOnly ? "error" : "warning" });
+    warnings.push({ code: "index_empty", message: "Code Intelligence index is empty. Run knowledge(action:reindex) or code_intelligence to build it.", severity: mode === "strict" && !isReadOnly ? "error" : "warning" });
     return { mode, indexStatus, warnings };
   }
   if (indexStatus.stale) {
     const dedupKey = `index_stale:${projectId}`;
     if (!_emittedStaleWarnings.has(dedupKey)) {
       _emittedStaleWarnings.add(dedupKey);
-      warnings.push({ code: "index_stale", message: "Code Intelligence index is stale (git hash mismatch). Consider running reindex_knowledge.", severity: "warning" });
+      warnings.push({ code: "index_stale", message: "Code Intelligence index is stale (git hash mismatch). Consider running knowledge(action:reindex).", severity: "warning" });
     }
   }
   const enrichment = buildPhaseEnrichment(codeStore, projectId, phase, toolName, args, warnings);
@@ -309,7 +309,7 @@ export function buildCodeIntelBlock(
 
 export function buildBlockedResponseCodeIntel(toolName: string, warnings: CodeIntelWarning[]): ToolCallResult {
   return {
-    content: [{ type: "text", text: JSON.stringify({ error: "code_intelligence_gate_blocked", tool: toolName, warnings, hint: "Run reindex_knowledge to build the code index, or use set_phase({codeIntelligence:'advisory'}) to switch to advisory mode." }, null, 2) }],
+    content: [{ type: "text", text: JSON.stringify({ error: "code_intelligence_gate_blocked", tool: toolName, warnings, hint: "Run knowledge(action:reindex) to build the code index, or use set_phase({codeIntelligence:'advisory'}) to switch to advisory mode." }, null, 2) }],
     isError: true,
   };
 }

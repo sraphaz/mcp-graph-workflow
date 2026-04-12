@@ -10,7 +10,8 @@ describe("tool-introspector", () => {
   it("should extract tools from source files", () => {
     tools = introspectTools(TOOLS_DIR);
 
-    expect(tools.length).toBeGreaterThanOrEqual(46);
+    // Reduced after context consolidation (rag_context + context_compress merged into context)
+    expect(tools.length).toBeGreaterThanOrEqual(42);
   });
 
   it("should include known core tools", () => {
@@ -25,20 +26,19 @@ describe("tool-introspector", () => {
     expect(names).toContain("validate");
   });
 
-  it("should include siebel tools", () => {
+  it("should include consolidated siebel tool", () => {
     tools = introspectTools(TOOLS_DIR);
-    const siebelTools = tools.filter((t) => t.name.startsWith("siebel_"));
+    const siebelTools = tools.filter((t) => t.name === "siebel");
 
-    expect(siebelTools.length).toBe(8);
+    expect(siebelTools.length).toBe(1);
+    expect(siebelTools[0].category).toBe("Siebel CRM");
   });
 
-  it("should include translation tools", () => {
+  it("should include consolidated translate tool", () => {
     tools = introspectTools(TOOLS_DIR);
     const names = tools.map((t) => t.name);
 
-    expect(names).toContain("translate_code");
-    expect(names).toContain("analyze_translation");
-    expect(names).toContain("translation_jobs");
+    expect(names).toContain("translate");
   });
 
   it("should not include deprecated tools (removed in v7.0)", () => {
@@ -71,10 +71,10 @@ describe("tool-introspector", () => {
     const initTool = tools.find((t) => t.name === "init");
     expect(initTool?.category).toBe("Core");
 
-    const siebelTool = tools.find((t) => t.name === "siebel_analyze");
+    const siebelTool = tools.find((t) => t.name === "siebel");
     expect(siebelTool?.category).toBe("Siebel CRM");
 
-    const translateTool = tools.find((t) => t.name === "translate_code");
+    const translateTool = tools.find((t) => t.name === "translate");
     expect(translateTool?.category).toBe("Translation");
   });
 

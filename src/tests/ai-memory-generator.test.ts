@@ -86,14 +86,14 @@ describe("tool completeness", () => {
     expect(section).toContain("Skills");
   });
 
-  it("should claim correct tool count (28 + 6 deprecated)", () => {
+  it("should claim correct tool count (v8.0 consolidated)", () => {
     const section = generateClaudeMdSection("test");
-    expect(section).toContain("48 tools + 6 deprecated");
+    expect(section).toContain("37 tools");
   });
 
   it("should include deprecated tools reference", () => {
     const section = generateClaudeMdSection("test");
-    expect(section).toContain("deprecated");
+    expect(section).toContain("Deprecated");
     expect(section).toContain("add_node");
     expect(section).toContain("update_node");
     expect(section).toContain("delete_node");
@@ -123,7 +123,7 @@ describe("knowledge pipeline section", () => {
     const section = generateClaudeMdSection("test");
     expect(section).toContain("Knowledge");
     expect(section).toContain("RAG");
-    expect(section).toContain("reindex_knowledge");
+    expect(section).toContain("knowledge(action:reindex)");
   });
 });
 
@@ -159,7 +159,7 @@ describe("copilot instructions parity", () => {
     const content = generateCopilotInstructions("test");
     expect(content).toContain("Projeto & Grafo");
     expect(content).toContain("Contexto & RAG");
-    expect(content).toContain("48 tools + 6 deprecated");
+    expect(content).toContain("37 tools");
   });
 
   it("should include analyze modes", () => {
@@ -171,7 +171,7 @@ describe("copilot instructions parity", () => {
   it("should include knowledge pipeline", () => {
     const content = generateCopilotInstructions("test");
     expect(content).toContain("Knowledge");
-    expect(content).toContain("reindex_knowledge");
+    expect(content).toContain("knowledge(action:reindex)");
   });
 
   it("should include skills section", () => {
@@ -311,7 +311,7 @@ describe("lean mode", () => {
     expect(section).toContain("start_task");
     expect(section).toContain("finish_task");
     expect(section).toContain("nextAction");
-    expect(section).toContain("48 tools");
+    expect(section).toContain("37 tools");
   });
 
   it("full mode should be much larger than lean mode", () => {

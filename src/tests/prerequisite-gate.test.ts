@@ -81,7 +81,7 @@ describe("checkPrerequisiteGate", () => {
     const toolName = "update_status";
     const toolArgs = { status: "done" };
 
-    it("should require context + rag_context + analyze:implement_done", () => {
+    it("should require context (node + project scope) + analyze:implement_done", () => {
       const warnings = checkPrerequisiteGate(
         phase, toolName, toolArgs, "node-1",
         mockHasBeenCalled([]),
@@ -90,16 +90,15 @@ describe("checkPrerequisiteGate", () => {
       expect(warnings.length).toBe(3);
       const missingTools = warnings.map((w) => w.message);
       expect(missingTools.some((m) => m.includes("context"))).toBe(true);
-      expect(missingTools.some((m) => m.includes("rag_context"))).toBe(true);
       expect(missingTools.some((m) => m.includes("analyze"))).toBe(true);
     });
 
-    it("should pass when all prerequisites are met (rag_context is project-scoped)", () => {
+    it("should pass when all prerequisites are met (context called at node + project scope)", () => {
       const warnings = checkPrerequisiteGate(
         phase, toolName, toolArgs, "node-1",
         mockHasBeenCalled([
           ["node-1", "context"],
-          [null, "rag_context"],
+          [null, "context"],
           ["node-1", "analyze", '{"mode":"implement_done"}'],
         ]),
         "strict",

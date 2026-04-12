@@ -3,13 +3,13 @@
  * Shared between the generator (full mode) and the help MCP tool (on-demand).
  */
 
-export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (48 tools + 6 deprecated)
+export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (37 tools — v8.0 consolidated)
 
 #### Pipeline Tools (v6.0 — recommended)
 
 | Tool | Quando usar |
 |------|-------------|
-| \`start_task\` | Iniciar próxima task em 1 call (compõe next + context + rag_context + TDD hints + update_status). Substitui 5 calls separados. |
+| \`start_task\` | Iniciar próxima task em 1 call (compõe next + context + TDD hints + update_status). Substitui 5 calls separados. |
 | \`finish_task\` | Finalizar task com validação em 1 call (compõe DoD 9 checks + AC + update_status + epic promotion + next). Substitui 3 calls separados. |
 
 #### Projeto & Grafo
@@ -49,9 +49,7 @@ export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (48 tools + 6 d
 | Tool | Quando usar |
 |------|-------------|
 | \`next\` | Próxima task recomendada (prioridade + deps + knowledge coverage 0-1 + TDD hints + velocity) |
-| \`context\` | Contexto comprimido da task (token-efficient, ~73% redução) |
-| \`rag_context\` | Contexto RAG phase-aware (tiers: summary/standard/deep, budget 60/30/10) |
-| \`reindex_knowledge\` | Rebuild completo do índice de knowledge (BM25 + TF-IDF) |
+| \`context\` | Contexto consolidado: action \`compact\` (task context ~73% redução), \`rag\` (RAG phase-aware, tiers: summary/standard/deep), \`compress\` (compressão de texto), \`batch_compress\` (compressão em lote) |
 | \`sync_stack_docs\` | Sincronizar docs das libs do projeto via Context7 |
 
 #### Memórias do Projeto
@@ -89,34 +87,29 @@ export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (48 tools + 6 d
 |------|-------------|
 | \`code_intelligence\` | Análise semântica via LSP: definition, references, hover, rename, call_hierarchy, diagnostics, symbols. Multi-language (TS, Python, Rust, Go, Java, C/C++, Ruby, PHP, Kotlin, Swift, C#, Lua) |
 
-#### Knowledge Avançado
+#### Knowledge (consolidated v8.0)
 
 | Tool | Quando usar |
 |------|-------------|
-| \`knowledge_feedback\` | Feedback em docs do knowledge store (helpful/unhelpful/outdated) para melhorar RAG |
-| \`knowledge_stats\` | Estatísticas do knowledge store: contagem por source, qualidade, docs mais acessados |
-| \`export_knowledge\` | Export/import/preview de knowledge packages para colaboração entre projetos |
+| \`knowledge\` | Knowledge store consolidado: action \`stats\` (estatísticas), \`export\` (export/import/preview packages), \`feedback\` (helpful/unhelpful/outdated), \`prune\` (limpeza), \`reindex\` (rebuild FTS), \`batch_feedback\` (feedback em lote) |
 
-#### Siebel CRM (8 tools)
+#### Siebel CRM (consolidated v8.0)
 
 | Tool | Quando usar |
 |------|-------------|
-| \`siebel_import_sif\` | Importar .SIF (XML Siebel) — parse, extrai objetos, mapeia no grafo, indexa no knowledge |
-| \`siebel_analyze\` | Analisar objetos Siebel: impact, dependencies, circular, diff, refactor_script, troubleshoot |
-| \`siebel_composer\` | Automação do Siebel Composer via Playwright: navigate, import_sif, edit, publish, capture |
-| \`siebel_env\` | Gerenciar ambientes Siebel CRM: list, add, remove |
-| \`siebel_validate\` | Validar .SIF: full, naming, security, performance, migration_ready, code_review |
-| \`siebel_search\` | Buscar objetos Siebel indexados no knowledge store (BCs, Applets, Views, Workflows) |
-| \`siebel_generate_sif\` | Gerar SIF: prepare, finalize, templates, scaffold, clone_adapt, auto_wire, wsdl_to_sif |
-| \`siebel_import_docs\` | Importar docs (Swagger/WSDL/PDF/HTML/DOCX/MD) no knowledge store para contexto Siebel |
+| \`siebel\` | Siebel CRM consolidado: action \`import_sif\` (importar .SIF), \`analyze\` (impact/dependencies/circular), \`compose\` (Composer via Playwright), \`env\` (ambientes), \`validate\` (validação SIF), \`search\` (busca objetos), \`generate\` (gerar SIF), \`import_docs\` (importar docs), \`batch_import_sif\` (import em lote) |
 
-#### Translation (3 tools)
+#### DaVinci (consolidated v8.0)
 
 | Tool | Quando usar |
 |------|-------------|
-| \`translate_code\` | Traduzir código entre linguagens — cria job, analisa constructs, gera prompt, finaliza com código |
-| \`analyze_translation\` | Analisar código-fonte para prontidão de tradução (language, constructs, complexity, translatability) |
-| \`translation_jobs\` | Gerenciar jobs de tradução: list, get, delete, stats |`;
+| \`davinci\` | DaVinci converter consolidado: action \`analyze\` (JS AST analysis), \`build\` (build output), \`convert\` (code conversion), \`batch_convert\` (conversão em lote) |
+
+#### Translation (consolidated v8.0)
+
+| Tool | Quando usar |
+|------|-------------|
+| \`translate\` | Tradução de código: action \`convert\` (traduzir entre linguagens), \`analyze\` (prontidão), \`jobs\` (gerenciar jobs), \`batch_convert\` (traduzir múltiplos) |`;
 
 export const DEPRECATED_TOOLS_SECTION = `#### Tools Deprecated (backward compat, removidos na v7.0)
 
@@ -183,12 +176,12 @@ Fontes indexadas automaticamente:
 - **Stack docs** — ao sincronizar com \`sync_stack_docs\`
 - **Sprint reports** — ao gerar com \`plan_sprint\`
 
-Recuperação: \`rag_context\` monta contexto phase-aware com budget de tokens:
+Recuperação: \`context(action:rag)\` monta contexto phase-aware com budget de tokens:
 - 60% contexto do grafo (nodes, deps, status)
 - 30% knowledge store (BM25 + TF-IDF)
 - 10% metadata de fase
 
-Manual: \`reindex_knowledge\` para rebuild completo do índice.`;
+Manual: \`knowledge(action:reindex)\` para rebuild completo do índice.`;
 
 export const SKILLS_SECTION = `### Skills Built-in (54 skills)
 
@@ -266,7 +259,7 @@ Em \`strict\`, ações são bloqueadas se pré-requisitos não foram executados:
 | \`set_phase(PLAN)\` | \`analyze(design_ready)\` | projeto |
 | \`set_phase(IMPLEMENT)\` | \`sync_stack_docs\` + \`plan_sprint\` | projeto |
 | \`update_status(in_progress)\` | \`next\` | projeto |
-| \`update_status(done)\` IMPLEMENT | \`context\` + \`rag_context\` + \`analyze(implement_done)\` | por node |
+| \`update_status(done)\` IMPLEMENT | \`context(compact)\` + \`context(rag)\` + \`analyze(implement_done)\` | por node |
 | \`update_status(done)\` VALIDATE | \`validate\` + \`analyze(validate_ready)\` | misto |
 | \`set_phase(HANDOFF)\` | \`analyze(review_ready)\` + \`export\` | projeto |
 | \`set_phase(LISTENING)\` | \`analyze(handoff_ready)\` + \`snapshot\` + \`write_memory\` | projeto |`;
@@ -277,13 +270,13 @@ export const WORKFLOWS_SECTION = `### Workflows Compostos (Combinações Poderos
 \`import_prd → analyze(prd_quality, scope, risk) → plan_sprint → sync_stack_docs\`
 
 **Implementação com Contexto Completo:**
-\`next → context → rag_context(detail=deep) → code_intelligence(impact) → [TDD] → analyze(implement_done) → update_status(done)\`
+\`next → context(compact) → context(rag, detail=deep) → code_intelligence(impact) → [TDD] → analyze(implement_done) → update_status(done)\`
 
 **Validação E2E:**
 \`validate(task, Playwright A/B) → analyze(done_integrity, status_flow) → export(mermaid)\`
 
 **Self-Healing (prevenir erros recorrentes):**
-\`rag_context(query="erro similar") → write_memory(padrão encontrado) → next\`
+\`context(action:rag, query="erro similar") → write_memory(padrão encontrado) → next\`
 
 **Snapshot & Rollback:**
 \`snapshot(create) antes de mudanças arriscadas → [implementar] → snapshot(restore) se falhar\``;
@@ -296,7 +289,7 @@ export const AGENT_ANTIPATTERNS_SECTION = `### Erros Comuns de Agentes
 | Marcar done sem rodar \`analyze(implement_done)\` | Sempre rodar DoD check antes |
 | Implementar sem chamar \`next\` | \`next\` dá prioridade + TDD hints + deps check |
 | Confiar em memories para estado atual | Grep no código — memories ficam stale |
-| Pular \`rag_context\` em IMPLEMENT | RAG traz decisões de DESIGN + healing memories |
+| Pular \`context(action:rag)\` em IMPLEMENT | RAG traz decisões de DESIGN + healing memories |
 | Criar tasks sem AC | AC é required — \`validate(ac)\` bloqueia sem ela |
 | Ignorar Code Intelligence em REVIEW | \`code_intelligence(impact)\` mostra blast radius |
 | Usar 6 calls separados (next+context+rag+...) | Usar \`start_task\` + \`finish_task\` (pipeline v6.0) |
@@ -387,11 +380,11 @@ start_task → [implementar com TDD] → finish_task
 
 **Fluxo v5.x (granular — 6 calls, ainda disponível):**
 \`\`\`
-next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status
+next → context(compact) → context(rag) → [implementar com TDD] → analyze(implement_done) → update_status
 \`\`\`
 
 #### start_task
-Compõe: \`next\` + \`context\` + \`rag_context\` + TDD hints + \`update_status(in_progress)\`
+Compõe: \`next\` + \`context(compact)\` + \`context(rag)\` + TDD hints + \`update_status(in_progress)\`
 - \`nodeId?\` — task específica ou auto via next
 - \`contextDetail?\` — "summary" | "standard" | "deep" (default: standard)
 - \`ragBudget?\` — token budget para RAG (default: 4000)
@@ -439,7 +432,7 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "list",
     "show",
     "help",
-    "knowledge_stats",
+    "knowledge",
   ],
   DESIGN: [
     "node",
@@ -450,9 +443,8 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "show",
     "help",
     "code_intelligence",
-    "siebel_analyze",
-    "siebel_import_sif",
-    "analyze_translation",
+    "siebel",
+    "translate",
   ],
   PLAN: [
     "plan_sprint",
@@ -469,7 +461,6 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "finish_task",
     "next",
     "context",
-    "rag_context",
     "update_status",
     "analyze",
     "validate",
@@ -477,9 +468,9 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "read_memory",
     "help",
     "code_intelligence",
-    "translate_code",
-    "siebel_generate_sif",
-    "siebel_composer",
+    "translate",
+    "siebel",
+    "davinci",
     "journey",
   ],
   VALIDATE: [
@@ -490,8 +481,8 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "next",
     "update_status",
     "help",
-    "siebel_validate",
-    "knowledge_feedback",
+    "siebel",
+    "knowledge",
   ],
   REVIEW: [
     "export",
@@ -501,8 +492,7 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "show",
     "help",
     "code_intelligence",
-    "knowledge_stats",
-    "export_knowledge",
+    "knowledge",
   ],
   HANDOFF: [
     "export",
@@ -510,8 +500,8 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "analyze",
     "write_memory",
     "help",
-    "export_knowledge",
-    "translation_jobs",
+    "knowledge",
+    "translate",
   ],
   DEPLOY: [
     "export",
@@ -528,7 +518,7 @@ const PHASE_TOOLS: Record<string, string[]> = {
     "search",
     "list",
     "help",
-    "knowledge_stats",
+    "knowledge",
     "import_graph",
   ],
 };

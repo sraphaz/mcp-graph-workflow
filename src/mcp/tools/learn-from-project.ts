@@ -41,7 +41,7 @@ export function registerLearnFromProject(server: McpServer, store: SqliteStore):
         categories: result.categories,
         sourceProject: result.sourceProject,
         hint: result.imported > 0
-          ? `${result.imported} documents imported. Use rag_context to access the new knowledge.`
+          ? `${result.imported} documents imported. Use context(action:rag) to access the new knowledge.`
           : "No new documents to import (all duplicates or below quality threshold).",
       });
     },

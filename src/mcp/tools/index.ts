@@ -9,7 +9,6 @@ import { registerUpdateStatus } from "./update-status.js";
 import { registerMetrics } from "./metrics.js";
 import { registerContext } from "./context.js";
 import { registerSearch } from "./search.js";
-import { registerRagContext } from "./rag-context.js";
 import { registerAnalyze } from "./analyze.js";
 import { registerEdge } from "./edge.js";
 import { registerSnapshot } from "./snapshot.js";
@@ -17,7 +16,6 @@ import { registerExport } from "./export.js";
 import { registerImportGraph } from "./import-graph.js";
 import { registerMoveNode } from "./move-node.js";
 import { registerCloneNode } from "./clone-node.js";
-import { registerReindexKnowledge } from "./reindex-knowledge.js";
 import { registerSyncStackDocs } from "./sync-stack-docs.js";
 import { registerPlanSprint } from "./plan-sprint.js";
 import { registerSetPhase } from "./set-phase.js";
@@ -25,31 +23,11 @@ import { registerMemory } from "./memory.js";
 import { registerManageSkill } from "./manage-skill.js";
 import { registerJourney } from "./journey.js";
 import { registerHelp } from "./help.js";
-// Siebel CRM integration tools
-import { registerSiebelImportSif } from "./siebel-import-sif.js";
-import { registerSiebelAnalyze } from "./siebel-analyze.js";
-import { registerSiebelComposer } from "./siebel-composer.js";
-import { registerSiebelEnv } from "./siebel-env.js";
-import { registerSiebelValidate } from "./siebel-validate.js";
-import { registerSiebelSearch } from "./siebel-search.js";
-import { registerSiebelGenerateSif } from "./siebel-generate-sif.js";
-import { registerSiebelImportDocs } from "./siebel-import-docs.js";
-import { registerTranslateCode } from "./translate-code.js";
-import { registerAnalyzeTranslation } from "./analyze-translation.js";
-import { registerTranslationJobs } from "./translation-jobs.js";
-// DaVinci converter tools
-import { registerDavinciAnalyze } from "./davinci-analyze.js";
-import { registerDavinciConvert } from "./davinci-convert.js";
-import { registerDavinciBuild } from "./davinci-build.js";
-// RAG knowledge tools
-import { registerKnowledgeFeedback } from "./knowledge-feedback.js";
-import { registerKnowledgeStats } from "./knowledge-stats.js";
-import { registerKnowledgeExport } from "./knowledge-export.js";
-// Context compression
-import { registerContextCompress } from "./context-compress.js";
-// Knowledge maintenance
-import { registerKnowledgePrune } from "./knowledge-prune.js";
-// Consolidated tools
+// Consolidated tools (v8.0)
+import { registerSiebel } from "./siebel.js";
+import { registerKnowledge } from "./knowledge.js";
+import { registerDavinci } from "./davinci.js";
+import { registerTranslate } from "./translate.js";
 import { registerNode } from "./node.js";
 import { registerValidate } from "./validate.js";
 // Task templates
@@ -74,7 +52,6 @@ import { registerGraphHealth } from "./graph-health.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 
 export function registerAllTools(server: McpServer, store: SqliteStore): void {
-  // Core tools
   registerInit(server, store);
   registerImportPrd(server, store);
   registerList(server, store);
@@ -84,7 +61,6 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerMetrics(server, store);
   registerContext(server, store);
   registerSearch(server, store);
-  registerRagContext(server, store);
   registerAnalyze(server, store);
   registerEdge(server, store);
   registerSnapshot(server, store);
@@ -92,7 +68,6 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerImportGraph(server, store);
   registerMoveNode(server, store);
   registerCloneNode(server, store);
-  registerReindexKnowledge(server, store);
   registerSyncStackDocs(server, store);
   registerPlanSprint(server, store);
   registerSetPhase(server, store);
@@ -100,70 +75,22 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerManageSkill(server, store);
   registerJourney(server, store);
   registerHelp(server);
-
-  // Siebel CRM integration tools
-  registerSiebelImportSif(server, store);
-  registerSiebelAnalyze(server, store);
-  registerSiebelComposer(server, store);
-  registerSiebelEnv(server, store);
-  registerSiebelValidate(server, store);
-  registerSiebelSearch(server, store);
-  registerSiebelGenerateSif(server, store);
-  registerSiebelImportDocs(server, store);
-
-  // Translation tools
-  registerTranslateCode(server, store);
-  registerAnalyzeTranslation(server, store);
-  registerTranslationJobs(server, store);
-
-  // DaVinci converter tools
-  registerDavinciAnalyze(server, store);
-  registerDavinciConvert(server, store);
-  registerDavinciBuild(server, store);
-
-  // RAG knowledge tools
-  registerKnowledgeFeedback(server, store);
-  registerKnowledgeStats(server, store);
-  registerKnowledgeExport(server, store);
-
-  // Context compression
-  registerContextCompress(server);
-
-  // Knowledge maintenance
-  registerKnowledgePrune(server, store);
-
-  // Consolidated tools
+  // Consolidated tools (v8.0)
+  registerSiebel(server, store);
+  registerKnowledge(server, store);
+  registerDavinci(server, store);
+  registerTranslate(server, store);
   registerNode(server, store);
   registerValidate(server, store);
-
-  // Task templates
   registerTemplate(server, store);
-
-  // LSP Code Intelligence
   registerCodeIntelligence(server, store);
-
-  // Pipeline tools (v6.0)
   registerStartTask(server, store);
   registerFinishTask(server, store);
-
-  // Predictive analytics (v6.0)
   registerForecast(server, store);
-
-  // Cross-project learning (v6.0)
   registerLearnFromProject(server, store);
-
-  // Interdisciplinary knowledge intersector
   registerIntersectKnowledge(server, store);
-
-  // Self-healing MAPE-K engine
   registerSelfHealing(server, store);
-
-  // Kanban orchestrator
   registerKanban(server, store);
-
-  // Graph health scanner
   registerGraphHealth(server, store);
-
-  // Wrap all registered tool handlers with unified lifecycle + code intelligence gates
   wrapToolsWithGates(server, store);
 }

@@ -20,24 +20,15 @@ const TOOL_REGEX = /server\.tool\(\s*\n?\s*"([^"]+)",\s*\n?\s*"([^"]+)"/g;
 
 // Category mappings inferred from index.ts comment blocks
 const FILE_CATEGORY_MAP: Record<string, string> = {
-  // Siebel CRM
-  "siebel-import-sif": "Siebel CRM",
-  "siebel-analyze": "Siebel CRM",
-  "siebel-composer": "Siebel CRM",
-  "siebel-env": "Siebel CRM",
-  "siebel-validate": "Siebel CRM",
-  "siebel-search": "Siebel CRM",
-  "siebel-generate-sif": "Siebel CRM",
-  "siebel-import-docs": "Siebel CRM",
-  // Translation
-  "translate-code": "Translation",
-  "analyze-translation": "Translation",
-  "translation-jobs": "Translation",
-  // RAG knowledge
-  "knowledge-feedback": "Knowledge",
-  "knowledge-stats": "Knowledge",
-  "knowledge-export": "Knowledge",
-  // Consolidated
+  // Siebel CRM (consolidated)
+  "siebel": "Siebel CRM",
+  // Translation (consolidated)
+  "translate": "Translation",
+  // Knowledge (consolidated)
+  "knowledge": "Knowledge",
+  // DaVinci (consolidated)
+  "davinci": "Translation",
+  // Consolidated core
   "node": "Core",
   "validate": "Core",
   // LSP Code Intelligence

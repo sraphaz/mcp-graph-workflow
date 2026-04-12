@@ -55,7 +55,7 @@ describe("SqliteStore — global mode methods", () => {
         .prepare("SELECT version FROM _migrations ORDER BY version")
         .all() as Array<{ version: number }>;
 
-      expect(migrations.length).toBe(30);
+      expect(migrations.length).toBe(31);
 
       store.close();
     });

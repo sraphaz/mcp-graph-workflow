@@ -284,7 +284,7 @@ export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
       "Use `write_memory` para persistir: 1) Decisões arquiteturais e trade-offs. " +
       "2) Lessons learned durante a implementação. 3) Limitações conhecidas e workarounds. " +
       "4) Padrões de erro descobertos e suas prevenções (healing memories). " +
-      "Essas memórias alimentam o RAG para contexto futuro via `rag_context`.",
+      "Essas memórias alimentam o RAG para contexto futuro via `context(action:rag)`.",
   },
 
   // ── LISTENING ───────────────────────────────
@@ -613,7 +613,7 @@ export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
     category: "implement",
     phases: ["IMPLEMENT", "VALIDATE"],
     instructions:
-      "Antes de executar uma tarefa, consulte rag_context para verificar memórias de self-healing " +
+      "Antes de executar uma tarefa, consulte context(action:rag) para verificar memórias de self-healing " +
       "relacionadas ao contexto atual. Padrões de erro conhecidos e suas prevenções estão " +
       "armazenados em workflow-graph/memories/healing-*.md. Se encontrar uma memória relevante, " +
       "aplique a regra de prevenção ANTES de implementar. Isso evita repetição de erros " +

@@ -21,7 +21,7 @@ import { registerMetrics } from "../mcp/tools/metrics.js";
 import { registerUpdateStatus } from "../mcp/tools/update-status.js";
 import { registerSnapshot } from "../mcp/tools/snapshot.js";
 import { registerCloneNode } from "../mcp/tools/clone-node.js";
-import { registerReindexKnowledge } from "../mcp/tools/reindex-knowledge.js";
+import { registerKnowledge } from "../mcp/tools/knowledge.js";
 import { registerImportPrd } from "../mcp/tools/import-prd.js";
 import { wrapToolsWithCodeIntelligence } from "../mcp/code-intelligence-wrapper.js";
 import { makeNode, makeEpic, makeEdge } from "./helpers/factories.js";
@@ -87,11 +87,11 @@ describe("E2E CRITICAL — Deadlock: bootstrap tools in strict mode (#001, #005,
     expect(parsed.error).not.toBe("code_intelligence_gate_blocked");
   });
 
-  it("#006: reindex_knowledge should NOT be blocked by empty index", async () => {
-    registerReindexKnowledge(server, store);
+  it("#006: knowledge(reindex) should NOT be blocked by empty index", async () => {
+    registerKnowledge(server, store);
     wrapToolsWithCodeIntelligence(server, store);
 
-    const result = await tools(server)["reindex_knowledge"].handler({});
+    const result = await tools(server)["knowledge"].handler({ action: "reindex" });
     const parsed = parse(result);
 
     expect(result.isError).toBeFalsy();
@@ -543,3 +543,4 @@ describe("E2E MEDIUM — Structural integrity (#036, #037, #045)", () => {
     expect(dependsOnEdges).toHaveLength(1);
   });
 });
+

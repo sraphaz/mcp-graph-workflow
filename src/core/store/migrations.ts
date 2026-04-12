@@ -914,6 +914,55 @@ const migrations: Migration[] = [
         WHERE id NOT IN (SELECT rowid FROM docs_fts);
     `,
   },
+  {
+    version: 31,
+    description: "v7.0 community summaries: add community_summaries table + FTS5 virtual table for GraphRAG",
+    sql: `
+      CREATE TABLE IF NOT EXISTS community_summaries (
+        id               TEXT PRIMARY KEY,
+        community_id     TEXT NOT NULL,
+        title            TEXT NOT NULL,
+        summary          TEXT NOT NULL,
+        member_node_ids  TEXT NOT NULL,
+        member_count     INTEGER NOT NULL,
+        top_terms        TEXT NOT NULL,
+        created_at       TEXT NOT NULL,
+        updated_at       TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_community_summaries_community_id
+        ON community_summaries(community_id);
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS community_summaries_fts USING fts5(
+        community_id UNINDEXED,
+        title,
+        summary,
+        top_terms,
+        content=community_summaries,
+        content_rowid=rowid
+      );
+
+      CREATE TRIGGER IF NOT EXISTS community_summaries_fts_insert
+        AFTER INSERT ON community_summaries BEGIN
+          INSERT INTO community_summaries_fts(rowid, community_id, title, summary, top_terms)
+            VALUES (new.rowid, new.community_id, new.title, new.summary, new.top_terms);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS community_summaries_fts_delete
+        AFTER DELETE ON community_summaries BEGIN
+          INSERT INTO community_summaries_fts(community_summaries_fts, rowid, community_id, title, summary, top_terms)
+            VALUES ('delete', old.rowid, old.community_id, old.title, old.summary, old.top_terms);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS community_summaries_fts_update
+        AFTER UPDATE ON community_summaries BEGIN
+          INSERT INTO community_summaries_fts(community_summaries_fts, rowid, community_id, title, summary, top_terms)
+            VALUES ('delete', old.rowid, old.community_id, old.title, old.summary, old.top_terms);
+          INSERT INTO community_summaries_fts(rowid, community_id, title, summary, top_terms)
+            VALUES (new.rowid, new.community_id, new.title, new.summary, new.top_terms);
+        END;
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

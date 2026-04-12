@@ -15,8 +15,8 @@ export interface NextAction {
 }
 
 const READ_ONLY_TOOLS = new Set([
-  "list", "show", "search", "help", "metrics", "context", "rag_context",
-  "export", "knowledge_stats", "knowledge_feedback", "code_intelligence",
+  "list", "show", "search", "help", "metrics", "context", "knowledge",
+  "export", "code_intelligence",
   "list_memories", "read_memory", "manage_skill",
 ]);
 

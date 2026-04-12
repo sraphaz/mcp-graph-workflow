@@ -506,6 +506,38 @@ export interface TranslationGraphData {
   edges: TranslationGraphEdge[];
 }
 
+// ── Flow / Sprint analytics types ────────────────
+
+export interface FlowSnapshot {
+  snapshotDate: string;
+  backlogCount: number;
+  readyCount: number;
+  inProgressCount: number;
+  blockedCount: number;
+  doneCount: number;
+}
+
+export interface SprintHealthReport {
+  health: "healthy" | "at_risk" | "critical";
+  metrics: {
+    taskCount: number;
+    doneCount: number;
+    blockedCount: number;
+    totalPoints: number;
+    burndownRatio: number;
+    externalDeps: number;
+  };
+  warnings: string[];
+}
+
+export interface DoraMetrics {
+  deploymentFrequency: number;
+  leadTime: { p50: number; p85: number; p95: number };
+  changeFailureRate: number;
+  mttr: number;
+  trend: "improving" | "stable" | "declining";
+}
+
 // ── DreamMode types ────────────────────────────
 
 export interface DreamStatus {

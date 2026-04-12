@@ -12,7 +12,7 @@ describe("Bug Verification — Gates & Tool Classification", () => {
   // ── #001, #002, #005, #006: Deadlock — bootstrap tools must be in both sets ──
 
   describe("Bootstrap tools in ALWAYS_ALLOWED_TOOLS (#001, #002, #005, #006)", () => {
-    it.each(["init", "set_phase", "reindex_knowledge", "sync_stack_docs"])(
+    it.each(["init", "set_phase", "knowledge", "sync_stack_docs"])(
       "should include '%s' in ALWAYS_ALLOWED_TOOLS",
       (tool) => {
         expect(ALWAYS_ALLOWED_TOOLS.has(tool)).toBe(true);
@@ -21,7 +21,7 @@ describe("Bug Verification — Gates & Tool Classification", () => {
   });
 
   describe("Bootstrap tools in READ_ONLY_TOOLS (#001, #002, #005, #006)", () => {
-    it.each(["init", "set_phase", "reindex_knowledge", "sync_stack_docs"])(
+    it.each(["init", "set_phase", "knowledge", "sync_stack_docs"])(
       "should include '%s' in READ_ONLY_TOOLS",
       (tool) => {
         expect(READ_ONLY_TOOLS.has(tool)).toBe(true);
@@ -67,10 +67,10 @@ describe("Bug Verification — Gates & Tool Classification", () => {
   describe("Read-only tools completeness", () => {
     const expectedReadOnly = [
       "list", "show", "search", "metrics", "export", "context",
-      "rag_context", "analyze", "snapshot", "next",
+      "knowledge", "analyze", "snapshot", "next",
       "list_memories", "read_memory", "manage_skill",
       "plan_sprint", "validate",
-      "knowledge_stats", "knowledge_feedback", "code_intelligence", "journey",
+      "code_intelligence", "journey",
     ];
 
     it.each(expectedReadOnly)(

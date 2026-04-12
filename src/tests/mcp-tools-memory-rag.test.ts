@@ -185,19 +185,20 @@ describe("MCP Memory & RAG Tool Handlers", () => {
     });
   });
 
-  // ── RAG Context Tool ─────────────────────────────────────────────────────
+  // ── Context action=rag (formerly rag_context) ────────────────────────────
 
-  describe("rag_context", () => {
+  describe("context action=rag (formerly rag_context)", () => {
     beforeEach(async () => {
-      const { registerRagContext } = await import("../mcp/tools/rag-context.js");
-      registerRagContext(server, store);
+      const { registerContext } = await import("../mcp/tools/context.js");
+      registerContext(server, store);
 
       // Add a node so there's something to search
       store.insertNode(makeNode({ title: "Auth module", description: "Login and signup flows" }));
     });
 
     it("should return context with default mode (no detail)", async () => {
-      const result = await tools(server)["rag_context"].handler({
+      const result = await tools(server)["context"].handler({
+        action: "rag",
         query: "auth login",
       });
       const parsed = parseResult(result);
@@ -208,7 +209,8 @@ describe("MCP Memory & RAG Tool Handlers", () => {
     });
 
     it("should return context with detail=summary", async () => {
-      const result = await tools(server)["rag_context"].handler({
+      const result = await tools(server)["context"].handler({
+        action: "rag",
         query: "auth",
         detail: "summary",
       });
@@ -219,7 +221,8 @@ describe("MCP Memory & RAG Tool Handlers", () => {
     });
 
     it("should return context with detail=deep", async () => {
-      const result = await tools(server)["rag_context"].handler({
+      const result = await tools(server)["context"].handler({
+        action: "rag",
         query: "auth",
         detail: "deep",
         tokenBudget: 2000,
@@ -236,10 +239,11 @@ describe("MCP Memory & RAG Tool Handlers", () => {
       emptyStore.initProject("Empty");
       const emptyServer = createServer();
 
-      const { registerRagContext } = await import("../mcp/tools/rag-context.js");
-      registerRagContext(emptyServer, emptyStore);
+      const { registerContext } = await import("../mcp/tools/context.js");
+      registerContext(emptyServer, emptyStore);
 
-      const result = await tools(emptyServer)["rag_context"].handler({
+      const result = await tools(emptyServer)["context"].handler({
+        action: "rag",
         query: "anything",
       });
 
@@ -250,14 +254,14 @@ describe("MCP Memory & RAG Tool Handlers", () => {
 
   // ── Reindex Knowledge Tool ────────────────────────────────────────────────
 
-  describe("reindex_knowledge", () => {
+  describe("knowledge(reindex)", () => {
     beforeEach(async () => {
-      const { registerReindexKnowledge } = await import("../mcp/tools/reindex-knowledge.js");
-      registerReindexKnowledge(server, store);
+      const { registerKnowledge } = await import("../mcp/tools/knowledge.js");
+      registerKnowledge(server, store);
     });
 
     it("should reindex all sources when no filter specified", async () => {
-      const result = await tools(server)["reindex_knowledge"].handler({});
+      const result = await tools(server)["knowledge"].handler({ action: "reindex" });
       const parsed = parseResult(result);
 
       expect(parsed.memories).toBeDefined();
@@ -268,8 +272,9 @@ describe("MCP Memory & RAG Tool Handlers", () => {
     });
 
     it("should reindex only memory source when specified", async () => {
-      const result = await tools(server)["reindex_knowledge"].handler({
-        sources: ["memory"],
+      const result = await tools(server)["knowledge"].handler({
+        action: "reindex",
+        reindexSources: ["memory"],
       });
       const parsed = parseResult(result);
 
@@ -281,8 +286,9 @@ describe("MCP Memory & RAG Tool Handlers", () => {
     });
 
     it("should reindex only docs source when specified", async () => {
-      const result = await tools(server)["reindex_knowledge"].handler({
-        sources: ["docs"],
+      const result = await tools(server)["knowledge"].handler({
+        action: "reindex",
+        reindexSources: ["docs"],
       });
       const parsed = parseResult(result);
 
@@ -291,8 +297,9 @@ describe("MCP Memory & RAG Tool Handlers", () => {
     });
 
     it("should accept serena alias for memory source", async () => {
-      const result = await tools(server)["reindex_knowledge"].handler({
-        sources: ["serena"],
+      const result = await tools(server)["knowledge"].handler({
+        action: "reindex",
+        reindexSources: ["serena"],
       });
       const parsed = parseResult(result);
 

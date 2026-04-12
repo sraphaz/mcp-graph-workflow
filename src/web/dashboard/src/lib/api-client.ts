@@ -481,6 +481,10 @@ export const apiClient = {
   dreamGetMetrics: () =>
     request<DreamMetrics>("/dream/metrics"),
 
+  // ── Lifecycle Phase ─────────────────────────
+  getPhase: () =>
+    request<{ currentPhase: string; isOverride: boolean; guidance: { reminder: string; suggestedTools: string[]; principles: string[]; suggestedSkills: string[] } }>("/insights/phase"),
+
   // ── Kanban ────────────────────────────────
   getKanbanBoard: (swimlane?: string) =>
     request<KanbanBoard>(`/kanban/board${swimlane ? `?swimlane=${swimlane}` : ""}`),

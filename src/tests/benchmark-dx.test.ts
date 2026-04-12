@@ -25,7 +25,7 @@ describe("Benchmark: DX Metrics SLOs", () => {
     const project = store.getProject()!;
 
     // Record 1000 tool calls
-    const tools = ["list", "show", "search", "context", "analyze", "next", "metrics", "rag_context"];
+    const tools = ["list", "show", "search", "context", "analyze", "next", "metrics", "knowledge"];
     for (let i = 0; i < 1000; i++) {
       tokenStore.record(project.id, tools[i % tools.length], 100 + i % 50, 200 + i % 100);
     }
@@ -51,8 +51,8 @@ describe("Benchmark: DX Metrics SLOs", () => {
     console.log(`  L3 (Property): ${distribution.L3_PropertyBased}`);
     console.log(`  L4 (Meta-Rule): ${distribution.L4_MetaRule}`);
 
-    // All tools should be classified
-    expect(classifications.length).toBeGreaterThanOrEqual(50);
+    // All tools should be classified (reduced after v8.0 consolidation)
+    expect(classifications.length).toBeGreaterThanOrEqual(40);
 
     // Distribution should cover all layers
     expect(distribution.L0_SQL).toBeGreaterThan(0);
