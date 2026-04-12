@@ -1,7 +1,8 @@
 /**
- * Checks if all sibling tasks under a parent are done,
- * suggesting promotion of the parent (epic) to done.
- * Extracted from update-status.ts for reuse in finish-task.ts.
+ * Epic promotion utilities:
+ * - checkEpicPromotion: advisory suggestion (existing)
+ * - autoPromoteEpic: executes promotion + recursive cascade up
+ * - cascadeDownOnDone: marks AC/subtask children as done when parent is done
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
@@ -14,9 +15,22 @@ export interface EpicPromotionResult {
   suggestion: string;
 }
 
+export interface AutoPromoteResult {
+  /** IDs of nodes that were promoted to done */
+  promoted: string[];
+}
+
+export interface CascadeDownResult {
+  /** IDs of children that were cascaded to done */
+  cascaded: string[];
+}
+
+const MAX_PROMOTE_DEPTH = 10;
+
 /**
  * Check if all children of a node's parent are done.
  * Returns a promotion suggestion if so, null otherwise.
+ * Advisory only — does NOT change status.
  */
 export function checkEpicPromotion(
   store: SqliteStore,
@@ -43,4 +57,86 @@ export function checkEpicPromotion(
     logger.debug("epic-promotion:check_failed", { error: String(err) });
     return null;
   }
+}
+
+/**
+ * Auto-promote parent epic to done when all children are done.
+ * Recursively checks grandparent, great-grandparent, etc. up to MAX_PROMOTE_DEPTH.
+ */
+export function autoPromoteEpic(
+  store: SqliteStore,
+  nodeId: string,
+  depth: number = 0,
+): AutoPromoteResult {
+  const result: AutoPromoteResult = { promoted: [] };
+
+  if (depth >= MAX_PROMOTE_DEPTH) return result;
+
+  try {
+    const node = store.getNodeById(nodeId);
+    if (!node?.parentId) return result;
+
+    const parent = store.getNodeById(node.parentId);
+    if (!parent || parent.status === "done") return result;
+
+    const siblings = store.getChildNodes(parent.id);
+    const allDone = siblings.length > 0 && siblings.every((s) => s.status === "done");
+    if (!allDone) return result;
+
+    // Promote parent to done
+    store.updateNodeStatus(parent.id, "done");
+    result.promoted.push(parent.id);
+    logger.info("epic-promotion:auto_promoted", {
+      nodeId: parent.id,
+      title: parent.title,
+      childrenDone: siblings.length,
+      depth,
+    });
+
+    // Recurse up — maybe grandparent is now promotable
+    const parentResult = autoPromoteEpic(store, parent.id, depth + 1);
+    result.promoted.push(...parentResult.promoted);
+  } catch (err) {
+    logger.debug("epic-promotion:auto_promote_failed", { error: String(err) });
+  }
+
+  return result;
+}
+
+/**
+ * Cascade done status DOWN to AC and subtask children.
+ * Only cascades to acceptance_criteria and subtask types.
+ * Does NOT cascade to task/epic children (those require explicit completion).
+ */
+export function cascadeDownOnDone(
+  store: SqliteStore,
+  nodeId: string,
+): CascadeDownResult {
+  const result: CascadeDownResult = { cascaded: [] };
+
+  try {
+    const node = store.getNodeById(nodeId);
+    if (!node || node.status !== "done") return result;
+
+    const children = store.getChildNodes(nodeId);
+    const cascadeTypes = new Set(["acceptance_criteria", "subtask"]);
+
+    for (const child of children) {
+      if (cascadeTypes.has(child.type) && child.status !== "done") {
+        store.updateNodeStatus(child.id, "done");
+        result.cascaded.push(child.id);
+      }
+    }
+
+    if (result.cascaded.length > 0) {
+      logger.info("epic-promotion:cascade_down", {
+        parentId: nodeId,
+        cascadedCount: result.cascaded.length,
+      });
+    }
+  } catch (err) {
+    logger.debug("epic-promotion:cascade_down_failed", { error: String(err) });
+  }
+
+  return result;
 }

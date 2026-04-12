@@ -9,8 +9,8 @@ import type { ImplementDoneReport } from "../../schemas/implementer-schema.js";
 import type { EnhancedNextResult } from "../planner/enhanced-next.js";
 import { checkDefinitionOfDone } from "../implementer/definition-of-done.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
-import { checkEpicPromotion } from "../utils/epic-promotion.js";
-import type { EpicPromotionResult } from "../utils/epic-promotion.js";
+import { checkEpicPromotion, autoPromoteEpic, cascadeDownOnDone } from "../utils/epic-promotion.js";
+import type { EpicPromotionResult, AutoPromoteResult, CascadeDownResult } from "../utils/epic-promotion.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { indexDecision } from "../rag/decision-indexer.js";
 import { indexEntitiesForSource } from "../rag/entity-index-hook.js";
@@ -27,6 +27,8 @@ export interface FinishTaskResult {
   status: "done" | "blocked";
   blockers: string[];
   epicPromotion: EpicPromotionResult | null;
+  autoPromoted: string[];
+  cascadedDown: string[];
   nextTask: EnhancedNextResult | null;
   decisionIndexed: boolean;
 }
@@ -95,10 +97,14 @@ export function finishTask(
     }
   }
 
-  // 4. Check epic promotion
+  // 4. Check epic promotion + auto-cascade
   let epicPromotion: EpicPromotionResult | null = null;
+  let autoPromoted: AutoPromoteResult = { promoted: [] };
+  let cascadedDown: CascadeDownResult = { cascaded: [] };
   if (status === "done") {
     epicPromotion = checkEpicPromotion(store, nodeId);
+    cascadedDown = cascadeDownOnDone(store, nodeId);
+    autoPromoted = autoPromoteEpic(store, nodeId);
   }
 
   // 5. Find next task if requested
@@ -122,6 +128,8 @@ export function finishTask(
     status,
     blockers,
     epicPromotion,
+    autoPromoted: autoPromoted.promoted,
+    cascadedDown: cascadedDown.cascaded,
     nextTask,
     decisionIndexed,
   };

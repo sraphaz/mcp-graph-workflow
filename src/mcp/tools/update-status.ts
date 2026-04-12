@@ -7,6 +7,7 @@ import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexDecision } from "../../core/rag/decision-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
+import { autoPromoteEpic, cascadeDownOnDone } from "../../core/utils/epic-promotion.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
@@ -101,24 +102,17 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
         result.hint = "Tip: provide a 'rationale' parameter when marking tasks done to capture learnings for future RAG context.";
       }
 
-      // Suggest parent promotion when all children are done
-      if (status === "done" && updated.parentId) {
-        try {
-          const siblings = store.getChildNodes(updated.parentId);
-          const allDone = siblings.length > 0 && siblings.every((s) => s.status === "done");
-          if (allDone) {
-            const parent = store.getNodeById(updated.parentId);
-            if (parent && parent.status !== "done") {
-              result.epicPromotion = {
-                parentId: parent.id,
-                parentTitle: parent.title,
-                childrenDone: siblings.length,
-                suggestion: `Todas as ${siblings.length} tasks filhas estão done. Considere marcar "${parent.title}" (${parent.id}) como done.`,
-              };
-            }
-          }
-        } catch (err) {
-          logger.debug("tool:update_status:epic_promotion_check_failed", { error: String(err) });
+      // Auto-promote parent epic when all children are done + cascade down
+      if (status === "done") {
+        const nodeId = ids[0];
+        const cascadeResult = cascadeDownOnDone(store, nodeId);
+        if (cascadeResult.cascaded.length > 0) {
+          result.cascadedDown = cascadeResult.cascaded;
+        }
+
+        const promoteResult = autoPromoteEpic(store, nodeId);
+        if (promoteResult.promoted.length > 0) {
+          result.autoPromoted = promoteResult.promoted;
         }
       }
 
