@@ -111,17 +111,18 @@ export function multiStrategySearch(
     }
   }
 
-  // Strategy 3: Recency boost (uses pre-computed recency_score column)
+  // Strategy 3: Recency boost (batch query for all IDs at once)
   let recencyResults: Array<{ id: string; score: number }> = [];
   if (ftsResults.length > 0) {
     const allIds = [...new Set([...ftsResults.map((r) => r.id), ...graphResults.map((r) => r.id)])];
-    recencyResults = allIds.map((id) => {
-      const row = db
-        .prepare("SELECT recency_score FROM knowledge_documents WHERE id = ?")
-        .get(id) as { recency_score: number | null } | undefined;
-      if (!row) return { id, score: 0 };
-      return { id, score: row.recency_score ?? 1.0 };
-    });
+    if (allIds.length > 0) {
+      const placeholders = allIds.map(() => "?").join(",");
+      const rows = db
+        .prepare(`SELECT id, recency_score FROM knowledge_documents WHERE id IN (${placeholders})`)
+        .all(...allIds) as Array<{ id: string; recency_score: number | null }>;
+      const scoreMap = new Map(rows.map((r) => [r.id, r.recency_score ?? 1.0]));
+      recencyResults = allIds.map((id) => ({ id, score: scoreMap.get(id) ?? 0 }));
+    }
   }
 
   // Strategy 4: Entity Graph Traversal — find docs via KG entities

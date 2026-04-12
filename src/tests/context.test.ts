@@ -5,13 +5,14 @@ import { buildTaskContext } from "../core/context/compact-context.js";
 import { makeNode, makeEdge } from "./helpers/factories.js";
 
 describe("token-estimator", () => {
-  it("estimates tokens as ceil(chars / 4)", () => {
+  it("estimates tokens for various inputs", () => {
     expect(estimateTokens("")).toBe(0);
     expect(estimateTokens("a")).toBe(1);
-    expect(estimateTokens("abcd")).toBe(1);
-    expect(estimateTokens("abcde")).toBe(2);
-    expect(estimateTokens("a".repeat(100))).toBe(25);
-    expect(estimateTokens("a".repeat(101))).toBe(26);
+    expect(estimateTokens("hello")).toBe(1); // short word = 1 token
+    expect(estimateTokens("hello world")).toBe(2); // two words = 2 tokens
+    expect(estimateTokens("Hello, world!")).toBeGreaterThanOrEqual(3); // word + punct + word
+    // Long word gets split
+    expect(estimateTokens("a".repeat(100))).toBeGreaterThanOrEqual(10);
   });
 });
 

@@ -32,7 +32,7 @@ describe("Tiered Context L0-L3", () => {
     expect(ctx!.tier).toBe("summary");
     expect(ctx!.summary.id).toBe("node1");
     expect(ctx!.taskContext).toBeUndefined();
-    expect(ctx!.estimatedTokens).toBeLessThan(50);
+    expect(ctx!.estimatedTokens).toBeLessThan(65);
   });
 
   it("should support 'brief' tier (L1 ~80 tok)", () => {

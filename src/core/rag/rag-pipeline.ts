@@ -12,34 +12,10 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { EmbeddingStore, type SimilarityResult } from "./embedding-store.js";
 import { TfIdfEmbeddingCache } from "./tfidf-embedding-cache.js";
+import { tokenize } from "../search/tokenizer.js";
 import { logger } from "../utils/logger.js";
 
 // ── TF-IDF Vectorizer ───────────────────────────
-
-/**
- * Simple tokenizer: lowercase, split on non-alphanumeric, remove stopwords.
- */
-const STOPWORDS = new Set([
-  "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
-  "have", "has", "had", "do", "does", "did", "will", "would", "shall",
-  "should", "may", "might", "can", "could", "must", "to", "of", "in",
-  "for", "on", "with", "at", "by", "from", "as", "into", "through",
-  "during", "before", "after", "above", "below", "between", "and", "but",
-  "or", "nor", "not", "so", "yet", "both", "either", "neither", "each",
-  "every", "all", "any", "few", "more", "most", "other", "some", "such",
-  "no", "only", "own", "same", "than", "too", "very", "that", "this",
-  "these", "those", "it", "its", "he", "she", "they", "them", "their",
-  "we", "our", "you", "your", "i", "me", "my", "what", "which", "who",
-  "whom", "when", "where", "why", "how",
-]);
-
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((t) => t.length > 1 && !STOPWORDS.has(t));
-}
 
 /**
  * Build a vocabulary from all documents and compute IDF values.

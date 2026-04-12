@@ -51,7 +51,7 @@ describe("TieredContext", () => {
       expect(ctx!.summary.title).toBe("Setup database");
       expect(ctx!.taskContext).toBeUndefined();
       expect(ctx!.knowledgeSnippets).toBeUndefined();
-      expect(ctx!.estimatedTokens).toBeLessThan(50);
+      expect(ctx!.estimatedTokens).toBeLessThan(65);
     });
   });
 

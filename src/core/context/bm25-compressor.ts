@@ -10,6 +10,7 @@
  */
 
 import { estimateTokens } from "./token-estimator.js";
+import { tokenize } from "../search/tokenizer.js";
 
 export interface RankedChunk {
   content: string;
@@ -46,14 +47,12 @@ export function getBm25Config(): Readonly<Bm25Config> {
 }
 
 /**
- * Tokenize text for BM25 (lowercase, split, remove short words).
+ * Tokenize text for BM25 — delegates to unified tokenizer.
+ * BM25 needs raw tokens without stopword removal or accent stripping
+ * to preserve term frequency accuracy.
  */
 function bm25Tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((t) => t.length > 1);
+  return tokenize(text, { stopwords: false, accentStrip: false });
 }
 
 /**

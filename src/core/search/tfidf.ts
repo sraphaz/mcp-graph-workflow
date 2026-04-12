@@ -1,6 +1,10 @@
 /**
  * Lightweight TF-IDF implementation for two-stage search reranking.
  * No external dependencies — pure TypeScript.
+ *
+ * Supports vocabulary caching with lazy invalidation:
+ * - docFreq is built incrementally as documents are added
+ * - invalidate() flags for lazy rebuild on next query
  */
 
 import { tokenize } from "./tokenizer.js";
@@ -14,9 +18,11 @@ interface DocumentEntry {
 export class TfIdfIndex {
   private docs: DocumentEntry[] = [];
   private docFreq: Map<string, number> = new Map();
+  private dirty = false;
 
   /**
    * Add a document to the index.
+   * Incrementally updates docFreq (no full rebuild needed).
    */
   addDocument(id: string, text: string): void {
     const tokens = tokenize(text);
@@ -26,7 +32,7 @@ export class TfIdfIndex {
       termFreq.set(token, (termFreq.get(token) ?? 0) + 1);
     }
 
-    // Update document frequency
+    // Update document frequency incrementally
     for (const term of termFreq.keys()) {
       this.docFreq.set(term, (this.docFreq.get(term) ?? 0) + 1);
     }
@@ -35,10 +41,38 @@ export class TfIdfIndex {
   }
 
   /**
+   * Flag the index for lazy rebuild on next query.
+   * Does NOT rebuild immediately — just sets a flag.
+   * Call this when the underlying corpus changes (knowledge store insert/update/delete).
+   */
+  invalidate(): void {
+    this.dirty = true;
+  }
+
+  /**
+   * Rebuild docFreq from scratch if invalidated.
+   * Called lazily on next search() after invalidate().
+   */
+  private rebuildIfDirty(): void {
+    if (!this.dirty) return;
+
+    this.docFreq.clear();
+    for (const doc of this.docs) {
+      for (const term of doc.termFreq.keys()) {
+        this.docFreq.set(term, (this.docFreq.get(term) ?? 0) + 1);
+      }
+    }
+    this.dirty = false;
+  }
+
+  /**
    * Compute TF-IDF score for a query against all documents.
    * Returns sorted results (highest score first).
+   * Lazily rebuilds docFreq if invalidated.
    */
   search(query: string, limit: number = 20): Array<{ id: string; score: number }> {
+    this.rebuildIfDirty();
+
     const queryTokens = tokenize(query);
     if (queryTokens.length === 0) return [];
 
