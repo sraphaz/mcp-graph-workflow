@@ -22,7 +22,7 @@
   <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/dm/%40mcp-graph-workflow%2Fmcp-graph" alt="npm downloads"></a>
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/stargazers"><img src="https://img.shields.io/github/stars/DiegoNogueiraDev/mcp-graph-workflow" alt="GitHub stars"></a>
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/network"><img src="https://img.shields.io/github/forks/DiegoNogueiraDev/mcp-graph-workflow" alt="GitHub forks"></a>
-  <img src="https://img.shields.io/badge/tests-5471%2B-brightgreen" alt="5471+ tests">
+  <img src="https://img.shields.io/badge/tests-5552%2B-brightgreen" alt="5552+ tests">
   <img src="https://img.shields.io/badge/MCP%20tools-53-blue" alt="53 MCP tools">
   <img src="https://img.shields.io/badge/DORA-Elite-gold" alt="DORA Elite">
   <img src="https://img.shields.io/badge/AI%20fallback-0%25-green" alt="0% AI fallback">
@@ -38,7 +38,7 @@
 
 A **local-first MCP server** that transforms product requirement documents (PRD) into persistent execution graphs (SQLite), with an integrated knowledge store, RAG pipeline, and multi-agent orchestration mesh.
 
-**v7.0** brings a **unified gate system** (-50% overhead per call), **deterministic-first architecture** (100% of tools are AI-free), **24 benchmark SLOs**, **155 engineering skills**, and **zero breaking regressions** across 5,471 tests. Built on the v6.0 foundation of pipeline tools, agent state machine, and DORA metrics.
+**v7.0** brings a **unified gate system** (-50% overhead per call), **deterministic-first architecture** (100% of tools are AI-free), **24 benchmark SLOs**, **155 engineering skills**, and **zero breaking regressions** across 5,552 tests. Built on the v6.0 foundation of pipeline tools, agent state machine, and DORA metrics.
 
 ## Quick Start
 
@@ -103,9 +103,25 @@ npm run dev        # HTTP + dashboard at localhost:3000
 | Lead Time (P50) | 14.9 hours | **Elite** |
 | Change Failure Rate | 0% | **Elite** |
 | MTTR | 0 hours | **Elite** |
-| Tests | 5,471 passing | 0 failures |
+| Tests | 5,552 passing (514 files) | 0 failures |
 | Benchmark SLOs | 24/24 | 100% pass |
 | AI Fallback | 0% | **Deterministic-First** |
+
+### Performance Benchmarks (Vitest Bench — real data)
+
+| Component | Operation | Throughput | Latency (mean) |
+|-----------|-----------|-----------|----------------|
+| **BM25 Ranking** | 50 chunks, k1=1.8 | 2,577 ops/s | 0.39ms |
+| **RAG Router** | Simple query routing | 1,134,757 ops/s | 0.9μs |
+| **RAG Router** | Complex query E2E | 268,956 ops/s | 3.7μs |
+| **Kanban Metrics** | 100 tasks board+metrics | 29,738 ops/s | 33μs |
+| **Kanban Metrics** | 500 tasks board+metrics | 5,852 ops/s | 171μs |
+| **Hybrid RAG** | BM25-only (500 nodes) | 18,630 ops/s | 54μs |
+| **Hybrid RAG** | BM25+Semantic (100 nodes) | 1,760 ops/s | 568μs |
+| **Semantic Search** | 50 embeddings similarity | 4,060 ops/s | 246μs |
+| **Self-Healing** | Health scan 200 nodes | 4,671 ops/s | 214μs |
+
+> All benchmarks run locally on SQLite — zero external dependencies. Full results: `npx vitest bench`
 
 ### Key Improvements over v6
 
@@ -378,7 +394,7 @@ Native systems: **Code Intelligence** (AST + symbol graph), **Native Memories** 
 
 ## Testing
 
-**5111+ tests** across 460 Vitest files + Playwright E2E specs.
+**5,552+ tests** across 514 Vitest files + Playwright E2E specs.
 
 ```bash
 npm test            # Unit + integration
@@ -393,10 +409,11 @@ npm run test:coverage  # V8 coverage report
 | [Getting Started](docs/guides/GETTING-STARTED.md) | Step-by-step setup guide |
 | [v6.0 Features Guide](docs/guides/V6-FEATURES-GUIDE.md) | Pipeline tools, nextAction, DORA, and more |
 | [Architecture](docs/architecture/ARCHITECTURE-GUIDE.md) | System layers, modules, data flows |
-| [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) | 52 tools + 6 deprecated, full parameters |
+| [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) | 53 tools, full parameters |
 | [REST API Reference](docs/reference/REST-API-REFERENCE.md) | 19 routers, 59 endpoints |
 | [Lifecycle](docs/reference/LIFECYCLE.md) | 9-phase dev methodology |
 | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) | RAG, embeddings, context assembly |
+| [RAG Strategies](docs/reference/RAG-STRATEGIES.md) | Adaptive Router, Multi-Strategy RRF, Corrective RAG, Graph Community |
 | [Integrations](docs/reference/INTEGRATIONS-GUIDE.md) | Code Intelligence, Context7, Playwright |
 | [Test Guide](docs/guides/TEST-GUIDE.md) | Test pyramid and best practices |
 

@@ -1,14 +1,14 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 53 tools organized in 5 categories — complete parameter reference.
-> v7.0: 6 deprecated tools removed (add_node, delete_node, update_node, validate_ac, validate_task, list_skills). See [Migration Guide](../MIGRATION-v7.md).
+> 54 tools organized in 5 categories — complete parameter reference.
+> v7.0: 6 deprecated tools removed (add_node, delete_node, update_node, validate_ac, validate_task, list_skills). New: `graph_health`. See [Migration Guide](../MIGRATION-v7.md).
 
 ## Summary
 
 | Category | Tools | Count |
 |----------|-------|-------|
-| Core | analyze, clone_node, context, context_compress, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, help, import_graph, import_prd, init, intersect_knowledge, journey, kanban, knowledge_prune, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, self_healing, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory | 43 |
+| Core | analyze, clone_node, context, context_compress, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, graph_health, help, import_graph, import_prd, init, intersect_knowledge, journey, kanban, knowledge_prune, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, self_healing, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory | 44 |
 | Translation | analyze_translation, translate_code, translation_jobs | 3 |
 | Code Intelligence | code_intelligence | 1 |
 | Knowledge | export_knowledge, knowledge_feedback, knowledge_stats | 3 |
@@ -329,6 +329,17 @@ template({
 // Creates: "Implement Authentication backend", "Implement Authentication frontend", "Write E2E tests for Authentication"
 ```
 
+### `kanban`
+
+Kanban board visualization and orchestration.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `action` | "board"\|"move"\|"suggestions" | Yes | — | Action to perform |
+| `nodeId` | string | No | — | Node ID (required for `move`) |
+| `newStatus` | NodeStatus | No | — | New status (required for `move`) |
+| `swimlane` | "none"\|"epic"\|"sprint" | No | — | Swimlane grouping mode (for `board`) |
+
 ---
 
 ## Knowledge & RAG
@@ -417,6 +428,24 @@ Unified validation tool. Replaces `validate_task` and `validate_ac` (v5.5.0).
 |-------|------|----------|---------|-------------|
 | `nodeId` | string | No | — | Specific node to validate (if omitted, validates all nodes with AC) |
 | `all` | boolean | No | `true` | Validate all nodes with AC (only when nodeId is omitted) |
+
+### `graph_health`
+
+Unified graph health scan. Combines cycle detection, orphan detection, stuck task analysis, done integrity, and status flow validation into a single diagnostic report.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `action` | "scan" | No | `"scan"` | Action: scan (full diagnostic) |
+
+### `self_healing`
+
+Self-healing MAPE-K engine: scan the graph for stuck tasks, broken dependencies, cycles, orphans, and other issues.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `action` | "scan"\|"diagnose"\|"heal"\|"report" | Yes | — | scan = detect; diagnose = detect + analyze; heal = full MAPE-K loop; report = last metrics |
+| `dryRun` | boolean | No | `true` | When true, heal actions are simulated but not applied |
+| `staleHours` | number | No | `48` | Hours after which an in_progress task is considered stuck |
 
 ---
 
@@ -768,6 +797,18 @@ Get statistics about the knowledge store.
 knowledge_stats({ topK: 3 })
 → { total: 459, bySourceType: { memory: 25, docs: 7, graph_node: 224 }, topDocs: [...] }
 ```
+
+### `intersect_knowledge`
+
+Discover cross-domain knowledge intersections and generate novel skill ideas from the knowledge store.
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `action` | "discover"\|"list"\|"detail" | Yes | — | discover = run intersection analysis; list = show previous; detail = single insight |
+| `concept` | string | No | — | Filter intersections by concept keyword (e.g. 'quantum', 'blockchain') |
+| `minScore` | number (0-1) | No | `0.15` | Minimum combined score threshold |
+| `limit` | integer (1-50) | No | `10` | Maximum results to return |
+| `docId` | string | No | — | Document ID (required for `detail` action) |
 
 ### `help`
 
