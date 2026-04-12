@@ -3,7 +3,7 @@
  * Shared between the generator (full mode) and the help MCP tool (on-demand).
  */
 
-export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (37 tools — v8.0 consolidated)
+export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (43 tools — v8.0 consolidated + spec-kit)
 
 #### Pipeline Tools (v6.0 — recommended)
 
@@ -80,6 +80,17 @@ export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (37 tools — v
 | \`help\` | Referência on-demand de tools, analyze modes, skills, CLI, workflow (este tool) |
 | \`journey\` | Gerenciar journey maps de websites (list, get, search, index para RAG) |
 | \`import_graph\` | Importar/merge grafo JSON exportado (local wins, dry_run disponível) |
+
+#### Spec-Driven Development (spec-kit v8)
+
+| Tool | Quando usar |
+|------|-------------|
+| \`constitution\` | Gerenciar princípios governantes: create, update, list, check (valida nodes contra princípios) |
+| \`plugin\` | Gerenciar extensões: install, remove, enable, disable, list, info |
+| \`preset\` | Gerenciar presets de workflow: list, apply, show, create (default, strict-tdd, agile-light, enterprise) |
+| \`spec\` | Templates de spec: generate (markdown), validate (contra template), list_templates |
+| \`spec_sync\` | Evolução de specs: sync (bidirecional), status, history, link (spec ↔ nodes) |
+| \`agent_format\` | Gerar instruções para AI agents: generate, list_formats, list_agents (markdown, TOML, skill.md, JSON) |
 
 #### Code Intelligence (LSP)
 

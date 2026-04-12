@@ -7,6 +7,8 @@ export const KnowledgeSourceTypeSchema = z.enum([
   "ai_decision", "validation_result", "test_outcome", "synthesis",
   "translation_evidence",
   "benchmark", "graph_node", "lsp_result",
+  // Spec-driven development types
+  "constitution", "spec_template",
 ]);
 
 export const KnowledgeDocumentSchema = z.object({

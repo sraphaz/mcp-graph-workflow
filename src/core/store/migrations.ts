@@ -963,6 +963,109 @@ const migrations: Migration[] = [
         END;
     `,
   },
+  {
+    version: 32,
+    description: "Plugin system: add plugins table for extension persistence",
+    sql: `
+      CREATE TABLE IF NOT EXISTS plugins (
+        name         TEXT NOT NULL,
+        project_id   TEXT NOT NULL,
+        version      TEXT NOT NULL,
+        path         TEXT NOT NULL,
+        enabled      INTEGER NOT NULL DEFAULT 1,
+        config       TEXT,
+        installed_at TEXT NOT NULL,
+        updated_at   TEXT NOT NULL,
+        PRIMARY KEY (project_id, name)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_plugins_project
+        ON plugins(project_id);
+    `,
+  },
+  {
+    version: 33,
+    description: "Harness v2: add harness_history table for trend tracking",
+    sql: `
+      CREATE TABLE IF NOT EXISTS harness_history (
+        id          TEXT NOT NULL PRIMARY KEY,
+        project_id  TEXT NOT NULL,
+        score       REAL NOT NULL,
+        grade       TEXT NOT NULL,
+        breakdown   TEXT NOT NULL,
+        git_commit  TEXT,
+        timestamp   TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_harness_history_project_time
+        ON harness_history(project_id, timestamp);
+    `,
+  },
+  {
+    version: 34,
+    description: "Spec evolution: spec_documents, spec_document_versions, spec_node_links",
+    sql: `
+      CREATE TABLE IF NOT EXISTS spec_documents (
+        id             TEXT PRIMARY KEY,
+        project_id     TEXT NOT NULL,
+        name           TEXT NOT NULL,
+        template_name  TEXT,
+        file_path      TEXT,
+        content_hash   TEXT NOT NULL,
+        version        INTEGER NOT NULL DEFAULT 1,
+        status         TEXT NOT NULL DEFAULT 'draft',
+        metadata       TEXT,
+        created_at     TEXT NOT NULL,
+        updated_at     TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_spec_docs_project
+        ON spec_documents(project_id);
+
+      CREATE TABLE IF NOT EXISTS spec_document_versions (
+        id             TEXT PRIMARY KEY,
+        spec_id        TEXT NOT NULL REFERENCES spec_documents(id) ON DELETE CASCADE,
+        version        INTEGER NOT NULL,
+        content        TEXT NOT NULL,
+        content_hash   TEXT NOT NULL,
+        diff_summary   TEXT,
+        created_at     TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_spec_versions_spec
+        ON spec_document_versions(spec_id);
+
+      CREATE TABLE IF NOT EXISTS spec_node_links (
+        id             TEXT PRIMARY KEY,
+        spec_id        TEXT NOT NULL REFERENCES spec_documents(id) ON DELETE CASCADE,
+        node_id        TEXT NOT NULL,
+        section_title  TEXT,
+        link_type      TEXT NOT NULL DEFAULT 'derived_from',
+        created_at     TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_spec_links_spec
+        ON spec_node_links(spec_id);
+
+      CREATE INDEX IF NOT EXISTS idx_spec_links_node
+        ON spec_node_links(node_id);
+    `,
+  },
+  {
+    version: 35,
+    description: "Harness v3: issue_patterns table (moved from constructor to versioned migration)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS issue_patterns (
+        id TEXT PRIMARY KEY,
+        pattern_type TEXT NOT NULL UNIQUE,
+        count INTEGER NOT NULL DEFAULT 1,
+        first_seen TEXT NOT NULL,
+        last_seen TEXT NOT NULL,
+        suggested_rule TEXT,
+        auto_generated INTEGER NOT NULL DEFAULT 0
+      );
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

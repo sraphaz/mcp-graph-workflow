@@ -49,6 +49,13 @@ import { registerSelfHealing } from "./self-healing.js";
 import { registerKanban } from "./kanban.js";
 // Graph health scanner
 import { registerGraphHealth } from "./graph-health.js";
+// Spec-driven development (spec-kit v8)
+import { registerConstitution } from "./constitution.js";
+import { registerPlugin } from "./plugin.js";
+import { registerPreset } from "./preset.js";
+import { registerSpec } from "./spec.js";
+import { registerSpecSync } from "./spec-sync.js";
+import { registerAgentFormat } from "./agent-format.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 
 export function registerAllTools(server: McpServer, store: SqliteStore): void {
@@ -92,5 +99,11 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerSelfHealing(server, store);
   registerKanban(server, store);
   registerGraphHealth(server, store);
+  registerConstitution(server, store);
+  registerPlugin(server, store);
+  registerPreset(server, store);
+  registerSpec(server, store);
+  registerSpecSync(server, store);
+  registerAgentFormat(server, store);
   wrapToolsWithGates(server, store);
 }

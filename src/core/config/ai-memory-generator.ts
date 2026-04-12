@@ -58,6 +58,25 @@ const XP_PRINCIPLES = `### Princ\u00EDpios XP Anti-Vibe-Coding
 - **Code detachment** \u2014 Se a IA errou, explique o erro via prompt. Nunca edite manualmente.
 - **CLAUDE.md como spec evolutiva** \u2014 Documente padr\u00F5es e decis\u00F5es aqui.`;
 
+const SPECKIT_SECTION = `### Spec-Driven Development (spec-kit)
+
+6 ferramentas adicionais para desenvolvimento guiado por especifica\u00E7\u00F5es:
+
+| Tool | A\u00E7\u00E3o | Descri\u00E7\u00E3o |
+|------|------|-----------|
+| \`constitution\` | create, update, list, check | Princ\u00EDpios governantes do projeto \u2014 indexados no RAG, validados em quality gates |
+| \`plugin\` | install, remove, enable, disable, list, info | Sistema de extens\u00F5es din\u00E2micas com persist\u00EAncia SQLite |
+| \`preset\` | list, apply, show, create | Presets de workflow: default, strict-tdd, agile-light, enterprise |
+| \`spec\` | generate, validate, list_templates | Templates de spec por fase (ANALYZE, DESIGN, PLAN, IMPLEMENT) |
+| \`spec_sync\` | sync, status, history, link | Specs como documentos vivos \u2014 versionamento + sync bidirecional |
+| \`agent_format\` | generate, list_formats, list_agents | Gera instru\u00E7\u00F5es para 6+ AI agents (markdown, TOML, skill.md, JSON) |
+
+**Fluxo recomendado:**
+1. \`constitution create\` \u2014 definir princ\u00EDpios do projeto
+2. \`preset apply\` \u2014 escolher workflow (strict-tdd, agile-light, enterprise)
+3. \`spec generate\` \u2014 gerar spec a partir de template
+4. \`spec validate\` \u2014 validar spec contra template
+5. \`spec_sync link\` \u2014 conectar spec com nodes do grafo`;
 
 const MEMORY_VERIFICATION_RULE = `### Memory \u2260 Estado Atual
 
@@ -109,6 +128,8 @@ ${FLOW_PRINCIPLES_SECTION}
 
 ${XP_PRINCIPLES}
 
+${SPECKIT_SECTION}
+
 ${MEMORY_VERIFICATION_RULE}
 
 ${LEAN_DISCOVERY_HINT}`;
@@ -148,6 +169,8 @@ ${KNOWLEDGE_PIPELINE_SECTION}
 ${SKILLS_SECTION}
 
 ${XP_PRINCIPLES}
+
+${SPECKIT_SECTION}
 
 ${MEMORY_VERIFICATION_RULE}
 

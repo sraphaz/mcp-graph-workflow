@@ -85,11 +85,11 @@ export const PHASE_BOOST_WEIGHTS: Record<LifecyclePhase, Partial<Record<Lifecycl
  */
 export const PHASE_SOURCE_AFFINITY: Record<LifecyclePhase, Record<string, number>> = {
   ANALYZE: { prd: 1.5, memory: 1.3, journey: 1.2 },
-  DESIGN: { memory: 1.4, prd: 1.3, docs: 1.2 },
+  DESIGN: { memory: 1.4, prd: 1.3, docs: 1.2, constitution: 1.5 },
   PLAN: { memory: 1.3, prd: 1.2, docs: 1.2 },
   IMPLEMENT: { code_context: 1.5, docs: 1.4, memory: 1.2 },
-  VALIDATE: { code_context: 1.3, benchmark: 1.4, web_capture: 1.3 },
-  REVIEW: { code_context: 1.4, memory: 1.3, benchmark: 1.2 },
+  VALIDATE: { code_context: 1.3, benchmark: 1.4, web_capture: 1.3, constitution: 1.3 },
+  REVIEW: { code_context: 1.4, memory: 1.3, benchmark: 1.2, constitution: 1.3 },
   HANDOFF: { memory: 1.4, docs: 1.3, prd: 1.2 },
   DEPLOY: { docs: 1.3, memory: 1.2, benchmark: 1.2 },
   LISTENING: { web_capture: 1.3, memory: 1.3, journey: 1.2 },

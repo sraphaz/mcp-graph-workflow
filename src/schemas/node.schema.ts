@@ -6,6 +6,8 @@ export const NodeTypeSchema = z.enum([
   // Game-specific / advanced node types
   "interface", "formula", "state_machine", "contract", "scenario",
   "performance_budget", "asset", "data_table", "metric", "config_schema",
+  // Spec-driven development types
+  "constitution",
 ]);
 
 export const NodeStatusSchema = z.enum([

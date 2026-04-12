@@ -31,7 +31,24 @@ export type GraphEventType =
   | "dream:phase_started"
   | "dream:phase_completed"
   | "dream:cycle_completed"
-  | "dream:cycle_failed";
+  | "dream:cycle_failed"
+  // Constitution events (spec-kit v8)
+  | "constitution:created"
+  | "constitution:updated"
+  | "constitution:check_completed"
+  // Plugin events (spec-kit v8)
+  | "plugin:installed"
+  | "plugin:removed"
+  | "plugin:enabled"
+  | "plugin:disabled"
+  | "plugin:error"
+  // Preset events (spec-kit v8)
+  | "preset:applied"
+  | "preset:created"
+  // Spec evolution events (spec-kit v8)
+  | "spec:created"
+  | "spec:updated"
+  | "spec:synced";
 
 export interface GraphEvent {
   type: GraphEventType;

@@ -18,7 +18,9 @@ export type NodeType =
   | "asset"
   | "data_table"
   | "metric"
-  | "config_schema";
+  | "config_schema"
+  // Spec-driven development types
+  | "constitution";
 
 export type NodeStatus =
   | "backlog"
