@@ -53,7 +53,7 @@ describe("API /api/v1/skills", () => {
   it("should filter by phase", async () => {
     const res = await request(ctx.app).get("/api/v1/skills?phase=ANALYZE");
     const { skills } = res.body;
-    expect(skills.length).toBe(4);
+    expect(skills.length).toBe(6);
     expect(skills.every((s: { source: string }) => s.source === "built-in")).toBe(true);
   });
 

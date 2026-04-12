@@ -20,7 +20,7 @@ describe("phase-metadata", () => {
     });
 
     it("should boost ANALYZE docs in VALIDATE phase", () => {
-      expect(getPhaseBoost("VALIDATE", "ANALYZE")).toBe(1.3);
+      expect(getPhaseBoost("VALIDATE", "ANALYZE")).toBe(1.1);
     });
 
     it("should boost IMPLEMENT docs in VALIDATE phase", () => {

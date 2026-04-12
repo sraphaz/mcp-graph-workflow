@@ -1,6 +1,7 @@
 import { access, constants } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { assertPathInside } from "./safe-path.js";
 
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -19,12 +20,8 @@ export function safeReadFileSync(
   filePath: string,
   allowedExtensions?: Set<string>,
 ): string {
-  const absolutePath = path.resolve(filePath);
   const projectRoot = process.cwd();
-
-  if (!absolutePath.startsWith(projectRoot + path.sep) && absolutePath !== projectRoot) {
-    throw new Error(`Path outside project directory: ${filePath}`);
-  }
+  const absolutePath = assertPathInside(filePath, projectRoot);
 
   if (allowedExtensions) {
     const ext = path.extname(absolutePath).toLowerCase();
@@ -38,15 +35,8 @@ export function safeReadFileSync(
 
 /**
  * Validate that a path is within the project directory.
- * Throws if the path escapes the project root.
+ * Uses centralized assertPathInside for comprehensive traversal protection.
  */
 export function assertPathInsideProject(targetPath: string): string {
-  const absolutePath = path.resolve(targetPath);
-  const projectRoot = process.cwd();
-
-  if (!absolutePath.startsWith(projectRoot + path.sep) && absolutePath !== projectRoot) {
-    throw new Error(`Path outside project directory: ${targetPath}`);
-  }
-
-  return absolutePath;
+  return assertPathInside(targetPath, process.cwd());
 }

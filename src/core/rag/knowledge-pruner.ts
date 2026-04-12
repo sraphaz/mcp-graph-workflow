@@ -5,8 +5,9 @@
 
 import type Database from "better-sqlite3";
 import { logger } from "../utils/logger.js";
+import { findDuplicates } from "./knowledge-dedup.js";
 
-export type PruneStrategy = "age" | "quality";
+export type PruneStrategy = "age" | "quality" | "dedup";
 
 export interface PruneOptions {
   strategy: PruneStrategy;
@@ -49,6 +50,15 @@ export function pruneKnowledge(
       )
       .all(minQuality) as Array<{ id: string }>;
     targetIds = rows.map((r) => r.id);
+  } else if (strategy === "dedup") {
+    const duplicates = findDuplicates(db);
+    // For each duplicate pair, keep the newer doc (docId1 from ORDER BY created_at DESC)
+    // and mark the older one (docId2) for deletion
+    const toDelete = new Set<string>();
+    for (const pair of duplicates) {
+      toDelete.add(pair.docId2);
+    }
+    targetIds = [...toDelete];
   }
 
   if (!dryRun && targetIds.length > 0) {

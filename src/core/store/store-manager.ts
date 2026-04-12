@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { SqliteStore } from "./sqlite-store.js";
-import { STORE_DIR, LEGACY_STORE_DIR, DB_FILE } from "../utils/constants.js";
+import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
 
 /** Mutable reference to the current SqliteStore — shared across route closures. */
@@ -65,13 +65,11 @@ export class StoreManager {
       return { ok: false, error: `Directory does not exist: ${newBasePath}` };
     }
 
-    // Check for graph.db in either workflow-graph/ or legacy .mcp-graph/
+    // Check for graph.db in workflow-graph/
     const newStoreDir = path.join(newBasePath, STORE_DIR);
-    const legacyStoreDir = path.join(newBasePath, LEGACY_STORE_DIR);
-    const hasNew = existsSync(path.join(newStoreDir, DB_FILE));
-    const hasLegacy = existsSync(path.join(legacyStoreDir, DB_FILE));
+    const hasGraph = existsSync(path.join(newStoreDir, DB_FILE));
 
-    if (!hasNew && !hasLegacy) {
+    if (!hasGraph) {
       return { ok: false, error: `No graph database found at ${newBasePath}. Expected ${STORE_DIR}/${DB_FILE}` };
     }
 

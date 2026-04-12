@@ -6,10 +6,10 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { registerAnalyze } from "../mcp/tools/analyze.js";
-import { registerValidateAc } from "../mcp/tools/validate-ac.js";
 import { registerPlanSprint } from "../mcp/tools/plan-sprint.js";
 import { registerSetPhase } from "../mcp/tools/set-phase.js";
-import { registerListSkills } from "../mcp/tools/list-skills.js";
+import { registerValidate } from "../mcp/tools/validate.js";
+import { registerManageSkill } from "../mcp/tools/manage-skill.js";
 import { makeNode } from "./helpers/factories.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,9 +240,9 @@ describe("MCP analyze tool", () => {
   });
 });
 
-// ── validate_ac tool ──────────────────────────────────────────
+// ── validate (action: ac) tool ──────────────────────────────────
 
-describe("MCP validate_ac tool", () => {
+describe("MCP validate tool (action: ac)", () => {
   let store: SqliteStore;
   let server: McpServer;
   let nodeId: string;
@@ -251,7 +251,7 @@ describe("MCP validate_ac tool", () => {
     store = SqliteStore.open(":memory:");
     store.initProject("Test");
     server = createServer();
-    registerValidateAc(server, store);
+    registerValidate(server, store);
 
     const node = makeNode({
       title: "Task with AC",
@@ -266,13 +266,13 @@ describe("MCP validate_ac tool", () => {
   });
 
   it("should validate all nodes", async () => {
-    const result = await tools(server)["validate_ac"].handler({ all: true });
+    const result = await tools(server)["validate"].handler({ action: "ac", all: true });
     const parsed = parseResult(result);
     expect(parsed.ok).toBe(true);
   });
 
   it("should validate a specific node", async () => {
-    const result = await tools(server)["validate_ac"].handler({ nodeId });
+    const result = await tools(server)["validate"].handler({ action: "ac", nodeId });
     const parsed = parseResult(result);
     expect(parsed.ok).toBe(true);
   });
@@ -357,45 +357,51 @@ describe("MCP set_phase tool", () => {
   });
 });
 
-// ── list_skills tool ──────────────────────────────────────────
+// ── manage_skill (action: list) tool ──────────────────────────────
 
-describe("MCP list_skills tool", () => {
+describe("MCP manage_skill tool (action: list)", () => {
+  let store: SqliteStore;
   let server: McpServer;
 
   beforeEach(() => {
+    store = SqliteStore.open(":memory:");
+    store.initProject("Test");
     server = createServer();
-    registerListSkills(server);
+    registerManageSkill(server, store);
+  });
+
+  afterEach(() => {
+    store.close();
   });
 
   it("should list all skills", async () => {
-    const result = await tools(server)["list_skills"].handler({});
+    const result = await tools(server)["manage_skill"].handler({ action: "list" });
     const parsed = parseResult(result);
     expect(parsed.total).toBeGreaterThan(0);
     expect(Array.isArray(parsed.skills)).toBe(true);
   });
 
   it("should filter skills by phase", async () => {
-    const result = await tools(server)["list_skills"].handler({ phase: "IMPLEMENT" });
+    const result = await tools(server)["manage_skill"].handler({ action: "list", phase: "IMPLEMENT" });
     const parsed = parseResult(result);
     expect(parsed.phase).toBe("IMPLEMENT");
     expect(Array.isArray(parsed.skills)).toBe(true);
   });
 
   it("should get a specific skill by name", async () => {
-    // First list to get a valid name
-    const listResult = await tools(server)["list_skills"].handler({});
+    const listResult = await tools(server)["manage_skill"].handler({ action: "list" });
     const listParsed = parseResult(listResult);
     const skills = listParsed.skills as Array<{ name: string }>;
     const firstName = skills[0].name;
 
-    const result = await tools(server)["list_skills"].handler({ name: firstName });
+    const result = await tools(server)["manage_skill"].handler({ action: "list", skillName: firstName });
     const parsed = parseResult(result);
     expect(parsed.name).toBe(firstName);
     expect(parsed.instructions).toBeDefined();
   });
 
   it("should return error for unknown skill name", async () => {
-    const result = await tools(server)["list_skills"].handler({ name: "nonexistent_skill_xyz" });
+    const result = await tools(server)["manage_skill"].handler({ action: "list", skillName: "nonexistent_skill_xyz" });
     expect(result.isError).toBe(true);
     const parsed = parseResult(result);
     expect(parsed.error).toBeDefined();

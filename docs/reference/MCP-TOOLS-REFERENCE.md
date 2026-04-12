@@ -1,18 +1,18 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 53 tools + 6 deprecated organized in 6 categories — complete parameter reference.
+> 53 tools organized in 5 categories — complete parameter reference.
+> v7.0: 6 deprecated tools removed (add_node, delete_node, update_node, validate_ac, validate_task, list_skills). See [Migration Guide](../MIGRATION-v7.md).
 
 ## Summary
 
 | Category | Tools | Count |
 |----------|-------|-------|
-| Core | analyze, clone_node, context, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, help, import_graph, import_prd, init, journey, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory | 38 |
+| Core | analyze, clone_node, context, context_compress, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, help, import_graph, import_prd, init, intersect_knowledge, journey, kanban, knowledge_prune, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, self_healing, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory | 43 |
 | Translation | analyze_translation, translate_code, translation_jobs | 3 |
 | Code Intelligence | code_intelligence | 1 |
 | Knowledge | export_knowledge, knowledge_feedback, knowledge_stats | 3 |
 | Siebel CRM | siebel_analyze, siebel_composer, siebel_env, siebel_generate_sif, siebel_import_docs, siebel_import_sif, siebel_search, siebel_validate | 8 |
-| Deprecated | add_node, delete_node, list_skills, update_node, validate_ac, validate_task | 6 |
 <!-- mcp-graph:tools-summary:end -->
 
 ---
@@ -711,22 +711,6 @@ davinci_build({ projectDir: "/path/to/email-verifier", jobId: "dvj_abc123" })
     buildResult: { success: true, jarPath: "/path/to/target/email-verifier-1.0.jar", durationMs: 12500 }
   }
 ```
-
----
-
-## Deprecated Tools
-
-> **These tools still work but are deprecated since v5.5.0 and will be removed in v7.0.** Migrate to the consolidated tools shown below.
-
-| Deprecated Tool | Migrate To | Notes |
-|----------------|------------|-------|
-| `add_node` | `node { action: "add", ... }` | Same parameters |
-| `update_node` | `node { action: "update", ... }` | Same parameters |
-| `delete_node` | `node { action: "delete", ... }` | Now supports cascade delete of children |
-| `validate_task` | `validate { action: "task", ... }` | Same parameters |
-| `validate_ac` | `validate { action: "ac", ... }` | Same parameters |
-
-Deprecated tools log a warning on each call and include a `_deprecated` field in their response.
 
 ---
 

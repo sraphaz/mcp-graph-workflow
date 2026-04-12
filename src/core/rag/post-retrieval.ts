@@ -8,7 +8,10 @@
  * 4. Limit — enforce maxResults
  */
 
+import type Database from "better-sqlite3";
+import type { SqliteStore } from "../store/sqlite-store.js";
 import type { RankedResult } from "./multi-strategy-retrieval.js";
+import { validateRetrievedResults, correctResults } from "./corrective-rag.js";
 import { tokenize } from "../search/tokenizer.js";
 import { logger } from "../utils/logger.js";
 
@@ -17,12 +20,17 @@ export interface PostRetrievalOptions {
   results: RankedResult[];
   maxResults: number;
   chunkMeta?: Map<string, number>;
+  /** Optional: enable corrective validation against execution graph. */
+  db?: Database.Database;
+  /** Optional: SqliteStore for corrective validation. */
+  store?: SqliteStore;
 }
 
 export interface PostRetrievalResult {
   results: RankedResult[];
   deduplicated: number;
   stitchedChunks: number;
+  corrected: number;
 }
 
 /**
@@ -129,30 +137,45 @@ export function stitchAdjacentChunks(
  * Full post-retrieval pipeline.
  */
 export function postRetrievalPipeline(options: PostRetrievalOptions): PostRetrievalResult {
-  const { query, results, maxResults, chunkMeta } = options;
+  const { query, results, maxResults, chunkMeta, db, store } = options;
 
   // Stage 1: Deduplication
   const deduped = deduplicateResults(results);
   const deduplicated = results.length - deduped.length;
 
-  // Stage 2: Reranking
-  const reranked = rerankByKeywordOverlap(deduped, query);
+  // Stage 2: Corrective validation (if store available)
+  let correctedResults = deduped;
+  let corrected = 0;
+  if (db && store) {
+    try {
+      const validations = validateRetrievedResults(deduped, db, store);
+      correctedResults = correctResults(deduped, validations);
+      corrected = deduped.length - correctedResults.length;
+    } catch {
+      logger.debug("Post-retrieval corrective validation skipped — error during validation");
+      correctedResults = deduped;
+    }
+  }
 
-  // Stage 3: Chunk stitching (if metadata available)
+  // Stage 3: Reranking
+  const reranked = rerankByKeywordOverlap(correctedResults, query);
+
+  // Stage 4: Chunk stitching (if metadata available)
   const stitched = chunkMeta
     ? stitchAdjacentChunks(reranked, chunkMeta)
     : reranked;
   const stitchedChunks = reranked.length - stitched.length;
 
-  // Stage 4: Limit
+  // Stage 5: Limit
   const limited = stitched.slice(0, maxResults);
 
   logger.debug("Post-retrieval pipeline complete", {
     input: results.length,
     deduplicated,
+    corrected,
     stitchedChunks,
     output: limited.length,
   });
 
-  return { results: limited, deduplicated, stitchedChunks };
+  return { results: limited, deduplicated, stitchedChunks, corrected };
 }

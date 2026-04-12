@@ -11,9 +11,9 @@ import {
   extractRelevantHints,
   buildCodeIntelBlock,
   buildBlockedResponseCodeIntel,
-  wrapToolsWithCodeIntelligence,
   resetStaleWarningDedup,
 } from "../mcp/code-intelligence-wrapper.js";
+import { wrapToolsWithGates } from "../mcp/unified-gate.js";
 
 // ── Helpers ─────────────────────────────────────────────
 
@@ -307,7 +307,7 @@ describe("wrapToolsWithCodeIntelligence", () => {
     const store = createInMemoryStore();
     const server = {} as unknown;
     // Should not throw
-    wrapToolsWithCodeIntelligence(server as never, store);
+    wrapToolsWithGates(server as never, store);
   });
 
   it("should pass through when mode is off", async () => {
@@ -316,13 +316,15 @@ describe("wrapToolsWithCodeIntelligence", () => {
     const handler = async () => originalResult;
 
     const server = createMockServer({ test_tool: { handler, enabled: true } });
-    wrapToolsWithCodeIntelligence(server as never, store);
+    wrapToolsWithGates(server as never, store);
 
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
     const result = await tools.test_tool.handler({});
-    // Mode is off by default, so original result should be returned without _code_intelligence
+    // Mode is off by default — no _code_intelligence block, but _lifecycle is still appended by unified gate
     const resultObj = result as { content: Array<{ type: string; text: string }> };
-    expect(resultObj.content).toHaveLength(1);
+    // Verify no _code_intelligence block
+    const hasCodeIntel = resultObj.content.some(c => c.text?.includes("_code_intelligence"));
+    expect(hasCodeIntel).toBe(false);
   });
 
   it("should append _code_intelligence block when mode is advisory", async () => {
@@ -333,7 +335,7 @@ describe("wrapToolsWithCodeIntelligence", () => {
     const handler = async () => originalResult;
 
     const server = createMockServer({ test_tool: { handler, enabled: true } });
-    wrapToolsWithCodeIntelligence(server as never, store);
+    wrapToolsWithGates(server as never, store);
 
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
     const result = await tools.test_tool.handler({});
@@ -350,18 +352,21 @@ describe("wrapToolsWithCodeIntelligence", () => {
   it("should auto-downgrade strict to advisory for mutating tool when index is empty", async () => {
     const store = createInMemoryStore();
     store.setProjectSetting("code_intelligence_mode", "strict");
+    // Use advisory lifecycle to avoid lifecycle gate blocking
+    store.setProjectSetting("lifecycle_strictness_mode", "advisory");
 
     const handler = async () => ({ content: [{ type: "text", text: '{"ok":true}' }] });
-    const server = createMockServer({ update_status: { handler, enabled: true } });
-    wrapToolsWithCodeIntelligence(server as never, store);
+    const server = createMockServer({ edge: { handler, enabled: true } });
+    wrapToolsWithGates(server as never, store);
 
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
-    const result = await tools.update_status.handler({}) as { content: Array<{ type: string; text: string }>; isError?: boolean };
+    const result = await tools.edge.handler({}) as { content: Array<{ type: string; text: string }>; isError?: boolean };
 
     // Bug #001/NEW-2: strict mode auto-downgrades to advisory instead of blocking
     expect(result.isError).toBeUndefined();
-    // Should still have _code_intelligence enrichment with advisory mode warning
-    expect(result.content.length).toBeGreaterThan(1);
+    // Should still have _code_intelligence enrichment
+    const hasCodeIntel = result.content.some(c => c.text?.includes("_code_intelligence"));
+    expect(hasCodeIntel).toBe(true);
   });
 
   it("should NOT block read-only tools in strict mode with empty index", async () => {
@@ -371,7 +376,7 @@ describe("wrapToolsWithCodeIntelligence", () => {
     const originalResult = { content: [{ type: "text", text: '{"nodes":[]}' }] };
     const handler = async () => originalResult;
     const server = createMockServer({ list: { handler, enabled: true } });
-    wrapToolsWithCodeIntelligence(server as never, store);
+    wrapToolsWithGates(server as never, store);
 
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
     const result = await tools.list.handler({}) as { content: Array<{ type: string; text: string }>; isError?: boolean };
@@ -384,6 +389,8 @@ describe("wrapToolsWithCodeIntelligence", () => {
   it("should allow mutating tools in strict mode when index exists", async () => {
     const store = createInMemoryStore();
     store.setProjectSetting("code_intelligence_mode", "strict");
+    // Use advisory lifecycle to avoid lifecycle gate blocking
+    store.setProjectSetting("lifecycle_strictness_mode", "advisory");
 
     // Seed index
     const codeStore = createCodeStore(store);
@@ -391,11 +398,11 @@ describe("wrapToolsWithCodeIntelligence", () => {
 
     const originalResult = { content: [{ type: "text", text: '{"ok":true}' }] };
     const handler = async () => originalResult;
-    const server = createMockServer({ update_status: { handler, enabled: true } });
-    wrapToolsWithCodeIntelligence(server as never, store);
+    const server = createMockServer({ edge: { handler, enabled: true } });
+    wrapToolsWithGates(server as never, store);
 
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
-    const result = await tools.update_status.handler({}) as { content: Array<{ type: string; text: string }>; isError?: boolean };
+    const result = await tools.edge.handler({}) as { content: Array<{ type: string; text: string }>; isError?: boolean };
 
     // Should execute (not blocked)
     expect(result.isError).toBeUndefined();
@@ -409,7 +416,7 @@ describe("wrapToolsWithCodeIntelligence", () => {
     // Handler returns null content to trigger catch in enrichment
     const handler = async () => ({ content: null });
     const server = createMockServer({ test_tool: { handler, enabled: true } });
-    wrapToolsWithCodeIntelligence(server as never, store);
+    wrapToolsWithGates(server as never, store);
 
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
     // Should not throw

@@ -8,6 +8,7 @@ import { readdir, readFile, writeFile, mkdir, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { logger } from "../utils/logger.js";
 import { STORE_DIR } from "../utils/constants.js";
+import { assertPathInside } from "../utils/safe-path.js";
 
 export interface ProjectMemory {
   name: string;
@@ -26,18 +27,11 @@ function memoriesPath(basePath: string): string {
 
 /**
  * Validate that a memory name resolves to a path inside the memories directory.
- * Prevents path traversal attacks (Bug #003).
+ * Uses centralized assertPathInside for comprehensive traversal protection (Bug #003).
  */
 function safePath(basePath: string, name: string): string {
-  if (name.includes("\0")) {
-    throw new Error("Path traversal detected: name contains null bytes");
-  }
   const memDir = path.resolve(memoriesPath(basePath));
-  const resolved = path.resolve(memDir, `${name}.md`);
-  if (!resolved.startsWith(memDir + path.sep) && resolved !== memDir) {
-    throw new Error("Path traversal detected: name escapes memories directory");
-  }
-  return resolved;
+  return assertPathInside(`${name}.md`, memDir);
 }
 
 /**

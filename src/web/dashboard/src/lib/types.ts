@@ -573,3 +573,70 @@ export interface DreamMetrics {
   avgQualityImprovement: number;
   totalFreedTokens: number;
 }
+
+// ── Kanban ─────────────────────────────────
+
+export interface KanbanCard {
+  node: GraphNode;
+  blockerCount: number;
+  dependencyCount: number;
+  isNext: boolean;
+  epicTitle?: string;
+}
+
+export interface KanbanColumn {
+  status: NodeStatus;
+  title: string;
+  wipLimit: number;
+  cards: KanbanCard[];
+}
+
+export interface WipViolation {
+  column: NodeStatus;
+  limit: number;
+  actual: number;
+}
+
+export interface KanbanMetrics {
+  wipViolations: WipViolation[];
+  throughput: number;
+  avgCycleTime: number;
+  avgLeadTime: number;
+  blockedPercentage: number;
+}
+
+export interface KanbanSwimlane {
+  id: string;
+  label: string;
+  nodeIds: string[];
+}
+
+export interface KanbanBoard {
+  columns: KanbanColumn[];
+  swimlanes: KanbanSwimlane[];
+  metrics: KanbanMetrics;
+}
+
+export type SwimlaneMode = "epic" | "sprint" | "none";
+
+export interface KanbanConfig {
+  wipLimits: Record<NodeStatus, number>;
+  swimlaneMode: SwimlaneMode;
+  showOnlyTasks: boolean;
+}
+
+export interface KanbanMoveResult {
+  success: boolean;
+  node: GraphNode;
+  previousStatus: NodeStatus;
+  newStatus: NodeStatus;
+  warnings: string[];
+}
+
+export interface KanbanSuggestion {
+  nodeId: string;
+  nodeTitle: string;
+  action: string;
+  reason: string;
+  priority: number;
+}

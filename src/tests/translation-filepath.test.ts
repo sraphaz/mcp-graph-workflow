@@ -103,13 +103,13 @@ describe("translation filePath support", () => {
 
     it("should reject a path outside the project directory", () => {
       expect(() => assertPathInsideProject("/etc/passwd")).toThrow(
-        "Path outside project directory",
+        "Path traversal",
       );
     });
 
     it("should reject path traversal attempts", () => {
       expect(() => assertPathInsideProject("../../etc/passwd")).toThrow(
-        "Path outside project directory",
+        "Path traversal",
       );
     });
   });

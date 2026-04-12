@@ -12,6 +12,7 @@ import { buildTieredContext, type ContextTier } from "./tiered-context.js";
 import { compressWithBm25 } from "./bm25-compressor.js";
 import { compressBullets } from "./rule-compressor.js";
 import { estimateTokens } from "./token-estimator.js";
+import { findCommunityDocs } from "../rag/graph-rag-strategy.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
@@ -167,7 +168,49 @@ export function assembleContext(
 
   breakdown.knowledge = tokensUsed - knowledgeTokensBefore;
 
-  // Section 3: LSP symbol context (if available)
+  // Section 3: Graph-aware community context (from Graph RAG community detection)
+  const communityTokensBefore = tokensUsed;
+  if (tokensUsed < tokenBudget) {
+    try {
+      const communityDocIds = findCommunityDocs(store.getDb(), store, query);
+      if (communityDocIds.length > 0) {
+        const knowledgeStore2 = new KnowledgeStore(store.getDb());
+        const communityBudget = Math.floor(tokenBudget * 0.1);
+        let communityTokensUsed = 0;
+
+        for (const docId of communityDocIds.slice(0, 3)) {
+          if (communityTokensUsed >= communityBudget) break;
+
+          const doc = knowledgeStore2.getById(docId);
+          if (!doc) continue;
+
+          // Skip docs already added in knowledge section
+          if (sections.some((s) => s.content.includes(doc.title))) continue;
+
+          // Apply dynamic phase boost if phase is set
+          const content = `[${doc.sourceType}] ${doc.title}: ${doc.content.slice(0, 300)}`;
+          const tokens = estimateTokens(content);
+
+          if (tokensUsed + tokens > tokenBudget) break;
+
+          sections.push({
+            name: `community:${doc.title.slice(0, 30)}`,
+            source: "graph_community",
+            content,
+            tokens,
+          });
+
+          tokensUsed += tokens;
+          communityTokensUsed += tokens;
+        }
+      }
+    } catch {
+      logger.debug("Graph community context unavailable during assembly");
+    }
+  }
+  breakdown.graph_community = tokensUsed - communityTokensBefore;
+
+  // Section 4: LSP symbol context (if available)
   const lspTokensBefore = tokensUsed;
   if (options?.lspContext) {
     const lspTokens = estimateTokens(options.lspContext);

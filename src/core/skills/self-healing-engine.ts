@@ -409,7 +409,7 @@ export function executeActions(
         }
         case "remove_edge": {
           if (action.params?.edgeId) {
-            const idx = doc.edges.findIndex((e) => e.id === action.params!.edgeId);
+            const idx = doc.edges.findIndex((e) => e.id === action.params?.edgeId);
             if (idx >= 0) doc.edges.splice(idx, 1);
           }
           break;

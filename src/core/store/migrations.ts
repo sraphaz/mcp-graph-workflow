@@ -894,6 +894,26 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_relevance_feedback_doc ON relevance_feedback(document_id);
     `,
   },
+  {
+    version: 30,
+    description: "v7.0 schema cleanup: backfill NULLs for required fields + rebuild FTS indexes",
+    sql: `
+      -- Backfill NULL status, priority, blocked fields (now required in v7)
+      UPDATE nodes SET status = 'backlog' WHERE status IS NULL;
+      UPDATE nodes SET priority = 3 WHERE priority IS NULL;
+      UPDATE nodes SET blocked = 0 WHERE blocked IS NULL OR blocked = '';
+
+      -- Rebuild nodes FTS index with fresh data
+      DELETE FROM nodes_fts;
+      INSERT INTO nodes_fts(rowid, title, description)
+        SELECT rowid, COALESCE(title, ''), COALESCE(description, '') FROM nodes;
+
+      -- Rebuild docs_cache FTS index (lib docs)
+      INSERT OR IGNORE INTO docs_fts(rowid, lib_name, content)
+        SELECT id, COALESCE(lib_name, ''), COALESCE(content, '') FROM docs_cache
+        WHERE id NOT IN (SELECT rowid FROM docs_fts);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

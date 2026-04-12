@@ -1,4 +1,4 @@
-import type { GraphDocument, GraphEdge, GraphNode, GraphStats, IntegrationStatus, CodeGraphStatus, ProjectMemory, ReindexResult, LogEntry, FolderInfo, OpenFolderResult, BrowseResult, CodeGraphData, ImpactResult, KnowledgeStats, Skill, CustomSkill, CustomSkillInput, ContextBudget, JourneyMap, JourneyMapFull, TranslationAnalysis, TranslationJob, TranslationPrepareResult, TranslationFinalizeResult, TranslationStats, TranslationKnowledgeStats, TranslationProject, TranslationProjectFile, TranslationProjectSummary, TranslationGraphData, DreamStatus, DreamCycleResult, DreamMetrics } from "./types";
+import type { GraphDocument, GraphEdge, GraphNode, GraphStats, IntegrationStatus, CodeGraphStatus, ProjectMemory, ReindexResult, LogEntry, FolderInfo, OpenFolderResult, BrowseResult, CodeGraphData, ImpactResult, KnowledgeStats, Skill, CustomSkill, CustomSkillInput, ContextBudget, JourneyMap, JourneyMapFull, TranslationAnalysis, TranslationJob, TranslationPrepareResult, TranslationFinalizeResult, TranslationStats, TranslationKnowledgeStats, TranslationProject, TranslationProjectFile, TranslationProjectSummary, TranslationGraphData, DreamStatus, DreamCycleResult, DreamMetrics, KanbanBoard, KanbanMoveResult, KanbanSuggestion, KanbanConfig } from "./types";
 
 const BASE = "/api/v1";
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -480,4 +480,22 @@ export const apiClient = {
     request<DreamCycleResult>("/dream/preview"),
   dreamGetMetrics: () =>
     request<DreamMetrics>("/dream/metrics"),
+
+  // ── Kanban ────────────────────────────────
+  getKanbanBoard: (swimlane?: string) =>
+    request<KanbanBoard>(`/kanban/board${swimlane ? `?swimlane=${swimlane}` : ""}`),
+  moveKanbanCard: (nodeId: string, newStatus: string) =>
+    request<KanbanMoveResult>("/kanban/move", {
+      method: "PATCH",
+      body: JSON.stringify({ nodeId, newStatus }),
+    }),
+  getKanbanSuggestions: () =>
+    request<{ suggestions: KanbanSuggestion[] }>("/kanban/suggestions"),
+  getKanbanConfig: () =>
+    request<KanbanConfig>("/kanban/config"),
+  updateKanbanConfig: (config: Partial<KanbanConfig>) =>
+    request<KanbanConfig>("/kanban/config", {
+      method: "PUT",
+      body: JSON.stringify(config),
+    }),
 };

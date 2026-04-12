@@ -8,9 +8,6 @@ import os from "node:os";
 /** Current store directory name (visible, not hidden) */
 export const STORE_DIR = "workflow-graph";
 
-/** Legacy store directory name (hidden, pre-migration) */
-export const LEGACY_STORE_DIR = ".mcp-graph";
-
 /** Default database file name */
 export const DB_FILE = "graph.db";
 
@@ -41,6 +38,26 @@ export const BOOTSTRAP_TOOLS = new Set([
   "set_phase",
   "reindex_knowledge",
   "sync_stack_docs",
+]);
+
+/**
+ * Alias for BOOTSTRAP_TOOLS — tools always allowed regardless of mode.
+ * Single source of truth for all tool classification.
+ */
+export const ALWAYS_ALLOWED_TOOLS = BOOTSTRAP_TOOLS;
+
+/**
+ * Tools that perform read-only operations and should never be blocked
+ * by code-intelligence or lifecycle gates.
+ * Includes ALWAYS_ALLOWED_TOOLS as a subset.
+ */
+export const READ_ONLY_TOOLS = new Set([
+  ...ALWAYS_ALLOWED_TOOLS,
+  "list", "show", "search", "metrics", "export", "context",
+  "rag_context", "analyze", "snapshot", "next",
+  "list_memories", "read_memory", "manage_skill",
+  "stats", "velocity", "dependencies", "plan_sprint", "validate",
+  "knowledge_stats", "knowledge_feedback", "code_intelligence", "journey",
 ]);
 
 // ── Node defaults ──

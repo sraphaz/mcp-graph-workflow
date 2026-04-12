@@ -54,11 +54,11 @@ describe("Bug Verification — Gates & Tool Classification", () => {
     });
   });
 
-  // ── #013: manage_skill removed from READ_ONLY_TOOLS (has mutating actions) ──
+  // ── #013: manage_skill in READ_ONLY_TOOLS (v7: replaces list_skills) ──
 
-  describe("manage_skill NOT in READ_ONLY_TOOLS (#013 revised)", () => {
-    it("should NOT include 'manage_skill' in READ_ONLY_TOOLS (has create/update/delete)", () => {
-      expect(READ_ONLY_TOOLS.has("manage_skill")).toBe(false);
+  describe("manage_skill in READ_ONLY_TOOLS (#013 revised v7)", () => {
+    it("should include 'manage_skill' in READ_ONLY_TOOLS (v7: replaces list_skills)", () => {
+      expect(READ_ONLY_TOOLS.has("manage_skill")).toBe(true);
     });
   });
 
@@ -68,8 +68,8 @@ describe("Bug Verification — Gates & Tool Classification", () => {
     const expectedReadOnly = [
       "list", "show", "search", "metrics", "export", "context",
       "rag_context", "analyze", "snapshot", "next",
-      "list_memories", "read_memory", "list_skills",
-      "plan_sprint", "validate_ac",
+      "list_memories", "read_memory", "manage_skill",
+      "plan_sprint", "validate",
       "knowledge_stats", "knowledge_feedback", "code_intelligence", "journey",
     ];
 

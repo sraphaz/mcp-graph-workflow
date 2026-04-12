@@ -8,8 +8,8 @@ import {
 } from "../core/skills/built-in-skills.js";
 
 describe("BuiltInSkills Registry", () => {
-  it("should have exactly 54 built-in skills", () => {
-    expect(BUILT_IN_SKILLS).toHaveLength(54);
+  it("should have exactly 56 built-in skills", () => {
+    expect(BUILT_IN_SKILLS).toHaveLength(56);
   });
 
   it("should have unique names across all skills", () => {
@@ -62,57 +62,57 @@ describe("BuiltInSkills Registry", () => {
 describe("getBuiltInSkills", () => {
   it("should return all built-in skills", () => {
     const skills = getBuiltInSkills();
-    expect(skills).toHaveLength(54);
+    expect(skills).toHaveLength(56);
   });
 });
 
 describe("getSkillsByPhase", () => {
-  it("should return 4 skills for ANALYZE (3 original + research-methodology)", () => {
+  it("should return 6 skills for ANALYZE", () => {
     const skills = getSkillsByPhase("ANALYZE");
-    expect(skills).toHaveLength(4);
+    expect(skills).toHaveLength(6);
     expect(skills.every((s: BuiltInSkill) => s.phases.includes("ANALYZE"))).toBe(true);
   });
 
-  it("should return 26 skills for DESIGN", () => {
+  it("should return 28 skills for DESIGN", () => {
     const skills = getSkillsByPhase("DESIGN");
-    expect(skills).toHaveLength(26);
+    expect(skills).toHaveLength(28);
   });
 
-  it("should return 3 skills for PLAN", () => {
+  it("should return 4 skills for PLAN", () => {
     const skills = getSkillsByPhase("PLAN");
-    expect(skills).toHaveLength(3);
+    expect(skills).toHaveLength(4);
   });
 
-  it("should return 20 skills for IMPLEMENT", () => {
+  it("should return 21 skills for IMPLEMENT", () => {
     const skills = getSkillsByPhase("IMPLEMENT");
-    expect(skills).toHaveLength(20);
+    expect(skills).toHaveLength(21);
   });
 
-  it("should return 9 skills for VALIDATE", () => {
+  it("should return 10 skills for VALIDATE", () => {
     const skills = getSkillsByPhase("VALIDATE");
-    expect(skills).toHaveLength(9);
+    expect(skills).toHaveLength(10);
   });
 
-  it("should return 26 skills for REVIEW", () => {
+  it("should return 27 skills for REVIEW", () => {
     const skills = getSkillsByPhase("REVIEW");
-    expect(skills).toHaveLength(26);
+    expect(skills).toHaveLength(27);
   });
 
-  it("should return 3 skills for DEPLOY", () => {
+  it("should return 4 skills for DEPLOY", () => {
     const skills = getSkillsByPhase("DEPLOY");
-    expect(skills).toHaveLength(3);
+    expect(skills).toHaveLength(4);
     expect(skills.every((s: BuiltInSkill) => s.phases.includes("DEPLOY"))).toBe(true);
   });
 
-  it("should return 3 skills for HANDOFF", () => {
+  it("should return 4 skills for HANDOFF", () => {
     const skills = getSkillsByPhase("HANDOFF");
-    expect(skills).toHaveLength(3);
+    expect(skills).toHaveLength(4);
     expect(skills.every((s: BuiltInSkill) => s.phases.includes("HANDOFF"))).toBe(true);
   });
 
-  it("should return 3 skills for LISTENING", () => {
+  it("should return 5 skills for LISTENING", () => {
     const skills = getSkillsByPhase("LISTENING");
-    expect(skills).toHaveLength(3);
+    expect(skills).toHaveLength(5);
     expect(skills.every((s: BuiltInSkill) => s.phases.includes("LISTENING"))).toBe(true);
   });
 });

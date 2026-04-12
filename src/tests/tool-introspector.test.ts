@@ -41,12 +41,16 @@ describe("tool-introspector", () => {
     expect(names).toContain("translation_jobs");
   });
 
-  it("should include deprecated tools", () => {
+  it("should not include deprecated tools (removed in v7.0)", () => {
     tools = introspectTools(TOOLS_DIR);
-    const deprecated = tools.filter((t) => t.deprecated);
+    const names = tools.map((t) => t.name);
 
-    expect(deprecated.length).toBeGreaterThanOrEqual(5);
-    expect(deprecated.map((t) => t.name)).toContain("add_node");
+    expect(names).not.toContain("add_node");
+    expect(names).not.toContain("delete_node");
+    expect(names).not.toContain("update_node");
+    expect(names).not.toContain("validate_ac");
+    expect(names).not.toContain("validate_task");
+    expect(names).not.toContain("list_skills");
   });
 
   it("should have name, description, category, sourceFile for each tool", () => {

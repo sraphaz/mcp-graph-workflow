@@ -276,6 +276,38 @@ export class KnowledgeStore {
   }
 
   /**
+   * Auto-prune knowledge documents when count exceeds 2x budget.
+   * Removes oldest documents (by created_at) until count equals budget.
+   * @param budgetLimit - Maximum number of documents to keep
+   * @param dryRun - If true, returns count of docs that would be pruned without deleting
+   * @returns Number of documents pruned (or that would be pruned in dry run)
+   */
+  autoprune(budgetLimit: number, dryRun: boolean = false): { removed: number; removedIds: string[] } {
+    const total = this.count();
+    if (total <= budgetLimit) return { removed: 0, removedIds: [] };
+
+    const excess = total - budgetLimit;
+
+    // Select lowest quality, least used, oldest first
+    const targetRows = this.db.prepare(`
+      SELECT id FROM knowledge_documents
+      ORDER BY quality_score ASC, usage_count ASC, created_at ASC
+      LIMIT ?
+    `).all(excess) as Array<{ id: string }>;
+
+    const removedIds = targetRows.map(r => r.id);
+    if (dryRun) return { removed: removedIds.length, removedIds };
+
+    if (removedIds.length > 0) {
+      const placeholders = removedIds.map(() => "?").join(",");
+      this.db.prepare(`DELETE FROM knowledge_documents WHERE id IN (${placeholders})`).run(...removedIds);
+    }
+
+    logger.info("Knowledge autoprune completed", { pruned: removedIds.length, remaining: this.count(), budget: budgetLimit });
+    return { removed: removedIds.length, removedIds };
+  }
+
+  /**
    * Count documents grouped by source type in a single query.
    */
   countBySource(): { total: number; bySource: Record<string, number> } {

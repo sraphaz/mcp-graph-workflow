@@ -32,7 +32,7 @@ describe("serveCommand", () => {
     const cmd = serveCommand();
 
     // Mock the dynamic import to prevent actual server startup
-    vi.doMock("../../mcp/server.js", () => ({}));
+    vi.doMock("../mcp/server.js", () => ({}));
 
     // Parse with a valid port
     cmd.exitOverride(); // Prevent process.exit

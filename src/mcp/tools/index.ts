@@ -67,15 +67,11 @@ import { registerLearnFromProject } from "./learn-from-project.js";
 import { registerIntersectKnowledge } from "./intersect-knowledge.js";
 // Self-healing MAPE-K engine
 import { registerSelfHealing } from "./self-healing.js";
-// Deprecated tools (backward compat — will be removed in v7.0)
-import { registerAddNode } from "./add-node.js";
-import { registerUpdateNode } from "./update-node.js";
-import { registerDeleteNode } from "./delete-node.js";
-import { registerValidateTask } from "./validate-task.js";
-import { registerValidateAc } from "./validate-ac.js";
-import { registerListSkills } from "./list-skills.js";
-import { wrapToolsWithLifecycle } from "../lifecycle-wrapper.js";
-import { wrapToolsWithCodeIntelligence } from "../code-intelligence-wrapper.js";
+// Kanban orchestrator
+import { registerKanban } from "./kanban.js";
+// Graph health scanner
+import { registerGraphHealth } from "./graph-health.js";
+import { wrapToolsWithGates } from "../unified-gate.js";
 
 export function registerAllTools(server: McpServer, store: SqliteStore): void {
   // Core tools
@@ -162,17 +158,12 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   // Self-healing MAPE-K engine
   registerSelfHealing(server, store);
 
-  // Deprecated tools (backward compat — will be removed in v7.0)
-  registerAddNode(server, store);
-  registerUpdateNode(server, store);
-  registerDeleteNode(server, store);
-  registerValidateTask(server, store);
-  registerValidateAc(server, store);
-  registerListSkills(server);
+  // Kanban orchestrator
+  registerKanban(server, store);
 
-  // Wrap all registered tool responses with lifecycle context
-  wrapToolsWithLifecycle(server, store);
+  // Graph health scanner
+  registerGraphHealth(server, store);
 
-  // Wrap with Code Intelligence enrichment (outermost layer)
-  wrapToolsWithCodeIntelligence(server, store);
+  // Wrap all registered tool handlers with unified lifecycle + code intelligence gates
+  wrapToolsWithGates(server, store);
 }

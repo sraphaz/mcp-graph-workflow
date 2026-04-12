@@ -52,7 +52,7 @@ src/
     store/           # sqlite-store, migrations, knowledge-store
     utils/           # errors, fs, id, logger, time
   api/               # Express REST API — 19 routers, 59 endpoints
-  mcp/tools/         # MCP tool wrappers (46 tools + 6 deprecated)
+  mcp/tools/         # MCP tool wrappers (53 active tools)
   schemas/           # Zod schemas (node, edge, graph, knowledge)
   web/dashboard/     # React + Tailwind + React Flow dashboard
 ```
@@ -62,7 +62,7 @@ src/
 | Capability | Key Modules | Docs |
 |------------|-------------|------|
 | PRD Import | parser/, importer/ | — |
-| 46 MCP Tools + 6 deprecated | mcp/tools/ | [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) |
+| 53 MCP Tools | mcp/tools/ | [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) |
 | 19 REST API Routers | api/routes/ | [REST API Reference](docs/reference/REST-API-REFERENCE.md) |
 | Knowledge Store + RAG | store/knowledge-store, rag/ | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) |
 | Tiered Context Compression | context/ | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) |

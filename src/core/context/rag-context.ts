@@ -11,6 +11,7 @@ import { searchNodes } from "../search/fts-search.js";
 import { buildTaskContext, type TaskContext } from "./compact-context.js";
 import { estimateTokens } from "./token-estimator.js";
 import { understandQuery } from "../rag/query-understanding.js";
+import { routeQuery } from "../rag/adaptive-router.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
@@ -45,6 +46,12 @@ export interface RagContext {
     budget: number;
     used: number;
     remaining: number;
+  };
+  /** Adaptive routing metadata (when adaptive router is active). */
+  routing?: {
+    complexity: string;
+    strategies: string[];
+    reason: string;
   };
 }
 
@@ -88,7 +95,11 @@ export function ragBuildContext(
   const understanding = understandQuery(query);
   const effectiveQuery = understanding.rewrittenQuery || query;
 
-  logger.info(`RAG context: query="${query}", effective="${effectiveQuery}", budget=${tokenBudget} tokens, phase=${phase ?? "none"}, intent=${understanding.intent}`);
+  // Adaptive routing: classify complexity and adjust budget
+  const routing = routeQuery(understanding);
+  const effectiveBudget = Math.min(tokenBudget, routing.tokenBudget);
+
+  logger.info(`RAG context: query="${query}", effective="${effectiveQuery}", budget=${effectiveBudget} tokens, phase=${phase ?? "none"}, intent=${understanding.intent}, complexity=${routing.complexity}`);
 
   // Stage 1: Search for relevant nodes with TF-IDF reranking + substring fallback
   let searchResults = searchNodes(store, effectiveQuery, { limit: 10, rerank: true });
@@ -224,6 +235,11 @@ export function ragBuildContext(
       budget: tokenBudget,
       used: reportedUsed,
       remaining: tokenBudget - reportedUsed,
+    },
+    routing: {
+      complexity: routing.complexity,
+      strategies: routing.strategies,
+      reason: routing.reason,
     },
   };
 

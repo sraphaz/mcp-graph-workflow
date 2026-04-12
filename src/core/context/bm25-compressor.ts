@@ -2,7 +2,11 @@
  * BM25 Compressor — filters text chunks by relevance before consuming token budget.
  * Uses BM25 scoring to rank chunks and discard low-relevance ones.
  *
- * BM25 parameters: k1=1.5, b=0.75 (standard defaults)
+ * BM25 parameters (tuned for PRD/code content per arXiv 2024-2026 research):
+ * - k1=1.8 (higher saturation → boosts rare technical terms in PRD/code)
+ * - b=0.75 (standard length normalization)
+ *
+ * Parameters are configurable via BM25_CONFIG for domain-specific tuning.
  */
 
 import { estimateTokens } from "./token-estimator.js";
@@ -13,8 +17,33 @@ export interface RankedChunk {
   tokens: number;
 }
 
-const K1 = 1.5;
-const B = 0.75;
+export interface Bm25Config {
+  /** Term frequency saturation parameter. Higher = more weight to rare terms. Default: 1.8 */
+  k1: number;
+  /** Length normalization parameter. 0 = no normalization, 1 = full normalization. Default: 0.75 */
+  b: number;
+}
+
+/** Default BM25 parameters, tuned for PRD/code content. */
+export const BM25_DEFAULTS: Readonly<Bm25Config> = { k1: 1.8, b: 0.75 };
+
+/** Module-level config — can be overridden for domain tuning. */
+let activeBm25Config: Bm25Config = { ...BM25_DEFAULTS };
+
+/** Override BM25 parameters globally. */
+export function setBm25Config(config: Partial<Bm25Config>): void {
+  activeBm25Config = { ...activeBm25Config, ...config };
+}
+
+/** Reset BM25 parameters to defaults. */
+export function resetBm25Config(): void {
+  activeBm25Config = { ...BM25_DEFAULTS };
+}
+
+/** Get current BM25 config. */
+export function getBm25Config(): Readonly<Bm25Config> {
+  return { ...activeBm25Config };
+}
 
 /**
  * Tokenize text for BM25 (lowercase, split, remove short words).
@@ -76,7 +105,8 @@ export function rankChunksByBm25(
 
       const df = docFreq.get(term) ?? 0;
       const idf = Math.log((totalDocs - df + 0.5) / (df + 0.5) + 1);
-      const tfNorm = (termTf * (K1 + 1)) / (termTf + K1 * (1 - B + B * (dl / avgDl)));
+      const { k1, b } = activeBm25Config;
+      const tfNorm = (termTf * (k1 + 1)) / (termTf + k1 * (1 - b + b * (dl / avgDl)));
 
       score += idf * tfNorm;
     }

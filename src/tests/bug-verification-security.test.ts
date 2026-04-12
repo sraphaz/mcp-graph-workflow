@@ -59,13 +59,13 @@ describe("Bug Verification — Security", () => {
 
   describe("readPrdFile path restriction (#004)", () => {
     it("should reject /etc/passwd (absolute path outside project)", async () => {
-      await expect(readPrdFile("/etc/passwd")).rejects.toThrow("Path outside project directory");
+      await expect(readPrdFile("/etc/passwd")).rejects.toThrow("Path traversal");
     });
 
     it("should reject relative traversal to system files", async () => {
       // This resolves to a path outside the project
       await expect(readPrdFile("../../../etc/passwd")).rejects.toThrow(
-        /Path outside project directory|Unsupported file extension/,
+        /Path traversal|Unsupported file extension/,
       );
     });
 

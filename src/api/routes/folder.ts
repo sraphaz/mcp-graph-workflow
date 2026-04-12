@@ -5,7 +5,7 @@ import path from "node:path";
 import type { StoreManager } from "../../core/store/store-manager.js";
 import { OpenFolderBodySchema } from "../../schemas/folder.schema.js";
 import { validateBody } from "../middleware/validate.js";
-import { STORE_DIR, LEGACY_STORE_DIR, DB_FILE } from "../../core/utils/constants.js";
+import { STORE_DIR, DB_FILE } from "../../core/utils/constants.js";
 import { CodeStore } from "../../core/code/code-store.js";
 import { CodeIndexer } from "../../core/code/code-indexer.js";
 import { logger } from "../../core/utils/logger.js";
@@ -135,14 +135,13 @@ export function createFolderRouter(storeManager: StoreManager): Router {
         .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
         .map((entry) => {
           const fullPath = path.join(resolvedPath, entry.name);
-          const hasNewStore = existsSync(path.join(fullPath, STORE_DIR, DB_FILE));
-          const hasLegacyStore = existsSync(path.join(fullPath, LEGACY_STORE_DIR, DB_FILE));
+          const hasGraph = existsSync(path.join(fullPath, STORE_DIR, DB_FILE));
 
           return {
             name: entry.name,
             path: fullPath,
             isDirectory: true,
-            hasGraph: hasNewStore || hasLegacyStore,
+            hasGraph,
           };
         })
         .sort((a, b) => {

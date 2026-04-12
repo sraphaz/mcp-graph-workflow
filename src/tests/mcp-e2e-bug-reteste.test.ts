@@ -146,7 +146,7 @@ describe("E2E CRITICAL — Security: path traversal (#003, #004)", () => {
       resultError = result.isError === true;
     } catch (err) {
       errorThrown = true;
-      expect(String(err)).toMatch(/Path outside project directory|Unsupported file extension/);
+      expect(String(err)).toMatch(/Path traversal|Unsupported file extension/);
     }
 
     expect(errorThrown || resultError).toBe(true);

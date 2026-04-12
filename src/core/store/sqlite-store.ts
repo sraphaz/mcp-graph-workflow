@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { mkdirSync, existsSync, renameSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
 import type {
   GraphDocument,
@@ -20,7 +20,7 @@ import { GraphNodeSchema } from "../../schemas/node.schema.js";
 import { GraphEdgeSchema } from "../../schemas/edge.schema.js";
 import { z } from "zod/v4";
 
-import { STORE_DIR, LEGACY_STORE_DIR, DB_FILE } from "../utils/constants.js";
+import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { normalizeNewlines } from "../utils/text.js";
 
 // ── Row types (SQLite ↔ JS) ─────────────────────────────
@@ -219,11 +219,6 @@ export class SqliteStore {
   /**
    * Open (or create) a store at basePath/workflow-graph/graph.db.
    * Pass ":memory:" for in-memory testing.
-   *
-   * Handles automatic migration from legacy `.mcp-graph/` directory:
-   * - If only `.mcp-graph/` exists → rename to `workflow-graph/`
-   * - If both exist → use `workflow-graph/`, log warning
-   * - If neither → create `workflow-graph/`
    */
   static open(basePath: string = process.cwd()): SqliteStore {
     let db: Database.Database;
@@ -232,20 +227,6 @@ export class SqliteStore {
       db = new Database(":memory:");
     } else {
       const newDir = path.join(basePath, STORE_DIR);
-      const legacyDir = path.join(basePath, LEGACY_STORE_DIR);
-      const legacyExists = existsSync(legacyDir);
-      const newExists = existsSync(newDir);
-
-      if (legacyExists && !newExists) {
-        renameSync(legacyDir, newDir);
-        logger.info("Migrated store directory", { from: LEGACY_STORE_DIR, to: STORE_DIR });
-      } else if (legacyExists && newExists) {
-        logger.warn("Both legacy and new store directories exist, using new", {
-          legacy: LEGACY_STORE_DIR,
-          active: STORE_DIR,
-        });
-      }
-
       mkdirSync(newDir, { recursive: true });
       db = new Database(path.join(newDir, DB_FILE));
     }

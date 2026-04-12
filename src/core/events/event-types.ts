@@ -16,6 +16,9 @@ export type GraphEventType =
   | "log:entry"
   | "error:detected"
   | "healing:memory_created"
+  | "healing:scan_completed"
+  | "healing:actions_executed"
+  | "healing:report_generated"
   | "siebel:sif_imported"
   | "siebel:composer_action"
   | "siebel:objects_indexed"
@@ -105,6 +108,21 @@ export interface ErrorDetectedEvent extends GraphEvent {
 export interface HealingMemoryCreatedEvent extends GraphEvent {
   type: "healing:memory_created";
   payload: { memoryName: string; errorCategory: string; errorHash: string };
+}
+
+export interface HealingScanCompletedEvent extends GraphEvent {
+  type: "healing:scan_completed";
+  payload: { issuesFound: number; bySeverity: Record<string, number> };
+}
+
+export interface HealingActionsExecutedEvent extends GraphEvent {
+  type: "healing:actions_executed";
+  payload: { totalActions: number; successCount: number; failCount: number };
+}
+
+export interface HealingReportGeneratedEvent extends GraphEvent {
+  type: "healing:report_generated";
+  payload: { reportId: string; successRate: number; totalIssues: number };
 }
 
 export interface SiebelSifImportedEvent extends GraphEvent {

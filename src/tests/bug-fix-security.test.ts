@@ -14,11 +14,11 @@ import { ALWAYS_ALLOWED_TOOLS, READ_ONLY_TOOLS } from "../mcp/tool-classificatio
 
 describe("Bug Fix — safeReadFileSync (import_graph path traversal)", () => {
   it("should reject absolute path outside project", () => {
-    expect(() => safeReadFileSync("/etc/passwd")).toThrow("Path outside project directory");
+    expect(() => safeReadFileSync("/etc/passwd")).toThrow("Path traversal");
   });
 
   it("should reject relative traversal outside project", () => {
-    expect(() => safeReadFileSync("../../../etc/passwd")).toThrow("Path outside project directory");
+    expect(() => safeReadFileSync("../../../etc/passwd")).toThrow("Path traversal");
   });
 
   it("should reject unsupported extension when allowedExtensions provided", () => {
@@ -38,11 +38,11 @@ describe("Bug Fix — safeReadFileSync (import_graph path traversal)", () => {
 
 describe("Bug Fix — assertPathInsideProject (siebel path traversal)", () => {
   it("should reject /etc/passwd", () => {
-    expect(() => assertPathInsideProject("/etc/passwd")).toThrow("Path outside project directory");
+    expect(() => assertPathInsideProject("/etc/passwd")).toThrow("Path traversal");
   });
 
   it("should reject relative traversal", () => {
-    expect(() => assertPathInsideProject("../../etc")).toThrow("Path outside project directory");
+    expect(() => assertPathInsideProject("../../etc")).toThrow("Path traversal");
   });
 
   it("should accept path inside project", () => {
