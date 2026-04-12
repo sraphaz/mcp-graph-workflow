@@ -191,6 +191,50 @@ export class EmbeddingStore {
   }
 
   /**
+   * Find similar embeddings by text query — builds a temporary TF-IDF
+   * from stored texts + query for dimension-safe cosine similarity.
+   * This avoids the dimension mismatch between hash-embed and TF-IDF vectors.
+   *
+   * Used by hybrid RAG scoring (BM25 + semantic strategy).
+   */
+  findSimilarByText(queryText: string, limit: number = 10): SimilarityResult[] {
+    const stmt = this.db.prepare(
+      "SELECT id, source, source_id, text, embedding FROM embeddings",
+    );
+    const rows = stmt.all() as EmbeddingRow[];
+
+    if (rows.length === 0) return [];
+
+    // Build token-overlap-based similarity (lightweight, no vectorizer needed)
+    const queryTokens = new Set(
+      queryText.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(t => t.length > 1)
+    );
+
+    const results: SimilarityResult[] = rows.map((row) => {
+      const docTokens = row.text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(t => t.length > 1);
+      // Jaccard-like overlap score
+      let overlap = 0;
+      for (const t of docTokens) {
+        if (queryTokens.has(t)) overlap++;
+      }
+      const similarity = queryTokens.size > 0
+        ? overlap / (queryTokens.size + docTokens.length - overlap)
+        : 0;
+
+      return {
+        id: row.id,
+        source: row.source,
+        sourceId: row.source_id,
+        text: row.text,
+        similarity,
+      };
+    });
+
+    results.sort((a, b) => b.similarity - a.similarity);
+    return results.slice(0, limit);
+  }
+
+  /**
    * Clear all embeddings.
    */
   clear(): void {

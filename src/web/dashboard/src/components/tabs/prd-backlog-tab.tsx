@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo, useRef } from "react";
+import { FullscreenButton } from "../ui/fullscreen-button";
+import { FullscreenOverlay } from "../ui/fullscreen-overlay";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -232,9 +234,17 @@ export function PrdBacklogTab({ graph, loading, error, onRetry }: PrdBacklogTabP
     );
   }
 
+  const fsContainerRef = useRef<HTMLDivElement>(null);
+
   return (
-    <ReactFlowProvider>
-      <PrdBacklogFlow graph={graph} />
-    </ReactFlowProvider>
+    <div ref={fsContainerRef} className="relative h-full">
+      <div className="absolute top-2 right-2 z-10">
+        <FullscreenButton containerRef={fsContainerRef} tabName="PRD & Backlog" />
+      </div>
+      <FullscreenOverlay tabName="PRD & Backlog" />
+      <ReactFlowProvider>
+        <PrdBacklogFlow graph={graph} />
+      </ReactFlowProvider>
+    </div>
   );
 }

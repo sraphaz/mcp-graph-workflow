@@ -1,6 +1,9 @@
+import { useRef } from "react";
 import { Loader2, FileUp, AlertCircle, LayoutGrid } from "lucide-react";
 import type { GraphDocument } from "@/lib/types";
 import { WorkflowGraph } from "@/components/graph/workflow-graph";
+import { FullscreenButton } from "../ui/fullscreen-button";
+import { FullscreenOverlay } from "../ui/fullscreen-overlay";
 
 interface GraphTabProps {
   graph: GraphDocument | null;
@@ -68,6 +71,8 @@ function GraphEmpty({ onImportPrd }: { onImportPrd?: () => void }): React.JSX.El
 }
 
 export function GraphTab({ graph, loading, error, onRetry, onImportPrd }: GraphTabProps): React.JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   if (loading && !graph) {
     return <GraphSkeleton />;
   }
@@ -81,7 +86,11 @@ export function GraphTab({ graph, loading, error, onRetry, onImportPrd }: GraphT
   }
 
   return (
-    <div className="h-full">
+    <div ref={containerRef} className="relative h-full">
+      <div className="absolute top-2 right-2 z-10">
+        <FullscreenButton containerRef={containerRef} tabName="Graph" />
+      </div>
+      <FullscreenOverlay tabName="Graph" />
       <WorkflowGraph graph={graph} />
     </div>
   );

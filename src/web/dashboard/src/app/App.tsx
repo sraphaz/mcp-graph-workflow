@@ -14,6 +14,7 @@ import { SkeletonPage } from "@/components/layout/skeleton";
 // Lazy-load tabs
 const GraphTab = lazy(() => import("@/components/tabs/graph-tab").then((m) => ({ default: m.GraphTab })));
 const PrdBacklogTab = lazy(() => import("@/components/tabs/prd-backlog-tab").then((m) => ({ default: m.PrdBacklogTab })));
+const KanbanTab = lazy(() => import("@/components/tabs/kanban-tab").then((m) => ({ default: m.KanbanTab })));
 const JourneyTab = lazy(() => import("@/components/tabs/journey-tab").then((m) => ({ default: m.JourneyTab })));
 const GitNexusTab = lazy(() => import("@/components/tabs/gitnexus-tab").then((m) => ({ default: m.GitNexusTab })));
 const MemoriesTab = lazy(() => import("@/components/tabs/memories-tab").then((m) => ({ default: m.MemoriesTab })));
@@ -31,6 +32,7 @@ const DavinciTab = lazy(() => import("@/components/davinci/davinci-tab").then((m
 const TAB_LABELS: Record<TabId, string> = {
   graph: "Graph",
   "prd-backlog": "PRD & Backlog",
+  kanban: "Kanban",
   journey: "Journey",
   gitnexus: "Code Graph",
   siebel: "Siebel",
@@ -118,7 +120,7 @@ function AppContent(): React.JSX.Element {
         {/* Main area: header + content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Slim header */}
-          <header className="flex items-center justify-between gap-2 px-4 py-2 border-b border-edge bg-surface-alt md:px-6">
+          <header role="banner" className="flex items-center justify-between gap-2 px-4 py-2 border-b border-edge bg-surface-alt md:px-6">
             {/* Left: breadcrumb + stats */}
             <div className="flex items-center gap-3 pl-10 md:pl-0">
               <h1 className="text-sm font-semibold text-foreground">
@@ -162,7 +164,7 @@ function AppContent(): React.JSX.Element {
           </header>
 
           {/* Content */}
-          <main id="main-content" className="flex-1 min-h-0 overflow-hidden">
+          <main id="main-content" role="main" aria-label={`${TAB_LABELS[activeTab]} content`} className="flex-1 min-h-0 overflow-hidden">
             {loading ? (
               <LoadingFallback />
             ) : error ? (
@@ -179,6 +181,7 @@ function AppContent(): React.JSX.Element {
                   <div style={{ display: activeTab === "prd-backlog" ? "contents" : "none" }}>
                     <PrdBacklogTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} />
                   </div>
+                  {activeTab === "kanban" && <KanbanTab />}
                   {activeTab === "journey" && <JourneyTab />}
                   {activeTab === "gitnexus" && <GitNexusTab />}
                   {activeTab === "memories" && <MemoriesTab />}

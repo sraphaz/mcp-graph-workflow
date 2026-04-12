@@ -1,5 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useKanbanBoard } from "@/hooks/use-kanban";
+import { FullscreenButton } from "../ui/fullscreen-button";
+import { FullscreenOverlay } from "../ui/fullscreen-overlay";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { KanbanToolbar } from "@/components/kanban/kanban-toolbar";
 import { KanbanMetrics } from "@/components/kanban/kanban-metrics";
@@ -7,6 +9,7 @@ import { KanbanSuggestions } from "@/components/kanban/kanban-suggestions";
 import type { SwimlaneMode, KanbanSuggestion } from "@/lib/types";
 
 export function KanbanTab(): React.JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [swimlaneMode, setSwimlaneMode] = useState<SwimlaneMode>("none");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { board, suggestions, loading, error, refresh, moveCard } = useKanbanBoard(swimlaneMode);
@@ -50,7 +53,11 @@ export function KanbanTab(): React.JSX.Element {
   if (!board) return <div />;
 
   return (
-    <div className="flex flex-col h-full">
+    <div ref={containerRef} className="relative flex flex-col h-full">
+      <div className="absolute top-2 right-2 z-10">
+        <FullscreenButton containerRef={containerRef} tabName="Kanban" />
+      </div>
+      <FullscreenOverlay tabName="Kanban" />
       <KanbanToolbar
         swimlaneMode={swimlaneMode}
         onSwimlaneChange={setSwimlaneMode}

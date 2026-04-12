@@ -21,7 +21,8 @@ export type StrategyName =
   | "recency"
   | "entity_graph"
   | "lsp"
-  | "exec_graph";
+  | "exec_graph"
+  | "semantic";
 
 export interface RoutingDecision {
   complexity: QueryComplexity;
@@ -85,8 +86,8 @@ export function classifyComplexity(understood: UnderstandingResult): QueryComple
 /** Strategy sets per complexity level. */
 const STRATEGY_SETS: Record<QueryComplexity, StrategyName[]> = {
   simple: ["fts", "recency"],
-  moderate: ["fts", "graph", "recency", "exec_graph"],
-  complex: ["fts", "graph", "recency", "entity_graph", "lsp", "exec_graph"],
+  moderate: ["fts", "graph", "recency", "exec_graph", "semantic"],
+  complex: ["fts", "graph", "recency", "entity_graph", "lsp", "exec_graph", "semantic"],
 };
 
 /** Token budgets per complexity level. */

@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { FullscreenButton } from "../ui/fullscreen-button";
+import { FullscreenOverlay } from "../ui/fullscreen-overlay";
 import { SigmaContainer, useLoadGraph, useSigma, useRegisterEvents } from "@react-sigma/core";
 import "@react-sigma/core/lib/style.css";
 import Graph from "graphology";
@@ -110,6 +112,7 @@ function guessKind(name: string): string {
 // ── Main component ───────────────────────────────
 
 export function GitNexusTab(): React.JSX.Element {
+  const fsContainerRef = useRef<HTMLDivElement>(null);
   const [gitNexusStatus, setGitNexusStatus] = useState<CodeGraphStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -408,7 +411,11 @@ export function GitNexusTab(): React.JSX.Element {
   const displayGraph = fullGraph ?? contextGraph;
 
   return (
-    <div className="h-full flex flex-col">
+    <div ref={fsContainerRef} className="relative h-full flex flex-col">
+      <div className="absolute top-2 right-2 z-20">
+        <FullscreenButton containerRef={fsContainerRef} tabName="Code Graph" />
+      </div>
+      <FullscreenOverlay tabName="Code Graph" />
       {/* Header bar */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-edge bg-surface-alt">
         <h2 className="text-sm font-semibold">Code Graph — Code Intelligence</h2>

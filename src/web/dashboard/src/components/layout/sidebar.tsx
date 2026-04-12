@@ -1,72 +1,21 @@
-import { memo, useState, useCallback, useEffect } from "react";
+import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { useTheme } from "@/providers/theme-provider";
 import { ProjectSelector } from "./project-selector";
 import {
   GitFork,
-  ClipboardList,
-  Route,
-  Network,
-  Code,
-  Database,
-  Brain,
-  BarChart3,
-  Zap,
-  Target,
-  Timer,
-  ScrollText,
   Sun,
   Moon,
   PanelLeftClose,
   PanelLeft,
   Menu,
   X,
-  Languages,
-  BookOpen,
-  Workflow,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
-export type TabId =
-  | "graph"
-  | "prd-backlog"
-  | "journey"
-  | "gitnexus"
-  | "memories"
-  | "insights"
-  | "skills"
-  | "context"
-  | "benchmark"
-  | "logs"
-  | "siebel"
-  | "lsp"
-  | "languages"
-  | "davinci"
-  | "docs";
-
-interface NavItem {
-  id: TabId;
-  label: string;
-  icon: LucideIcon;
-  beta?: boolean;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { id: "graph", label: "Graph", icon: GitFork },
-  { id: "prd-backlog", label: "PRD & Backlog", icon: ClipboardList },
-  { id: "journey", label: "Journey", icon: Route, beta: true },
-  { id: "gitnexus", label: "Code Graph", icon: Network },
-  { id: "siebel", label: "Siebel", icon: Database, beta: true },
-  { id: "lsp", label: "LSP", icon: Code, beta: true },
-  { id: "memories", label: "Memories", icon: Brain },
-  { id: "insights", label: "Insights", icon: BarChart3 },
-  { id: "skills", label: "Skills", icon: Zap },
-  { id: "context", label: "Context", icon: Target },
-  { id: "benchmark", label: "Benchmark", icon: Timer },
-  { id: "languages", label: "Languages", icon: Languages, beta: true },
-  { id: "davinci", label: "DaVinci", icon: Workflow, beta: true },
-  { id: "docs", label: "Docs", icon: BookOpen },
-  { id: "logs", label: "Logs", icon: ScrollText },
-];
+import { NAV_GROUPS } from "./nav-config";
+import { SidebarGroup } from "./sidebar-group";
+export type { TabId } from "./nav-config";
+export { NAV_GROUPS, NAV_ITEMS } from "./nav-config";
+export type { NavGroup, NavGroupId, NavItem } from "./nav-config";
+import type { TabId } from "./nav-config";
 
 const STORAGE_KEY = "mcp-graph-sidebar-collapsed";
 
@@ -85,6 +34,7 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
     }
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -114,6 +64,38 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
     return () => document.removeEventListener("keydown", handleKey);
   }, [mobileOpen]);
 
+  // Focus trap for mobile drawer
+  useEffect(() => {
+    if (!mobileOpen || !drawerRef.current) return;
+    const drawer = drawerRef.current;
+    const focusable = drawer.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    function trapFocus(e: KeyboardEvent): void {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    drawer.addEventListener("keydown", trapFocus);
+    // Focus first element when drawer opens
+    first.focus();
+    return () => drawer.removeEventListener("keydown", trapFocus);
+  }, [mobileOpen]);
+
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
     if (mobileOpen) {
@@ -126,7 +108,7 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
     };
   }, [mobileOpen]);
 
-  const sidebarContent = (
+  const renderSidebarContent = (isMobile: boolean) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-edge">
@@ -140,53 +122,19 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
         )}
       </div>
 
-      {/* Nav Items */}
+      {/* Nav Groups */}
       <nav role="navigation" aria-label="Main navigation" className="flex-1 overflow-y-auto py-2 px-2">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleTabChange(item.id)}
-              aria-current={isActive ? "page" : undefined}
-              title={collapsed ? item.label : undefined}
-              className={`
-                group relative flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium
-                transition-colors duration-200
-                ${isActive
-                  ? "bg-accent/10 text-accent"
-                  : "text-muted hover:bg-surface-elevated hover:text-foreground"
-                }
-              `}
-            >
-              <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-              {!collapsed && (
-                <>
-                  <span className="truncate">{item.label}</span>
-                  {item.beta && (
-                    <span className="ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-warning/15 text-warning">
-                      beta
-                    </span>
-                  )}
-                </>
-              )}
-
-              {/* Tooltip for collapsed state */}
-              {collapsed && (
-                <span className="
-                  absolute left-full ml-2 px-2 py-1 rounded-md text-xs font-medium
-                  bg-surface-elevated text-foreground border border-edge shadow-lg
-                  opacity-0 pointer-events-none group-hover:opacity-100
-                  transition-opacity duration-150 whitespace-nowrap z-50
-                ">
-                  {item.label}
-                  {item.beta && " (beta)"}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {NAV_GROUPS.map((group) => (
+          <SidebarGroup
+            key={group.id}
+            group={group}
+            activeTab={activeTab}
+            collapsed={collapsed}
+            onTabChange={handleTabChange}
+            defaultExpanded={isMobile}
+            touchFriendly={isMobile}
+          />
+        ))}
       </nav>
 
       {/* Bottom Section */}
@@ -249,6 +197,7 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
 
       {/* Mobile drawer */}
       <aside
+        ref={drawerRef}
         className={`
           fixed top-0 left-0 z-50 h-full w-[240px]
           bg-surface-alt border-r border-edge
@@ -265,7 +214,7 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
         >
           <X className="w-4 h-4" />
         </button>
-        {sidebarContent}
+        {renderSidebarContent(true)}
       </aside>
 
       {/* Desktop sidebar */}
@@ -278,7 +227,7 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
         `}
         aria-label="Navigation sidebar"
       >
-        {sidebarContent}
+        {renderSidebarContent(false)}
       </aside>
     </>
   );

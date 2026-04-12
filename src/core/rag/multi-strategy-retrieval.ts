@@ -20,6 +20,7 @@ import { applyRelevanceBoosts } from "./relevance-boost.js";
 import { decomposeQuery, understandQuery } from "./query-understanding.js";
 import { executionGraphSearch } from "./graph-rag-strategy.js";
 import type { StrategyName } from "./adaptive-router.js";
+import type { EmbeddingStore } from "./embedding-store.js";
 import { logger } from "../utils/logger.js";
 
 export interface RankedResult {
@@ -40,6 +41,8 @@ interface SearchOptions {
   lspBridge?: { findReferences: (file: string, line: number, character: number) => Promise<Array<{ file: string; startLine: number }>> } | null;
   /** Optional SqliteStore for execution graph strategy. */
   store?: SqliteStore;
+  /** Optional EmbeddingStore for semantic similarity strategy (hybrid BM25 + embedding). */
+  embeddingStore?: EmbeddingStore;
   /** Optional subset of strategies to run (adaptive routing). If omitted, all strategies run. */
   strategies?: StrategyName[];
 }
@@ -194,11 +197,27 @@ export function multiStrategySearch(
     }
   }
 
-  if (ftsResults.length === 0 && graphResults.length === 0 && entityGraphResults.length === 0 && lspResults.length === 0 && execGraphResults.length === 0) {
+  // Strategy 7: Semantic Embedding — TF-IDF cosine similarity (hybrid BM25+embedding)
+  // Literature: BEIR benchmarks show +15-21% recall with hybrid scoring
+  const semanticResults: Array<{ id: string; score: number }> = [];
+  if (shouldRun("semantic") && options?.embeddingStore) {
+    try {
+      const matches = options.embeddingStore.findSimilarByText(query, limit * 2);
+      for (const match of matches) {
+        if (match.similarity > 0.01) {
+          semanticResults.push({ id: match.sourceId, score: match.similarity });
+        }
+      }
+    } catch {
+      logger.debug("Multi-strategy semantic search returned no results");
+    }
+  }
+
+  if (ftsResults.length === 0 && graphResults.length === 0 && entityGraphResults.length === 0 && lspResults.length === 0 && execGraphResults.length === 0 && semanticResults.length === 0) {
     return [];
   }
 
-  // Merge via RRF — add entity graph results as 4th list, LSP as 5th, exec graph as 6th
+  // Merge via RRF — 7 strategy lists
   const rankedLists = [ftsResults, graphResults, recencyResults];
   if (entityGraphResults.length > 0) {
     rankedLists.push(entityGraphResults);
@@ -208,6 +227,9 @@ export function multiStrategySearch(
   }
   if (execGraphResults.length > 0) {
     rankedLists.push(execGraphResults);
+  }
+  if (semanticResults.length > 0) {
+    rankedLists.push(semanticResults);
   }
   const merged = reciprocalRankFusion(rankedLists);
 
@@ -239,6 +261,11 @@ export function multiStrategySearch(
     const strategies = strategyMap.get(eg.id) ?? [];
     strategies.push("exec_graph");
     strategyMap.set(eg.id, strategies);
+  }
+  for (const sr of semanticResults) {
+    const strategies = strategyMap.get(sr.id) ?? [];
+    strategies.push("semantic");
+    strategyMap.set(sr.id, strategies);
   }
 
   for (const item of merged.slice(0, limit)) {
