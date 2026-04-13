@@ -18,15 +18,28 @@ export interface NextTaskResult {
   reason: string;
 }
 
+export interface NextTaskOptions {
+  /** Task IDs locked by other agents — excluded from results (teamTask mode) */
+  lockedTaskIds?: Set<string>;
+}
+
 /** Find the highest-priority unblocked task to work on next. */
-export function findNextTask(doc: GraphDocument): NextTaskResult | null {
+export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): NextTaskResult | null {
+  const { lockedTaskIds } = options ?? {};
+
   // Step 1: Filter eligible nodes
-  const eligible = doc.nodes.filter(
+  let eligible = doc.nodes.filter(
     (n) =>
       (n.type === "task" || n.type === "subtask") &&
       (n.status === "backlog" || n.status === "ready") &&
       !n.blocked,
   );
+
+  // Step 1.5: Exclude tasks locked by other agents (teamTask mode)
+  if (lockedTaskIds && lockedTaskIds.size > 0) {
+    eligible = eligible.filter((n) => !lockedTaskIds.has(n.id));
+    logger.debug("next:lock-filter", { excluded: lockedTaskIds.size, remaining: eligible.length });
+  }
 
   logger.debug("Next task candidates", {
     eligible: eligible.length,

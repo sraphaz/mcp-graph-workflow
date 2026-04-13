@@ -9,6 +9,7 @@ import { KnowledgeStore } from "../store/knowledge-store.js";
 import { findNextTask, type NextTaskResult } from "./next-task.js";
 import { calculateVelocity } from "./velocity.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
+import type { LockManager } from "../store/lock-manager.js";
 import { logger } from "../utils/logger.js";
 
 /** Maps common task tags to harness dimension keys */
@@ -42,14 +43,33 @@ export interface EnhancedNextResult {
   };
 }
 
+export interface EnhancedNextOptions {
+  /** LockManager for teamTask mode — used to exclude locked tasks */
+  lockManager?: LockManager;
+  /** Agent ID for teamTask mode — exclude tasks locked by other agents */
+  agentId?: string;
+}
+
 /**
  * Find the next task with enhanced context from knowledge store and velocity.
  */
 export function findEnhancedNextTask(
   doc: GraphDocument,
   store: SqliteStore,
+  options?: EnhancedNextOptions,
 ): EnhancedNextResult | null {
-  const baseResult = findNextTask(doc);
+  // Build locked task IDs set for teamTask mode
+  let lockedTaskIds: Set<string> | undefined;
+  if (options?.lockManager && options?.agentId) {
+    const activeLocks = options.lockManager.listActive();
+    lockedTaskIds = new Set(
+      activeLocks
+        .filter((l) => l.agentId !== options.agentId && l.resourceType === "task")
+        .map((l) => l.resourceId.replace("task:", "")),
+    );
+  }
+
+  const baseResult = findNextTask(doc, { lockedTaskIds });
   if (!baseResult) return null;
 
   const knowledgeCoverage = assessKnowledgeCoverage(store, baseResult.node);

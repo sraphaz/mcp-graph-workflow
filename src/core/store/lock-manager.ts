@@ -21,6 +21,15 @@ export interface LockResult {
   expiresAt: string;
 }
 
+export interface LockInfo {
+  resourceId: string;
+  resourceType: string;
+  agentId: string;
+  leaseToken: string;
+  acquiredAt: string;
+  expiresAt: string;
+}
+
 export class LockManager {
   constructor(private readonly db: Database.Database) {}
 
@@ -34,7 +43,7 @@ export class LockManager {
     const leaseToken = randomUUID();
 
     // Clean expired locks first
-    this.cleanExpired(now);
+    this._cleanExpired(now);
 
     // Check existing lock
     const existing = this.db
@@ -116,8 +125,45 @@ export class LockManager {
     logger.debug("lock:renew", { leaseToken, ttlSeconds });
   }
 
-  /** Remove all expired locks. */
-  private cleanExpired(now: Date): void {
+  /**
+   * Check if a resource is locked by a different agent (non-expired).
+   * Returns lock info if held by another agent, null otherwise.
+   */
+  isHeldByOther(resourceId: string, agentId: string): LockInfo | null {
+    const now = new Date().toISOString();
+    const row = this.db
+      .prepare("SELECT * FROM resource_locks WHERE resource_id = ? AND expires_at > ?")
+      .get(resourceId, now) as LockRow | undefined;
+
+    if (!row || row.agent_id === agentId) {
+      return null;
+    }
+
+    return toLockInfo(row);
+  }
+
+  /**
+   * List all active (non-expired) locks.
+   */
+  listActive(): LockInfo[] {
+    const now = new Date().toISOString();
+    const rows = this.db
+      .prepare("SELECT * FROM resource_locks WHERE expires_at > ?")
+      .all(now) as LockRow[];
+
+    return rows.map(toLockInfo);
+  }
+
+  /**
+   * Remove all expired locks. Returns the number of locks cleaned.
+   */
+  cleanExpired(): number {
+    const now = new Date();
+    return this._cleanExpired(now);
+  }
+
+  /** Internal clean used by acquire (with provided timestamp). */
+  private _cleanExpired(now: Date): number {
     const deleted = this.db
       .prepare("DELETE FROM resource_locks WHERE expires_at < ?")
       .run(now.toISOString());
@@ -125,6 +171,8 @@ export class LockManager {
     if (deleted.changes > 0) {
       logger.debug("lock:clean_expired", { count: deleted.changes });
     }
+
+    return deleted.changes;
   }
 }
 
@@ -135,4 +183,15 @@ interface LockRow {
   lease_token: string;
   acquired_at: string;
   expires_at: string;
+}
+
+function toLockInfo(row: LockRow): LockInfo {
+  return {
+    resourceId: row.resource_id,
+    resourceType: row.resource_type,
+    agentId: row.agent_id,
+    leaseToken: row.lease_token,
+    acquiredAt: row.acquired_at,
+    expiresAt: row.expires_at,
+  };
 }

@@ -20,6 +20,8 @@ import { getHarnessRegressionReport } from "../harness/harness-preflight.js";
 import type { HarnessRegressionReport } from "../harness/harness-preflight.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { RemediationValidator, type PostFixResult } from "../harness/remediation-validator.js";
+import type { LockManager } from "../store/lock-manager.js";
+import { LockConflictError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 // Maps DoD check names to IssuePatternTracker pattern types
@@ -35,6 +37,12 @@ export interface FinishTaskOptions {
   rationale?: string;
   testFiles?: string[];
   autoNext?: boolean;
+  /** Agent ID for teamTask mode — verifies task ownership */
+  agentId?: string;
+  /** Lease token for releasing the task lock (teamTask mode) */
+  leaseToken?: string;
+  /** LockManager instance for teamTask mode */
+  lockManager?: LockManager;
 }
 
 export interface FinishTaskResult {
@@ -61,7 +69,7 @@ export function finishTask(
   nodeId: string,
   options?: FinishTaskOptions,
 ): FinishTaskResult {
-  const { rationale, testFiles, autoNext = true } = options ?? {};
+  const { rationale, testFiles, autoNext = true, agentId, leaseToken, lockManager } = options ?? {};
   const doc = store.toGraphDocument();
 
   // 0. Update testFiles if provided
@@ -81,12 +89,35 @@ export function finishTask(
     .filter((c) => c.severity === "required" && !c.passed)
     .map((c) => `${c.name}: ${c.details}`);
 
+  // 2a. Verify task ownership in teamTask mode
+  if (lockManager && agentId) {
+    const lockInfo = lockManager.isHeldByOther(`task:${nodeId}`, agentId);
+    if (lockInfo) {
+      throw new LockConflictError({
+        resourceId: `task:${nodeId}`,
+        owner: lockInfo.agentId,
+        acquiredAt: lockInfo.acquiredAt,
+        expiresAt: lockInfo.expiresAt,
+      });
+    }
+  }
+
   let status: "done" | "blocked";
   if (blockers.length === 0) {
     // All required checks pass — mark done
     try {
       store.updateNodeStatus(nodeId, "done");
       status = "done";
+
+      // Release task lock in teamTask mode
+      if (lockManager && leaseToken) {
+        try {
+          lockManager.release(leaseToken);
+          logger.info("pipeline:finish_task:lock_released", { nodeId, leaseToken });
+        } catch (err) {
+          logger.warn("pipeline:finish_task:lock_release_failed", { nodeId, error: String(err) });
+        }
+      }
     } catch (err) {
       logger.warn("pipeline:finish_task:status_update_failed", { error: String(err) });
       status = "blocked";

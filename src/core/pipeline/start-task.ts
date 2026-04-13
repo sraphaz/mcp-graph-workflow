@@ -18,6 +18,8 @@ import type { HarnessPreflightWarning } from "../harness/harness-preflight.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { evaluate as evaluateRemediations } from "../harness/remediation-engine.js";
 import type { RemediationSuggestion } from "../harness/violation-detail.js";
+import type { LockManager } from "../store/lock-manager.js";
+import { LockConflictError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 
@@ -26,6 +28,10 @@ export interface StartTaskOptions {
   contextDetail?: "summary" | "standard" | "deep";
   ragBudget?: number;
   autoStart?: boolean;
+  /** Agent ID for teamTask mode — enables lock-based task claiming */
+  agentId?: string;
+  /** LockManager instance for teamTask mode */
+  lockManager?: LockManager;
 }
 
 export interface StartTaskResult {
@@ -37,6 +43,8 @@ export interface StartTaskResult {
   harnessWarning: HarnessPreflightWarning | null;
   /** Top 3 remediation suggestions when harness score < 70 */
   topRemediations?: RemediationSuggestion[];
+  /** Lease token for task lock (teamTask mode only) */
+  leaseToken?: string;
 }
 
 /**
@@ -47,7 +55,7 @@ export function startTask(
   store: SqliteStore,
   options?: StartTaskOptions,
 ): StartTaskResult | null {
-  const { nodeId, contextDetail, ragBudget, autoStart = true } = options ?? {};
+  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager } = options ?? {};
 
   const doc = store.toGraphDocument();
 
@@ -67,7 +75,7 @@ export function startTask(
       enhancedReason: `Manually selected task: ${node.title}`,
     };
   } else {
-    enhanced = findEnhancedNextTask(doc, store);
+    enhanced = findEnhancedNextTask(doc, store, { lockManager, agentId });
   }
 
   if (!enhanced) {
@@ -131,11 +139,25 @@ export function startTask(
 
   // 6. Auto-start if requested
   let startedAt: string | null = null;
+  let leaseToken: string | undefined;
   if (autoStart) {
     try {
-      store.updateNodeStatus(taskNode.id, "in_progress");
+      if (lockManager && agentId) {
+        // teamTask mode: atomic claim with lock
+        const lock = lockManager.acquire(`task:${taskNode.id}`, agentId, 600); // 10min TTL
+        store.updateNodeStatus(taskNode.id, "in_progress");
+        leaseToken = lock.leaseToken;
+        logger.info("pipeline:start_task:claimed", { nodeId: taskNode.id, agentId, leaseToken });
+      } else {
+        // Single-terminal mode: no lock
+        store.updateNodeStatus(taskNode.id, "in_progress");
+      }
       startedAt = now();
     } catch (err) {
+      if (err instanceof LockConflictError) {
+        logger.warn("pipeline:start_task:lock_conflict", { nodeId: taskNode.id, agentId, error: String(err) });
+        throw err; // Propagate lock conflicts to caller
+      }
       logger.warn("pipeline:start_task:auto_start_failed", { error: String(err) });
     }
   }
@@ -145,6 +167,7 @@ export function startTask(
     title: taskNode.title,
     autoStart,
     hasTddHints: tddHints.length > 0,
+    teamTask: !!lockManager,
   });
 
   return {
@@ -155,5 +178,6 @@ export function startTask(
     startedAt,
     harnessWarning,
     ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
+    ...(leaseToken ? { leaseToken } : {}),
   };
 }

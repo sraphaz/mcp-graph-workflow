@@ -152,4 +152,90 @@ describe("LockManager", () => {
     const result2 = lm.acquire("node:456", "agent-2");
     expect(result2.agentId).toBe("agent-2");
   });
+
+  // ── isHeldByOther ──────────────────────────────────────
+
+  describe("isHeldByOther", () => {
+    it("should return lock info when resource is held by a different agent", () => {
+      lm.acquire("node:123", "agent-1", 300);
+
+      const info = lm.isHeldByOther("node:123", "agent-2");
+      expect(info).toBeTruthy();
+      expect(info!.agentId).toBe("agent-1");
+      expect(info!.resourceId).toBe("node:123");
+    });
+
+    it("should return null when resource is held by the same agent", () => {
+      lm.acquire("node:123", "agent-1", 300);
+
+      const info = lm.isHeldByOther("node:123", "agent-1");
+      expect(info).toBeNull();
+    });
+
+    it("should return null when resource is not locked", () => {
+      const info = lm.isHeldByOther("node:123", "agent-1");
+      expect(info).toBeNull();
+    });
+
+    it("should return null when lock is expired", () => {
+      lm.acquire("node:123", "agent-1", 300);
+      vi.advanceTimersByTime(301_000);
+
+      const info = lm.isHeldByOther("node:123", "agent-2");
+      expect(info).toBeNull();
+    });
+  });
+
+  // ── listActive ─────────────────────────────────────────
+
+  describe("listActive", () => {
+    it("should return all active (non-expired) locks", () => {
+      lm.acquire("node:1", "agent-1", 300);
+      lm.acquire("node:2", "agent-2", 300);
+
+      const active = lm.listActive();
+      expect(active).toHaveLength(2);
+      expect(active.map((l) => l.resourceId).sort()).toEqual(["node:1", "node:2"]);
+    });
+
+    it("should exclude expired locks", () => {
+      lm.acquire("node:1", "agent-1", 300);
+      lm.acquire("node:2", "agent-2", 10); // 10s TTL
+
+      vi.advanceTimersByTime(11_000);
+
+      const active = lm.listActive();
+      expect(active).toHaveLength(1);
+      expect(active[0].resourceId).toBe("node:1");
+    });
+
+    it("should return empty array when no locks exist", () => {
+      const active = lm.listActive();
+      expect(active).toHaveLength(0);
+    });
+  });
+
+  // ── cleanExpired (public) ──────────────────────────────
+
+  describe("cleanExpired", () => {
+    it("should remove expired locks and return count", () => {
+      lm.acquire("node:1", "agent-1", 10);
+      lm.acquire("node:2", "agent-2", 10);
+      lm.acquire("node:3", "agent-3", 600); // still active
+
+      vi.advanceTimersByTime(11_000);
+
+      const cleaned = lm.cleanExpired();
+      expect(cleaned).toBe(2);
+
+      const total = db.prepare("SELECT COUNT(*) as count FROM resource_locks").get() as { count: number };
+      expect(total.count).toBe(1);
+    });
+
+    it("should return 0 when no expired locks", () => {
+      lm.acquire("node:1", "agent-1", 300);
+      const cleaned = lm.cleanExpired();
+      expect(cleaned).toBe(0);
+    });
+  });
 });
