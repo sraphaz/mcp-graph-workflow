@@ -15,13 +15,19 @@ import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { configureDb, runMigrations } from "./migrations.js";
 import { logger } from "../utils/logger.js";
-import { GraphNotInitializedError, ValidationError, SnapshotNotFoundError, McpGraphError } from "../utils/errors.js";
+import { GraphNotInitializedError, ValidationError, SnapshotNotFoundError, McpGraphError, ConflictError } from "../utils/errors.js";
 import { GraphNodeSchema } from "../../schemas/node.schema.js";
 import { GraphEdgeSchema } from "../../schemas/edge.schema.js";
 import { z } from "zod/v4";
 
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { normalizeNewlines } from "../utils/text.js";
+
+/** Options for mutation operations (multi-agent support, ADR-10). */
+export interface MutationOptions {
+  agentId?: string;
+  expectedVersion?: number;
+}
 
 // ── Row types (SQLite ↔ JS) ─────────────────────────────
 
@@ -435,7 +441,7 @@ export class SqliteStore {
 
   // ── Nodes ────────────────────────────────────────
 
-  insertNode(node: GraphNode): void {
+  insertNode(node: GraphNode, options?: MutationOptions): void {
     try {
       GraphNodeSchema.parse(node);
     } catch (err) {
@@ -453,14 +459,14 @@ export class SqliteStore {
           (id, project_id, type, title, description, status, priority,
            xp_size, estimate_minutes, tags, parent_id, sprint,
            source_file, source_start_line, source_end_line, source_confidence,
-           acceptance_criteria, test_files, blocked, metadata, created_at, updated_at)
+           acceptance_criteria, test_files, blocked, metadata, created_at, updated_at, modified_by)
          VALUES
           (@id, @project_id, @type, @title, @description, @status, @priority,
            @xp_size, @estimate_minutes, @tags, @parent_id, @sprint,
            @source_file, @source_start_line, @source_end_line, @source_confidence,
-           @acceptance_criteria, @test_files, @blocked, @metadata, @created_at, @updated_at)`,
+           @acceptance_criteria, @test_files, @blocked, @metadata, @created_at, @updated_at, @modified_by)`,
       )
-      .run(row);
+      .run({ ...row, modified_by: options?.agentId ?? null });
     this._eventBus?.emitTyped("node:created", { nodeId: node.id, title: node.title, nodeType: node.type });
   }
 
@@ -544,6 +550,7 @@ export class SqliteStore {
         | "metadata"
       >
     >,
+    options?: MutationOptions,
   ): GraphNode | null {
     const pid = this.ensureProject();
     const existing = this.getNodeById(id);
@@ -611,6 +618,13 @@ export class SqliteStore {
 
     if (setClauses.length === 0) return existing;
 
+    // Agent tracking (ADR-10): update modified_by and increment version
+    if (options?.agentId) {
+      setClauses.push("modified_by = ?");
+      params.push(options.agentId);
+    }
+    setClauses.push("version = version + 1");
+
     const timestamp = now();
     setClauses.push("updated_at = ?");
     params.push(timestamp);
@@ -651,6 +665,22 @@ export class SqliteStore {
     }
 
     this.db.transaction(() => {
+      // Optimistic locking (ADR-08): if expectedVersion provided, verify before write
+      if (options?.expectedVersion !== undefined) {
+        const current = this.db.prepare(
+          "SELECT version, modified_by, updated_at FROM nodes WHERE id = ? AND project_id = ?",
+        ).get(id, pid) as { version: number; modified_by: string | null; updated_at: string } | undefined;
+
+        if (current && current.version !== options.expectedVersion) {
+          throw new ConflictError({
+            currentVersion: current.version,
+            expectedVersion: options.expectedVersion,
+            modifiedBy: current.modified_by,
+            modifiedAt: current.updated_at,
+          });
+        }
+      }
+
       this.db
         .prepare(
           `UPDATE nodes SET ${setClauses.join(", ")} WHERE id = ? AND project_id = ?`,
@@ -659,10 +689,11 @@ export class SqliteStore {
 
       if (changelogEntries.length > 0) {
         const insertChangelog = this.db.prepare(
-          `INSERT INTO node_changelog (project_id, node_id, field, old_value, new_value, changed_at) VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO node_changelog (project_id, node_id, field, old_value, new_value, changed_at, agent_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         );
+        const agentId = options?.agentId ?? null;
         for (const entry of changelogEntries) {
-          insertChangelog.run(pid, id, entry.field, entry.oldValue, entry.newValue, timestamp);
+          insertChangelog.run(pid, id, entry.field, entry.oldValue, entry.newValue, timestamp, agentId);
         }
       }
     })();

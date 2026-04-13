@@ -191,7 +191,7 @@ describe("RAG Eval", () => {
       store.close();
     });
 
-    it("should produce a valid eval report with per-query metrics", () => {
+    it("should produce a valid eval report with per-query metrics", async () => {
       // Setup: node + knowledge
       store.insertNode(makeNode({
         id: "task-db",
@@ -213,7 +213,7 @@ describe("RAG Eval", () => {
         source: "manual",
       }];
 
-      const report = runEvalBenchmark(store.getDb(), store, queries, 10);
+      const report = await runEvalBenchmark(store.getDb(), store, queries, 10);
 
       expect(report.queryCount).toBe(1);
       expect(report.avgNdcg).toBeGreaterThanOrEqual(0);
@@ -223,8 +223,8 @@ describe("RAG Eval", () => {
       expect(report.perQuery).toHaveLength(1);
     });
 
-    it("should handle empty query list gracefully", () => {
-      const report = runEvalBenchmark(store.getDb(), store, [], 10);
+    it("should handle empty query list gracefully", async () => {
+      const report = await runEvalBenchmark(store.getDb(), store, [], 10);
 
       expect(report.queryCount).toBe(0);
       expect(report.avgNdcg).toBe(0);

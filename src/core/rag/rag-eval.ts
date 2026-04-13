@@ -204,16 +204,16 @@ export function generateEvalDataset(
  * Run the eval dataset through the multi-strategy search pipeline
  * and compute aggregate metrics.
  */
-export function runEvalBenchmark(
+export async function runEvalBenchmark(
   db: Database.Database,
   store: SqliteStore,
   queries: EvalQuery[],
   k: number = 10,
-): EvalReport {
+): Promise<EvalReport> {
   const perQuery: Array<{ query: string; metrics: EvalMetrics }> = [];
 
   for (const evalQuery of queries) {
-    const results = multiStrategySearch(db, evalQuery.query, { limit: k, store });
+    const results = await multiStrategySearch(db, evalQuery.query, { limit: k, store });
     const rankedIds = results.map((r) => r.id);
     const relevantSet = new Set(evalQuery.relevantDocIds);
 

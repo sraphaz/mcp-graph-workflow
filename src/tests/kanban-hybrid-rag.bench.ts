@@ -123,16 +123,16 @@ describe("Kanban Metrics Calculation", () => {
 // ── 2. Hybrid RAG Scoring Benchmark ──────────────────────
 
 describe("Hybrid RAG: BM25-only vs BM25+Semantic", () => {
-  bench("100 nodes — BM25 only (fts strategy)", () => {
-    multiStrategySearch(store100.getDb(), "authentication JWT token", {
+  bench("100 nodes — BM25 only (fts strategy)", async () => {
+    await multiStrategySearch(store100.getDb(), "authentication JWT token", {
       limit: 10,
       store: store100,
       strategies: ["fts", "recency"],
     });
   });
 
-  bench("100 nodes — Hybrid (fts + semantic)", () => {
-    multiStrategySearch(store100.getDb(), "authentication JWT token", {
+  bench("100 nodes — Hybrid (fts + semantic)", async () => {
+    await multiStrategySearch(store100.getDb(), "authentication JWT token", {
       limit: 10,
       store: store100,
       embeddingStore: embeddingStore100,
@@ -140,16 +140,16 @@ describe("Hybrid RAG: BM25-only vs BM25+Semantic", () => {
     });
   });
 
-  bench("500 nodes — BM25 only", () => {
-    multiStrategySearch(store500.getDb(), "database PostgreSQL migration", {
+  bench("500 nodes — BM25 only", async () => {
+    await multiStrategySearch(store500.getDb(), "database PostgreSQL migration", {
       limit: 10,
       store: store500,
       strategies: ["fts", "recency"],
     });
   });
 
-  bench("500 nodes — Hybrid (fts + semantic)", () => {
-    multiStrategySearch(store500.getDb(), "database PostgreSQL migration", {
+  bench("500 nodes — Hybrid (fts + semantic)", async () => {
+    await multiStrategySearch(store500.getDb(), "database PostgreSQL migration", {
       limit: 10,
       store: store500,
       embeddingStore: embeddingStore500,

@@ -21,6 +21,7 @@ import { decomposeQuery, understandQuery } from "./query-understanding.js";
 import { executionGraphSearch } from "./graph-rag-strategy.js";
 import type { StrategyName } from "./adaptive-router.js";
 import type { EmbeddingStore } from "./embedding-store.js";
+import { generateEmbedding } from "./embedding-generator.js";
 import { logger } from "../utils/logger.js";
 
 export interface RankedResult {
@@ -76,11 +77,11 @@ export function reciprocalRankFusion(
  * quality scoring, and recency.
  */
 /** Search knowledge using FTS, graph, entity, and semantic strategies. */
-export function multiStrategySearch(
+export async function multiStrategySearch(
   db: Database.Database,
   query: string,
   options?: SearchOptions,
-): RankedResult[] {
+): Promise<RankedResult[]> {
   const limit = options?.limit ?? 10;
   const knowledgeStore = new KnowledgeStore(db);
 
@@ -215,11 +216,30 @@ export function multiStrategySearch(
     }
   }
 
-  if (ftsResults.length === 0 && graphResults.length === 0 && entityGraphResults.length === 0 && lspResults.length === 0 && execGraphResults.length === 0 && semanticResults.length === 0) {
+  // Strategy 8: ONNX Semantic — neural embedding cosine similarity (ADR-05/06/07)
+  const onnxSemanticResults: Array<{ id: string; score: number }> = [];
+  if (shouldRun("onnx_semantic") && options?.embeddingStore) {
+    try {
+      const queryEmbedding = await generateEmbedding(query);
+      const allZero = queryEmbedding.every(v => v === 0);
+      if (!allZero) {
+        const matches = options.embeddingStore.findSimilar(queryEmbedding, limit * 2, 'onnx');
+        for (const match of matches) {
+          if (match.similarity > 0.05) {
+            onnxSemanticResults.push({ id: match.sourceId, score: match.similarity });
+          }
+        }
+      }
+    } catch {
+      logger.debug("Multi-strategy ONNX semantic search returned no results");
+    }
+  }
+
+  if (ftsResults.length === 0 && graphResults.length === 0 && entityGraphResults.length === 0 && lspResults.length === 0 && execGraphResults.length === 0 && semanticResults.length === 0 && onnxSemanticResults.length === 0) {
     return [];
   }
 
-  // Merge via RRF — 7 strategy lists
+  // Merge via RRF — 8 strategy lists
   const rankedLists = [ftsResults, graphResults, recencyResults];
   if (entityGraphResults.length > 0) {
     rankedLists.push(entityGraphResults);
@@ -232,6 +252,9 @@ export function multiStrategySearch(
   }
   if (semanticResults.length > 0) {
     rankedLists.push(semanticResults);
+  }
+  if (onnxSemanticResults.length > 0) {
+    rankedLists.push(onnxSemanticResults);
   }
   const merged = reciprocalRankFusion(rankedLists);
 
@@ -268,6 +291,11 @@ export function multiStrategySearch(
     const strategies = strategyMap.get(sr.id) ?? [];
     strategies.push("semantic");
     strategyMap.set(sr.id, strategies);
+  }
+  for (const or of onnxSemanticResults) {
+    const strategies = strategyMap.get(or.id) ?? [];
+    strategies.push("onnx_semantic");
+    strategyMap.set(or.id, strategies);
   }
 
   for (const item of merged.slice(0, limit)) {

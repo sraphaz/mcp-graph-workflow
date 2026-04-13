@@ -108,15 +108,16 @@ export class EmbeddingStore {
   /**
    * Insert or update an embedding entry.
    */
-  upsert(entry: EmbeddingEntry): void {
+  upsert(entry: EmbeddingEntry, embeddingType: 'tfidf' | 'onnx' = 'tfidf'): void {
     const stmt = this.db.prepare(`
-      INSERT INTO embeddings (id, source, source_id, text, embedding)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO embeddings (id, source, source_id, text, embedding, embedding_type)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         source = excluded.source,
         source_id = excluded.source_id,
         text = excluded.text,
-        embedding = excluded.embedding
+        embedding = excluded.embedding,
+        embedding_type = excluded.embedding_type
     `);
     stmt.run(
       entry.id,
@@ -124,6 +125,7 @@ export class EmbeddingStore {
       entry.sourceId,
       entry.text,
       serializeVector(entry.embedding),
+      embeddingType,
     );
   }
 
@@ -151,11 +153,12 @@ export class EmbeddingStore {
    * Find the most similar embeddings to a query vector using cosine similarity.
    * Performs brute-force search (suitable for < 100k embeddings).
    */
-  findSimilar(queryVector: number[], limit: number = 10): SimilarityResult[] {
-    const stmt = this.db.prepare(
-      "SELECT id, source, source_id, text, embedding FROM embeddings",
-    );
-    const rows = stmt.all() as EmbeddingRow[];
+  findSimilar(queryVector: number[], limit: number = 10, embeddingType?: 'tfidf' | 'onnx'): SimilarityResult[] {
+    const sql = embeddingType
+      ? "SELECT id, source, source_id, text, embedding FROM embeddings WHERE embedding_type = ?"
+      : "SELECT id, source, source_id, text, embedding FROM embeddings";
+    const stmt = this.db.prepare(sql);
+    const rows = (embeddingType ? stmt.all(embeddingType) : stmt.all()) as EmbeddingRow[];
 
     const results: SimilarityResult[] = rows.map((row) => ({
       id: row.id,
@@ -183,11 +186,12 @@ export class EmbeddingStore {
   /**
    * Count stored embeddings.
    */
-  count(): number {
-    const stmt = this.db.prepare(
-      "SELECT COUNT(*) as cnt FROM embeddings",
-    );
-    const row = stmt.get() as { cnt: number };
+  count(embeddingType?: 'tfidf' | 'onnx'): number {
+    const sql = embeddingType
+      ? "SELECT COUNT(*) as cnt FROM embeddings WHERE embedding_type = ?"
+      : "SELECT COUNT(*) as cnt FROM embeddings";
+    const stmt = this.db.prepare(sql);
+    const row = (embeddingType ? stmt.get(embeddingType) : stmt.get()) as { cnt: number };
     return row.cnt;
   }
 

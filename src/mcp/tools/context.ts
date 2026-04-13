@@ -237,7 +237,7 @@ async function handleRag(
 
     // Stage 3: Retrieval (request more results to give post-retrieval room to dedup/rerank)
     tracer.startStage("retrieval");
-    const rawResults = multiStrategySearch(store.getDb(), effectiveQuery, {
+    const rawResults = await multiStrategySearch(store.getDb(), effectiveQuery, {
       limit: 20,
       phase: currentPhase,
     });

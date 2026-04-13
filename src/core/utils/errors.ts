@@ -74,6 +74,47 @@ export class TranslationValidationError extends McpGraphError {
   }
 }
 
+// ── ONNX errors ──
+
+export class OnnxModelNotFoundError extends McpGraphError {
+  constructor(public readonly modelPath: string) {
+    super(`ONNX model not found at: ${modelPath}. Run 'npm run model:download' or ensure internet access for first-time download.`);
+    this.name = "OnnxModelNotFoundError";
+  }
+}
+
+// ── Multi-agent errors ──
+
+export interface ConflictDetails {
+  currentVersion: number;
+  expectedVersion: number;
+  modifiedBy: string | null;
+  modifiedAt: string | null;
+}
+
+export class ConflictError extends McpGraphError {
+  constructor(public readonly details: ConflictDetails) {
+    super(`Optimistic lock conflict: expected version ${details.expectedVersion}, found ${details.currentVersion} (modified by ${details.modifiedBy ?? 'unknown'})`);
+    this.name = "ConflictError";
+  }
+}
+
+export interface LockConflictDetails {
+  resourceId: string;
+  owner: string;
+  acquiredAt: string;
+  expiresAt: string;
+}
+
+export class LockConflictError extends McpGraphError {
+  constructor(public readonly details: LockConflictDetails) {
+    super(`Resource "${details.resourceId}" is locked by agent "${details.owner}" until ${details.expiresAt}`);
+    this.name = "LockConflictError";
+  }
+}
+
+// ── Lifecycle errors ──
+
 export class LifecycleGateError extends McpGraphError {
   constructor(
     public readonly toolName: string,

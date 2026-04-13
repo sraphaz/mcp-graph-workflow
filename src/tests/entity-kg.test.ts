@@ -464,7 +464,7 @@ describe("Multi-Strategy with Entity Graph", () => {
     knowledgeStore = new KnowledgeStore(db);
   });
 
-  it("should return results combining FTS and entity graph strategies", () => {
+  it("should return results combining FTS and entity graph strategies", async () => {
     // Insert knowledge documents
     const doc1 = knowledgeStore.insert({
       sourceType: "memory",
@@ -485,11 +485,11 @@ describe("Multi-Strategy with Entity Graph", () => {
     indexDocument(db, doc2.id);
 
     // Search should find both docs
-    const results = multiStrategySearch(db, "SQLite storage");
+    const results = await multiStrategySearch(db, "SQLite storage");
     expect(results.length).toBeGreaterThan(0);
   });
 
-  it("should work with empty KG (graceful degradation)", () => {
+  it("should work with empty KG (graceful degradation)", async () => {
     knowledgeStore.insert({
       sourceType: "memory",
       sourceId: "memory:test",
@@ -498,13 +498,13 @@ describe("Multi-Strategy with Entity Graph", () => {
     });
 
     // No entity indexing — KG is empty
-    const results = multiStrategySearch(db, "test");
+    const results = await multiStrategySearch(db, "test");
     expect(results.length).toBeGreaterThan(0);
     // Should not contain entity_graph strategy
     expect(results.every((r) => !r.strategies.includes("entity_graph"))).toBe(true);
   });
 
-  it("should include entity_graph strategy when KG has matching entities", () => {
+  it("should include entity_graph strategy when KG has matching entities", async () => {
     const doc = knowledgeStore.insert({
       sourceType: "memory",
       sourceId: "memory:arch",
@@ -515,7 +515,7 @@ describe("Multi-Strategy with Entity Graph", () => {
     // Build KG
     indexDocument(db, doc.id);
 
-    const results = multiStrategySearch(db, "SqliteStore database");
+    const results = await multiStrategySearch(db, "SqliteStore database");
     if (results.length > 0) {
       // At least one result should have entity_graph strategy
       const hasEntityGraph = results.some((r) => r.strategies.includes("entity_graph"));
