@@ -1,12 +1,13 @@
 import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
+import type { LockManager } from "../../core/store/lock-manager.js";
 import { finishTask } from "../../core/pipeline/finish-task.js";
 import { runQualityGates } from "../../core/pipeline/quality-gates-runner.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
-export function registerFinishTask(server: McpServer, store: SqliteStore): void {
+export function registerFinishTask(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
   server.tool(
     "finish_task",
     "Pipeline: DoD check (9 checks) + AC validation + mark done + epic promotion + next task — all in 1 call. Replaces: analyze(implement_done) → validate(ac) → update_status(done).",
@@ -16,11 +17,13 @@ export function registerFinishTask(server: McpServer, store: SqliteStore): void 
       testFiles: z.array(z.string()).optional().describe("Test file paths to associate with this task"),
       autoNext: z.boolean().optional().describe("Return next recommended task (default: true)"),
       qualityGates: z.array(z.string()).optional().describe("Optional quality gate modes to run: security_scan, code_quality, test_coverage, observability_check"),
+      agentId: z.string().optional().describe("Agent ID for teamTask mode — verifies task ownership"),
+      leaseToken: z.string().optional().describe("Lease token from start_task — used to release the lock"),
     },
-    async ({ nodeId, rationale, testFiles, autoNext, qualityGates }) => {
-      logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates });
+    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, agentId, leaseToken }) => {
+      logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const result = finishTask(store, nodeId, { rationale, testFiles, autoNext });
+      const result = finishTask(store, nodeId, { rationale, testFiles, autoNext, agentId, leaseToken, lockManager });
 
       logger.info("tool:finish_task:ok", {
         nodeId,

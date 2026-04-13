@@ -57,13 +57,27 @@ import { registerSpec } from "./spec.js";
 import { registerSpecSync } from "./spec-sync.js";
 import { registerAgentFormat } from "./agent-format.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
+import { LockManager } from "../../core/store/lock-manager.js";
+import { logger } from "../../core/utils/logger.js";
 
 export function registerAllTools(server: McpServer, store: SqliteStore): void {
+  // Initialize LockManager when teamTask mode is enabled
+  let lockManager: LockManager | undefined;
+  try {
+    const teamTaskMode = store.getProjectSetting("team_task_mode");
+    if (teamTaskMode === "on") {
+      lockManager = new LockManager(store.getDb());
+      logger.info("tools:teamTask:enabled", { lockManager: true });
+    }
+  } catch {
+    // Project may not be initialized yet — no team task mode
+  }
+
   registerInit(server, store);
   registerImportPrd(server, store);
   registerList(server, store);
   registerShow(server, store);
-  registerNext(server, store);
+  registerNext(server, store, lockManager);
   registerUpdateStatus(server, store);
   registerMetrics(server, store);
   registerContext(server, store);
@@ -91,8 +105,8 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerValidate(server, store);
   registerTemplate(server, store);
   registerCodeIntelligence(server, store);
-  registerStartTask(server, store);
-  registerFinishTask(server, store);
+  registerStartTask(server, store, lockManager);
+  registerFinishTask(server, store, lockManager);
   registerForecast(server, store);
   registerLearnFromProject(server, store);
   registerIntersectKnowledge(server, store);

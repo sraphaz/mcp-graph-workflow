@@ -1,11 +1,12 @@
 import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
+import type { LockManager } from "../../core/store/lock-manager.js";
 import { startTask } from "../../core/pipeline/start-task.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
-export function registerStartTask(server: McpServer, store: SqliteStore): void {
+export function registerStartTask(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
   server.tool(
     "start_task",
     "Pipeline: find next task + load context + RAG + TDD hints + mark in_progress — all in 1 call. Replaces: next → context → context(rag) → update_status(in_progress).",
@@ -14,11 +15,16 @@ export function registerStartTask(server: McpServer, store: SqliteStore): void {
       contextDetail: z.enum(["summary", "standard", "deep"]).optional().describe("RAG detail tier (default: standard)"),
       ragBudget: z.number().min(500).max(32000).optional().describe("Token budget for RAG context (default: 4000)"),
       autoStart: z.boolean().optional().describe("Auto-mark task in_progress (default: true)"),
+      agentId: z.string().optional().describe("Agent ID for teamTask mode — enables exclusive task claiming"),
     },
-    async ({ nodeId, contextDetail, ragBudget, autoStart }) => {
-      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart });
+    async ({ nodeId, contextDetail, ragBudget, autoStart, agentId }) => {
+      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId });
 
-      const result = startTask(store, { nodeId, contextDetail, ragBudget, autoStart });
+      const result = startTask(store, {
+        nodeId, contextDetail, ragBudget, autoStart,
+        agentId,
+        lockManager,
+      });
 
       if (!result) {
         logger.info("tool:start_task:no_tasks");
@@ -45,6 +51,7 @@ export function registerStartTask(server: McpServer, store: SqliteStore): void {
         ragContext: result.ragContext,
         startedAt: result.startedAt,
         ...(result.harnessWarning ? { harnessWarning: result.harnessWarning } : {}),
+        ...(result.leaseToken ? { leaseToken: result.leaseToken } : {}),
       });
     },
   );

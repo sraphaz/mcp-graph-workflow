@@ -30,9 +30,12 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       prerequisites: z.enum(["strict", "advisory", "off"]).optional().describe(
         "Tool prerequisites enforcement: 'strict' blocks tools if mandatory prerequisites not called, 'advisory' warns, 'off' disables",
       ),
+      teamTask: z.boolean().optional().describe(
+        "Enable/disable multi-terminal teamTask mode — activates lock-based task claiming, agent registration, and ownership verification",
+      ),
     },
-    async ({ phase, force, mode, codeIntelligence, prerequisites }) => {
-      logger.debug("tool:set_phase", { phase, force, mode, codeIntelligence, prerequisites });
+    async ({ phase, force, mode, codeIntelligence, prerequisites, teamTask }) => {
+      logger.debug("tool:set_phase", { phase, force, mode, codeIntelligence, prerequisites, teamTask });
 
       // Persist strictness mode if provided
       if (mode) {
@@ -50,6 +53,12 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       if (prerequisites) {
         store.setProjectSetting("tool_prerequisites_mode", prerequisites);
         logger.info("tool:set_phase:prerequisites_changed", { prerequisites });
+      }
+
+      // Persist teamTask mode if provided
+      if (teamTask !== undefined) {
+        store.setProjectSetting("team_task_mode", teamTask ? "on" : "off");
+        logger.info("tool:set_phase:team_task_changed", { teamTask });
       }
 
       if (phase === "auto") {
