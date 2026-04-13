@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/tab-graph.png" alt="mcp-graph dashboard — execution graph" width="800">
+  <img src="docs/images/graph-logo.jpg" alt="mcp-graph dashboard — execution graph" width="800">
 </p>
 
 ---
