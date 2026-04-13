@@ -34,12 +34,12 @@ import { registerValidate } from "./validate.js";
 import { registerTemplate } from "./template.js";
 // LSP Code Intelligence
 import { registerCodeIntelligence } from "./code-intelligence.js";
-// Pipeline tools (v6.0)
+// Pipeline tools (v8.0)
 import { registerStartTask } from "./start-task.js";
 import { registerFinishTask } from "./finish-task.js";
-// Predictive analytics (v6.0)
+// Predictive analytics (v8.0)
 import { registerForecast } from "./forecast.js";
-// Cross-project learning (v6.0)
+// Cross-project learning (v8.0)
 import { registerLearnFromProject } from "./learn-from-project.js";
 // Interdisciplinary knowledge intersector
 import { registerIntersectKnowledge } from "./intersect-knowledge.js";

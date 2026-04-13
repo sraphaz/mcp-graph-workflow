@@ -20,6 +20,7 @@ import {
   AGENT_ANTIPATTERNS_SECTION,
   PIPELINE_TOOLS_SECTION,
   CLI_COMMANDS as CLI_COMMANDS_REF,
+  HARNESS_SECTION,
 } from "./reference-content.js";
 
 export const MARKER_START = "<!-- mcp-graph:start -->";
@@ -30,7 +31,7 @@ const MANDATORY_EXECUTION_RULE = `### ⚠️ Regra de Execução OBRIGATÓRIA
 **O mcp-graph é a fonte de verdade ABSOLUTA. Nenhuma implementação acontece fora do grafo.**
 
 1. **Node deve existir** — antes de escrever QUALQUER código, o node correspondente DEVE existir no grafo
-2. **Fluxo obrigatório** — \`start_task → [implementar com TDD] → finish_task\` (pipeline v6.0) ou \`next → context(compact) → context(rag) → [TDD] → analyze(implement_done) → update_status\` (granular) — SEM EXCEÇÕES
+2. **Fluxo obrigatório** — \`start_task → [implementar com TDD] → finish_task\` (pipeline v8.0) ou \`next → context(compact) → context(rag) → [TDD] → analyze(implement_done) → update_status\` (granular) — SEM EXCEÇÕES
 3. **Epic = estrutura primeiro** — criar Epic + tasks filhas + edges ANTES de implementar
 4. **Status tracking** — \`update_status → in_progress\` ANTES de codar, \`→ done\` APÓS completar
 5. **Validação** — usar \`validate\` (action: \`ac\`) após cada task para checar critérios de aceitação
@@ -44,7 +45,7 @@ const LIFECYCLE_SUMMARY = `### Lifecycle (9 fases)
 2. **DESIGN** \u2014 Arquitetura, decis\u00F5es t\u00E9cnicas (\`add_node\`, \`edge\`, \`analyze\`)
 3. **PLAN** \u2014 Sprint planning, decomposi\u00E7\u00E3o (\`plan_sprint\`, \`analyze\`, \`sync_stack_docs\`)
 4. **IMPLEMENT** \u2014 TDD Red\u2192Green\u2192Refactor (\`next\`, \`context\`, \`update_status\`, \`analyze\` \u2014 modes: implement_done, tdd_check, progress)
-5. **VALIDATE** \u2014 Testes E2E, crit\u00E9rios de aceita\u00E7\u00E3o (\`validate_task\`, \`metrics\`)
+5. **VALIDATE** \u2014 Testes E2E, crit\u00E9rios de aceita\u00E7\u00E3o (\`validate\`, \`metrics\`)
 6. **REVIEW** \u2014 Code review, blast radius (\`export\`, \`metrics\`)
 7. **HANDOFF** \u2014 PR, documenta\u00E7\u00E3o, entrega (\`export\`, \`snapshot\`)
 8. **DEPLOY** \u2014 CI pipeline, release, post-release validation (\`export\`, \`snapshot\`, \`analyze\`)
@@ -101,7 +102,7 @@ ${MANDATORY_EXECUTION_RULE}`;
 
   const workflow = `### Fluxo de trabalho OBRIGATÓRIO
 
-**Pipeline v6.0 (recomendado — 2 calls):**
+**Pipeline v8.0 (recomendado — 2 calls):**
 \`\`\`
 start_task → [implementar com TDD] → finish_task
 \`\`\`
@@ -129,6 +130,8 @@ ${FLOW_PRINCIPLES_SECTION}
 ${XP_PRINCIPLES}
 
 ${SPECKIT_SECTION}
+
+${HARNESS_SECTION}
 
 ${MEMORY_VERIFICATION_RULE}
 
@@ -172,6 +175,8 @@ ${XP_PRINCIPLES}
 
 ${SPECKIT_SECTION}
 
+${HARNESS_SECTION}
+
 ${MEMORY_VERIFICATION_RULE}
 
 ${AGENT_ANTIPATTERNS_SECTION}
@@ -181,6 +186,7 @@ ${PIPELINE_TOOLS_SECTION}
 ${CLI_COMMANDS_REF}`;
 }
 
+/** Generate the mcp-graph section for CLAUDE.md. */
 export function generateClaudeMdSection(projectName: string, mode: "lean" | "full" = "full"): string {
   return `
 ${MARKER_START}
@@ -189,6 +195,7 @@ ${MARKER_END}
 `;
 }
 
+/** Generate the mcp-graph section for copilot-instructions.md. */
 export function generateCopilotInstructions(projectName: string, mode: "lean" | "full" = "full"): string {
   return `${MARKER_START}
 ${buildSectionBody(projectName, mode)}

@@ -20,6 +20,7 @@ import { CodeStore } from "../../core/code/code-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexTranslationEvidence } from "../../core/rag/translation-indexer.js";
 import { logger } from "../../core/utils/logger.js";
+import { McpGraphError } from "../../core/utils/errors.js";
 
 const UploadSchema = z.object({
   targetLanguage: z.string().min(1),
@@ -79,7 +80,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
 
   function requireProjectId(): string {
     const id = storeRef.current.getProject()?.id;
-    if (!id) throw new Error("NO_ACTIVE_PROJECT");
+    if (!id) throw new McpGraphError("NO_ACTIVE_PROJECT");
     return id;
   }
 

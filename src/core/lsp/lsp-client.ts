@@ -9,6 +9,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 
 // ---------------------------------------------------------------------------
 // JSON-RPC 2.0 message types
@@ -180,7 +181,7 @@ export class LspClient extends EventEmitter {
   /** Send a JSON-RPC request and wait for the corresponding response. */
   async sendRequest<T = unknown>(method: string, params?: unknown): Promise<T> {
     if (!this.process?.stdin?.writable) {
-      throw new Error("LSP process is not running or stdin is not writable");
+      throw new McpGraphError("LSP process is not running or stdin is not writable");
     }
 
     const id = this.nextId++;

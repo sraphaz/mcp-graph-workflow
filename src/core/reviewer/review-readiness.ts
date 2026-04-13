@@ -14,8 +14,10 @@ import { detectCycles } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
+/** Run VALIDATE-to-REVIEW gate checks on the graph. */
 export function checkReviewReadiness(doc: GraphDocument): ReviewReadinessReport {
   const checks: ReviewReadinessCheck[] = [];
 
@@ -160,6 +162,22 @@ export function checkReviewReadiness(doc: GraphDocument): ReviewReadinessReport 
     details: `AC quality score: ${acReport.overallScore} (meta: 60)`,
     severity: "recommended",
   });
+
+  // Harness grade check — grade >= C (score >= 55)
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      const harnessPass = harness.score >= 55;
+      checks.push({
+        name: "harness_grade_minimum",
+        passed: harnessPass,
+        details: `Harness grade: ${harness.grade} (score ${harness.score}, meta: >= C/55)`,
+        severity: "recommended",
+      });
+    }
+  } catch {
+    // non-blocking
+  }
 
   // ── Scoring ──
   const totalChecks = checks.length;

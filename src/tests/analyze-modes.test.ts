@@ -156,13 +156,13 @@ describe("Analyze modes integration (store → core → report)", () => {
       expect(report.ready).toBe(true);
     });
 
-    it("should have 10 checks with correct severity split", () => {
+    it("should have 11 checks with correct severity split", () => {
       store.insertNode(makeNode({ status: "done", acceptanceCriteria: ["AC1"] }));
       const doc = store.toGraphDocument();
       const report = checkReviewReadiness(doc);
-      expect(report.checks).toHaveLength(10);
+      expect(report.checks).toHaveLength(11);
       expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(5);
-      expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
+      expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(6);
     });
   });
 
@@ -266,13 +266,13 @@ describe("Analyze modes integration (store → core → report)", () => {
       expect(report.checks.find((c) => c.name === "has_snapshot")?.passed).toBe(hasSnapshots);
     });
 
-    it("should have 8 checks with correct severity split", () => {
+    it("should have 9 checks with correct severity split", () => {
       store.insertNode(makeDoneTask());
       const doc = store.toGraphDocument();
       const report = checkListeningReadiness(doc);
-      expect(report.checks).toHaveLength(8);
+      expect(report.checks).toHaveLength(9);
       expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(3);
-      expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
+      expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(6);
     });
   });
 

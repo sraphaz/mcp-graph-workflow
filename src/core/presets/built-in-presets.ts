@@ -108,10 +108,12 @@ export const BUILT_IN_PRESETS: PresetDefinition[] = [
   enterprisePreset,
 ];
 
+/** Look up a built-in preset by name. */
 export function getPreset(name: string): PresetDefinition | undefined {
   return BUILT_IN_PRESETS.find((p) => p.name === name);
 }
 
+/** Recursively resolve preset inheritance by merging parent fields into child overrides. */
 export function resolvePresetInheritance(
   preset: PresetDefinition,
   availablePresets: PresetDefinition[],

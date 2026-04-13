@@ -12,6 +12,7 @@ export interface PrdFileResult {
 
 const ALLOWED_EXTENSIONS = new Set([".md", ".txt", ".html", ".pdf", ".prd"]);
 
+/** Read a PRD file from disk with path-traversal protection and extension validation. */
 export async function readPrdFile(filePath: string): Promise<PrdFileResult> {
   // Security: centralized path traversal protection (Bug #004)
   const projectRoot = process.cwd();

@@ -11,13 +11,9 @@ function tokenize(text: string): string[] {
   return text.toLowerCase().split(/\s+/).filter(Boolean);
 }
 
-/**
- * Compute Jaccard similarity between two texts.
- * Tokenizes by whitespace, case-insensitive.
- * Returns 0-1 where 1 = identical token sets, 0 = no overlap.
- */
 import { estimateTokens } from "./token-estimator.js";
 
+/** Compute Jaccard similarity between two token sets. */
 export function jaccardSimilarity(a: string, b: string): number {
   const tokensA = tokenize(a);
   const tokensB = tokenize(b);

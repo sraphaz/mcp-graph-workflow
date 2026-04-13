@@ -1,7 +1,7 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 54 tools organized in 5 categories — complete parameter reference.
+> 45 tools organized in 5 categories — complete parameter reference.
 > v7.0: 6 deprecated tools removed (add_node, delete_node, update_node, validate_ac, validate_task, list_skills). New: `graph_health`. See [Migration Guide](../MIGRATION-v7.md).
 
 ## Summary

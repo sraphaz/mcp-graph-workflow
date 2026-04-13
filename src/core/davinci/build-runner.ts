@@ -45,6 +45,7 @@ export interface ScaffoldResult {
 
 // ── Environment Detection ─────────────────────────────────────────────
 
+/** Detect JDK, Maven, and PingAccess SDK availability for plugin compilation. */
 export function checkBuildEnvironment(): BuildEnvironment {
   const instructions: string[] = [];
 
@@ -153,6 +154,7 @@ function detectSdk(): { available: boolean } {
 
 // ── Maven Project Scaffold ────────────────────────────────────────────
 
+/** Create a Maven project directory structure with POM, Java source, and optional PF-INF descriptor. */
 export async function scaffoldMavenProject(
   options: ScaffoldOptions,
 ): Promise<ScaffoldResult> {
@@ -190,6 +192,7 @@ export async function scaffoldMavenProject(
 
 // ── Maven Build Execution ─────────────────────────────────────────────
 
+/** Execute a Maven build in the given project directory and return the JAR path on success. */
 export async function runMavenBuild(projectDir: string): Promise<BuildResult> {
   const startTime = Date.now();
 

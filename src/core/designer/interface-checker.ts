@@ -10,6 +10,7 @@ import { logger } from "../utils/logger.js";
 // Bug #071: include constraint and risk nodes in interface analysis
 const INTERFACE_NODE_TYPES = new Set(["epic", "requirement", "decision", "constraint", "risk"]);
 
+/** Validate contract nodes have description, AC, edges, and links. */
 export function checkInterfaces(doc: GraphDocument): InterfaceReport {
   const { nodes, edges } = doc;
   const interfaceNodes = nodes.filter((n) => INTERFACE_NODE_TYPES.has(n.type));

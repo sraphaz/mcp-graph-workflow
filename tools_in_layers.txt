@@ -1,0 +1,59 @@
+  toolName: string;
+44 deterministic analyze modes
+AC quality scoring + browser validation invariants
+AST analysis + symbol graph traversal
+AST-based code translation, analysis, and job management
+Aggregate SQL queries (COUNT, AVG)
+Aggregate knowledge document stats
+CRUD on edge table
+CRUD on journey store
+CRUD on node table
+CRUD on task templates
+Copy node + edges
+Create project in DB
+Cross-domain knowledge intersection heuristic
+Cross-project knowledge transfer with dedup
+DORA metrics calculation from historical data
+Delete memory file
+Dependency satisfaction + TDD hints
+Deterministic SIF generation
+Deterministic build output
+Deterministic code conversion
+Direct SQL SELECT with filters
+Direct node lookup by ID
+Direct snapshot read/write
+DoD 9 checks — property-based invariant validation
+Environment config CRUD
+FTS search over SIF objects
+FTS5 BM25 search over nodes
+Fetch and cache library docs
+JS AST analysis
+Lifecycle state machine transition
+MAPE-K error categorization FSM
+Merge JSON into DB
+Multi-analyzer scan composition
+Parse file and insert nodes
+Persist AI decisions as reusable rules
+Priority + dependency FSM for task selection
+Read memory file content
+Read memory file listing
+Rebuild FTS indexes
+Record feedback signal in DB
+Rule-based compression with cached patterns
+SIF XML parsing to DB
+SIF complexity analysis
+SIF composition from components
+SIF validation rules
+Semantic cache + multi-strategy retrieval
+Serialize graph document to JSON/Mermaid
+Serialize knowledge to JSON
+Session delta tracking + context assembly with cache
+Siebel doc import to DB
+Skill CRUD + phase-based recommendation
+Strategy-based pruning decision tree
+Topic-based help routing
+Update parentId + edges
+Update status field in DB
+Velocity-based sprint planning heuristic
+WIP limits and flow state machine
+export function getToolLayer(toolName: string): ToolClassification | undefined {

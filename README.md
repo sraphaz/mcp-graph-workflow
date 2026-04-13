@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/images/mcp-graph-v6.png" alt="mcp-graph v6.0 — Autopilot for AI-driven development" width="700">
+  <img src="docs/images/graph-logo.jpg" alt="mcp-graph v8.0 — Autopilot for AI-driven development" width="700">
 </p>
 
 <h1 align="center">mcp-graph</h1>
 
 <p align="center">
   <strong>Autopilot for AI-driven development.</strong><br/>
-  Local-first CLI that converts PRDs into execution graphs with pipeline tools, agent state machine, and predictive analytics.
+  Local-first CLI that converts PRDs into execution graphs with 45 unified tools, spec-driven development, and predictive analytics.
 </p>
 
 <p align="center">
@@ -22,8 +22,8 @@
   <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/dm/%40mcp-graph-workflow%2Fmcp-graph" alt="npm downloads"></a>
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/stargazers"><img src="https://img.shields.io/github/stars/DiegoNogueiraDev/mcp-graph-workflow" alt="GitHub stars"></a>
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/network"><img src="https://img.shields.io/github/forks/DiegoNogueiraDev/mcp-graph-workflow" alt="GitHub forks"></a>
-  <img src="https://img.shields.io/badge/tests-5552%2B-brightgreen" alt="5552+ tests">
-  <img src="https://img.shields.io/badge/MCP%20tools-53-blue" alt="53 MCP tools">
+  <img src="https://img.shields.io/badge/tests-5800%2B-brightgreen" alt="5800+ tests">
+  <img src="https://img.shields.io/badge/MCP%20tools-45-blue" alt="45 MCP tools">
   <img src="https://img.shields.io/badge/DORA-Elite-gold" alt="DORA Elite">
   <img src="https://img.shields.io/badge/AI%20fallback-0%25-green" alt="0% AI fallback">
 </p>
@@ -38,7 +38,7 @@
 
 A **local-first MCP server** that transforms product requirement documents (PRD) into persistent execution graphs (SQLite), with an integrated knowledge store, RAG pipeline, and multi-agent orchestration mesh.
 
-**v7.0** brings a **unified gate system** (-50% overhead per call), **deterministic-first architecture** (100% of tools are AI-free), **24 benchmark SLOs**, **155 engineering skills**, and **zero breaking regressions** across 5,552 tests. Built on the v6.0 foundation of pipeline tools, agent state machine, and DORA metrics.
+**v8.0** brings **tool consolidation** (21 tools merged into 5 unified action-based tools), a **spec-driven development platform** (constitution, plugins, presets, living specs), **NLP engine quality** (stemming, fuzzy search), and **auto-promote epics** with cascade status. Built on v7.0's unified gate system, deterministic-first architecture, and **5,800+ tests**.
 
 ## Quick Start
 
@@ -93,7 +93,41 @@ npm run dev        # HTTP + dashboard at localhost:3000
 
 ---
 
-## v7.0 — What's New
+## v8.0 — What's New
+
+### Tool Consolidation (v8.0)
+
+21 individual tools merged into 5 unified action-based tools:
+
+| Unified Tool | Absorbs | Actions |
+|--------------|---------|---------|
+| `context` | `rag_context`, `context_compress` | `compact`, `rag`, `compress`, `batch_compress` |
+| `knowledge` | 5 `knowledge_*` tools | `stats`, `export`, `feedback`, `prune`, `reindex` |
+| `davinci` | 3 `davinci_*` tools | `analyze`, `build`, `convert` |
+| `siebel` | 8 `siebel_*` tools | `analyze`, `compose`, `env`, `generate`, `search`, `validate` |
+| `translate` | 3 `translate_*` tools | `convert`, `analyze`, `jobs` |
+
+### Spec-Driven Development Platform (v8.0)
+
+6 new MCP tools for structured project governance:
+
+| Tool | Purpose |
+|------|---------|
+| `constitution` | Project governing principles with RAG indexing |
+| `plugin` | Dynamic extension system with 8 hook points |
+| `preset` | Workflow customization (4 built-in: default, strict-tdd, agile-light, enterprise) |
+| `spec` | Structured spec templates per lifecycle phase |
+| `spec_sync` | Living specs with versioning and bidirectional graph sync |
+| `agent_format` | Multi-agent instruction generator (markdown, TOML, skill.md, JSON) |
+
+### Additional v8.0 Features
+
+- **Auto-promote epics** — recursively promotes parent epic to `done` when all children complete
+- **Cascade status** — auto-marks `acceptance_criteria` and `subtask` children as `done`
+- **NLP engine quality** — unified tokenizer with built-in stemming (EN/PT), fuzzy search fallback
+- **GraphRAG community summaries** — community detection for knowledge consolidation
+
+## v7.0 Highlights
 
 ### Benchmark Results (Real Project: 415 nodes, 923 edges)
 
@@ -103,7 +137,7 @@ npm run dev        # HTTP + dashboard at localhost:3000
 | Lead Time (P50) | 14.9 hours | **Elite** |
 | Change Failure Rate | 0% | **Elite** |
 | MTTR | 0 hours | **Elite** |
-| Tests | 5,552 passing (514 files) | 0 failures |
+| Tests | 5,800+ passing | 0 failures |
 | Benchmark SLOs | 24/24 | 100% pass |
 | AI Fallback | 0% | **Deterministic-First** |
 
@@ -128,17 +162,18 @@ npm run dev        # HTTP + dashboard at localhost:3000
 | Feature | v6 | v7 | Impact |
 |---------|----|----|--------|
 | Tool gate wrapping | 2 sequential wrappers | 1 unified gate | **-50% overhead/call** |
-| Registered tools | 53 + 6 deprecated | 53 clean | **-10% surface** |
+| Registered tools | 53 + 6 deprecated | 45 unified (v8) | **-15% surface** |
 | Security | 3 fragmented checks | 1 centralized (20 attack vectors) | **Hardened** |
 | Knowledge pruning | Manual only | Autoprune + dedup deletion + budget | **Automated** |
 | Graph diagnostics | Individual analyzers | Unified health scanner | **1 scan = 6 checks** |
 | Skills catalog | 30 lifecycle skills | **155 skills** (audio, CV, IoT, NLP, ML) | **+417%** |
 | Schema integrity | NULLs possible | Migration v30 backfill | **Zero NULLs** |
 | FTS indexes | Accumulated since v1 | Rebuilt fresh | **Clean perf** |
+| Harnessability Score | — | 4-dimension agent-readiness metric (types, tests, fitness, docs) | **Measurable** |
 
 ### Deterministic-First Architecture
 
-All 58 MCP tools operate without any AI/LLM dependency:
+All 45 MCP tools operate without any AI/LLM dependency:
 
 ```
 L0 SQL (55%) ████████████████████████████  32 tools
@@ -184,15 +219,15 @@ Supports Claude Code, GitHub Copilot, and Codex CLI. See [skills-graph/README.md
 
 ---
 
-## v6.0 Highlights
+## v6.0 Highlights (Historical)
 
 ### Pipeline Tools: 6 calls to 2
 
 ```
 # Before (v5.x) — 6 tool calls per task
-next → context → rag_context → [implement] → analyze(implement_done) → update_status
+next → context → context(rag) → [implement] → analyze(implement_done) → update_status
 
-# After (v6.0) — 2 tool calls per task
+# After (v6.0+) — 2 tool calls per task
 start_task → [implement with TDD] → finish_task
 ```
 
@@ -287,25 +322,27 @@ Each phase has **gate checks** (`analyze` modes) that must pass before transitio
 
 | Category | Details |
 |----------|---------|
-| **MCP Tools** | 53 active across 6 categories (v7: 6 deprecated removed) |
+| **MCP Tools** | 45 unified tools (v8: 21 merged into 5 action-based + 6 spec-kit) |
 | **Analyze Modes** | 48 modes mapped to 9 lifecycle phases |
 | **Benchmark SLOs** | 24 SLOs (chaos, RAG, DX) — all passing |
 | **Deterministic Score** | 100% — zero AI/LLM dependency in operations |
-| **Pipeline Tools** | `start_task` + `finish_task` (v6.0) |
-| **Agent State Machine** | `nextAction` in every response (v6.0) |
+| **Pipeline Tools** | `start_task` + `finish_task` (v8.0) |
+| **Agent State Machine** | `nextAction` in every response |
 | **PRD Import** | .md, .txt, .pdf, .html auto-parsed into task trees |
 | **Context Compression** | 70-85% token reduction (summary/standard/deep) |
 | **Semantic Search + RAG** | BM25 + TF-IDF, phase-aware boosting, 100% local |
 | **Sprint Planning** | Velocity metrics, capacity-based, overflow detection |
-| **DORA Metrics** | Deploy freq, lead time, CFR, MTTR (v6.0) |
-| **Cross-Project Learning** | Knowledge transfer between projects (v6.0) |
-| **Code-Aware Sync** | Graph ↔ code drift detection (v6.0) |
-| **Dashboard** | 14 tabs: Graph, PRD, Code Graph, Memories, Insights, and more |
+| **DORA Metrics** | Deploy freq, lead time, CFR, MTTR |
+| **Cross-Project Learning** | Knowledge transfer between projects |
+| **Code-Aware Sync** | Graph ↔ code drift detection |
+| **Spec-Driven Dev** | Constitution, plugins, presets, living specs (v8.0) |
+| **Harnessability Score** | 4-dimension composite: types 30%, tests 30%, fitness 20%, docs 20% — `npm run harness:scan` |
+| **Dashboard** | 16 tabs: Graph, PRD, Code Graph, Memories, Insights, Specs, and more |
 | **Local-First** | SQLite, zero external deps, cross-platform |
 
 ## Dashboard
 
-15 tabs covering the full development lifecycle:
+16 tabs covering the full development lifecycle:
 
 | Tab | Purpose |
 |-----|---------|
@@ -317,13 +354,14 @@ Each phase has **gate checks** (`analyze` modes) that must pass before transitio
 | **LSP** | Language Server Protocol status and diagnostics |
 | **Memories** | Project knowledge store |
 | **Insights** | Health score, sprint progress, knowledge coverage |
-| **Skills** | 45 built-in skills by lifecycle phase |
+| **Skills** | 155 built-in skills by lifecycle phase |
 | **Context** | Token management + DreamMode |
 | **Benchmark** | Compression rates, cost impact, token usage |
 | **Languages** | Code translation between languages |
 | **DaVinci** | DaVinci JS to Java plugin converter |
 | **Docs** | Live-introspected tools, APIs, guides |
 | **Logs** | Real-time structured logs |
+| **Specs** | Spec-driven development: constitution, presets, living specs |
 
 <p align="center">
   <img src="docs/images/tab-insights.png" alt="Insights — health score, sprint progress" width="800">
@@ -341,7 +379,7 @@ Each phase has **gate checks** (`analyze` modes) that must pass before transitio
   <img src="docs/images/tab-context.png" alt="Context — DreamMode + token management" width="800">
 </p>
 
-> See all 15 tabs with full screenshots in the [V6 Features Guide](docs/guides/V6-FEATURES-GUIDE.md).
+> See historical v6.0 details in the [V6 Features Guide](docs/guides/V6-FEATURES-GUIDE.md).
 
 ```bash
 npx mcp-graph serve --port 3000    # or: npm run dev
@@ -394,7 +432,7 @@ Native systems: **Code Intelligence** (AST + symbol graph), **Native Memories** 
 
 ## Testing
 
-**5,552+ tests** across 514 Vitest files + Playwright E2E specs.
+**5,800+ tests** across Vitest files + Playwright E2E specs.
 
 ```bash
 npm test            # Unit + integration
@@ -407,10 +445,10 @@ npm run test:coverage  # V8 coverage report
 | Document | Description |
 |----------|-------------|
 | [Getting Started](docs/guides/GETTING-STARTED.md) | Step-by-step setup guide |
-| [v6.0 Features Guide](docs/guides/V6-FEATURES-GUIDE.md) | Pipeline tools, nextAction, DORA, and more |
+| [v6.0 Features Guide](docs/guides/V6-FEATURES-GUIDE.md) | Historical: pipeline tools, nextAction, DORA |
 | [Architecture](docs/architecture/ARCHITECTURE-GUIDE.md) | System layers, modules, data flows |
-| [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) | 53 tools, full parameters |
-| [REST API Reference](docs/reference/REST-API-REFERENCE.md) | 19 routers, 59 endpoints |
+| [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) | 45 unified tools, full parameters |
+| [REST API Reference](docs/reference/REST-API-REFERENCE.md) | 30 routers, 130+ endpoints |
 | [Lifecycle](docs/reference/LIFECYCLE.md) | 9-phase dev methodology |
 | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) | RAG, embeddings, context assembly |
 | [RAG Strategies](docs/reference/RAG-STRATEGIES.md) | Adaptive Router, Multi-Strategy RRF, Corrective RAG, Graph Community |

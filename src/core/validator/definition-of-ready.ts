@@ -14,8 +14,10 @@ import { checkDoneIntegrity } from "./done-integrity-checker.js";
 import { checkStatusFlow } from "./status-flow-checker.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
+/** Run IMPLEMENT-to-VALIDATE gate checks on the graph. */
 export function checkValidationReadiness(doc: GraphDocument): ValidationReadinessReport {
   const checks: ValidationReadinessCheck[] = [];
 
@@ -160,6 +162,23 @@ export function checkValidationReadiness(doc: GraphDocument): ValidationReadines
       : "Nenhum sprint ativo",
     severity: "recommended",
   });
+
+  // Harness regression check — score nao caiu > 10pts
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      checks.push({
+        name: "harness_no_regression",
+        passed: !harness.regression || (harness.regressionDelta !== undefined && harness.regressionDelta > -10),
+        details: harness.regression
+          ? `Harness regrediu ${harness.regressionDelta} pontos (threshold: -10)`
+          : `Harness score: ${harness.score} (grade ${harness.grade}) — sem regressão`,
+        severity: "recommended",
+      });
+    }
+  } catch {
+    // non-blocking
+  }
 
   // ── Scoring ──
   const totalChecks = checks.length;

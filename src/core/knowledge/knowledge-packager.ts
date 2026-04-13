@@ -11,6 +11,7 @@ import { readAllMemories, writeMemory, listMemories } from "../memory/memory-rea
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 import {
   KnowledgePackageSchema,
   type KnowledgePackage,
@@ -96,6 +97,7 @@ interface TranslationMemoryRow {
 
 // ── Export ──────────────────────────────────────────────
 
+/** Export knowledge documents, relations, memories, and translation memory as a portable package. */
 export async function exportKnowledge(
   db: Database.Database,
   basePath: string,
@@ -172,6 +174,7 @@ export async function exportKnowledge(
 
 // ── Import ─────────────────────────────────────────────
 
+/** Import a knowledge package, deduplicating documents by content hash and merging translation memory. */
 export async function importKnowledge(
   db: Database.Database,
   basePath: string,
@@ -181,7 +184,7 @@ export async function importKnowledge(
   const parsed = KnowledgePackageSchema.safeParse(pkg);
   if (!parsed.success) {
     const errorMsg = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
-    throw new Error(`Invalid knowledge package: ${errorMsg}`);
+    throw new McpGraphError(`Invalid knowledge package: ${errorMsg}`);
   }
 
   logger.info("knowledge-packager:import:start", {
@@ -336,6 +339,7 @@ export async function importKnowledge(
 
 // ── Preview ────────────────────────────────────────────
 
+/** Preview what an import would do without applying changes. */
 export async function previewImport(
   db: Database.Database,
   basePath: string,
@@ -344,7 +348,7 @@ export async function previewImport(
   const parsed = KnowledgePackageSchema.safeParse(pkg);
   if (!parsed.success) {
     const errorMsg = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
-    throw new Error(`Invalid knowledge package: ${errorMsg}`);
+    throw new McpGraphError(`Invalid knowledge package: ${errorMsg}`);
   }
 
   let newDocuments = 0;

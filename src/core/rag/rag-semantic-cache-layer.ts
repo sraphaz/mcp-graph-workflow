@@ -1,6 +1,6 @@
 /**
  * RAG Semantic Cache Layer — wraps SemanticCache + TfIdfVectorizer
- * for use in the rag_context tool pipeline.
+ * for use in the context(rag) pipeline.
  */
 
 import { SemanticCache, type SemanticCacheOptions } from "./semantic-cache.js";

@@ -26,14 +26,17 @@ function appendToBuffer(level: LogLevel, message: string, context?: Record<strin
   }
 }
 
+/** Return a shallow copy of the in-memory log buffer. */
 export function getLogBuffer(): LogEntry[] {
   return [...logBuffer];
 }
 
+/** Clear all entries from the in-memory log buffer. */
 export function clearLogBuffer(): void {
   logBuffer.length = 0;
 }
 
+/** Register (or unregister) a callback that receives every new log entry in real time. */
 export function setLogListener(listener: ((entry: LogEntry) => void) | null): void {
   logListener = listener;
 }

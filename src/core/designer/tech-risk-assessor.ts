@@ -45,6 +45,7 @@ const FULL_MITIGATION_TYPES = new Set(["decision", "constraint"]);
 /** Partial mitigation: epic edge */
 const PARTIAL_MITIGATION_TYPES = new Set(["epic"]);
 
+/** Determine mitigation level of a risk node from its edges. */
 export function assessMitigationLevel(doc: GraphDocument, riskNode: { id: string; metadata?: Record<string, unknown> }): MitigationLevel {
   const nodeTypeMap = new Map(doc.nodes.map((n) => [n.id, n.type]));
 
@@ -85,6 +86,7 @@ export function assessMitigationLevel(doc: GraphDocument, riskNode: { id: string
   return "unmitigated";
 }
 
+/** Score and categorize explicit and inferred tech risks. */
 export function assessTechRisks(doc: GraphDocument): TechRiskReport {
   const riskNodes = doc.nodes.filter((n) => n.type === "risk");
 

@@ -9,6 +9,7 @@ import { STORE_DIR, DB_FILE } from "../../core/utils/constants.js";
 import { CodeStore } from "../../core/code/code-store.js";
 import { CodeIndexer } from "../../core/code/code-indexer.js";
 import { logger } from "../../core/utils/logger.js";
+import { McpGraphError } from "../../core/utils/errors.js";
 
 /** Directories that should never be browsable (OS-level sensitive paths). */
 const BLOCKED_PATHS = new Set(["/proc", "/sys", "/dev", "/boot", "/lost+found"]);
@@ -21,7 +22,7 @@ const BLOCKED_PATHS = new Set(["/proc", "/sys", "/dev", "/boot", "/lost+found"])
 export function validateBrowsePath(rawPath: string): string {
   // Reject null byte injection
   if (rawPath.includes("\0")) {
-    throw new Error("Path contains null bytes");
+    throw new McpGraphError("Path contains null bytes");
   }
 
   const resolved = path.resolve(rawPath);
@@ -29,7 +30,7 @@ export function validateBrowsePath(rawPath: string): string {
   // Reject system-sensitive directories
   for (const blocked of BLOCKED_PATHS) {
     if (resolved === blocked || resolved.startsWith(blocked + path.sep)) {
-      throw new Error(`Access denied: ${blocked} is a restricted system directory`);
+      throw new McpGraphError(`Access denied: ${blocked} is a restricted system directory`);
     }
   }
 
@@ -45,7 +46,7 @@ export function validateBrowsePath(rawPath: string): string {
     const na = normalize(a);
     return normalizedResolved === na || normalizedResolved.startsWith(na + path.sep);
   })) {
-    throw new Error("Access denied: browsing restricted to home directory");
+    throw new McpGraphError("Access denied: browsing restricted to home directory");
   }
 
   return resolved;

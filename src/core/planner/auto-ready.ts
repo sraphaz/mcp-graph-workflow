@@ -18,6 +18,7 @@ export interface AutoReadyReport {
  * - All dependencies (depends_on edges) are resolved (done status)
  * - Not blocked
  */
+/** Find backlog tasks that meet all "ready" criteria. */
 export function analyzeAutoReady(doc: GraphDocument): AutoReadyReport {
   const backlogTasks = doc.nodes.filter(
     (n) =>

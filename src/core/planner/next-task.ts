@@ -18,6 +18,7 @@ export interface NextTaskResult {
   reason: string;
 }
 
+/** Find the highest-priority unblocked task to work on next. */
 export function findNextTask(doc: GraphDocument): NextTaskResult | null {
   // Step 1: Filter eligible nodes
   const eligible = doc.nodes.filter(

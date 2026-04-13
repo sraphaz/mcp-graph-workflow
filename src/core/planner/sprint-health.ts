@@ -5,6 +5,7 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
 export interface SprintHealthReport {
@@ -23,6 +24,7 @@ export interface SprintHealthReport {
   warnings: string[];
 }
 
+/** Analyze sprint health and return grade with warnings. */
 export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): SprintHealthReport {
   const tasks = doc.nodes.filter((n) =>
     (n.type === "task" || n.type === "subtask") &&
@@ -56,10 +58,26 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
 
   logger.info("sprint-health", { sprint: sprintFilter ?? "all", health, tasks: tasks.length });
 
+  // Harness delta (non-blocking)
+  let harnessDelta: { current: number; grade: string } | null = null;
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      harnessDelta = { current: harness.score, grade: harness.grade };
+      if (harness.regression) {
+        warnings.push(`Harness score regrediu ${harness.regressionDelta ?? 0} pontos durante o sprint`);
+        if (health === "healthy") health = "at_risk";
+      }
+    }
+  } catch {
+    // non-blocking
+  }
+
   return {
     sprint: sprintFilter ?? null,
     health,
     metrics: { totalPoints, taskCount: tasks.length, doneCount, blockedCount, burndownRatio, blockedRatio, tasksWithoutAC, externalDeps },
     warnings,
+    ...(harnessDelta ? { harnessDelta } : {}),
   };
 }

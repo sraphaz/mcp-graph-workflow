@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Wrench,
   Settings,
+  Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -37,7 +38,8 @@ export type TabId =
   | "lsp"
   | "languages"
   | "davinci"
-  | "docs";
+  | "docs"
+  | "harness";
 
 export type NavGroupId = "visualization" | "intelligence" | "tools" | "system";
 
@@ -76,6 +78,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: "memories", label: "Memories", icon: Brain },
       { id: "insights", label: "Insights", icon: BarChart3 },
       { id: "skills", label: "Skills", icon: Zap },
+      { id: "harness", label: "Harness", icon: Shield },
     ],
   },
   {

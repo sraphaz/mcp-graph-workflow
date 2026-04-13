@@ -25,7 +25,7 @@ Thin orchestration layer. Commands call core functions and format output. No bus
 **Protocol:** Model Context Protocol (Streamable HTTP + Stdio)
 
 <!-- mcp-graph:arch-mcp:start -->
-59 tool registrations (53 active + 6 deprecated shims) via `@modelcontextprotocol/sdk`. Two transport modes:
+45 tool registrations (45 active, 0 deprecated) via `@modelcontextprotocol/sdk`. Two transport modes:
 
 - **HTTP** (`server.ts`) — Express server with `/mcp` endpoint + REST API + static dashboard
 - **Stdio** (`stdio.ts`) — Standard I/O transport for direct MCP client integration
@@ -36,7 +36,7 @@ Tool categories:
 - **Code Intelligence** (1) — code_intelligence
 - **Knowledge** (3) — export_knowledge, knowledge_feedback, knowledge_stats
 - **Siebel CRM** (8) — siebel_analyze, siebel_composer, siebel_env, siebel_generate_sif, siebel_import_docs, siebel_import_sif, siebel_search, siebel_validate
-- **Deprecated shims** (6) — add_node, delete_node, list_skills, update_node, validate_ac, validate_task (removed in v7.0)
+- **Deprecated shims** — none (all deprecated tools removed in v7.0)
 <!-- mcp-graph:arch-mcp:end -->
 
 ### Layer 3: REST API — `src/api/`
@@ -44,7 +44,7 @@ Tool categories:
 **Framework:** Express v5
 
 <!-- mcp-graph:arch-api:start -->
-27 routers, 142 endpoints. Modular router architecture:
+30 routers, 130+ endpoints. Modular router architecture:
 <!-- mcp-graph:arch-api:end -->
 
 ```
@@ -248,7 +248,7 @@ Data stored in `workflow-graph/graph.db` (local, gitignored). Legacy `.mcp-graph
 | `components/modals/` | Import and capture modals |
 | `hooks/` | Graph data, SSE, stats hooks |
 
-4 tabs: Graph, Code Graph, PRD Backlog, Insights. Real-time updates via SSE. Dark/light theme.
+16 tabs: Graph, PRD & Backlog, Journey, Code Graph, Siebel, LSP, Memories, Insights, Skills, Context, Benchmark, Languages, Docs, Logs, and more. Real-time updates via SSE. Dark/light theme.
 
 ### Layer 7: Skills & Agents
 

@@ -7,6 +7,7 @@ import type { DoneIntegrityReport, DoneIntegrityIssue } from "../../schemas/vali
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { logger } from "../utils/logger.js";
 
+/** Validate that done tasks have consistent state and deps. */
 export function checkDoneIntegrity(doc: GraphDocument): DoneIntegrityReport {
   const issues: DoneIntegrityIssue[] = [];
 

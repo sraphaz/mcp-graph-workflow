@@ -2,7 +2,9 @@ import { access, constants } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { assertPathInside } from "./safe-path.js";
+import { McpGraphError } from "./errors.js";
 
+/** Check whether a file exists and is readable at the given path. */
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
     await access(filePath, constants.R_OK);
@@ -26,7 +28,7 @@ export function safeReadFileSync(
   if (allowedExtensions) {
     const ext = path.extname(absolutePath).toLowerCase();
     if (ext && !allowedExtensions.has(ext)) {
-      throw new Error(`Unsupported file extension: ${ext}. Allowed: ${[...allowedExtensions].join(", ")}`);
+      throw new McpGraphError(`Unsupported file extension: ${ext}. Allowed: ${[...allowedExtensions].join(", ")}`);
     }
   }
 

@@ -120,6 +120,7 @@ function diffChildren(
   return { added, removed, modified };
 }
 
+/** Compute a structural diff between two sets of Siebel objects by name and type. */
 export function diffSifObjects(
   baseObjects: readonly SiebelObject[],
   targetObjects: readonly SiebelObject[],
@@ -205,6 +206,7 @@ export function diffSifObjects(
 
 // --- Markdown Formatter ---
 
+/** Format a SIF diff result as a human-readable Markdown report. */
 export function formatDiffMarkdown(diff: SifDiffResult): string {
   const lines: string[] = [];
 

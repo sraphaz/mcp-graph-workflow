@@ -131,20 +131,20 @@ describe("checkHandoffReadiness", () => {
 
   // ── Composite behavior ──
 
-  it("should have exactly 10 checks", () => {
+  it("should have exactly 11 checks (5 required + 6 recommended)", () => {
     const doc = makeDoc([
       { type: "task", status: "done", acceptanceCriteria: ["AC1"] },
     ]);
     const report = checkHandoffReadiness(doc);
-    expect(report.checks).toHaveLength(10);
+    expect(report.checks).toHaveLength(11);
   });
 
-  it("should have 5 required and 5 recommended", () => {
+  it("should have 5 required and 6 recommended", () => {
     const doc = makeDoc([
       { type: "task", status: "done", acceptanceCriteria: ["AC1"] },
     ]);
     const report = checkHandoffReadiness(doc);
     expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(5);
-    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
+    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(6);
   });
 });

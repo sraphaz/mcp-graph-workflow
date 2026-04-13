@@ -86,6 +86,7 @@ const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   ".hs": "haskell",
 };
 
+/** Detect the programming language from a file extension. */
 export function detectLanguageByExtension(ext: string): string | undefined {
   return EXTENSION_TO_LANGUAGE[ext.toLowerCase()];
 }
@@ -130,6 +131,7 @@ function isHiddenFile(entryPath: string): boolean {
 // Main extractor
 // ---------------------------------------------------------------------------
 
+/** Extract text source files from a ZIP archive, filtering out binaries and ignored directories. */
 export function extractZip(zipPath: string): ExtractedFile[] {
   let zip: AdmZip;
   try {

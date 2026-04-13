@@ -101,15 +101,16 @@ describe('Docs Coverage Scanner', () => {
 // ── Task 3.4: Harnessability Score ─────────────────────
 
 describe('Harnessability Score', () => {
-  it('should compute weighted score from 4 dimensions', () => {
+  it('should compute weighted score from 4 dimensions (v2 weights, new dims default 100)', () => {
     const result = computeHarnessabilityScore({
       typeScore: 95,
       testScore: 80,
       fitnessScore: 100,
       docsScore: 70,
     });
-    // 95*0.3 + 80*0.3 + 100*0.2 + 70*0.2 = 28.5 + 24 + 20 + 14 = 86.5
-    expect(result.score).toBeCloseTo(86.5, 0);
+    // v2: 95*0.25 + 80*0.25 + 100*0.15 + 70*0.15 + 100*0.10 + 100*0.05 + 100*0.05
+    // = 23.75 + 20 + 15 + 10.5 + 10 + 5 + 5 = 89.25 ~ 89.3
+    expect(result.score).toBeCloseTo(89.3, 0);
     expect(result.grade).toBe('A');
   });
 
@@ -129,18 +130,19 @@ describe('Harnessability Score', () => {
   });
 
   it('should grade D for score < 55', () => {
-    const result = computeHarnessabilityScore({ typeScore: 0, testScore: 0, fitnessScore: 0, docsScore: 0 });
+    const result = computeHarnessabilityScore({ typeScore: 0, testScore: 0, fitnessScore: 0, docsScore: 0, namingScore: 0, errorHandlingScore: 0, contextDensityScore: 0 });
     expect(result.grade).toBe('D');
     expect(result.score).toBe(0);
   });
 
-  it('should include breakdown in result', () => {
-    const result = computeHarnessabilityScore({ typeScore: 90, testScore: 80, fitnessScore: 70, docsScore: 60 });
-    expect(result.breakdown).toEqual({
-      types: { score: 90, weight: 0.3 },
-      tests: { score: 80, weight: 0.3 },
-      fitness: { score: 70, weight: 0.2 },
-      docs: { score: 60, weight: 0.2 },
-    });
+  it('should include breakdown in result with all 7 dimensions', () => {
+    const result = computeHarnessabilityScore({ typeScore: 90, testScore: 80, fitnessScore: 70, docsScore: 60, namingScore: 50, errorHandlingScore: 40, contextDensityScore: 30 });
+    expect(result.breakdown.types).toEqual({ score: 90, weight: 0.25 });
+    expect(result.breakdown.tests).toEqual({ score: 80, weight: 0.25 });
+    expect(result.breakdown.fitness).toEqual({ score: 70, weight: 0.15 });
+    expect(result.breakdown.docs).toEqual({ score: 60, weight: 0.15 });
+    expect(result.breakdown.naming).toEqual({ score: 50, weight: 0.10 });
+    expect(result.breakdown.errors).toEqual({ score: 40, weight: 0.05 });
+    expect(result.breakdown.context).toEqual({ score: 30, weight: 0.05 });
   });
 });

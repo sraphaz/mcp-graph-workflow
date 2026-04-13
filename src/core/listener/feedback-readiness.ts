@@ -9,6 +9,7 @@ import { calculateVelocity } from "../planner/velocity.js";
 import { analyzeBacklogHealth } from "./backlog-health.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
 export interface ListeningReadinessOptions {
@@ -16,6 +17,7 @@ export interface ListeningReadinessOptions {
   knowledgeCount?: number;
 }
 
+/** Run HANDOFF-to-LISTENING gate checks on the graph. */
 export function checkListeningReadiness(
   doc: GraphDocument,
   opts?: ListeningReadinessOptions,
@@ -122,6 +124,21 @@ export function checkListeningReadiness(
       : `${healthReport.staleTasks.length} task(s) stale, ${healthReport.techDebtIndicators.length} indicador(es) de tech debt`,
     severity: "recommended",
   });
+
+  // Harness baseline — save score as post-deploy reference
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      checks.push({
+        name: "harness_baseline",
+        passed: true,
+        details: `Harness baseline: score ${harness.score} (grade ${harness.grade}) — salvo como referência pós-deploy`,
+        severity: "recommended",
+      });
+    }
+  } catch {
+    // non-blocking
+  }
 
   // ── Scoring ──
   const totalChecks = checks.length;

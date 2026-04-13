@@ -37,6 +37,7 @@ function saveCustomPresets(store: SqliteStore, presets: PresetDefinition[]): voi
 /*  Handlers (exported for testing)                                    */
 /* ------------------------------------------------------------------ */
 
+/** List all available presets (built-in and custom) for the active project. */
 export function handlePresetList(
   store: SqliteStore,
 ): { ok: boolean; presets: Array<{ name: string; description: string; source: string }> } {
@@ -50,6 +51,7 @@ export function handlePresetList(
   return { ok: true, presets };
 }
 
+/** Apply a named preset as the active workflow configuration. */
 export function handlePresetApply(
   store: SqliteStore,
   params: { presetName: string },
@@ -67,6 +69,7 @@ export function handlePresetApply(
   return { ok: true, applied: params.presetName };
 }
 
+/** Show the currently resolved configuration from the active preset. */
 export function handlePresetShow(
   store: SqliteStore,
 ): { ok: boolean; config: ResolvedConfig; activePreset: string | null } {
@@ -81,6 +84,7 @@ export function handlePresetShow(
   return { ok: true, config, activePreset: activePreset ?? null };
 }
 
+/** Create or update a custom preset definition in project settings. */
 export function handlePresetCreate(
   store: SqliteStore,
   params: { name: string; description: string; lifecycle?: Record<string, unknown>; dod?: Record<string, unknown>; classifierPatterns?: Record<string, string[]> },
@@ -116,6 +120,7 @@ export function handlePresetCreate(
 /*  MCP Registration                                                   */
 /* ------------------------------------------------------------------ */
 
+/** Register the preset MCP tool with list, apply, show, and create actions. */
 export function registerPreset(server: McpServer, store: SqliteStore): void {
   server.tool(
     "preset",

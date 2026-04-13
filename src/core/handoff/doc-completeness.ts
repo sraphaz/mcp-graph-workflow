@@ -6,6 +6,7 @@ import type { GraphDocument } from "../graph/graph-types.js";
 import type { DocCompletenessReport } from "../../schemas/handoff-schema.js";
 import { logger } from "../utils/logger.js";
 
+/** Check description coverage across all graph nodes. */
 export function checkDocCompleteness(doc: GraphDocument): DocCompletenessReport {
   const { nodes } = doc;
 

@@ -31,6 +31,7 @@ function countByType(blocks: ClassifiedBlock[], items: ClassifiedItem[], type: B
   return blockCount + itemCount;
 }
 
+/** Parse raw PRD text into classified entities (epics, tasks, risks, AC, etc.). */
 export function extractEntities(rawText: string): ExtractionResult {
   logger.info(`Extracting entities from ${rawText.length} chars`);
   const normalized = normalize(rawText);

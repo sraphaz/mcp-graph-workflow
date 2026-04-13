@@ -8,7 +8,19 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { findNextTask, type NextTaskResult } from "./next-task.js";
 import { calculateVelocity } from "./velocity.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
+
+/** Maps common task tags to harness dimension keys */
+const TAG_TO_DIMENSION: Record<string, string> = {
+  test: "tests", testing: "tests", tdd: "tests",
+  docs: "docs", documentation: "docs", jsdoc: "docs",
+  types: "types", typescript: "types", typing: "types",
+  naming: "naming", refactor: "naming",
+  error: "errorHandling", errors: "errorHandling",
+  fitness: "fitness", architecture: "fitness",
+  context: "contextDensity",
+};
 
 export interface EnhancedNextResult {
   /** The recommended task */
@@ -22,6 +34,12 @@ export interface EnhancedNextResult {
   };
   /** Reason for recommendation */
   enhancedReason: string;
+  /** Harness-aware bonus info (if applicable) */
+  harnessBonus?: {
+    applied: boolean;
+    weakDimensions: string[];
+    matchedTags: string[];
+  };
 }
 
 /**
@@ -49,10 +67,40 @@ export function findEnhancedNextTask(
     reasons.push(`Estimated ~${velocityContext.estimatedHours}h based on velocity`);
   }
 
+  // Harness-aware bonus: detect weak dimensions and match task tags
+  let harnessBonus: EnhancedNextResult["harnessBonus"];
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      const breakdown = harness.breakdown as Record<string, { score: number }>;
+      const weakDimensions = Object.entries(breakdown)
+        .filter(([, info]) => info.score < 70)
+        .map(([dim]) => dim);
+
+      if (weakDimensions.length > 0) {
+        const taskTags = baseResult.node.tags ?? [];
+        const matchedTags = taskTags.filter((tag) => {
+          const dim = TAG_TO_DIMENSION[tag.toLowerCase()];
+          return dim && weakDimensions.includes(dim);
+        });
+
+        if (matchedTags.length > 0) {
+          reasons.push(`Harness bonus: tags [${matchedTags.join(", ")}] match weak dimensions [${weakDimensions.join(", ")}]`);
+          harnessBonus = { applied: true, weakDimensions, matchedTags };
+        } else {
+          harnessBonus = { applied: false, weakDimensions, matchedTags: [] };
+        }
+      }
+    }
+  } catch {
+    // non-blocking
+  }
+
   logger.info("Enhanced next task", {
     nodeId: baseResult.node.id,
     knowledgeCoverage,
     estimatedHours: velocityContext.estimatedHours,
+    harnessBonus: harnessBonus?.applied ?? false,
   });
 
   return {
@@ -60,6 +108,7 @@ export function findEnhancedNextTask(
     knowledgeCoverage,
     velocityContext,
     enhancedReason: reasons.join(". "),
+    ...(harnessBonus ? { harnessBonus } : {}),
   };
 }
 

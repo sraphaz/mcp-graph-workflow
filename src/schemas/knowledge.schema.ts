@@ -9,6 +9,8 @@ export const KnowledgeSourceTypeSchema = z.enum([
   "benchmark", "graph_node", "lsp_result",
   // Spec-driven development types
   "constitution", "spec_template",
+  // Harness engineering types (v3)
+  "harness_scan",
 ]);
 
 export const KnowledgeDocumentSchema = z.object({

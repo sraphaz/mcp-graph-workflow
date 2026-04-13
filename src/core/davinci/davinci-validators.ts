@@ -17,6 +17,7 @@ export interface ValidationResult {
 
 // ── Pre-Conversion Validation ─────────────────────────────────────────
 
+/** Validate DaVinci source code before conversion, checking for unsupported patterns. */
 export function validatePreConversion(code: string, analysis: DaVinciAnalysis): ValidationResult {
   const issues: ValidationIssue[] = [];
 
@@ -58,6 +59,7 @@ export function validatePreConversion(code: string, analysis: DaVinciAnalysis): 
 
 // ── Post-Generation Validation ────────────────────────────────────────
 
+/** Validate generated Java plugin code for completeness and structural correctness. */
 export function validatePostGeneration(result: GeneratePluginResult): ValidationResult {
   const issues: ValidationIssue[] = [];
 
@@ -104,6 +106,7 @@ export function validatePostGeneration(result: GeneratePluginResult): Validation
 
 // ── Build Result Validation ───────────────────────────────────────────
 
+/** Validate a Maven build result, checking for success, JAR output, and build duration. */
 export function validateBuildResult(result: BuildResult): ValidationResult {
   const issues: ValidationIssue[] = [];
 

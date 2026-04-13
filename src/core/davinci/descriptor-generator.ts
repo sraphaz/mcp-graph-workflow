@@ -10,6 +10,7 @@ export interface GuiDescriptorResult {
   instanceFields: string;
 }
 
+/** Generate GUI descriptor declarations, registrations, and instance fields from DaVinci variables. */
 export function generateGuiDescriptor(
   variables: DaVinciVariable[],
 ): GuiDescriptorResult {
@@ -43,6 +44,7 @@ export function generateGuiDescriptor(
 
 // ── Attribute Contract Generation ─────────────────────────────────────
 
+/** Generate Java code for a PingFederate attribute contract from a list of attribute names. */
 export function generateAttributeContract(attributes: string[]): string {
   if (attributes.length === 0) {
     return "        Set<String> contract = new HashSet<>();";
@@ -64,6 +66,7 @@ export interface PfInfDescriptor {
   fullPath: string;
 }
 
+/** Generate the PF-INF descriptor file content and path for plugin registration. */
 export function generatePfInfDescriptor(
   pluginType: string,
   packageName: string,
@@ -86,6 +89,7 @@ export function generatePfInfDescriptor(
 
 // ── META-INF/services for PingAccess ──────────────────────────────────
 
+/** Generate META-INF/services file content for PingAccess plugin service discovery. */
 export function generateMetaInfServices(
   serviceInterface: string,
   packageName: string,

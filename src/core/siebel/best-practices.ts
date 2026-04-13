@@ -95,11 +95,13 @@ const RULES: BestPracticeRule[] = [
 
 // --- Public API ---
 
+/** Return all Siebel best practice rules (50+ rules across naming, config, scripting, etc.). */
 export function getSiebelBestPractices(): readonly BestPracticeRule[] {
   logger.debug("best-practices: returning all rules", { count: RULES.length });
   return RULES;
 }
 
+/** Return best practice rules grouped by category (naming, configuration, scripting, etc.). */
 export function getBestPracticesByCategory(): Record<string, readonly BestPracticeRule[]> {
   const categories: Record<string, BestPracticeRule[]> = {};
   for (const rule of RULES) {

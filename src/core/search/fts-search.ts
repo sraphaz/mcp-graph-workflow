@@ -125,6 +125,7 @@ function fuzzyFallback(
   return scored.slice(0, limit);
 }
 
+/** Search nodes via FTS5 with optional TF-IDF reranking. */
 export function searchNodes(
   store: SqliteStore,
   query: string,

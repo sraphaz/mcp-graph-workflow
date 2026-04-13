@@ -12,12 +12,14 @@ import { checkDocCompleteness } from "./doc-completeness.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
 export interface HandoffReadinessOptions {
   knowledgeCount?: number;
 }
 
+/** Run REVIEW-to-HANDOFF gate checks on the graph. */
 export function checkHandoffReadiness(
   doc: GraphDocument,
   opts?: HandoffReadinessOptions,
@@ -152,6 +154,21 @@ export function checkHandoffReadiness(
     details: `${docReport.coverageRate}% nodes com description (meta: 70%)`,
     severity: "recommended",
   });
+
+  // 11. harness_handoff_grade — harness score >= 55 (grade C)
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      checks.push({
+        name: "harness_handoff_grade",
+        passed: harness.score >= 55,
+        details: `Harness: ${harness.grade} (${harness.score}/100, min: C/55)`,
+        severity: "recommended",
+      });
+    }
+  } catch {
+    // non-blocking: harness scan unavailable
+  }
 
   // ── Scoring ──
   const totalChecks = checks.length;

@@ -39,6 +39,7 @@ function determineCoverage(linkedDecisions: string[], linkedConstraints: string[
   return "none";
 }
 
+/** Build requirement-to-decision-to-constraint coverage matrix. */
 export function buildTraceabilityMatrix(doc: GraphDocument): TraceabilityReport {
   const requirements = doc.nodes.filter((n) => n.type === "requirement");
   const decisions = doc.nodes.filter((n) => n.type === "decision");

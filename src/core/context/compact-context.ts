@@ -7,6 +7,7 @@ import { logger } from "../utils/logger.js";
 
 // ── Constants ────────────────────────────────────────────
 
+/** Max characters for neighbor node descriptions. */
 export const NEIGHBOR_DESC_LIMIT = 100;
 
 // ── Types ────────────────────────────────────────────────
@@ -206,6 +207,7 @@ export function omitDefaults(obj: unknown): unknown {
 
 // ── Main function ────────────────────────────────────────
 
+/** Build a compact task context with neighbors and metrics. */
 export function buildTaskContext(
   store: SqliteStore,
   nodeId: string,
@@ -384,6 +386,7 @@ export function buildTaskContext(
 
 // ── Naive Neighborhood (honest baseline) ─────────────────
 
+/** Build a full (uncompressed) neighborhood for baseline metrics. */
 export function buildNaiveNeighborhood(
   store: SqliteStore,
   nodeId: string,
@@ -485,6 +488,7 @@ export function buildNaiveNeighborhood(
 
 // ── Compressed Context (L2 + L3 + L4) ───────────────────
 
+/** Apply L2-L4 compression layers to task context. */
 export function buildCompressedContext(
   store: SqliteStore,
   nodeId: string,
@@ -544,6 +548,7 @@ export function buildCompressedContext(
 
 // ── Layered Metrics ──────────────────────────────────────
 
+/** Compute token savings across all compression layers. */
 export function computeLayeredMetrics(
   store: SqliteStore,
   nodeId: string,

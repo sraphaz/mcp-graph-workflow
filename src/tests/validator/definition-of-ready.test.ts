@@ -152,21 +152,21 @@ describe("checkValidationReadiness", () => {
     expect(report.ready).toBe(false);
   });
 
-  it("should have exactly 10 checks", () => {
+  it("should have exactly 11 checks", () => {
     const doc = makeDoc([
       { type: "task", status: "done", acceptanceCriteria: ["AC1"] },
     ]);
     const report = checkValidationReadiness(doc);
-    expect(report.checks).toHaveLength(10);
+    expect(report.checks).toHaveLength(11);
   });
 
-  it("should have 5 required and 5 recommended checks", () => {
+  it("should have 5 required and 6 recommended checks", () => {
     const doc = makeDoc([
       { type: "task", status: "done", acceptanceCriteria: ["AC1"] },
     ]);
     const report = checkValidationReadiness(doc);
     expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(5);
-    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
+    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(6);
   });
 
   it("should calculate score based on passed checks", () => {

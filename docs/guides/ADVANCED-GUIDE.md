@@ -200,13 +200,13 @@ The `analyze` tool provides 25 specialized analysis modes organized by lifecycle
 
 | Mode | What it checks | Parameters |
 |------|---------------|------------|
-| `implement_done` | Definition of Done: 8 checks (4 required + 4 recommended) | `nodeId` (required) |
+| `implement_done` | Definition of Done: 9 checks (4 required + 5 recommended) | `nodeId` (required) |
 | `tdd_check` | TDD adherence: suggested test specs from AC | — |
 | `progress` | Sprint burndown + velocity trend + blockers + ETA | `sprint` (optional) |
 | `cycles` | Dependency cycles (also available in ANALYZE) | — |
 | `critical_path` | Critical path (also available in ANALYZE) | — |
 
-**Definition of Done — 8 checks:**
+**Definition of Done — 9 checks:**
 
 | # | Check | Severity | Logic |
 |---|-------|----------|-------|
@@ -218,6 +218,7 @@ The `analyze` tool provides 25 specialized analysis modes organized by lifecycle
 | 6 | `not_oversized` | recommended | Not L/XL without subtasks |
 | 7 | `has_testable_ac` | recommended | At least 1 AC is testable |
 | 8 | `has_estimate` | recommended | xpSize or estimateMinutes defined |
+| 9 | `has_test_files` | recommended | testFiles field is populated |
 
 ### VALIDATE Phase (3 modes)
 
@@ -313,7 +314,7 @@ Five source types feed the knowledge store:
 | `memory` | Project memories | `write_memory` |
 | `code_context` | Code symbols and relationships | `reindex_knowledge` |
 | `docs` | Library documentation | `sync_stack_docs` |
-| `web_capture` | Browser page captures | `validate_task` |
+| `web_capture` | Browser page captures | `validate` |
 
 **Indexers:**
 - **Memory indexer** — watches `workflow-graph/memories/` for changes
@@ -405,8 +406,8 @@ CLI → MCP → API → Core → Store → Dashboard → Skills → Integrations
 ```
 
 - **CLI layer** (`src/cli/`) — Commander.js commands, thin orchestration only
-- **MCP layer** (`src/mcp/`) — 30 tools registered (22 core + 2 consolidated + 5 deprecated shims + 1 skills) with lifecycle annotations
-- **API layer** (`src/api/`) — Express REST API with 17+ routers, 44+ endpoints
+- **MCP layer** (`src/mcp/`) — 45 tools registered (45 active, 0 deprecated) with lifecycle annotations
+- **API layer** (`src/api/`) — Express REST API with 30 routers, 130+ endpoints
 - **Core layer** (`src/core/`) — Pure business logic, typed errors, no framework coupling
 - **Store layer** (`src/core/store/`) — SQLite persistence with migrations
 - **Dashboard** (`src/web/dashboard/`) — React 19 + Tailwind + React Flow SPA
@@ -420,7 +421,7 @@ For detailed layer documentation, see [ARCHITECTURE-GUIDE.md](../architecture/AR
 
 ## 6. REST API Advanced Patterns
 
-The REST API exposes 17+ routers and 44+ endpoints. Full reference: [REST-API-REFERENCE.md](../reference/REST-API-REFERENCE.md).
+The REST API exposes 30 routers and 130+ endpoints. Full reference: [REST-API-REFERENCE.md](../reference/REST-API-REFERENCE.md).
 
 ### Key Patterns
 
@@ -497,7 +498,7 @@ risk: low
 
 **Listing available skills:**
 ```
-list_skills
+manage_skill(action: "list")
 ```
 
 ### 7.2 MCP Server Configuration
@@ -646,8 +647,8 @@ If migrating from the old Serena integration:
 
 | Document | Description |
 |----------|-------------|
-| [MCP-TOOLS-REFERENCE.md](../reference/MCP-TOOLS-REFERENCE.md) | Full reference for all 30 MCP tools |
-| [REST-API-REFERENCE.md](../reference/REST-API-REFERENCE.md) | 44+ REST API endpoints |
+| [MCP-TOOLS-REFERENCE.md](../reference/MCP-TOOLS-REFERENCE.md) | Full reference for all 45 MCP tools |
+| [REST-API-REFERENCE.md](../reference/REST-API-REFERENCE.md) | 130+ REST API endpoints |
 | [ARCHITECTURE-GUIDE.md](../architecture/ARCHITECTURE-GUIDE.md) | System layers and design principles |
 | [ARCHITECTURE-MERMAID.md](../architecture/ARCHITECTURE-MERMAID.md) | Visual architecture diagram |
 | [KNOWLEDGE-PIPELINE.md](../architecture/KNOWLEDGE-PIPELINE.md) | RAG pipeline deep dive |

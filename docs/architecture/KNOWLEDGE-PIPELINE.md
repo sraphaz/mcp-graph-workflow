@@ -64,7 +64,7 @@ Three specialized indexers feed documents into the Knowledge Store:
 |---------|------|---------|---------|
 | **MemoryIndexer** | `src/core/rag/memory-indexer.ts` | `workflow-graph/memories/` directory | `reindex_knowledge` / `write_memory` tools |
 | **DocsIndexer** | `src/core/rag/docs-indexer.ts` | Context7 cached documentation | `sync_stack_docs` tool |
-| **CaptureIndexer** | `src/core/rag/capture-indexer.ts` | Playwright web captures | `validate_task` tool |
+| **CaptureIndexer** | `src/core/rag/capture-indexer.ts` | Playwright web captures | `validate` tool |
 
 Each indexer:
 1. Reads source content

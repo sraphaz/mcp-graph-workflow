@@ -13,17 +13,17 @@ graph TB
     CMD["6 Commands<br/>init · list · serve · doctor · stats · index"]
   end
 
-  subgraph MCP["MCP Tool Layer (30 tools)"]
+  subgraph MCP["MCP Tool Layer (45 tools)"]
     direction LR
-    GRAPH_TOOLS["Graph & Nodes<br/>init · list · show · search<br/>add · update · delete · move · clone · edge"]
-    PLAN_TOOLS["Lifecycle & Planning<br/>import_prd · plan_sprint<br/>set_phase · analyze (24 modes)"]
+    GRAPH_TOOLS["Graph & Nodes<br/>init · list · show · search<br/>node · move · clone · edge"]
+    PLAN_TOOLS["Lifecycle & Planning<br/>import_prd · plan_sprint<br/>set_phase · analyze (48 modes)"]
     EXEC_TOOLS["Execution & Context<br/>next · context · rag_context<br/>dependencies · decompose"]
     MEM_TOOLS["Memories (CRUD)<br/>write · read · list · delete"]
-    VAL_TOOLS["Validation & Export<br/>validate_task · validate_ac<br/>snapshot · export · metrics"]
-    KNOW_TOOLS["Knowledge<br/>reindex_knowledge<br/>sync_stack_docs · list_skills"]
+    VAL_TOOLS["Validation & Export<br/>validate<br/>snapshot · export · metrics"]
+    KNOW_TOOLS["Knowledge<br/>reindex_knowledge<br/>sync_stack_docs · manage_skill"]
   end
 
-  subgraph API["REST API Layer (20 routers, 44+ endpoints)"]
+  subgraph API["REST API Layer (30 routers, 130+ endpoints)"]
     API_ROUTES["graph · nodes · edges · stats · search<br/>import · context · rag · knowledge<br/>integrations · skills · code-graph<br/>project · events · capture · insights<br/>benchmark · logs · folder · docs-cache"]
   end
 
@@ -121,7 +121,7 @@ graph TB
   CORE --> EVENTS
 
   CTX7 -.->|sync_stack_docs| RAG
-  PW -.->|validate_task| RAG
+  PW -.->|validate| RAG
 
   PARSER --> SS
   PARSER --> KS

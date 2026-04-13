@@ -10,6 +10,7 @@ import type { KnowledgeDocument, KnowledgeSourceType } from "../../schemas/knowl
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 import { getPhaseBoost, applyPhaseBoost } from "../rag/phase-metadata.js";
 import { PhaseBoostCache } from "../rag/phase-boost-cache.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
@@ -54,6 +55,7 @@ function rowToDoc(row: KnowledgeRow): KnowledgeDocument {
 /**
  * Compute SHA-256 hash of content for deduplication.
  */
+/** Compute SHA-256 hash of content for dedup. */
 export function contentHash(content: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
@@ -75,7 +77,7 @@ export class KnowledgeStore {
   insert(doc: InsertKnowledgeDoc): KnowledgeDocument {
     // Bug #054: reject oversized content to prevent SQLite bloat
     if (doc.content.length > KnowledgeStore.MAX_CONTENT_SIZE) {
-      throw new Error(`Content too large (${doc.content.length} chars, max ${KnowledgeStore.MAX_CONTENT_SIZE}). Chunk the content before indexing.`);
+      throw new McpGraphError(`Content too large (${doc.content.length} chars, max ${KnowledgeStore.MAX_CONTENT_SIZE}). Chunk the content before indexing.`);
     }
     const hash = contentHash(doc.content);
 

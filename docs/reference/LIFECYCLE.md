@@ -4,7 +4,7 @@
 
 ---
 
-## Pipeline v6.0 (Recomendado)
+## Pipeline v8.0 (Recomendado)
 
 O fluxo v6.0 reduz de 6 tool calls para 2 por task:
 
@@ -383,9 +383,9 @@ sequenceDiagram
 
 **Agents:**
 - **Playwright MCP** — Automação de browser
-- **mcp-graph** — `validate_task` wraps Playwright + auto-indexa conteúdo no Knowledge Store
+- **mcp-graph** — `validate` wraps Playwright + auto-indexa conteúdo no Knowledge Store
 
-**Tool `validate_task`:**
+**Tool `validate`:**
 - Captura página via Playwright (HTML, screenshot, accessibility tree)
 - Suporta **A/B comparison** com `compareUrl` (diff de conteúdo entre duas URLs)
 - **CSS selector scoping** para extração direcionada
@@ -398,7 +398,7 @@ sequenceDiagram
     participant MCP as mcp-graph
     participant PW as Playwright MCP
 
-    A->>MCP: validate_task(TASK-001, url="/login")
+    A->>MCP: validate(TASK-001, url="/login")
     MCP->>PW: browser_navigate("/login")
     PW-->>MCP: Page loaded
     MCP->>PW: browser_snapshot()
@@ -407,7 +407,7 @@ sequenceDiagram
     MCP-->>A: Validação OK + conteúdo indexado
 
     Note over A: A/B Testing (opcional)
-    A->>MCP: validate_task(TASK-001, url="/login-v2", compareUrl="/login-v1")
+    A->>MCP: validate(TASK-001, url="/login-v2", compareUrl="/login-v1")
     MCP-->>A: Diff report: +3 elementos, -1 campo
 
     A->>A: Gerar auth.spec.ts com seletores reais
@@ -866,7 +866,7 @@ sequenceDiagram
     end
 
     Note over U,PW: FASE 5: VALIDATE
-    A->>MCP: validate_task(TEST-001, url="/login")
+    A->>MCP: validate(TEST-001, url="/login")
     MCP->>PW: Captura + validação
     PW-->>MCP: Conteúdo capturado
     MCP-->>MCP: Index → Knowledge Store

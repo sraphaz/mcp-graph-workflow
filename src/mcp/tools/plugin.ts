@@ -9,6 +9,7 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { PluginStore } from "../../core/plugins/plugin-store.js";
 import { PluginRegistry } from "../../core/plugins/plugin-registry.js";
 import { logger } from "../../core/utils/logger.js";
+import { McpGraphError } from "../../core/utils/errors.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
 /* ------------------------------------------------------------------ */
@@ -31,12 +32,13 @@ interface InstallParams {
   config?: Record<string, unknown>;
 }
 
+/** Install a plugin by persisting its metadata to the plugin store. */
 export function handlePluginInstall(
   store: SqliteStore,
   params: InstallParams,
 ): { ok: boolean; name: string; status: string } {
   const project = store.getActiveProject();
-  if (!project) throw new Error("No active project");
+  if (!project) throw new McpGraphError("No active project");
 
   const pluginStore = new PluginStore(store.getDb());
   pluginStore.install({
@@ -52,12 +54,13 @@ export function handlePluginInstall(
   return { ok: true, name: params.name, status: "installed" };
 }
 
+/** Remove a plugin from both the persistent store and in-memory registry. */
 export function handlePluginRemove(
   store: SqliteStore,
   params: { name: string },
 ): { ok: boolean; removed: string } {
   const project = store.getActiveProject();
-  if (!project) throw new Error("No active project");
+  if (!project) throw new McpGraphError("No active project");
 
   const pluginStore = new PluginStore(store.getDb());
   pluginStore.remove(project.id, params.name);
@@ -72,12 +75,13 @@ export function handlePluginRemove(
   return { ok: true, removed: params.name };
 }
 
+/** Enable a previously installed plugin. */
 export function handlePluginEnable(
   store: SqliteStore,
   params: { name: string },
 ): { ok: boolean; status: string } {
   const project = store.getActiveProject();
-  if (!project) throw new Error("No active project");
+  if (!project) throw new McpGraphError("No active project");
 
   const pluginStore = new PluginStore(store.getDb());
   pluginStore.setEnabled(project.id, params.name, true);
@@ -89,12 +93,13 @@ export function handlePluginEnable(
   return { ok: true, status: "enabled" };
 }
 
+/** Disable a plugin without removing it. */
 export function handlePluginDisable(
   store: SqliteStore,
   params: { name: string },
 ): { ok: boolean; status: string } {
   const project = store.getActiveProject();
-  if (!project) throw new Error("No active project");
+  if (!project) throw new McpGraphError("No active project");
 
   const pluginStore = new PluginStore(store.getDb());
   pluginStore.setEnabled(project.id, params.name, false);
@@ -106,6 +111,7 @@ export function handlePluginDisable(
   return { ok: true, status: "disabled" };
 }
 
+/** List all installed plugins for the active project. */
 export function handlePluginList(
   store: SqliteStore,
 ): { ok: boolean; plugins: Array<{ name: string; version: string; enabled: boolean; path: string }> } {
@@ -126,6 +132,7 @@ export function handlePluginList(
   };
 }
 
+/** Retrieve detailed information about a specific installed plugin. */
 export function handlePluginInfo(
   store: SqliteStore,
   params: { name: string },
@@ -155,6 +162,7 @@ export function handlePluginInfo(
 /*  MCP Registration                                                   */
 /* ------------------------------------------------------------------ */
 
+/** Register the plugin MCP tool with all CRUD actions. */
 export function registerPlugin(server: McpServer, store: SqliteStore): void {
   server.tool(
     "plugin",

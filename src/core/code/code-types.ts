@@ -206,6 +206,7 @@ export interface IndexResult {
 
 // ── Helpers ───────────────────────────────────────────
 
+/** Determine risk level based on number of affected symbols. */
 export function calculateRiskLevel(affectedCount: number): RiskLevel {
   if (affectedCount > 15) return "high";
   if (affectedCount >= 5) return "medium";

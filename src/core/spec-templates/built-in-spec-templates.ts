@@ -205,10 +205,12 @@ export const BUILT_IN_SPEC_TEMPLATES: SpecTemplate[] = [
   implementationSpecTemplate,
 ];
 
+/** Look up a built-in spec template by name. */
 export function getSpecTemplate(name: string): SpecTemplate | undefined {
   return BUILT_IN_SPEC_TEMPLATES.find((t) => t.name === name);
 }
 
+/** List all built-in spec templates with summary metadata. */
 export function listSpecTemplates(): Array<{ name: string; phase: string; description: string; sectionCount: number }> {
   return BUILT_IN_SPEC_TEMPLATES.map((t) => ({
     name: t.name,

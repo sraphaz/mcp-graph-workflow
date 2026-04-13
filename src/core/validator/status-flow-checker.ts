@@ -7,6 +7,7 @@ import type { StatusFlowReport, StatusFlowViolation } from "../../schemas/valida
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { logger } from "../utils/logger.js";
 
+/** Validate done tasks went through proper status transitions. */
 export function checkStatusFlow(doc: GraphDocument): StatusFlowReport {
   const violations: StatusFlowViolation[] = [];
 

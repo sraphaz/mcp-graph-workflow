@@ -8,7 +8,7 @@ import { mcpText } from "../response-helpers.js";
 export function registerStartTask(server: McpServer, store: SqliteStore): void {
   server.tool(
     "start_task",
-    "Pipeline: find next task + load context + RAG + TDD hints + mark in_progress — all in 1 call. Replaces: next → context → rag_context → update_status(in_progress).",
+    "Pipeline: find next task + load context + RAG + TDD hints + mark in_progress — all in 1 call. Replaces: next → context → context(rag) → update_status(in_progress).",
     {
       nodeId: z.string().optional().describe("Specific task ID (or auto via next)"),
       contextDetail: z.enum(["summary", "standard", "deep"]).optional().describe("RAG detail tier (default: standard)"),
@@ -44,6 +44,7 @@ export function registerStartTask(server: McpServer, store: SqliteStore): void {
         context: result.context,
         ragContext: result.ragContext,
         startedAt: result.startedAt,
+        ...(result.harnessWarning ? { harnessWarning: result.harnessWarning } : {}),
       });
     },
   );

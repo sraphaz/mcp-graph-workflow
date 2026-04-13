@@ -112,6 +112,7 @@ interface SiebelParams {
 
 // ─── ANALYZE ─────────────────────────────────────────────────────────────────
 
+/** Handle Siebel analyze actions: impact, dependencies, circular, summary, diff, troubleshoot, refactor. */
 export async function handleSiebelAnalyze(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { analyzeMode: action, objectName, objectType, targetName, targetType, sifContent, targetSifContent, outputFormat, scriptContent, errorMessage, wsdlContent } = params;
 
@@ -293,6 +294,7 @@ export async function handleSiebelAnalyze(store: SqliteStore, params: SiebelPara
 
 // ─── COMPOSE ─────────────────────────────────────────────────────────────────
 
+/** Handle Siebel Composer automation: build_package, navigate, import, edit, publish, capture. */
 export async function handleSiebelCompose(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { composerAction: action, envName, sifPath, objectName, property, value, selector, timeout, sifContent, currentUser } = params;
 
@@ -369,6 +371,7 @@ export async function handleSiebelCompose(store: SqliteStore, params: SiebelPara
 
 // ─── ENV ─────────────────────────────────────────────────────────────────────
 
+/** Handle Siebel environment management: list, add, and remove environments. */
 export async function handleSiebelEnv(_store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { envAction: action, name, url, version, envType: type, composerUrl, restApiUrl } = params;
 
@@ -416,6 +419,7 @@ export async function handleSiebelEnv(_store: SqliteStore, params: SiebelParams)
 
 // ─── GENERATE ────────────────────────────────────────────────────────────────
 
+/** Handle Siebel SIF generation: prepare, finalize, scaffold, clone_adapt, generate_script, wsdl_to_sif, auto_wire. */
 export async function handleSiebelGenerate(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const {
     generateAction: action, description, objectTypes, basedOnProject, properties,
@@ -654,6 +658,7 @@ export async function handleSiebelGenerate(store: SqliteStore, params: SiebelPar
 
 // ─── IMPORT DOCS ─────────────────────────────────────────────────────────────
 
+/** Handle Siebel documentation import: index Swagger, WSDL, PDF, HTML, and Markdown into knowledge store. */
 export async function handleSiebelImportDocs(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { filePath, content, fileName, docType } = params;
 
@@ -750,6 +755,7 @@ export async function handleSiebelImportDocs(store: SqliteStore, params: SiebelP
 
 // ─── IMPORT SIF ──────────────────────────────────────────────────────────────
 
+/** Handle single or batch SIF file import with optional graph mapping. */
 export async function handleSiebelImportSif(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { filePath, content, fileName, directory, concurrency, mapToGraph } = params;
 
@@ -806,6 +812,7 @@ export async function handleSiebelImportSif(store: SqliteStore, params: SiebelPa
 
 // ─── SEARCH ──────────────────────────────────────────────────────────────────
 
+/** Search Siebel objects in the knowledge store by query and optional object type filter. */
 export async function handleSiebelSearch(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { query, objectType, limit } = params;
 
@@ -848,6 +855,7 @@ export async function handleSiebelSearch(store: SqliteStore, params: SiebelParam
 
 // ─── VALIDATE ────────────────────────────────────────────────────────────────
 
+/** Validate Siebel SIF content: naming conventions, security, performance, migration readiness, or code review. */
 export async function handleSiebelValidate(_store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { filePath, content, fileName, validateMode: mode, ruleSetName, checkDeps, checkCircular, prefix } = params;
 
@@ -1005,6 +1013,7 @@ export async function handleSiebelValidate(_store: SqliteStore, params: SiebelPa
 
 // ─── BATCH IMPORT SIF ────────────────────────────────────────────────────────
 
+/** Batch-import multiple SIF files from provided file array with optional graph mapping. */
 export async function handleSiebelBatchImportSif(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { files, mapToGraph } = params;
 

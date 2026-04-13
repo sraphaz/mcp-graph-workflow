@@ -62,6 +62,14 @@ export function registerFinishTask(server: McpServer, store: SqliteStore): void 
         response.decisionIndexed = true;
       }
 
+      if (result.harnessRegression) {
+        response.harnessRegression = result.harnessRegression;
+      }
+
+      if (result.ruleSuggestions.length > 0) {
+        response.ruleSuggestions = result.ruleSuggestions;
+      }
+
       // Run optional quality gates (advisory mode — never blocks)
       if (qualityGates && qualityGates.length > 0) {
         const gatesResult = runQualityGates(process.cwd(), qualityGates);

@@ -26,6 +26,7 @@ export interface MergeGraphResult {
  * - Edges referencing nodes that don't exist (locally or in the import) are SKIPPED as orphans.
  * - In dryRun mode, no data is written; only counts are returned.
  */
+/** Merge an exported graph into the local store (skip duplicates). */
 export function mergeGraph(
   store: SqliteStore,
   incoming: GraphDocument,

@@ -40,6 +40,7 @@ interface ArchiveRow {
 
 // ─── Save a new dream cycle ───
 
+/** Persist a new dream cycle result to the database. */
 export function saveDreamCycle(db: Database.Database, cycle: DreamCycleResult): void {
   const stmt = db.prepare(`
     INSERT INTO dream_cycles (id, status, config, result, started_at, completed_at, error_message)
@@ -59,6 +60,7 @@ export function saveDreamCycle(db: Database.Database, cycle: DreamCycleResult): 
 
 // ─── Update an existing dream cycle ───
 
+/** Update an existing dream cycle's status, result, and completion timestamp. */
 export function updateDreamCycle(db: Database.Database, cycle: DreamCycleResult): void {
   const stmt = db.prepare(`
     UPDATE dream_cycles
@@ -77,6 +79,7 @@ export function updateDreamCycle(db: Database.Database, cycle: DreamCycleResult)
 
 // ─── Get a single dream cycle by ID ───
 
+/** Retrieve a single dream cycle by its ID, or null if not found. */
 export function getDreamCycle(db: Database.Database, id: string): DreamCycleResult | null {
   const row = db.prepare("SELECT * FROM dream_cycles WHERE id = ?").get(id) as CycleRow | undefined;
   if (!row) return null;
@@ -85,6 +88,7 @@ export function getDreamCycle(db: Database.Database, id: string): DreamCycleResu
 
 // ─── List dream cycles (most recent first) ───
 
+/** List dream cycles ordered by most recent first, up to the given limit. */
 export function listDreamCycles(db: Database.Database, limit: number = 50): DreamCycleResult[] {
   const rows = db
     .prepare("SELECT * FROM dream_cycles ORDER BY started_at DESC LIMIT ?")
@@ -94,6 +98,7 @@ export function listDreamCycles(db: Database.Database, limit: number = 50): Drea
 
 // ─── Archive a document (soft-delete tracking) ───
 
+/** Archive a knowledge document that was pruned or merged during a dream cycle. */
 export function archiveDreamDoc(db: Database.Database, entry: DreamArchiveEntry): void {
   const stmt = db.prepare(`
     INSERT INTO dream_archive (id, original_doc_id, title, source_type, quality_score, reason, archived_at, cycle_id)
@@ -114,6 +119,7 @@ export function archiveDreamDoc(db: Database.Database, entry: DreamArchiveEntry)
 
 // ─── List archived docs for a cycle ───
 
+/** List all archived documents for a specific dream cycle. */
 export function listDreamArchive(db: Database.Database, cycleId: string): DreamArchiveEntry[] {
   const rows = db
     .prepare("SELECT * FROM dream_archive WHERE cycle_id = ? ORDER BY archived_at ASC")

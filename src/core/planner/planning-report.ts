@@ -8,6 +8,7 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { findNextTask } from "./next-task.js";
 import { calculateVelocity } from "./velocity.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
 import { logger } from "../utils/logger.js";
 
@@ -132,6 +133,21 @@ export function generatePlanningReport(
     overflow: overflow.length,
   });
 
+  // Harness context (non-blocking)
+  let harnessContext: { score: number; grade: string; weakDimensions: string[] } | null = null;
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      const breakdown = harness.breakdown as Record<string, { score: number }>;
+      const weakDimensions = Object.entries(breakdown)
+        .filter(([, info]) => info.score < 70)
+        .map(([dim]) => dim);
+      harnessContext = { score: harness.score, grade: harness.grade, weakDimensions };
+    }
+  } catch {
+    // non-blocking
+  }
+
   return {
     recommendedOrder: finalOrder,
     overflow,
@@ -145,6 +161,7 @@ export function generatePlanningReport(
       avgVelocity: velocity.overall.avgPointsPerSprint,
       suggestedCapacity,
     },
+    ...(harnessContext ? { harnessContext } : {}),
   };
 }
 

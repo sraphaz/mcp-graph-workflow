@@ -75,6 +75,7 @@ export function reciprocalRankFusion(
  * Multi-strategy knowledge search combining FTS, graph relations,
  * quality scoring, and recency.
  */
+/** Search knowledge using FTS, graph, entity, and semantic strategies. */
 export function multiStrategySearch(
   db: Database.Database,
   query: string,

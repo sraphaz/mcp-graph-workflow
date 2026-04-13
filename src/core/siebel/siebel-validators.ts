@@ -56,6 +56,7 @@ export interface SecurityValidationResult {
   readonly lgpdReport: LgpdReport;
 }
 
+/** Validate Siebel objects for security issues: sensitive fields, dangerous operations, visibility, and LGPD. */
 export function validateSecurity(objects: readonly SiebelObject[]): SecurityValidationResult {
   const sensitiveFields: SensitiveFieldHit[] = [];
   const dangerousOperations: DangerousOperation[] = [];
@@ -165,6 +166,7 @@ const INFINITE_LOOP_PATTERNS = [
   /for\s*\(\s*;\s*;\s*\)/i,
 ];
 
+/** Validate Siebel objects for performance issues: excessive fields, missing specs, loop patterns. */
 export function validatePerformance(objects: readonly SiebelObject[]): PerformanceValidationResult {
   const issues: PerformanceIssue[] = [];
 
@@ -280,6 +282,7 @@ const HARDCODED_PATTERNS = [
   /host\s*=\s*["'][^"']+["']/i,
 ];
 
+/** Assess migration readiness: unresolved dependencies, cycles, hardcoded values, and checklist. */
 export function validateMigrationReadiness(
   objects: readonly SiebelObject[],
   dependencies: readonly SiebelDependency[],

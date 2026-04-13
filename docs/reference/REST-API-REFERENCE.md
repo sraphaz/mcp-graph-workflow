@@ -1,6 +1,6 @@
 # REST API Reference
 
-> 25 routers, 128+ endpoints — all served from `mcp-graph serve`.
+> 30 routers, 130+ endpoints — all served from `mcp-graph serve`.
 
 ## Base URL
 

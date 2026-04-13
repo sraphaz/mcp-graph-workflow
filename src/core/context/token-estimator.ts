@@ -12,6 +12,7 @@
  * vs the old ceil(len/4) which had ~20% error.
  */
 
+/** Estimate BPE token count using word-boundary heuristics. */
 export function estimateTokens(text: string): number {
   if (!text) return 0;
 

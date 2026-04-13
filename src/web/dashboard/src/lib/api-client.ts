@@ -384,7 +384,7 @@ export const apiClient = {
       method: "POST",
       body: formData,
     }).then(async (res) => {
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? res.statusText);
+      if (!res.ok) throw new ApiError((await res.json().catch(() => ({}))).error ?? res.statusText, res.status);
       return res.json() as Promise<{ project: TranslationProject; files: TranslationProjectFile[] }>;
     });
   },
@@ -402,12 +402,12 @@ export const apiClient = {
     }),
   translationDownloadProject: async (projectId: string): Promise<Blob> => {
     const res = await fetch(`${BASE}/translation/projects/${projectId}/download`);
-    if (!res.ok) throw new Error("Download failed");
+    if (!res.ok) throw new ApiError("Download failed", res.status);
     return res.blob();
   },
   translationDownloadFile: async (projectId: string, fileId: string): Promise<Blob> => {
     const res = await fetch(`${BASE}/translation/projects/${projectId}/files/${fileId}/download`);
-    if (!res.ok) throw new Error("File download failed");
+    if (!res.ok) throw new ApiError("File download failed", res.status);
     return res.blob();
   },
   translationProjectSummary: (projectId: string) =>

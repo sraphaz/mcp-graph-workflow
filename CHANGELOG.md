@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.0] (2026-04-12)
+
+### BREAKING CHANGES
+
+* **Tool consolidation:** 21 individual tools merged into 5 unified action-based tools. Old tool names (`rag_context`, `context_compress`, `knowledge_stats`, `export_knowledge`, `knowledge_feedback`, `knowledge_prune`, `reindex_knowledge`, `davinci_analyze`, `davinci_build`, `davinci_convert`, `siebel_analyze`, `siebel_composer`, `siebel_env`, `siebel_generate_sif`, `siebel_import_docs`, `siebel_import_sif`, `siebel_search`, `siebel_validate`, `translate_code`, `analyze_translation`, `translation_jobs`) are removed. Use the unified tools with action parameters instead.
+
+### Features
+
+* **Spec-driven development platform:** 6 new MCP tools — `constitution`, `plugin`, `preset`, `spec`, `spec_sync`, `agent_format` — for structured project governance with living specs, plugins, and multi-agent format generation
+* **Auto-promote epics:** recursively promotes parent epic to `done` when all children complete (up to 10 levels)
+* **Cascade status propagation:** auto-marks `acceptance_criteria` and `subtask` children as `done`
+* **NLP engine quality:** unified tokenizer with built-in Porter/RSLP stemming (EN/PT), Levenshtein fuzzy search fallback, batch recency score lookups
+* **GraphRAG community summaries:** community detection table with FTS5 for knowledge consolidation
+* Migration v31 (community_summaries), v32 (plugins), v34 (spec_documents, versions, node_links)
+* 180+ new tests for spec-kit platform
+
+## [7.0.0] (2026-04-10)
+
+### BREAKING CHANGES
+
+* **Removed 6 deprecated tools:** `add-node`, `delete-node`, `update-node`, `list-skills`, `validate-ac`, `validate-task`. Use `node(action)`, `manage_skill(action: "list")`, `validate(action)` instead.
+
+### Features
+
+* **Unified gate system:** single gate engine replacing 2 sequential wrappers (-50% overhead per call)
+* **Graph health scanner:** new `graph_health` tool for comprehensive graph diagnostics
+* **Deterministic-first architecture:** 100% of tools operate without AI/LLM dependency
+* **155 engineering skills:** expanded from 30 to 155 across audio, CV, IoT, NLP, ML, and more
+* **24 benchmark SLOs:** chaos, RAG, DX benchmarks — all passing
+* **Server-Sent Events:** real-time dashboard updates via SSE endpoint
+* **Safe path utilities:** centralized path traversal prevention
+* Migration v30: schema cleanup + FTS rebuild
+* 5,552 tests across 514 files, zero regressions
+
 ## [6.3.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v6.3.0...mcp-graph-v6.3.1) (2026-04-06)
 
 
@@ -959,6 +993,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Testes E2E de performance dos filtros do Graph tab (`graph-filters-perf.spec.ts`)
 - GitNexus auto-analyze on startup (detecta `.git/`, indexa codebase, inicia serve)
 - Configuração `gitnexusAutoStart` e variável de ambiente `GITNEXUS_AUTO_START`
+- **Harnessability Score** — composite agent-readiness metric: type coverage (30%), test coverage (30%), architecture fitness (20%), docs coverage (20%). Grade scale A–D. Run via `npm run harness:scan`. Full guide: [docs/guides/HARNESS-ENGINEERING.md](docs/guides/HARNESS-ENGINEERING.md). Based on "Harness Engineering for Coding Agent Users" (Böckeler, Thoughtworks 2026).
 
 ### Changed
 - MCP tools consolidados de 31 → 26 (edge, snapshot, export como multi-action)

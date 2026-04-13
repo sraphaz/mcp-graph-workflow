@@ -25,6 +25,7 @@ function escapeCsv(value: string): string {
   return value;
 }
 
+/** Export a graph document to CSV format with optional status/type filters. */
 export function graphToCsv(
   doc: GraphDocument,
   options?: CsvExportOptions,

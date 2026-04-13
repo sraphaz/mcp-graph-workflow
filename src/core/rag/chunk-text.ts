@@ -130,6 +130,7 @@ function hardSplit(text: string, maxTokens: number, overlapTokens: number): stri
  * Content-type-aware chunking strategy.
  * Selects chunk size and splitting strategy based on source type.
  */
+/** Chunk text using content-type-aware splitting strategy. */
 export function smartChunk(text: string, contentType: string, options?: ChunkOptions): TextChunk[] {
   const trimmed = text.trim();
   if (!trimmed) return [];

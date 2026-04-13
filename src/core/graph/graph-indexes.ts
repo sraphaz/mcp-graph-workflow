@@ -1,5 +1,6 @@
 import type { GraphNode, GraphEdge, GraphIndexes } from "./graph-types.js";
 
+/** Build lookup indexes (by-id, children-by-parent, incoming/outgoing edges) for fast graph traversal. */
 export function buildIndexes(nodes: GraphNode[], edges: GraphEdge[]): GraphIndexes {
   const byId: Record<string, number> = {};
   const childrenByParent: Record<string, string[]> = {};

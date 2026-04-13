@@ -109,6 +109,7 @@ export class TfIdfIndex {
  * Build a TF-IDF index from search result nodes and rerank them.
  * Two-stage: FTS5 candidates → TF-IDF reranking.
  */
+/** Build a TF-IDF index from candidates and rerank by query. */
 export function rerankWithTfIdf(
   candidates: Array<{ id: string; text: string }>,
   query: string,

@@ -75,6 +75,7 @@ function estimateFromTestType(testType: "unit" | "integration" | "e2e"): number 
  * Decompose a task into subtasks based on its acceptance criteria.
  * Returns null if node not found or has no AC.
  */
+/** Decompose a task into subtasks based on acceptance criteria. */
 export function smartDecompose(
   store: SqliteStore,
   nodeId: string,

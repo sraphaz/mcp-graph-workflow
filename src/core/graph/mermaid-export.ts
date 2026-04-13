@@ -23,6 +23,7 @@ function escapeMermaid(text: string): string {
 
 const REDUNDANT_EDGE_TYPES = new Set(["child_of"]);
 
+/** Filter graph nodes by status, type, and/or root scope before Mermaid export. */
 export function filterNodes(
   nodes: GraphNode[],
   options?: MermaidExportOptions,
@@ -181,6 +182,7 @@ function buildStateDiagram(nodes: GraphNode[], _edges: GraphEdge[]): string {
   return lines.join("\n");
 }
 
+/** Convert graph nodes and edges into a Mermaid flowchart diagram string. */
 export function graphToMermaid(
   nodes: GraphNode[],
   edges: GraphEdge[],

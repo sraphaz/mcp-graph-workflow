@@ -6,6 +6,7 @@
 import type Database from "better-sqlite3";
 import { createHash } from "crypto";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 
 function generateId(): string {
   return `spec_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -78,13 +79,13 @@ export class SpecStore {
     logger.info("Spec document registered", { id, name: params.name });
 
     const result = this.get(id);
-    if (!result) throw new Error(`Failed to retrieve spec document after register: ${id}`);
+    if (!result) throw new McpGraphError(`Failed to retrieve spec document after register: ${id}`);
     return result;
   }
 
   update(specId: string, newContent: string, diffSummary: string): void {
     const current = this.get(specId);
-    if (!current) throw new Error(`Spec not found: ${specId}`);
+    if (!current) throw new McpGraphError(`Spec not found: ${specId}`);
 
     const now = new Date().toISOString();
     const hash = contentHash(newContent);

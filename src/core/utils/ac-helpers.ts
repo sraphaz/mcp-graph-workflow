@@ -28,6 +28,7 @@ function ensureAcIndex(doc: GraphDocument): void {
   }
 }
 
+/** Retrieve acceptance criteria texts for a node, falling back to parent AC nodes. */
 export function getNodeAcTexts(doc: GraphDocument, nodeId: string): string[] {
   ensureAcIndex(doc);
   const node = _nodeMap.get(nodeId);

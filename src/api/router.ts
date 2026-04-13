@@ -20,6 +20,7 @@ import { createCodeGraphRouter } from "./routes/code-graph.js";
 import { createRagRouter } from "./routes/rag.js";
 import { createKnowledgeRouter } from "./routes/knowledge.js";
 import { createBenchmarkRouter } from "./routes/benchmark.js";
+import { createHarnessRouter } from "./routes/harness.js";
 import { createLogsRouter } from "./routes/logs.js";
 import { createJourneyRouter } from "./routes/journey.js";
 import { createFolderRouter } from "./routes/folder.js";
@@ -79,6 +80,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/rag", createRagRouter(storeRef));
   router.use("/knowledge", createKnowledgeRouter(storeRef));
   router.use("/benchmark", createBenchmarkRouter(storeRef));
+  router.use("/harness", createHarnessRouter(storeRef));
   router.use("/siebel", createSiebelRouter(storeRef, getBasePath));
   router.use("/logs", createLogsRouter());
   router.use("/journey", createJourneyRouter(storeRef, getBasePath));

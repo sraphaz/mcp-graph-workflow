@@ -13,6 +13,7 @@ import Database from "better-sqlite3";
 import { STORE_DIR, DB_FILE, GLOBAL_DB_DIR } from "../utils/constants.js";
 import { configureDb, runMigrations } from "./migrations.js";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 
 export type StoreMode = "local" | "global" | "explicit";
 
@@ -45,6 +46,7 @@ export interface ResolveOptions {
  *
  * @throws {Error} If no DB can be found and createGlobal is false.
  */
+/** Resolve which store DB to use based on precedence rules. */
 export function resolveStorePath(options?: ResolveOptions): ResolvedStore {
   const cwd = options?.cwd ?? process.cwd();
   const globalDir = options?.globalDir ?? GLOBAL_DB_DIR;
@@ -106,7 +108,7 @@ export function resolveStorePath(options?: ResolveOptions): ResolvedStore {
     };
   }
 
-  throw new Error(
+  throw new McpGraphError(
     `No graph database found. Checked:\n` +
     `  local:  ${localDbPath}\n` +
     `  global: ${globalDbPath}\n` +

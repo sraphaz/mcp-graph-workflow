@@ -104,17 +104,17 @@ describe("checkListeningReadiness", () => {
 
   // ── Composite behavior ──
 
-  it("should have exactly 8 checks", () => {
+  it("should have exactly 9 checks", () => {
     const doc = makeDoc([{ type: "task", status: "done" }]);
     const report = checkListeningReadiness(doc);
-    expect(report.checks).toHaveLength(8);
+    expect(report.checks).toHaveLength(9);
   });
 
-  it("should have 3 required and 5 recommended checks", () => {
+  it("should have 3 required and 6 recommended checks", () => {
     const doc = makeDoc([{ type: "task", status: "done" }]);
     const report = checkListeningReadiness(doc);
     expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(3);
-    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
+    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(6);
   });
 
   it("should calculate score and grade", () => {

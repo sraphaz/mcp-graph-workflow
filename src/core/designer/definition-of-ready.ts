@@ -12,10 +12,12 @@ import { checkInterfaces } from "./interface-checker.js";
 import { assessTechRisks } from "./tech-risk-assessor.js";
 import { detectCycles } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
 const GRADE_ORDER: Record<AdrGrade, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 };
 
+/** Run DESIGN-to-PLAN gate checks on the graph. */
 export function checkDesignReadiness(doc: GraphDocument): DesignReadinessReport {
   const checks: DesignReadinessCheck[] = [];
 
@@ -139,6 +141,27 @@ export function checkDesignReadiness(doc: GraphDocument): DesignReadinessReport 
       : "Nenhum milestone definido",
     severity: "recommended",
   });
+
+  // 11. Harness score >= 55 (grade C+) — recommended
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    const harnessPass = harness ? harness.score >= 55 : true;
+    checks.push({
+      name: "harness_minimum",
+      passed: harnessPass,
+      details: harness
+        ? `Harness score: ${harness.score} (grade ${harness.grade}, meta: >= 55)`
+        : "Harness scan não disponível — check skippado",
+      severity: "recommended",
+    });
+  } catch {
+    checks.push({
+      name: "harness_minimum",
+      passed: true,
+      details: "Harness scan falhou — check skippado (non-blocking)",
+      severity: "recommended",
+    });
+  }
 
   // ── Scoring ──
   const totalChecks = checks.length;

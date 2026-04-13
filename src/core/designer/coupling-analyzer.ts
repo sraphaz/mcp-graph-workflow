@@ -16,6 +16,7 @@ function calculateDepth(nodeId: string, parentMap: Map<string, string | null | u
   return depth;
 }
 
+/** Compute fan-in, fan-out, and instability for all nodes. */
 export function analyzeCoupling(doc: GraphDocument): CouplingReport {
   const { nodes, edges } = doc;
 

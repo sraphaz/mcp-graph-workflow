@@ -162,7 +162,7 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
   },
   IMPLEMENT: {
     reminder: "Fase IMPLEMENT: TDD obrigatório — Red → Green → Refactor. Escreva o teste ANTES da implementação. Use `context` para token-efficiency.",
-    suggestedTools: ["next", "context", "update_status", "validate_task", "analyze"],
+    suggestedTools: ["next", "context", "update_status", "validate", "analyze"],
     principles: ["TDD Red→Green→Refactor", "Anti-one-shot", "Code detachment", "Decomposição atômica"],
     suggestedMcpAgents: [
       { name: "code-graph", action: "Impact analysis antes de editar, busca de contexto de symbols", tools: ["impact", "context", "search"] },
@@ -172,7 +172,7 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
   },
   VALIDATE: {
     reminder: "Fase VALIDATE: Valide tasks completadas com testes E2E (Playwright). Verifique critérios de aceitação.",
-    suggestedTools: ["validate_task", "metrics", "analyze", "list"],
+    suggestedTools: ["validate", "metrics", "analyze", "list"],
     principles: ["Validação automatizada", "Critérios de aceitação como contrato", "Zero tolerance para regressões", "AC quality como contrato", "Done integrity"],
     suggestedMcpAgents: [
       { name: "code-graph", action: "Verificar impacto das mudanças nos symbols afetados", tools: ["impact", "search"] },
@@ -215,6 +215,7 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
   },
 };
 
+/** Get reminder, tools, and principles for a lifecycle phase. */
 export function getPhaseGuidance(phase: LifecyclePhase): PhaseGuidance {
   return GUIDANCE[phase];
 }
@@ -374,10 +375,10 @@ const PHASE_RECOMMENDED_TOOLS: Record<LifecyclePhase, Set<string>> = {
   PLAN: new Set(["plan_sprint", "analyze", "sync_stack_docs", "decompose", "node", "edge"]),
   IMPLEMENT: new Set(["next", "context", "update_status", "node", "analyze", "write_memory", "validate", "validate_task", "edge"]),
   VALIDATE: new Set(["validate", "analyze", "update_status", "validate_task"]),
-  REVIEW: new Set(["analyze", "export", "metrics", "validate_task"]),
-  HANDOFF: new Set(["export", "snapshot", "write_memory", "validate_task"]),
+  REVIEW: new Set(["analyze", "export", "metrics", "validate", "validate_task"]),
+  HANDOFF: new Set(["export", "snapshot", "write_memory", "validate", "validate_task"]),
   DEPLOY: new Set(["export", "snapshot", "analyze", "metrics", "write_memory"]),
-  LISTENING: new Set(["import_prd", "node", "analyze", "manage_skill", "list_skills", "validate_task"]),
+  LISTENING: new Set(["import_prd", "node", "analyze", "manage_skill", "validate_task"]),
 };
 
 /** Tools exempt from phase gating — includes bootstrap tools + read-only operations. */
@@ -393,6 +394,7 @@ const PHASE_EXEMPT_TOOLS = new Set([
  * Check if a tool is allowed in the current phase.
  * Returns warnings with severity based on strictness mode.
  */
+/** Check if a tool is allowed in the current phase. */
 export function checkToolGate(
   doc: GraphDocument,
   phase: LifecyclePhase,
@@ -515,6 +517,7 @@ export interface PrerequisiteRule {
   description: string;
 }
 
+/** Prerequisite rules keyed by lifecycle phase. */
 export const PHASE_PREREQUISITES: Record<LifecyclePhase, PrerequisiteRule[]> = {
   ANALYZE: [],
   DESIGN: [

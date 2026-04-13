@@ -126,6 +126,7 @@ function renderJson(_agent: string, ctx: AgentContext): string {
   }, null, 2);
 }
 
+/** Render context-aware agent instructions in the specified output format. */
 export function generateAgentInstructions(
   agentName: string,
   format: AgentFormat,
@@ -139,10 +140,12 @@ export function generateAgentInstructions(
   }
 }
 
+/** List all supported output formats with their extensions and descriptions. */
 export function listFormats(): FormatDef[] {
   return [...FORMATS];
 }
 
+/** List all supported AI agent definitions with their default formats. */
 export function listAgents(): AgentDef[] {
   return [...AGENTS];
 }

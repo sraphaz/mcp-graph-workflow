@@ -227,6 +227,7 @@ function findNodeByRef(nodes: GraphNode[], ref: string, excludeId: string): Grap
   return undefined;
 }
 
+/** Convert parsed PRD extraction results into graph nodes and edges. */
 export function convertToGraph(
   extraction: ExtractionResult,
   sourceFile: string,

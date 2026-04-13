@@ -51,8 +51,8 @@ src/
     search/          # fts-search, tfidf, tokenizer
     store/           # sqlite-store, migrations, knowledge-store
     utils/           # errors, fs, id, logger, time
-  api/               # Express REST API — 19 routers, 59 endpoints
-  mcp/tools/         # MCP tool wrappers (53 active tools)
+  api/               # Express REST API — 30 routers, 130+ endpoints
+  mcp/tools/         # MCP tool wrappers (45 active tools)
   schemas/           # Zod schemas (node, edge, graph, knowledge)
   web/dashboard/     # React + Tailwind + React Flow dashboard
 ```
@@ -62,7 +62,7 @@ src/
 | Capability | Key Modules | Docs |
 |------------|-------------|------|
 | PRD Import | parser/, importer/ | — |
-| 53 MCP Tools | mcp/tools/ | [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) |
+| 45 MCP Tools | mcp/tools/ | [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) |
 | 19 REST API Routers | api/routes/ | [REST API Reference](docs/reference/REST-API-REFERENCE.md) |
 | Knowledge Store + RAG | store/knowledge-store, rag/ | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) |
 | Tiered Context Compression | context/ | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) |
@@ -153,6 +153,25 @@ Before marking any task as done, self-review against:
 - [ ] Error handling includes typed errors + stack trace preservation?
 - [ ] No dead code, no commented-out code, no TODO without a linked issue?
 - [ ] Build + type check + test suite + linter all pass?
+
+### Harnessability Score
+
+The project tracks **harnessability** as a composite agent-readiness metric across 7 dimensions:
+
+| Dimension | Weight | What it measures |
+|-----------|--------|-----------------|
+| Type coverage | 25% | % of files without `any` usage |
+| Test coverage | 25% | Structural module→test file match (not % lines) |
+| Architecture fitness | 15% | 3 fitness functions: dependency direction, no cycles, barrel export integrity |
+| Docs coverage | 15% | CLAUDE.md, README, rules/, docs/ presence |
+| Naming clarity | 10% | Descriptive names (no generic data/result/temp/val) |
+| Error handling | 5% | Typed errors, no swallowed catches, no console.error |
+| Context density | 5% | JSDoc coverage on exported functions |
+
+**Run:** `npm run harness:scan` or `analyze(mode: "harness_scan")` — score (0–100) and grade (A ≥85 / B ≥70 / C ≥55 / D <55).
+**Help:** `help(topic: "harness")` — full reference with daily workflow per phase.
+**Full guide:** [docs/guides/HARNESS-ENGINEERING.md](docs/guides/HARNESS-ENGINEERING.md)
+**Daily workflow:** Run `analyze(mode: "harness_scan")` at the start of each phase. `start_task` shows warnings if score < 70, `finish_task` detects regressions > 5pts.
 
 ## Critical Conventions
 

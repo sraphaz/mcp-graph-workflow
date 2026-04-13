@@ -214,6 +214,7 @@ const PA_TEMPLATES: Record<string, PluginTemplate> = {
 
 // ── Public API ────────────────────────────────────────────────────────
 
+/** Look up a plugin template by type and SDK (PingFederate or PingAccess). */
 export function getTemplate(
   pluginType: string,
   sdk: "pingfederate" | "pingaccess",
@@ -224,6 +225,7 @@ export function getTemplate(
   return PF_TEMPLATES[pluginType];
 }
 
+/** List all available plugin templates for the specified SDK. */
 export function listTemplates(
   sdk: "pingfederate" | "pingaccess",
 ): PluginTemplate[] {
@@ -233,6 +235,7 @@ export function listTemplates(
   return Object.values(PF_TEMPLATES);
 }
 
+/** Render a plugin template into complete Java source code using the given context. */
 export function renderTemplate(
   template: PluginTemplate,
   context: TemplateContext,

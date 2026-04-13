@@ -39,6 +39,7 @@ function sectionCountToGrade(count: number): AdrGrade {
 
 const GRADE_ORDER: Record<AdrGrade, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 };
 
+/** Validate decision nodes against the ADR pattern. */
 export function validateAdrs(doc: GraphDocument): AdrReport {
   const decisionNodes = doc.nodes.filter((n) => n.type === "decision");
 

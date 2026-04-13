@@ -28,6 +28,7 @@ const LspTab = lazy(() => import("@/components/tabs/lsp-tab").then((m) => ({ def
 const LanguagesTab = lazy(() => import("@/components/tabs/languages-tab").then((m) => ({ default: m.LanguagesTab })));
 const DocsTab = lazy(() => import("@/components/tabs/docs-tab").then((m) => ({ default: m.DocsTab })));
 const DavinciTab = lazy(() => import("@/components/davinci/davinci-tab").then((m) => ({ default: m.DavinciTab })));
+const HarnessTab = lazy(() => import("@/components/tabs/harness-tab").then((m) => ({ default: m.HarnessTab })));
 
 const TAB_LABELS: Record<TabId, string> = {
   graph: "Graph",
@@ -46,6 +47,7 @@ const TAB_LABELS: Record<TabId, string> = {
   davinci: "DaVinci",
   docs: "Docs",
   logs: "Logs",
+  harness: "Harness",
 };
 
 class ErrorBoundary extends React.Component<
@@ -195,6 +197,7 @@ function AppContent(): React.JSX.Element {
                   {activeTab === "languages" && <LanguagesTab />}
                   {activeTab === "davinci" && <DavinciTab />}
                   {activeTab === "docs" && <DocsTab />}
+                  {activeTab === "harness" && <HarnessTab />}
                 </Suspense>
               </ErrorBoundary>
             )}

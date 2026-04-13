@@ -76,12 +76,14 @@ const METADATA_PATTERNS = [
   /^\*\*(?:Depends?\s+on|Depende\s+de)\s*:/i,
 ];
 
+/** Check whether a line matches PRD metadata patterns (size, priority, tags, depends). */
 export function isMetadataLine(text: string): boolean {
   return METADATA_PATTERNS.some((p) => p.test(text));
 }
 
 const CHECKBOX_PATTERN = /^\[[ x]\]\s/i;
 
+/** Classify a text line into a PRD block type (task, AC, risk, etc.) with confidence score. */
 export function classifyText(text: string): { type: BlockType; confidence: number } {
   // Order matters: more specific checks first
   if (CHECKBOX_PATTERN.test(text)) return { type: "acceptance_criteria", confidence: 0.9 };
@@ -93,6 +95,7 @@ export function classifyText(text: string): { type: BlockType; confidence: numbe
   return { type: "unknown", confidence: 0.3 };
 }
 
+/** Classify a section heading into a block type using title keywords and heading level. */
 export function classifySectionTitle(title: string, level: number): { type: BlockType; confidence: number } {
   const lower = title.toLowerCase();
 
@@ -159,6 +162,7 @@ function parseNumberedItems(body: string, startLine: number): ClassifiedItem[] {
   return items;
 }
 
+/** Classify an entire PRD section (title + body) and extract typed child items. */
 export function classifySection(
   title: string,
   body: string,
@@ -196,6 +200,7 @@ export function classifySection(
   };
 }
 
+/** Classify a markdown table's content by inspecting its header row for known keywords. */
 export function classifyTableRows(tableBody: string): { type: BlockType; confidence: number } {
   const lower = tableBody.toLowerCase();
   const headerLine = lower.split("\n")[0] ?? "";

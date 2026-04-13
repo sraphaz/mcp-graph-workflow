@@ -6,7 +6,7 @@ Step-by-step guide for new users. For API reference, see [MCP-TOOLS-REFERENCE.md
 
 ## What is mcp-graph?
 
-**mcp-graph** is a local-first CLI tool that converts PRD (Product Requirements Document) text files into persistent execution graphs stored in SQLite. It provides 30 MCP tools, a knowledge pipeline with RAG, and a web dashboard — enabling structured, token-efficient agentic workflows for AI-assisted development.
+**mcp-graph** is a local-first CLI tool that converts PRD (Product Requirements Document) text files into persistent execution graphs stored in SQLite. It provides 45 MCP tools, a knowledge pipeline with RAG, and a web dashboard — enabling structured, token-efficient agentic workflows for AI-assisted development.
 
 No cloud, no Docker, no external infra. Everything runs locally on your machine.
 
@@ -45,7 +45,7 @@ Create `.vscode/mcp.json` in your project root:
 }
 ```
 
-Then open **Copilot Chat** in Agent Mode (`@workspace` or Ctrl+Shift+I) — the 30 MCP tools will be available automatically.
+Then open **Copilot Chat** in Agent Mode (`@workspace` or Ctrl+Shift+I) — the 45 MCP tools will be available automatically.
 
 #### Claude Code / Cursor / IntelliJ (JetBrains)
 
@@ -391,7 +391,7 @@ Activated automatically via `sync_stack_docs`. Fetches up-to-date docs for proje
 
 ### Playwright (Browser Testing)
 
-Requires installation: `npx playwright install`. Used by `validate_task` for visual validation.
+Requires installation: `npx playwright install`. Used by `validate` for visual validation.
 
 ---
 

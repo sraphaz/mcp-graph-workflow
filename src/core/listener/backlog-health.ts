@@ -17,6 +17,7 @@ const TECH_DEBT_SIMPLE_KEYWORDS = ["tech-debt", "refactor", "debt", "cleanup", "
 const FIX_PATTERN = /\b(?:hot|bug)?fix(?:es|ing)?\b/i;
 const STALE_THRESHOLD_DAYS = 30;
 
+/** Analyze backlog state, stale tasks, and tech debt indicators. */
 export function analyzeBacklogHealth(doc: GraphDocument): BacklogHealthReport {
   // Bug #072: include epics and requirements in backlog analysis, not just tasks
   const BACKLOG_TYPES = new Set([...TASK_TYPES, "epic", "requirement"]);

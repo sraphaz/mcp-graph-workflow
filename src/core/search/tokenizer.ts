@@ -170,6 +170,7 @@ function stem(word: string, language: "all" | "en" | "pt"): string {
  * - RAG pipeline: default (full processing)
  * - Stemmed search: `{ stemming: true }`
  */
+/** Normalize and tokenize text with configurable options. */
 export function tokenize(text: string, options?: TokenizeOptions): string[] {
   const opts = {
     stopwords: options?.stopwords ?? true,

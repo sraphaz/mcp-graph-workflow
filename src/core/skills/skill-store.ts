@@ -49,6 +49,7 @@ function rowToCustomSkill(row: CustomSkillRow): CustomSkill {
 
 // ── Preferences ──────────────────────────────────────
 
+/** Toggle a skill's enabled/disabled preference for a project. */
 export function setSkillEnabled(db: Database.Database, projectId: string, skillName: string, enabled: boolean): void {
   logger.debug("skill-store:setEnabled", { projectId, skillName, enabled });
   db.prepare(`
@@ -58,6 +59,7 @@ export function setSkillEnabled(db: Database.Database, projectId: string, skillN
   `).run(projectId, skillName, enabled ? 1 : 0, now());
 }
 
+/** Retrieve all skill enabled/disabled preferences for a project as a Map. */
 export function getSkillPreferences(db: Database.Database, projectId: string): Map<string, boolean> {
   const rows = db.prepare(
     "SELECT skill_name, enabled FROM skill_preferences WHERE project_id = ?",
@@ -72,6 +74,7 @@ export function getSkillPreferences(db: Database.Database, projectId: string): M
 
 // ── Custom Skills CRUD ───────────────────────────────
 
+/** Create a new custom skill definition and persist it to the database. */
 export function createCustomSkill(db: Database.Database, projectId: string, data: CustomSkillInput): CustomSkill {
   const id = generateId("skill");
   const timestamp = now();
@@ -106,6 +109,7 @@ export function createCustomSkill(db: Database.Database, projectId: string, data
   };
 }
 
+/** Update an existing custom skill's fields by ID. */
 export function updateCustomSkill(
   db: Database.Database,
   projectId: string,
@@ -147,6 +151,7 @@ export function updateCustomSkill(
   });
 }
 
+/** Delete a custom skill by ID, throwing if not found. */
 export function deleteCustomSkill(db: Database.Database, projectId: string, id: string): void {
   logger.info("skill-store:delete", { projectId, id });
   const result = db.prepare(
@@ -158,6 +163,7 @@ export function deleteCustomSkill(db: Database.Database, projectId: string, id: 
   }
 }
 
+/** List all custom skills for a project ordered by creation date. */
 export function getCustomSkills(db: Database.Database, projectId: string): CustomSkill[] {
   const rows = db.prepare(
     "SELECT * FROM custom_skills WHERE project_id = ? ORDER BY created_at",
@@ -166,6 +172,7 @@ export function getCustomSkills(db: Database.Database, projectId: string): Custo
   return rows.map(rowToCustomSkill);
 }
 
+/** Look up a custom skill by its unique name within a project. */
 export function getCustomSkillByName(db: Database.Database, projectId: string, name: string): CustomSkill | undefined {
   const row = db.prepare(
     "SELECT * FROM custom_skills WHERE project_id = ? AND name = ?",

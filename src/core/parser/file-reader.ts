@@ -95,6 +95,7 @@ export async function readFileContent(
   };
 }
 
+/** Check whether a filename has a supported import extension (.md, .txt, .html, .pdf, .docx, etc.). */
 export function isSupportedFormat(filename: string): boolean {
   const ext = path.extname(filename).toLowerCase();
   return SUPPORTED_EXTENSIONS.has(ext);

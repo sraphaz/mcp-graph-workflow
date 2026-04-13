@@ -8,6 +8,7 @@ export interface ResolveOptions {
 
 // ── Core Resolution ───────────────────────────────────────────────────
 
+/** Resolve a single DaVinci variable into its Java expression and GUI/configure code. */
 export function resolveVariable(
   variable: DaVinciVariable,
   options: ResolveOptions = {},
@@ -24,6 +25,7 @@ export function resolveVariable(
   };
 }
 
+/** Resolve a list of DaVinci variables, deduplicating by kind and field name. */
 export function resolveVariables(variables: DaVinciVariable[]): ResolvedVariable[] {
   const seen = new Set<string>();
   const results: ResolvedVariable[] = [];
@@ -66,6 +68,7 @@ function buildJavaExpression(
 
 // ── GUI Field Code Generator ──────────────────────────────────────────
 
+/** Generate Java GUI field declaration and registration code for a DaVinci variable. */
 export function generateGuiFieldCode(variable: DaVinciVariable): string {
   if (variable.kind === "local") {
     return "";
@@ -82,6 +85,7 @@ export function generateGuiFieldCode(variable: DaVinciVariable): string {
 
 // ── Configure Code Generator ──────────────────────────────────────────
 
+/** Generate the Java configure() method assignment for a DaVinci variable. */
 export function generateConfigureCode(variable: DaVinciVariable): string {
   if (variable.kind === "local") {
     return "";

@@ -5,6 +5,7 @@ import { calculateVelocity } from "../../core/planner/velocity.js";
 import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { buildTaskContext } from "../../core/context/compact-context.js";
+import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
@@ -103,6 +104,13 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         knowledgeDocCount = ks.list({}).length;
       } catch { /* knowledge store may not exist */ }
 
+      // Harness score (non-blocking, cached)
+      let harnessScore: { score: number; grade: string } | null = null;
+      try {
+        const harness = runHarnessScanCached(process.cwd());
+        if (harness) harnessScore = { score: harness.score, grade: harness.grade };
+      } catch { /* non-blocking */ }
+
       logger.info("tool:metrics:stats:ok", { totalNodes: stats.totalNodes, totalEdges: stats.totalEdges });
       return mcpText({
         ok: true,
@@ -114,6 +122,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         knowledgeDocCount,
         contextEnrichment,
         contextReduction,
+        harnessScore,
       });
     },
   );

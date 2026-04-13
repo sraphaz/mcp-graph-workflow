@@ -48,7 +48,10 @@ export type GraphEventType =
   // Spec evolution events (spec-kit v8)
   | "spec:created"
   | "spec:updated"
-  | "spec:synced";
+  | "spec:synced"
+  // Harness events (v3)
+  | "harness:scan_completed"
+  | "harness:regression_detected";
 
 export interface GraphEvent {
   type: GraphEventType;
@@ -229,4 +232,14 @@ export interface DreamCycleCompletedEvent extends GraphEvent {
 export interface DreamCycleFailedEvent extends GraphEvent {
   type: "dream:cycle_failed";
   payload: { cycleId: string; errorMessage: string };
+}
+
+export interface HarnessScanCompletedEvent extends GraphEvent {
+  type: "harness:scan_completed";
+  payload: { score: number; grade: string; timestamp: string };
+}
+
+export interface HarnessRegressionEvent extends GraphEvent {
+  type: "harness:regression_detected";
+  payload: { before: number; after: number; delta: number };
 }

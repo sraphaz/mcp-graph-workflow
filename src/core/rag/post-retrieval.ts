@@ -136,6 +136,7 @@ export function stitchAdjacentChunks(
 /**
  * Full post-retrieval pipeline.
  */
+/** Run the full post-retrieval pipeline (dedup, rerank, stitch). */
 export function postRetrievalPipeline(options: PostRetrievalOptions): PostRetrievalResult {
   const { query, results, maxResults, chunkMeta, db, store } = options;
 

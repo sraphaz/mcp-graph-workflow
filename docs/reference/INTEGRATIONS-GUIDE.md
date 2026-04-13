@@ -131,7 +131,7 @@ Code Intelligence is exposed via REST at `/api/v1/code-graph/*`:
 
 ### Automatic MCP Enforcement
 
-**File:** `src/mcp/code-intelligence-wrapper.ts`
+**File:** `src/mcp/unified-gate.ts` (previously `src/mcp/code-intelligence-wrapper.ts` — merged into `unified-gate.ts` in v7.0)
 
 Code Intelligence can be automatically enforced during MCP tool execution. When enabled, a `_code_intelligence` block is appended to every tool response with:
 - Index health status (available, stale, symbol count)
@@ -145,7 +145,7 @@ Code Intelligence can be automatically enforced during MCP tool execution. When 
 
 ### Tool Prerequisites Enforcement
 
-**File:** `src/mcp/lifecycle-wrapper.ts` (pre-execution gate) + `src/core/store/tool-call-log.ts` (tracking)
+**File:** `src/mcp/unified-gate.ts` (previously `src/mcp/lifecycle-wrapper.ts` — merged into `unified-gate.ts` in v7.0) + `src/core/store/tool-call-log.ts` (tracking)
 
 Tracks MCP tool calls per node and enforces mandatory prerequisites before critical actions (e.g., `update_status(done)` requires `context` + `rag_context` + `analyze(implement_done)` to have been called first).
 

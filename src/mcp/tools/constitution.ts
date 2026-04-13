@@ -12,6 +12,7 @@ import { indexConstitution } from "../../core/rag/constitution-indexer.js";
 import { ConstitutionChecker } from "../../core/constitution/constitution-checker.js";
 import { generateId } from "../../core/utils/id.js";
 import { logger } from "../../core/utils/logger.js";
+import { McpGraphError } from "../../core/utils/errors.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import type { GraphNode } from "../../core/graph/graph-types.js";
 
@@ -57,6 +58,7 @@ interface CheckNodeResult {
 /*  Handlers (exported for testing)                                    */
 /* ------------------------------------------------------------------ */
 
+/** Create a project constitution node with governing principles and index into knowledge store. */
 export function handleConstitutionCreate(
   store: SqliteStore,
   params: CreateParams,
@@ -65,7 +67,7 @@ export function handleConstitutionCreate(
   const nodeId = generateId();
   const version = "1.0.0";
   const project = store.getActiveProject();
-  if (!project) throw new Error("No active project");
+  if (!project) throw new McpGraphError("No active project");
 
   const node: GraphNode = {
     id: nodeId,
@@ -102,13 +104,14 @@ export function handleConstitutionCreate(
   };
 }
 
+/** Update an existing constitution's principles and bump its version. */
 export function handleConstitutionUpdate(
   store: SqliteStore,
   params: UpdateParams,
 ): { ok: boolean; constitutionVersion: string; principlesIndexed: number } {
   const node = store.getNodeById(params.nodeId);
-  if (!node) throw new Error(`Node not found: ${params.nodeId}`);
-  if (node.type !== "constitution") throw new Error(`Node is not a constitution: ${params.nodeId}`);
+  if (!node) throw new McpGraphError(`Node not found: ${params.nodeId}`);
+  if (node.type !== "constitution") throw new McpGraphError(`Node is not a constitution: ${params.nodeId}`);
 
   const currentVersion = (node.metadata?.constitutionVersion as string) ?? "1.0.0";
   const parts = currentVersion.split(".").map(Number);
@@ -143,6 +146,7 @@ export function handleConstitutionUpdate(
   };
 }
 
+/** List all constitution principles grouped by category. */
 export function handleConstitutionList(
   store: SqliteStore,
 ): { ok: boolean; totalPrinciples: number; byCategory: Record<string, PrincipleInput[]> } {
@@ -171,6 +175,7 @@ export function handleConstitutionList(
   };
 }
 
+/** Check graph nodes against constitution principles and report violations. */
 export function handleConstitutionCheck(
   store: SqliteStore,
   params: CheckParams,
@@ -220,6 +225,7 @@ export function handleConstitutionCheck(
 /*  MCP Registration                                                   */
 /* ------------------------------------------------------------------ */
 
+/** Register the constitution MCP tool with create, update, list, and check actions. */
 export function registerConstitution(server: McpServer, store: SqliteStore): void {
   server.tool(
     "constitution",

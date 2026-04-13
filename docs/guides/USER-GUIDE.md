@@ -439,12 +439,12 @@ Analyzes the task and reports:
 
 ## 9. Browser Validation (Playwright)
 
-The `validate` tool (action: `task`) uses Playwright for browser-based validation. The legacy name `validate_task` also works but is deprecated.
+The `validate` tool (action: `task`) uses Playwright for browser-based validation.
 
 ### Single URL Validation
 
 ```
-validate_task { nodeId: "<ID>", url: "http://localhost:3000/login" }
+validate { nodeId: "<ID>", url: "http://localhost:3000/login" }
 ```
 
 Captures the page (HTML, screenshot, accessibility tree) and auto-indexes the content into the knowledge store.
@@ -452,7 +452,7 @@ Captures the page (HTML, screenshot, accessibility tree) and auto-indexes the co
 ### A/B Comparison
 
 ```
-validate_task { nodeId: "<ID>", url: "http://localhost:3000/login-v2", compareUrl: "http://localhost:3000/login-v1" }
+validate { nodeId: "<ID>", url: "http://localhost:3000/login-v2", compareUrl: "http://localhost:3000/login-v1" }
 ```
 
 Generates a diff report between two URLs — useful for comparing before/after states.
@@ -460,7 +460,7 @@ Generates a diff report between two URLs — useful for comparing before/after s
 ### CSS Selector Scoping
 
 ```
-validate_task { nodeId: "<ID>", url: "http://localhost:3000", selector: ".main-content" }
+validate { nodeId: "<ID>", url: "http://localhost:3000", selector: ".main-content" }
 ```
 
 Extracts only the targeted portion of the page.
@@ -532,5 +532,5 @@ For the complete list of 25 analyze modes, see the [Advanced Guide](./ADVANCED-G
 - **[Advanced Guide](./ADVANCED-GUIDE.md)** — Lifecycle methodology, all 25 analyze modes, RAG tuning, architecture, and extensibility
 - **[Getting Started](./GETTING-STARTED.md)** — Quick-start tutorial and cheat sheet
 - **[Dashboard Guide](./DASHBOARD-GUIDE.md)** — Complete visual walkthrough of all dashboard features
-- **[MCP Tools Reference](../reference/MCP-TOOLS-REFERENCE.md)** — Full reference for all 30 MCP tools
+- **[MCP Tools Reference](../reference/MCP-TOOLS-REFERENCE.md)** — Full reference for all 45 MCP tools
 - **[Knowledge Pipeline](../architecture/KNOWLEDGE-PIPELINE.md)** — Deep dive into RAG architecture

@@ -13,6 +13,7 @@ import { compressWithBm25 } from "./bm25-compressor.js";
 import { compressBullets } from "./rule-compressor.js";
 import { estimateTokens } from "./token-estimator.js";
 import { findCommunityDocs } from "../rag/graph-rag-strategy.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
@@ -141,9 +142,40 @@ export function assembleContext(
 
   try {
     const knowledgeStore = new KnowledgeStore(store.getDb());
+
+    // Primary search with original query
     const kResults = phase
       ? knowledgeStore.searchWithPhaseBoost(query, phase, maxKnowledgeChunks * 2)
       : knowledgeStore.search(query, maxKnowledgeChunks * 2);
+
+    // Harness-aware: supplementary search for weak dimensions (non-blocking, additive only)
+    try {
+      const harness = runHarnessScanCached(process.cwd());
+      if (harness && harness.score < 70 && kResults.length < maxKnowledgeChunks) {
+        const breakdown = harness.breakdown as Record<string, { score: number }>;
+        const boostTerms: Record<string, string> = {
+          tests: "testing coverage",
+          types: "typescript types",
+          errorHandling: "error handling",
+          contextDensity: "jsdoc documentation",
+        };
+        const weak = Object.entries(breakdown)
+          .filter(([, v]) => v.score < 50)
+          .map(([k]) => boostTerms[k])
+          .filter(Boolean);
+        if (weak.length > 0) {
+          const existingIds = new Set(kResults.map((r) => r.id));
+          const supplementary = knowledgeStore.search(weak.join(" "), 3);
+          for (const doc of supplementary) {
+            if (!existingIds.has(doc.id) && kResults.length < maxKnowledgeChunks * 2) {
+              kResults.push(doc);
+            }
+          }
+        }
+      }
+    } catch {
+      // non-blocking
+    }
 
     if (kResults.length > 0) {
       const chunks = kResults.map((r) => `[${r.sourceType}] ${r.title}: ${r.content}`);

@@ -3,6 +3,9 @@ import type { StoreRef } from "../../core/store/store-manager.js";
 import { detectBottlenecks } from "../../core/insights/bottleneck-detector.js";
 import { scanSkills, recommendSkills } from "../../core/insights/skill-recommender.js";
 import { calculateMetrics } from "../../core/insights/metrics-calculator.js";
+import { calculateDoraMetrics } from "../../core/insights/dora-metrics.js";
+import { captureFlowSnapshot, getCfdData } from "../../core/insights/flow-tracker.js";
+import { analyzeSprintHealth } from "../../core/planner/sprint-health.js";
 
 export function createInsightsRouter(storeRef: StoreRef, getBasePath: () => string): Router {
   const router = Router();
@@ -33,6 +36,43 @@ export function createInsightsRouter(storeRef: StoreRef, getBasePath: () => stri
       const doc = storeRef.current.toGraphDocument();
       const metrics = calculateMetrics(doc);
       res.json(metrics);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/dora", (_req, res, next) => {
+    try {
+      const metrics = calculateDoraMetrics(storeRef.current);
+      res.json(metrics);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/cfd", (req, res, next) => {
+    try {
+      const project = storeRef.current.getProject();
+      if (!project) {
+        res.json([]);
+        return;
+      }
+      const sprint = typeof req.query.sprint === "string" ? req.query.sprint : undefined;
+      // Capture today's snapshot before returning data
+      captureFlowSnapshot(storeRef.current, project.id, sprint);
+      const data = getCfdData(storeRef.current, project.id, { sprint });
+      res.json(data);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get("/sprint-health", (req, res, next) => {
+    try {
+      const doc = storeRef.current.toGraphDocument();
+      const sprint = typeof req.query.sprint === "string" ? req.query.sprint : undefined;
+      const report = analyzeSprintHealth(doc, sprint);
+      res.json(report);
     } catch (err) {
       next(err);
     }

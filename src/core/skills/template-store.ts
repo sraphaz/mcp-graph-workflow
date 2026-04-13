@@ -32,6 +32,7 @@ function rowToTemplate(row: TemplateRow): TaskTemplate {
   };
 }
 
+/** Create a new reusable task template with predefined subtasks. */
 export function createTaskTemplate(
   db: Database.Database,
   projectId: string,
@@ -68,6 +69,7 @@ export function createTaskTemplate(
   };
 }
 
+/** List all task templates for a project ordered by creation date. */
 export function listTaskTemplates(db: Database.Database, projectId: string): TaskTemplate[] {
   const rows = db.prepare(
     "SELECT * FROM task_templates WHERE project_id = ? ORDER BY created_at",
@@ -76,6 +78,7 @@ export function listTaskTemplates(db: Database.Database, projectId: string): Tas
   return rows.map(rowToTemplate);
 }
 
+/** Look up a task template by its unique name within a project. */
 export function getTaskTemplateByName(
   db: Database.Database,
   projectId: string,
@@ -88,6 +91,7 @@ export function getTaskTemplateByName(
   return row ? rowToTemplate(row) : undefined;
 }
 
+/** Delete a task template by ID, throwing if not found. */
 export function deleteTaskTemplate(db: Database.Database, projectId: string, id: string): void {
   logger.info("template-store:delete", { projectId, id });
   const result = db.prepare(

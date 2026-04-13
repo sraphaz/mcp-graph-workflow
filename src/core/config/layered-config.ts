@@ -44,6 +44,7 @@ function applyLayer<K extends keyof ConfigLayer>(
   }
 }
 
+/** Resolve config by merging defaults, project, local, and env layers. */
 export function resolveLayeredConfig(options: ResolveOptions): LayeredConfigResult {
   // Start with defaults
   const result: Record<string, ConfigField<unknown>> = {

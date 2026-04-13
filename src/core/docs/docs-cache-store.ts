@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 
 export interface CachedDoc {
   id: number;
@@ -60,7 +61,7 @@ export class DocsCacheStore {
     logger.info(`Docs cache upserted: ${doc.libName} (${doc.libId})`);
     const result = this.getDoc(doc.libId);
     if (!result) {
-      throw new Error(`Failed to retrieve doc after upsert: ${doc.libId}`);
+      throw new McpGraphError(`Failed to retrieve doc after upsert: ${doc.libId}`);
     }
     return result;
   }

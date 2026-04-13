@@ -26,6 +26,7 @@ export interface Bm25Config {
 }
 
 /** Default BM25 parameters, tuned for PRD/code content. */
+/** Default BM25 parameters tuned for PRD/code content. */
 export const BM25_DEFAULTS: Readonly<Bm25Config> = { k1: 1.8, b: 0.75 };
 
 /** Module-level config — can be overridden for domain tuning. */

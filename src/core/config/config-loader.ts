@@ -5,6 +5,7 @@ import { logger } from "../utils/logger.js";
 
 const CONFIG_FILENAME = "mcp-graph.config.json";
 
+/** Load project config from file with env var overrides. */
 export function loadConfig(basePath?: string): McpGraphConfig {
   const resolvedBase = basePath ?? process.cwd();
   const configPath = path.join(resolvedBase, CONFIG_FILENAME);

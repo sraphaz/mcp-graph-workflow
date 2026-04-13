@@ -33,6 +33,7 @@ import { CodeStore } from "../core/code/code-store.js";
 import { analyzeImpact } from "../core/code/graph-traversal.js";
 import type { CodeSymbol } from "../core/code/code-types.js";
 import { READ_ONLY_TOOLS } from "./tool-classification.js";
+import { runHarnessScanCached } from "../core/harness/harness-cache.js";
 import { execSync } from "child_process";
 
 // ── Re-exported types (backward compat for tests importing from old files) ──
@@ -48,6 +49,11 @@ export interface PhaseKnowledgeSnippet {
   phase?: string;
 }
 
+export interface LifecycleHarnessInfo {
+  score: number;
+  grade: string;
+}
+
 export interface LifecycleBlock {
   phase: LifecyclePhase;
   reminder: string;
@@ -58,6 +64,8 @@ export interface LifecycleBlock {
   suggestedSkills?: string[];
   recommendedSkills?: SkillRecommendation[];
   phaseKnowledge?: PhaseKnowledgeSnippet[];
+  harness?: LifecycleHarnessInfo | null;
+  harnessBaselineHint?: string;
   nextAction?: NextAction;
 }
 
@@ -108,6 +116,7 @@ const MAX_TOP_AFFECTED = 5;
 
 const _emittedStaleWarnings = new Set<string>();
 
+/** Clear the session-level stale index warning dedup set. */
 export function resetStaleWarningDedup(): void {
   _emittedStaleWarnings.clear();
 }
@@ -140,6 +149,7 @@ function getCurrentGitHash(basePath?: string): string | null {
 
 // ── Lifecycle block builder ───────────────────────────────
 
+/** Build the lifecycle metadata block from a graph document for appending to tool responses. */
 export function buildLifecycleBlock(doc: GraphDocument, options?: LifecycleBlockOptions): LifecycleBlock {
   const phase = detectCurrentPhase(doc, {
     hasSnapshots: options?.hasSnapshots,
@@ -186,9 +196,28 @@ export function buildLifecycleBlock(doc: GraphDocument, options?: LifecycleBlock
         return {};
       }
     })(),
+    ...(() => {
+      try {
+        const cached = runHarnessScanCached(process.cwd());
+        if (cached) {
+          return { harness: { score: cached.score, grade: cached.grade } };
+        }
+        // In ANALYZE phase without harness data, suggest establishing baseline
+        if (phase === "ANALYZE") {
+          return { harnessBaselineHint: "Run analyze(mode: 'harness_scan') to establish harness baseline for agent readiness tracking." };
+        }
+        return {};
+      } catch {
+        if (phase === "ANALYZE") {
+          return { harnessBaselineHint: "Run analyze(mode: 'harness_scan') to establish harness baseline for agent readiness tracking." };
+        }
+        return {};
+      }
+    })(),
   };
 }
 
+/** Append a _lifecycle block to a JSON response string. */
 export function appendLifecycleToResponse(responseJson: string, doc: GraphDocument): string {
   try {
     const parsed = JSON.parse(responseJson);
@@ -202,6 +231,7 @@ export function appendLifecycleToResponse(responseJson: string, doc: GraphDocume
 
 // ── Code Intelligence block builder ───────────────────────
 
+/** Check whether the code intelligence index is available and stale relative to current git hash. */
 export function detectStaleIndex(
   codeStore: CodeStore,
   projectId: string,
@@ -216,6 +246,7 @@ export function detectStaleIndex(
   return { available: true, stale, lastIndexed: meta.lastIndexed, symbolCount: meta.symbolCount };
 }
 
+/** Extract symbol name hints from tool arguments for code intelligence enrichment. */
 export function extractRelevantHints(toolName: string, args: unknown[]): string[] {
   const toolArgs = args[0] as Record<string, unknown> | undefined;
   if (!toolArgs) return [];
@@ -277,6 +308,7 @@ function buildPhaseEnrichment(
   return { type, relevantSymbols: symbolSummary, impactAnalysis };
 }
 
+/** Build the code intelligence enrichment block with index status and phase-aware impact analysis. */
 export function buildCodeIntelBlock(
   codeStore: CodeStore,
   projectId: string,
@@ -307,6 +339,7 @@ export function buildCodeIntelBlock(
   return { mode, indexStatus, enrichment, warnings };
 }
 
+/** Build an error response when a tool is blocked by the code intelligence gate. */
 export function buildBlockedResponseCodeIntel(toolName: string, warnings: CodeIntelWarning[]): ToolCallResult {
   return {
     content: [{ type: "text", text: JSON.stringify({ error: "code_intelligence_gate_blocked", tool: toolName, warnings, hint: "Run knowledge(action:reindex) to build the code index, or use set_phase({codeIntelligence:'advisory'}) to switch to advisory mode." }, null, 2) }],

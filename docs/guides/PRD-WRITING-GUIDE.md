@@ -126,7 +126,7 @@ Resultado: 1 node `task` + 3 nodes `subtask` com `parentId` apontando para a tas
 - Adicionar flag --json
 ```
 
-> Acceptance criteria detalhados podem ser adicionados via `update_node` apos o import, ou incluidos como bullets com verbos de acao.
+> Acceptance criteria detalhados podem ser adicionados via `node(action: "update")` apos o import, ou incluidos como bullets com verbos de acao.
 
 ### 4. Use `##` para epics e `###` para tasks
 
@@ -276,7 +276,7 @@ Depois de `import_prd`, refine o grafo com ferramentas MCP:
 
 1. **`list`** — Verificar nodes criados
 2. **`show <id>`** — Ver detalhes de cada node
-3. **`update_node <id>`** — Adicionar `acceptanceCriteria`, `tags`, `estimateMinutes`, `xpSize`
+3. **`node(action: "update") <id>`** — Adicionar `acceptanceCriteria`, `tags`, `estimateMinutes`, `xpSize`
 4. **`edge`** — Criar dependencias manuais
 5. **`decompose`** — Detectar tasks grandes para quebrar
 6. **`plan_sprint`** — Gerar plano de sprint

@@ -9,6 +9,7 @@ import { detectCycles } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
+import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { logger } from "../utils/logger.js";
 
 export interface DeployReadinessOptions {
@@ -16,6 +17,7 @@ export interface DeployReadinessOptions {
   knowledgeCount?: number;
 }
 
+/** Run HANDOFF-to-DEPLOY gate checks on the graph. */
 export function checkDeployReadiness(
   doc: GraphDocument,
   opts?: DeployReadinessOptions,
@@ -109,6 +111,22 @@ export function checkDeployReadiness(
       : "Nenhum conhecimento capturado no knowledge store",
     severity: "recommended",
   });
+
+  // Harness grade check — grade >= B (score >= 70) for deploy
+  try {
+    const harness = runHarnessScanCached(process.cwd());
+    if (harness) {
+      const harnessPass = harness.score >= 70;
+      checks.push({
+        name: "harness_deploy_grade",
+        passed: harnessPass,
+        details: `Harness grade: ${harness.grade} (score ${harness.score}, meta: >= B/70)`,
+        severity: "recommended",
+      });
+    }
+  } catch {
+    // non-blocking
+  }
 
   // ── Scoring ──
   const totalChecks = checks.length;
