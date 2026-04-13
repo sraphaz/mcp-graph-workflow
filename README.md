@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/graph-logo.jpg" alt="mcp-graph v8.0 — Autopilot for AI-driven development" width="700">
+  <img src="docs/images/graph-logo.jpg" alt="mcp-graph v9.1 — Autopilot for AI-driven development" width="700">
 </p>
 
 <h1 align="center">mcp-graph</h1>
@@ -36,7 +36,7 @@ A **local-first MCP server** that transforms product requirement documents (PRD)
 
 It guides every phase of development — from PRD to production — through a structured 9-phase lifecycle, measures your codebase's agent-readiness across 7 dimensions (Harness Engineering), and operates with **zero AI/LLM dependency** at runtime.
 
-**v8.0** brings **tool consolidation** (21 tools merged into 5 unified action-based tools), a **spec-driven development platform** (constitution, plugins, presets, living specs), **NLP engine quality** (stemming, fuzzy search), and **auto-promote epics** with cascade status. Built on v7.0's unified gate system, deterministic-first architecture, and **5,800+ tests**.
+**v9.1** brings **multi-terminal orchestration** (teamTask mode with lock-based task claiming, cross-terminal event propagation, orphan task reconciliation), building on v8.0's **tool consolidation** (21 tools merged into 5), **spec-driven development** (constitution, plugins, presets), and **NLP engine quality** (stemming, fuzzy search). Built on v7.0's unified gate system, deterministic-first architecture, and **6,400+ tests**.
 
 ## Quick Start
 
@@ -172,12 +172,29 @@ This means mcp-graph works offline, produces reproducible results, and never hal
 
 ### Spec-Driven Development
 
-v8.0 introduces a governance layer that treats project rules as code:
+v8.0 introduced a governance layer that treats project rules as code:
 
 - **Constitution** — governing principles indexed into RAG for automatic enforcement
 - **Plugins** — dynamic extensions with 8 hook points for custom behavior
 - **Presets** — workflow customization (4 built-in: `default`, `strict-tdd`, `agile-light`, `enterprise`)
 - **Living Specs** — structured templates per lifecycle phase with versioning and bidirectional graph sync
+
+---
+
+## v9.1 — What's New
+
+### Multi-Terminal Orchestrator (teamTask Mode)
+
+Enables multiple Claude Code terminals to work on the same graph without conflicts:
+
+| Feature | What it does |
+|---------|-------------|
+| **Task Claim Protocol** | `start_task` acquires lock + returns `leaseToken`, `finish_task` verifies ownership, `next` excludes locked tasks |
+| **Cross-Terminal Events** | `SqliteEventBridge` publishes/polls events via `event_queue` table (migration v38) |
+| **Orphan Task Reconciliation** | `detectOrphanTasks` finds backlog tasks whose code already exists (confidence scoring) |
+| **Agent Heartbeat** | Periodic lock renewal (30s) + heartbeat events prevent lock expiry |
+
+Activate: `set_phase({ teamTask: true })`. All features gated — backward compatible when off.
 
 ---
 
@@ -210,7 +227,7 @@ v8.0 introduces a governance layer that treats project rules as code:
 | `spec_sync` | Living specs with versioning and bidirectional graph sync |
 | `agent_format` | Multi-agent instruction generator (markdown, TOML, skill.md, JSON) |
 
-### Additional v8.0 Features
+### Additional v8.0+ Features
 
 - **Auto-promote epics** — recursively promotes parent epic to `done` when all children complete
 - **Cascade status** — auto-marks `acceptance_criteria` and `subtask` children as `done`
@@ -251,7 +268,7 @@ graph TD
 | **Analyze Modes** | 48 modes mapped to 9 lifecycle phases |
 | **Benchmark SLOs** | 24 SLOs (chaos, RAG, DX) — all passing |
 | **Deterministic Score** | 100% — zero AI/LLM dependency in operations |
-| **Pipeline Tools** | `start_task` + `finish_task` (v8.0) |
+| **Pipeline Tools** | `start_task` + `finish_task` (v8.0), teamTask mode (v9.1) |
 | **Agent State Machine** | `nextAction` in every response |
 | **PRD Import** | .md, .txt, .pdf, .html auto-parsed into task trees |
 | **Context Compression** | 70-85% token reduction (summary/standard/deep) |
@@ -260,7 +277,7 @@ graph TD
 | **DORA Metrics** | Deploy freq, lead time, CFR, MTTR |
 | **Cross-Project Learning** | Knowledge transfer between projects |
 | **Code-Aware Sync** | Graph <-> code drift detection |
-| **Spec-Driven Dev** | Constitution, plugins, presets, living specs (v8.0) |
+| **Spec-Driven Dev** | Constitution, plugins, presets, living specs (v8.0+) |
 | **Harnessability Score** | 7-dimension composite: types 25%, tests 25%, fitness 15%, docs 15%, naming 10%, errors 5%, context density 5% — `npm run harness:scan` |
 | **Dashboard** | 17 tabs: Graph, PRD, Kanban, Code Graph, Harness, Memories, Insights, and more |
 | **Local-First** | SQLite, zero external deps, cross-platform |
@@ -275,7 +292,7 @@ mcp-graph includes a fully local RAG (Retrieval-Augmented Generation) pipeline �
 |-----------|---------|
 | **Sources** | Memories, docs, web captures, code context, uploaded files |
 | **Storage** | SQLite FTS5 with SHA-256 dedup and content-addressable indexing |
-| **Embeddings** | TF-IDF local vectors + ONNX semantic embeddings (v8.x: all-MiniLM-L6-v2, 384-dim) |
+| **Embeddings** | TF-IDF local vectors + ONNX semantic embeddings (all-MiniLM-L6-v2, 384-dim) |
 | **Search** | BM25 ranking + phase-aware boosting + adaptive routing (simple/complex/graph) |
 | **Context Assembly** | 4 tiers: summary (~20 tokens), brief (~80), standard (~150), deep (~500+) — 70-85% token reduction |
 
@@ -407,7 +424,7 @@ Native systems: **Code Intelligence** (AST + symbol graph), **Native Memories** 
 
 ## Roadmap: Grade AAA+
 
-The v8.x roadmap targets **Grade AAA+** through three strategic pillars:
+The v9.x roadmap targets **Grade AAA+** through three strategic pillars:
 
 | Phase | Focus | Key Deliverables |
 |-------|-------|-----------------|
@@ -447,6 +464,7 @@ npm run test:coverage  # V8 coverage report
 | [Integrations](docs/reference/INTEGRATIONS-GUIDE.md) | Code Intelligence, Context7, Playwright |
 | [Test Guide](docs/guides/TEST-GUIDE.md) | Test pyramid and best practices |
 | [Migration v8.0](docs/MIGRATION-v8.md) | v7.x to v8.0 migration (21 tools consolidated) |
+| [Migration v9.0](docs/MIGRATION-v9.md) | v8.x to v9.x migration (multi-terminal orchestrator) |
 | [Grade AAA+ Roadmap](docs/prd/grade-aaa-plus-evolution.md) | ONNX embeddings, multi-agent, dashboard evolution |
 
 ## Support the Project

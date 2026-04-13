@@ -459,8 +459,8 @@ HARNESS ENGINEERING
 Fundo preto. Texto minimalista.
 
 ```
-mcp-graph v8.0
-Spec-Driven Development Platform
+mcp-graph v9.1
+Multi-Terminal Orchestrator + Spec-Driven Development
 
 6 epics · 22 tasks · 180+ tests · zero regressions
 Built with TDD, tracked in the graph

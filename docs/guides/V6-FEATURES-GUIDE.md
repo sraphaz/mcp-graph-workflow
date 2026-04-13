@@ -1,6 +1,6 @@
 # mcp-graph v6.0 Features Guide
 
-> **Historical:** This guide describes v6.0 features. The current version is v8.0. See README.md for the latest.
+> **Historical:** This guide describes v6.0 features. The current version is v9.1. See README.md for the latest.
 
 This guide covers all 8 features introduced in v6.0. Zero breaking changes — all v5.x tools continue working.
 

@@ -4,7 +4,7 @@
 
 ---
 
-## Pipeline v8.0 (Recomendado)
+## Pipeline v9.x (Recomendado)
 
 O fluxo v6.0 reduz de 6 tool calls para 2 por task:
 
