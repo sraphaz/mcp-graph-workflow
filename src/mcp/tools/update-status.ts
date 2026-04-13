@@ -10,6 +10,7 @@ import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { autoPromoteEpic, cascadeDownOnDone } from "../../core/utils/epic-promotion.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+import { extractAgentId } from "../agent-identity.js";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   backlog: ["ready", "in_progress", "blocked"],
@@ -29,11 +30,12 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
       force: z.boolean().optional().describe("Force status change, bypass transition validation"),
       rationale: z.string().optional().describe("AI rationale/learnings for the status change — required when transitioning to done"),
     },
-    async ({ id, status, force, rationale }) => {
+    async ({ id, status, force, rationale }, extra) => {
+      const agentId = extractAgentId(extra);
       const ids = Array.isArray(id) ? id : [id];
       const isBulk = ids.length > 1;
 
-      logger.debug("tool:update_status", { ids, status, bulk: isBulk, force });
+      logger.debug("tool:update_status", { ids, status, bulk: isBulk, force, agentId });
 
       if (isBulk) {
         // Validate transitions for bulk update
@@ -69,8 +71,8 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
         }
       }
 
-      // Single node update
-      const updated = store.updateNodeStatus(ids[0], status as NodeStatus);
+      // Single node update (propagate agent identity for audit trail)
+      const updated = store.updateNodeStatus(ids[0], status as NodeStatus, { agentId });
 
       if (!updated) {
         const err = new NodeNotFoundError(ids[0]);

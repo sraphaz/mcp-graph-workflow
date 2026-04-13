@@ -160,6 +160,15 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       // 9. Snapshot after import
       store.createSnapshot();
 
+      // 10. Rebuild community summaries (async, non-blocking)
+      try {
+        const { rebuildCommunities } = await import("../../core/rag/community-summarizer.js");
+        rebuildCommunities(store);
+        logger.debug("tool:import_prd:communities_rebuilt");
+      } catch {
+        // Non-blocking — community rebuild failure should not fail import
+      }
+
       logger.info("tool:import_prd:ok", {
         sourceFile: sourceFileName,
         nodesCreated: stats.nodesCreated,

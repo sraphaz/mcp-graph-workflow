@@ -360,7 +360,7 @@ function handlePrune(
 async function handleReindex(
   store: SqliteStore,
   basePath: string | undefined,
-  reindexSources: Array<"memory" | "serena" | "docs" | "skills" | "journey" | "embeddings" | "quality" | "relations" | "synthesis" | "entities" | "graph" | "code"> | undefined,
+  reindexSources: Array<"memory" | "serena" | "docs" | "skills" | "journey" | "embeddings" | "quality" | "relations" | "synthesis" | "entities" | "graph" | "code" | "community"> | undefined,
 ): Promise<ReturnType<typeof mcpText>> {
   invalidateRagCache();
   const projectPath = basePath ?? process.cwd();
@@ -457,6 +457,17 @@ async function handleReindex(
     }
   }
 
+  if (allSources || reindexSources?.includes("community")) {
+    try {
+      const { rebuildCommunities } = await import("../../core/rag/community-summarizer.js");
+      const summaries = rebuildCommunities(store);
+      results.community = { communitiesRebuilt: summaries.length };
+    } catch (err) {
+      logger.warn("community-summarizer:reindex-failed", { error: String(err) });
+      results.community = { error: "Community rebuild failed" };
+    }
+  }
+
   results.totalKnowledge = knowledgeStore.count();
 
   logger.info("tool:knowledge:reindex:ok", { totalKnowledge: results.totalKnowledge });
@@ -509,7 +520,7 @@ export function registerKnowledge(server: McpServer, store: SqliteStore): void {
       basePath: z.string().optional().describe("Project base path for finding memories (default: cwd, action=reindex)"),
       reindexSources: z.array(z.enum([
         "memory", "serena", "docs", "skills", "journey", "embeddings",
-        "quality", "relations", "synthesis", "entities", "graph", "code",
+        "quality", "relations", "synthesis", "entities", "graph", "code", "community",
       ])).optional().describe("Which sources to reindex (default: all, action=reindex)"),
     },
     async (params) => {

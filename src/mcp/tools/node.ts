@@ -17,6 +17,7 @@ import { logger } from "../../core/utils/logger.js";
 import { checkCircularity } from "../../core/utils/circularity.js";
 import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
 import { indexNodeAsKnowledge, removeNodeFromKnowledge } from "../../core/rag/node-indexer.js";
+import { extractAgentId } from "../agent-identity.js";
 
 export function registerNode(server: McpServer, store: SqliteStore): void {
   server.tool(
@@ -60,8 +61,9 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         metadata: z.record(z.string(), z.unknown()).optional(),
       })).max(50).optional().describe("Array of nodes for batch_add (max 50)"),
     },
-    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, testFiles, blocked, autoSequence, metadata, nodes }) => {
-      logger.debug("tool:node", { action, id, type, title });
+    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, testFiles, blocked, autoSequence, metadata, nodes }, extra) => {
+      const agentId = extractAgentId(extra);
+      logger.debug("tool:node", { action, id, type, title, agentId });
 
       if (action === "add") {
         if (!type || !title) {
@@ -97,7 +99,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
           updatedAt: timestamp,
         };
 
-        store.insertNode(node);
+        store.insertNode(node, { agentId });
 
         if (parentId) {
           store.insertEdge({
@@ -217,7 +219,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
           })();
         }
 
-        const updated = store.updateNode(id, fields);
+        const updated = store.updateNode(id, fields, { agentId });
         if (!updated) {
           const err = new NodeNotFoundError(id);
           logger.warn("tool:node:update:fail", { error: err.message });

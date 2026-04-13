@@ -564,16 +564,39 @@ export class SqliteStore {
     return rows.map(rowToNode);
   }
 
-  updateNodeStatus(id: string, status: NodeStatus): GraphNode | null {
+  updateNodeStatus(id: string, status: NodeStatus, options?: MutationOptions): GraphNode | null {
     const pid = this.ensureProject();
     const timestamp = now();
+
+    // Read old status for changelog before mutation
+    const oldNode = this.getNodeById(id);
+    if (!oldNode) return null;
+    const oldStatus = oldNode.status;
+
+    const agentId = options?.agentId ?? null;
+    const setClauses = ["status = ?", "updated_at = ?"];
+    const params: unknown[] = [status, timestamp];
+
+    if (agentId) {
+      setClauses.push("modified_by = ?");
+      params.push(agentId);
+    }
+
     const result = this.db
       .prepare(
-        "UPDATE nodes SET status = ?, updated_at = ? WHERE id = ? AND project_id = ?",
+        `UPDATE nodes SET ${setClauses.join(", ")} WHERE id = ? AND project_id = ?`,
       )
-      .run(status, timestamp, id, pid);
+      .run(...params, id, pid);
 
     if (result.changes === 0) return null;
+
+    // Record status change in changelog with agent identity
+    if (oldStatus !== status) {
+      this.db.prepare(
+        `INSERT INTO node_changelog (project_id, node_id, field, old_value, new_value, changed_at, agent_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ).run(pid, id, "status", oldStatus, status, timestamp, agentId);
+    }
+
     this._eventBus?.emitTyped("node:updated", { nodeId: id, fields: ["status"] });
     return this.getNodeById(id);
   }
@@ -750,16 +773,17 @@ export class SqliteStore {
     return this.getNodeById(id);
   }
 
-  getNodeHistory(nodeId: string): Array<{ field: string; oldValue: string | null; newValue: string | null; changedAt: string }> {
+  getNodeHistory(nodeId: string): Array<{ field: string; oldValue: string | null; newValue: string | null; changedAt: string; agentId: string | null }> {
     const pid = this.ensureProject();
     const rows = this.db.prepare(
-      `SELECT field, old_value, new_value, changed_at FROM node_changelog WHERE project_id = ? AND node_id = ? ORDER BY changed_at DESC, id DESC`,
-    ).all(pid, nodeId) as Array<{ field: string; old_value: string | null; new_value: string | null; changed_at: string }>;
+      `SELECT field, old_value, new_value, changed_at, agent_id FROM node_changelog WHERE project_id = ? AND node_id = ? ORDER BY changed_at DESC, id DESC`,
+    ).all(pid, nodeId) as Array<{ field: string; old_value: string | null; new_value: string | null; changed_at: string; agent_id: string | null }>;
     return rows.map((r) => ({
       field: r.field,
       oldValue: r.old_value,
       newValue: r.new_value,
       changedAt: r.changed_at,
+      agentId: r.agent_id,
     }));
   }
 
