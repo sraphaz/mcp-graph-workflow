@@ -82,8 +82,8 @@ export function computePPR(input: PprInput): PprResult {
   const seed = new Float64Array(n);
   const seedWeight = 1.0 / validSeeds.length;
   for (const seedId of validSeeds) {
-    const idx = nodeIndex.get(seedId)!;
-    seed[idx] = seedWeight;
+    const idx = nodeIndex.get(seedId);
+    if (idx !== undefined) seed[idx] = seedWeight;
   }
 
   // Initialize score vector = seed

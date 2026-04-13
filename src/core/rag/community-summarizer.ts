@@ -75,12 +75,12 @@ export function detectCommunities(nodes: GraphNode[], edges: GraphEdge[]): Commu
       // Count neighbor labels
       const labelCounts = new Map<string, number>();
       for (const neighborId of neighbors) {
-        const nLabel = labels.get(neighborId)!;
+        const nLabel = labels.get(neighborId) ?? neighborId;
         labelCounts.set(nLabel, (labelCounts.get(nLabel) ?? 0) + 1);
       }
 
       // Find most frequent label
-      let bestLabel = labels.get(node.id)!;
+      let bestLabel = labels.get(node.id) ?? node.id;
       let bestCount = 0;
       for (const [label, count] of labelCounts) {
         if (count > bestCount) {

@@ -93,7 +93,8 @@ export class TranslationPipeline {
         maxIterations: this.maxRepairIterations,
         repairFn: async (code: string, errors: ValidationError[]) => {
           const repairPrompt = this.buildRepairPrompt(code, errors);
-          return this.translateFn!(repairPrompt);
+          if (!this.translateFn) throw new Error("translateFn not set");
+          return this.translateFn(repairPrompt);
         },
         validator,
       });
