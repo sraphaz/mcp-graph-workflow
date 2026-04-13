@@ -118,6 +118,7 @@ function PrdBacklogFlow({ graph }: { graph: GraphDocument }): React.JSX.Element 
             edgeTypes={edgeTypes}
             nodesDraggable={false}
             nodesConnectable={false}
+            onlyRenderVisibleElements
             fitView
             minZoom={0.1}
             maxZoom={2}

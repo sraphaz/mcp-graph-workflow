@@ -139,6 +139,68 @@ describe("API /api/v1/graph", () => {
     });
   });
 
+  describe("GET /api/v1/graph/summary", () => {
+    it("should return lightweight node summaries", async () => {
+      const parent = makeNode({ title: "Epic A", type: "epic" });
+      const child = makeNode({ title: "Task A", parentId: parent.id });
+      ctx.store.insertNode(parent);
+      ctx.store.insertNode(child);
+
+      const res = await request(ctx.app).get("/api/v1/graph/summary");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(2);
+      expect(res.body.totalCount).toBe(2);
+
+      const epicSummary = res.body.nodes.find((n: { id: string }) => n.id === parent.id);
+      expect(epicSummary).toBeDefined();
+      expect(epicSummary.childCount).toBe(1);
+      expect(epicSummary.title).toBe("Epic A");
+      // Should NOT include heavy fields
+      expect(epicSummary.metadata).toBeUndefined();
+      expect(epicSummary.description).toBeUndefined();
+    });
+  });
+
+  describe("GET /api/v1/graph/nodes/:id", () => {
+    it("should return full node with edges and related nodes", async () => {
+      const nodeA = makeNode({ title: "Node A" });
+      const nodeB = makeNode({ title: "Node B" });
+      ctx.store.insertNode(nodeA);
+      ctx.store.insertNode(nodeB);
+      ctx.store.insertEdge(makeEdge(nodeA.id, nodeB.id));
+
+      const res = await request(ctx.app).get(`/api/v1/graph/nodes/${nodeA.id}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.node.id).toBe(nodeA.id);
+      expect(res.body.edges).toHaveLength(1);
+      expect(res.body.relatedNodes).toHaveLength(1);
+      expect(res.body.relatedNodes[0].id).toBe(nodeB.id);
+    });
+
+    it("should return 404 for unknown node", async () => {
+      const res = await request(ctx.app).get("/api/v1/graph/nodes/node_nonexistent");
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe("Node not found");
+    });
+
+    it("should return children", async () => {
+      const parent = makeNode({ title: "Parent" });
+      const child1 = makeNode({ title: "Child 1", parentId: parent.id });
+      const child2 = makeNode({ title: "Child 2", parentId: parent.id });
+      ctx.store.insertNode(parent);
+      ctx.store.insertNode(child1);
+      ctx.store.insertNode(child2);
+
+      const res = await request(ctx.app).get(`/api/v1/graph/nodes/${parent.id}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.children).toHaveLength(2);
+    });
+  });
+
   describe("GET /api/v1/graph/mermaid", () => {
     it("should return mermaid flowchart", async () => {
       const nodeA = makeNode({ title: "Task A" });

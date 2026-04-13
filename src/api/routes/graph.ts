@@ -91,6 +91,40 @@ export function createGraphRouter(storeRef: StoreRef): Router {
     }
   });
 
+  router.get("/nodes/:id", (req, res, next) => {
+    try {
+      const store = storeRef.current;
+      const node = store.getNodeById(req.params.id);
+      if (!node) {
+        res.status(404).json({ error: "Node not found" });
+        return;
+      }
+
+      const allEdges = store.getAllEdges();
+      const edges = allEdges.filter(
+        (e) => e.from === node.id || e.to === node.id,
+      );
+
+      const relatedIds = new Set(edges.flatMap((e) => [e.from, e.to]));
+      relatedIds.delete(node.id);
+      const relatedNodes = Array.from(relatedIds)
+        .map((id) => store.getNodeById(id))
+        .filter(Boolean)
+        .map((n) => ({ id: n!.id, title: n!.title, type: n!.type, status: n!.status }));
+
+      const children = store.getChildNodes(node.id);
+
+      res.json({
+        node,
+        edges,
+        relatedNodes,
+        children: children.map((c) => ({ id: c.id, title: c.title, type: c.type, status: c.status })),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/mermaid", (req, res, next) => {
     try {
       const doc = storeRef.current.toGraphDocument();

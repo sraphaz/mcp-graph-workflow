@@ -1,4 +1,5 @@
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useDeferredValue, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { GraphNode } from "@/lib/types";
 import { STATUS_COLORS, NODE_TYPE_COLORS } from "@/lib/constants";
 
@@ -21,11 +22,12 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
-    if (!search) return nodes;
-    const q = search.toLowerCase();
+    if (!deferredSearch) return nodes;
+    const q = deferredSearch.toLowerCase();
     return nodes.filter(
       (n) =>
         n.title.toLowerCase().includes(q) ||
@@ -33,7 +35,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
         n.status.toLowerCase().includes(q) ||
         (n.sprint || "").toLowerCase().includes(q),
     );
-  }, [nodes, search]);
+  }, [nodes, deferredSearch]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -46,6 +48,14 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const paged = useMemo(() => sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [sorted, page]);
+
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: paged.length,
+    getScrollElement: () => tableBodyRef.current?.parentElement ?? null,
+    estimateSize: () => 32,
+    overscan: 5,
+  });
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -93,7 +103,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tableBodyRef} style={{ position: "relative", height: `${rowVirtualizer.getTotalSize()}px` }}>
             {paged.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-3 py-4 text-center text-muted">
@@ -101,37 +111,48 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
                 </td>
               </tr>
             ) : (
-              paged.map((node) => (
-                <tr
-                  key={node.id}
-                  onClick={() => onNodeClick(node)}
-                  className="border-t border-edge hover:bg-surface-alt cursor-pointer"
-                >
-                  <td className="px-3 py-1.5 max-w-[200px] truncate">{node.title}</td>
-                  <td className="px-3 py-1.5">
-                    <span
-                      className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-                      style={{ background: `${NODE_TYPE_COLORS[node.type]}20`, color: NODE_TYPE_COLORS[node.type] }}
-                    >
-                      {node.type}
-                    </span>
-                  </td>
-                  <td className="px-3 py-1.5">
-                    <span
-                      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                      style={{ background: `${STATUS_COLORS[node.status]}20`, color: STATUS_COLORS[node.status] }}
-                    >
-                      {node.status.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="px-3 py-1.5 text-center">{node.priority}</td>
-                  <td className="px-3 py-1.5 text-center">{node.xpSize || "-"}</td>
-                  <td className="px-3 py-1.5">{node.sprint || "-"}</td>
-                  <td className="px-3 py-1.5 max-w-[150px] truncate text-muted">
-                    {node.parentId ? (parentMap.get(node.parentId) ?? "-") : "-"}
-                  </td>
-                </tr>
-              ))
+              rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const node = paged[virtualRow.index];
+                return (
+                  <tr
+                    key={node.id}
+                    onClick={() => onNodeClick(node)}
+                    className="border-t border-edge hover:bg-surface-alt cursor-pointer"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <td className="px-3 py-1.5 max-w-[200px] truncate">{node.title}</td>
+                    <td className="px-3 py-1.5">
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                        style={{ background: `${NODE_TYPE_COLORS[node.type]}20`, color: NODE_TYPE_COLORS[node.type] }}
+                      >
+                        {node.type}
+                      </span>
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                        style={{ background: `${STATUS_COLORS[node.status]}20`, color: STATUS_COLORS[node.status] }}
+                      >
+                        {node.status.replace("_", " ")}
+                      </span>
+                    </td>
+                    <td className="px-3 py-1.5 text-center">{node.priority}</td>
+                    <td className="px-3 py-1.5 text-center">{node.xpSize || "-"}</td>
+                    <td className="px-3 py-1.5">{node.sprint || "-"}</td>
+                    <td className="px-3 py-1.5 max-w-[150px] truncate text-muted">
+                      {node.parentId ? (parentMap.get(node.parentId) ?? "-") : "-"}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

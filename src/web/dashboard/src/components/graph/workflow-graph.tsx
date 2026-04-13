@@ -237,6 +237,7 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
               edgeTypes={edgeTypes}
               nodesDraggable={false}
               nodesConnectable={true}
+              onlyRenderVisibleElements
               fitView
               minZoom={0.1}
               maxZoom={2}
