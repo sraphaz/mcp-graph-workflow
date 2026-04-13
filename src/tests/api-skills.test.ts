@@ -45,7 +45,9 @@ describe("API /api/v1/skills", () => {
 
   it("should have totalTokens equal to sum of all estimatedTokens", async () => {
     const res = await request(ctx.app).get("/api/v1/skills");
+    expect(res.status).toBe(200);
     const { skills, totalTokens } = res.body;
+    expect(Array.isArray(skills)).toBe(true);
     const sum = skills.reduce((acc: number, s: { estimatedTokens: number }) => acc + s.estimatedTokens, 0);
     expect(totalTokens).toBe(sum);
   });
