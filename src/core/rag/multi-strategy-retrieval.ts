@@ -22,6 +22,7 @@ import { executionGraphSearch } from "./graph-rag-strategy.js";
 import type { StrategyName } from "./adaptive-router.js";
 import type { EmbeddingStore } from "./embedding-store.js";
 import { generateEmbedding } from "./embedding-generator.js";
+import { expandQuery } from "./query-expander.js";
 import { logger } from "../utils/logger.js";
 
 export interface RankedResult {
@@ -46,12 +47,49 @@ interface SearchOptions {
   embeddingStore?: EmbeddingStore;
   /** Optional subset of strategies to run (adaptive routing). If omitted, all strategies run. */
   strategies?: StrategyName[];
+  /** Enable query expansion via Pseudo-Relevance Feedback. Default: true */
+  queryExpansion?: boolean;
 }
 
 const RRF_K = 60;
 
+/** Default RRF weights per strategy (ADR-07). Sum ~= 1.0. */
+export const DEFAULT_RRF_WEIGHTS: Record<string, number> = {
+  fts: 0.30,
+  graph: 0.10,
+  recency: 0.10,
+  entity_graph: 0.05,
+  lsp: 0.05,
+  exec_graph: 0.10,
+  semantic: 0.05,
+  onnx_semantic: 0.25,
+};
+
+const DEFAULT_WEIGHT = 0.1;
+
+// ── Phase-Aware RRF Presets (Task 3.2) ──────────────────
+
+/** RRF weight presets per lifecycle phase. Each sums to 1.0. */
+export const PHASE_RRF_PRESETS: Record<string, Record<string, number>> = {
+  IMPLEMENT: { fts: 0.5, graph: 0.2, recency: 0.2, quality: 0.1 },
+  REVIEW: { fts: 0.2, graph: 0.5, recency: 0.1, quality: 0.2 },
+  ANALYZE: { fts: 0.3, graph: 0.3, recency: 0.1, community: 0.3 },
+  DESIGN: { fts: 0.3, graph: 0.3, recency: 0.1, quality: 0.3 },
+  VALIDATE: { fts: 0.4, graph: 0.2, recency: 0.3, quality: 0.1 },
+  default: { fts: 0.4, graph: 0.3, recency: 0.2, quality: 0.1 },
+};
+
 /**
- * Reciprocal Rank Fusion — merge multiple ranked lists into one.
+ * Get RRF weights for a lifecycle phase.
+ * Returns phase-specific preset if available, else the default v6.x weights.
+ */
+export function getRrfWeightsForPhase(phase: string | undefined): Record<string, number> {
+  if (!phase) return { ...PHASE_RRF_PRESETS.default };
+  return { ...(PHASE_RRF_PRESETS[phase] ?? PHASE_RRF_PRESETS.default) };
+}
+
+/**
+ * Reciprocal Rank Fusion — merge multiple ranked lists into one (unweighted).
  * score = Σ(1 / (k + rank_i))
  */
 export function reciprocalRankFusion(
@@ -64,6 +102,30 @@ export function reciprocalRankFusion(
       const item = list[rank];
       const current = scores.get(item.id) ?? 0;
       scores.set(item.id, current + 1 / (RRF_K + rank + 1));
+    }
+  }
+
+  return Array.from(scores.entries())
+    .map(([id, rrfScore]) => ({ id, rrfScore }))
+    .sort((a, b) => b.rrfScore - a.rrfScore);
+}
+
+/**
+ * Weighted Reciprocal Rank Fusion — each strategy's contribution is scaled by weight.
+ * score = Σ(weight_i / (k + rank_i))
+ */
+export function weightedReciprocalRankFusion(
+  strategyResults: Array<{ name: string; results: Array<{ id: string; score: number }> }>,
+  weights: Record<string, number>,
+): Array<{ id: string; rrfScore: number }> {
+  const scores = new Map<string, number>();
+
+  for (const strategy of strategyResults) {
+    const weight = weights[strategy.name] ?? DEFAULT_WEIGHT;
+    for (let rank = 0; rank < strategy.results.length; rank++) {
+      const item = strategy.results[rank];
+      const current = scores.get(item.id) ?? 0;
+      scores.set(item.id, current + weight / (RRF_K + rank + 1));
     }
   }
 
@@ -89,10 +151,30 @@ export async function multiStrategySearch(
   const activeStrategies = options?.strategies ? new Set(options.strategies) : null;
   const shouldRun = (name: StrategyName): boolean => !activeStrategies || activeStrategies.has(name);
 
+  // Pre-retrieval: Query Expansion via Pseudo-Relevance Feedback
+  let searchQuery = query;
+  if (options?.queryExpansion !== false) {
+    const expansion = expandQuery(query, (q, k) => {
+      try {
+        return knowledgeStore.search(q, k).map((r) => ({ title: r.title, content: r.content }));
+      } catch {
+        return [];
+      }
+    });
+    if (expansion.expanded) {
+      searchQuery = expansion.expandedQuery;
+      logger.info("query expanded", {
+        original: query,
+        expanded: searchQuery,
+        addedTerms: expansion.addedTerms.length,
+      });
+    }
+  }
+
   // Strategy 1: FTS5 + BM25
   let ftsResults: Array<{ id: string; score: number }> = [];
   try {
-    const raw = knowledgeStore.search(query, limit * 2);
+    const raw = knowledgeStore.search(searchQuery, limit * 2);
     ftsResults = raw.map((r) => ({ id: r.id, score: r.score }));
   } catch {
     logger.debug("Multi-strategy FTS search returned no results");

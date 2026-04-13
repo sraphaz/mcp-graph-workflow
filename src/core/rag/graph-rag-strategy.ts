@@ -15,6 +15,8 @@ import type Database from "better-sqlite3";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphNode } from "../graph/graph-types.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
+import { computePPR } from "./personalized-pagerank.js";
+import { tokenize } from "../search/tokenizer.js";
 import { logger } from "../utils/logger.js";
 
 export interface GraphRagResult {
@@ -29,9 +31,13 @@ export interface GraphRagResult {
   strategies: string[];
 }
 
-interface GraphRagOptions {
+export interface GraphRagOptions {
   limit?: number;
   maxHops?: number;
+  /** Use Personalized PageRank for scoring instead of BFS distance. Default: false */
+  ppr?: boolean;
+  /** Enable community summary injection for broad queries. Default: false */
+  communitySearch?: boolean;
 }
 
 /**
@@ -119,19 +125,75 @@ export function executionGraphSearch(
     if (frontier.length === 0) break;
   }
 
-  // Step 3: Collect knowledge docs linked to the expanded node set
+  // Step 3: Score nodes — PPR or BFS
+  const usePpr = options?.ppr === true;
+  let pprScores: Map<string, number> | null = null;
+
+  if (usePpr) {
+    // Collect subgraph edges for PPR
+    const subgraphEdges: Array<{ from: string; to: string }> = [];
+    for (const nodeId of visited) {
+      const outgoing = safeGetEdgesFrom(store, nodeId);
+      for (const edge of outgoing) {
+        if (visited.has(edge.to)) {
+          subgraphEdges.push({ from: edge.from, to: edge.to });
+        }
+      }
+      const incoming = safeGetEdgesTo(store, nodeId);
+      for (const edge of incoming) {
+        if (visited.has(edge.from)) {
+          subgraphEdges.push({ from: edge.from, to: edge.to });
+        }
+      }
+      // Parent/child edges
+      const node = store.getNodeById(nodeId);
+      if (node?.parentId && visited.has(node.parentId)) {
+        subgraphEdges.push({ from: node.parentId, to: nodeId });
+      }
+      const children = safeGetChildren(store, nodeId);
+      for (const child of children) {
+        if (visited.has(child.id)) {
+          subgraphEdges.push({ from: nodeId, to: child.id });
+        }
+      }
+    }
+
+    // Add reverse edges for undirected PPR (proximity matters both directions)
+    const biEdges = [
+      ...subgraphEdges,
+      ...subgraphEdges.map((e) => ({ from: e.to, to: e.from })),
+    ];
+
+    const pprResult = computePPR({
+      nodeIds: [...visited],
+      edges: biEdges,
+      seedNodeIds: matchedNodes.map((n) => n.id),
+    });
+    pprScores = pprResult.scores;
+
+    logger.debug("graph-rag: PPR computed", {
+      nodes: visited.size,
+      edges: subgraphEdges.length,
+      iterations: pprResult.iterations,
+      converged: pprResult.converged,
+    });
+  }
+
+  // Step 4: Collect knowledge docs linked to the expanded node set
   const knowledgeStore = new KnowledgeStore(db);
   const docScores = new Map<string, { score: number; distance: number; nodeId: string }>();
 
   for (const [nodeId, distance] of nodeDistances) {
     const docs = findDocsLinkedToNode(db, nodeId);
-    const proximity = graphProximityScore(distance);
+    const nodeScore = usePpr && pprScores
+      ? (pprScores.get(nodeId) ?? 0)
+      : graphProximityScore(distance);
 
     for (const doc of docs) {
       const existing = docScores.get(doc.id);
-      // Keep the best score (closest graph distance)
-      if (!existing || proximity > existing.score) {
-        docScores.set(doc.id, { score: proximity, distance, nodeId });
+      // Keep the best score
+      if (!existing || nodeScore > existing.score) {
+        docScores.set(doc.id, { score: nodeScore, distance, nodeId });
       }
     }
   }
@@ -155,6 +217,24 @@ export function executionGraphSearch(
     });
   }
 
+  // Inject community summaries for broad queries (feature flag)
+  if (options?.communitySearch) {
+    const communityResults = findByCommunity(store, query);
+    for (const cr of communityResults) {
+      results.push({
+        id: cr.communityId,
+        sourceType: "community_summary",
+        sourceId: cr.communityId,
+        title: cr.title,
+        content: cr.summary,
+        score: cr.score,
+        graphDistance: 0,
+        linkedNodeId: cr.communityId,
+        strategies: ["community"],
+      });
+    }
+  }
+
   // Sort by score descending, then limit
   results.sort((a, b) => b.score - a.score);
 
@@ -162,6 +242,7 @@ export function executionGraphSearch(
     matchedNodes: matchedNodes.length,
     expandedNodes: nodeDistances.size,
     docsFound: results.length,
+    communityResults: options?.communitySearch ? results.filter((r) => r.strategies.includes("community")).length : 0,
   });
 
   return results.slice(0, limit);
@@ -231,6 +312,32 @@ function findDocsLinkedToNode(
     return rows;
   } catch {
     // json_extract may fail if metadata is null — that's OK
+    return [];
+  }
+}
+
+// ── Safe edge/children accessors (swallow errors) ───
+
+function safeGetEdgesFrom(store: SqliteStore, nodeId: string): Array<{ from: string; to: string }> {
+  try {
+    return store.getEdgesFrom(nodeId);
+  } catch {
+    return [];
+  }
+}
+
+function safeGetEdgesTo(store: SqliteStore, nodeId: string): Array<{ from: string; to: string }> {
+  try {
+    return store.getEdgesTo(nodeId);
+  } catch {
+    return [];
+  }
+}
+
+function safeGetChildren(store: SqliteStore, nodeId: string): Array<{ id: string }> {
+  try {
+    return store.getChildNodes(nodeId);
+  } catch {
     return [];
   }
 }
@@ -360,4 +467,108 @@ export function findCommunityDocs(
   }
 
   return Array.from(relevantDocIds);
+}
+
+// ── Community Summary Search (v7 — Task 2.3) ─────────
+
+const COMMUNITY_COVERAGE_THRESHOLD = 0.6;
+const COMMUNITY_INJECT_SCORE = 0.85;
+
+export interface CommunitySearchResult {
+  communityId: string;
+  title: string;
+  summary: string;
+  score: number;
+  coverage: number;
+  memberNodeIds: string[];
+  topTerms: string[];
+}
+
+interface CommunitySummaryRow {
+  id: string;
+  community_id: string;
+  title: string;
+  summary: string;
+  member_node_ids: string;
+  member_count: number;
+  top_terms: string;
+}
+
+/**
+ * Find community summaries that match a broad query.
+ *
+ * Uses term coverage: if >= 60% of community top_terms appear in the query,
+ * the community summary is injected as a high-relevance result (score 0.85).
+ * For specific queries (low term overlap), returns empty — no interference.
+ *
+ * Respects feature flag: `community_summaries_enabled` project setting.
+ * Default: enabled (when setting is not set or is "true").
+ */
+export function findByCommunity(
+  store: SqliteStore,
+  query: string,
+): CommunitySearchResult[] {
+  // Feature flag check
+  const setting = store.getProjectSetting("community_summaries_enabled");
+  if (setting === "false") return [];
+
+  const db = store.getDb();
+
+  // Read all community summaries
+  let rows: CommunitySummaryRow[];
+  try {
+    rows = db
+      .prepare("SELECT * FROM community_summaries")
+      .all() as CommunitySummaryRow[];
+  } catch {
+    return [];
+  }
+
+  if (rows.length === 0) return [];
+
+  const queryTokens = new Set(tokenize(query));
+  if (queryTokens.size === 0) return [];
+
+  const results: CommunitySearchResult[] = [];
+
+  for (const row of rows) {
+    let topTerms: string[];
+    let memberNodeIds: string[];
+    try {
+      topTerms = JSON.parse(row.top_terms) as string[];
+      memberNodeIds = JSON.parse(row.member_node_ids) as string[];
+    } catch {
+      continue;
+    }
+
+    if (topTerms.length === 0) continue;
+
+    // Compute coverage: what fraction of community terms appear in the query
+    const matchedTerms = topTerms.filter((term) => queryTokens.has(term));
+    const coverage = matchedTerms.length / topTerms.length;
+
+    if (coverage >= COMMUNITY_COVERAGE_THRESHOLD) {
+      results.push({
+        communityId: row.community_id,
+        title: row.title,
+        summary: row.summary,
+        score: COMMUNITY_INJECT_SCORE,
+        coverage,
+        memberNodeIds,
+        topTerms,
+      });
+
+      logger.debug("graph-rag:community", {
+        communityId: row.community_id,
+        coverage: +(coverage * 100).toFixed(1),
+        matchedTerms: matchedTerms.length,
+        totalTerms: topTerms.length,
+      });
+    }
+  }
+
+  // Sort by coverage descending
+  results.sort((a, b) => b.coverage - a.coverage);
+
+  return results;
 }

@@ -3,6 +3,7 @@ import { HarnessTrend } from "@/components/harness/harness-trend";
 import { IssuePatternTracker } from "@/components/harness/issue-pattern-tracker";
 import { PhaseGatesStatus } from "@/components/harness/phase-gates-status";
 import { HarnessEventsLog } from "@/components/harness/harness-events-log";
+import { RemediationPanel } from "@/components/harness/remediation-panel";
 
 export function HarnessTab(): React.JSX.Element {
   return (
@@ -32,7 +33,13 @@ export function HarnessTab(): React.JSX.Element {
         <IssuePatternTracker />
       </div>
 
-      {/* Row 3: Phase Gates + Events Log */}
+      {/* Row 3: Remediation Suggestions (full width) */}
+      <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Remediation Suggestions</h3>
+        <RemediationPanel />
+      </div>
+
+      {/* Row 4: Phase Gates + Events Log */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
           <h3 className="text-sm font-medium text-gray-300 mb-3">Phase Gates</h3>

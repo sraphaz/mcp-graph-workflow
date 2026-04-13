@@ -17,6 +17,8 @@ import { analyzeCoupling } from "../../core/designer/coupling-analyzer.js";
 import { checkInterfaces } from "../../core/designer/interface-checker.js";
 import { assessTechRisks } from "../../core/designer/tech-risk-assessor.js";
 import { checkDesignReadiness } from "../../core/designer/definition-of-ready.js";
+import { runAdrChallenge, runAllAdrChallenges } from "../../core/designer/adr-challenge-runner.js";
+import { serializeChallengeReport } from "../../core/designer/challenge-report.js";
 import { checkValidationReadiness } from "../../core/validator/definition-of-ready.js";
 import { checkDoneIntegrity } from "../../core/validator/done-integrity-checker.js";
 import { checkStatusFlow } from "../../core/validator/status-flow-checker.js";
@@ -99,6 +101,7 @@ const ANALYZE_MODES = z.enum([
   "harness_trend",
   "harness_advice",
   "harness_remediate",
+  "adr_challenge",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
@@ -641,6 +644,38 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const message = advice.length === 0 ? "Harness score healthy — all dimensions >= 70" : `${advice.length} dimension(s) need improvement`;
           logger.info("tool:analyze:harness_advice:ok", { score: adviceReport.score, dimensions: advice.length });
           return mcpText({ ok: true, mode, score: adviceReport.score, grade: adviceReport.grade, advice, message });
+        }
+
+        case "adr_challenge": {
+          if (nodeId) {
+            const result = runAdrChallenge(store, nodeId);
+            const serialized = serializeChallengeReport(result.report, "standard");
+            return mcpText({
+              ok: true,
+              mode,
+              nodeId,
+              nodeTitle: result.nodeTitle,
+              verdict: result.report.overallVerdict.verdict,
+              compositeScore: result.report.fitnessScore.composite,
+              grade: result.report.fitnessScore.grade,
+              findings: result.report.preMortemFindings.length,
+              questions: result.report.challengeQuestions,
+              report: serialized,
+            });
+          }
+          const allResult = runAllAdrChallenges(store);
+          return mcpText({
+            ok: true,
+            mode,
+            summary: allResult.summary,
+            reports: allResult.reports.map((r) => ({
+              nodeId: r.nodeId,
+              title: r.nodeTitle,
+              verdict: r.report.overallVerdict.verdict,
+              compositeScore: r.report.fitnessScore.composite,
+              grade: r.report.fitnessScore.grade,
+            })),
+          });
         }
 
         default: {

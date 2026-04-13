@@ -1,6 +1,34 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useMemo, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { HierarchyTreeNode } from "@/lib/graph-hierarchy";
 import { STATUS_COLORS, NODE_TYPE_COLORS } from "@/lib/constants";
+
+interface FlatTreeItem {
+  node: HierarchyTreeNode["node"];
+  depth: number;
+  hasChildren: boolean;
+  childCount: number;
+}
+
+function flattenTree(
+  tree: HierarchyTreeNode[],
+  expandedIds: Set<string>,
+  depth = 0,
+): FlatTreeItem[] {
+  const result: FlatTreeItem[] = [];
+  for (const item of tree) {
+    result.push({
+      node: item.node,
+      depth,
+      hasChildren: item.children.length > 0,
+      childCount: item.children.length,
+    });
+    if (item.children.length > 0 && expandedIds.has(item.node.id)) {
+      result.push(...flattenTree(item.children, expandedIds, depth + 1));
+    }
+  }
+  return result;
+}
 
 interface HierarchyTreePanelProps {
   tree: HierarchyTreeNode[];
@@ -47,125 +75,115 @@ export const HierarchyTreePanel = memo(function HierarchyTreePanel({
           ◂
         </button>
       </div>
-      <div className="overflow-y-auto flex-1 py-1">
-        {tree.length === 0 ? (
-          <div className="px-3 py-4 text-xs text-muted text-center">
-            No nodes
-          </div>
-        ) : (
-          tree.map((item) => (
-            <TreeItem
-              key={item.node.id}
-              item={item}
-              depth={0}
-              expandedIds={expandedIds}
-              selectedNodeId={selectedNodeId}
-              onToggleExpand={onToggleExpand}
-              onSelectNode={onSelectNode}
-            />
-          ))
-        )}
-      </div>
+      <VirtualizedTree
+        tree={tree}
+        expandedIds={expandedIds}
+        selectedNodeId={selectedNodeId}
+        onToggleExpand={onToggleExpand}
+        onSelectNode={onSelectNode}
+      />
     </div>
   );
 });
 
-interface TreeItemProps {
-  item: HierarchyTreeNode;
-  depth: number;
-  expandedIds: Set<string>;
-  selectedNodeId: string | null;
-  onToggleExpand: (nodeId: string) => void;
-  onSelectNode: (nodeId: string) => void;
-}
+const ITEM_HEIGHT = 28;
 
-function TreeItem({
-  item,
-  depth,
+function VirtualizedTree({
+  tree,
   expandedIds,
   selectedNodeId,
   onToggleExpand,
   onSelectNode,
-}: TreeItemProps): React.JSX.Element {
-  const { node, children } = item;
-  const isExpanded = expandedIds.has(node.id);
-  const isSelected = selectedNodeId === node.id;
-  const hasChildren = children.length > 0;
-  const statusColor = STATUS_COLORS[node.status] || "#9e9e9e";
-  const typeColor = NODE_TYPE_COLORS[node.type] || "#6c757d";
+}: Omit<HierarchyTreePanelProps, never>): React.JSX.Element {
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  const handleChevronClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onToggleExpand(node.id);
-    },
-    [node.id, onToggleExpand],
+  const flatItems = useMemo(
+    () => flattenTree(tree, expandedIds),
+    [tree, expandedIds],
   );
 
-  const handleTitleClick = useCallback(() => {
-    onSelectNode(node.id);
-  }, [node.id, onSelectNode]);
+  const virtualizer = useVirtualizer({
+    count: flatItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ITEM_HEIGHT,
+    overscan: 10,
+  });
+
+  if (flatItems.length === 0) {
+    return (
+      <div className="px-3 py-4 text-xs text-muted text-center">
+        No nodes
+      </div>
+    );
+  }
 
   return (
-    <>
-      <button
-        onClick={handleTitleClick}
-        className={`w-full text-left flex items-center gap-1 px-2 py-1 text-xs hover:bg-surface-elevated transition-colors ${
-          isSelected ? "bg-surface-elevated font-semibold" : ""
-        }`}
-        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+    <div ref={parentRef} className="overflow-y-auto flex-1 py-1">
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative",
+        }}
       >
-        {/* Chevron */}
-        {hasChildren ? (
-          <span
-            onClick={handleChevronClick}
-            className="w-4 text-center text-muted hover:text-foreground cursor-pointer shrink-0"
-          >
-            {isExpanded ? "\u25BE" : "\u25B8"}
-          </span>
-        ) : (
-          <span className="w-4 shrink-0" />
-        )}
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const item = flatItems[virtualRow.index];
+          const isExpanded = expandedIds.has(item.node.id);
+          const isSelected = selectedNodeId === item.node.id;
+          const statusColor = STATUS_COLORS[item.node.status] || "#9e9e9e";
+          const typeColor = NODE_TYPE_COLORS[item.node.type] || "#6c757d";
 
-        {/* Status dot */}
-        <span
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ background: statusColor }}
-          title={node.status.replace("_", " ")}
-        />
+          return (
+            <button
+              key={item.node.id}
+              onClick={() => onSelectNode(item.node.id)}
+              className={`absolute top-0 left-0 w-full text-left flex items-center gap-1 px-2 text-xs hover:bg-surface-elevated transition-colors ${
+                isSelected ? "bg-surface-elevated font-semibold" : ""
+              }`}
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+                paddingLeft: `${item.depth * 16 + 8}px`,
+              }}
+            >
+              {item.hasChildren ? (
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleExpand(item.node.id);
+                  }}
+                  className="w-4 text-center text-muted hover:text-foreground cursor-pointer shrink-0"
+                >
+                  {isExpanded ? "\u25BE" : "\u25B8"}
+                </span>
+              ) : (
+                <span className="w-4 shrink-0" />
+              )}
 
-        {/* Type badge */}
-        <span
-          className="text-[9px] px-1 rounded shrink-0"
-          style={{ background: `${typeColor}20`, color: typeColor }}
-        >
-          {node.type.slice(0, 3)}
-        </span>
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: statusColor }}
+                title={item.node.status.replace("_", " ")}
+              />
 
-        {/* Title */}
-        <span className="truncate">{node.title}</span>
+              <span
+                className="text-[9px] px-1 rounded shrink-0"
+                style={{ background: `${typeColor}20`, color: typeColor }}
+              >
+                {item.node.type.slice(0, 3)}
+              </span>
 
-        {/* Child count */}
-        {hasChildren && (
-          <span className="text-[9px] text-muted ml-auto shrink-0">
-            {children.length}
-          </span>
-        )}
-      </button>
+              <span className="truncate">{item.node.title}</span>
 
-      {/* Render children only if expanded */}
-      {isExpanded &&
-        children.map((child) => (
-          <TreeItem
-            key={child.node.id}
-            item={child}
-            depth={depth + 1}
-            expandedIds={expandedIds}
-            selectedNodeId={selectedNodeId}
-            onToggleExpand={onToggleExpand}
-            onSelectNode={onSelectNode}
-          />
-        ))}
-    </>
+              {item.hasChildren && (
+                <span className="text-[9px] text-muted ml-auto shrink-0">
+                  {item.childCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

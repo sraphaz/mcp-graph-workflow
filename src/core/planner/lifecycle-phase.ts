@@ -506,6 +506,8 @@ export type PrerequisiteScope = "node" | "project";
 
 export interface PrerequisiteRequiredTool {
   tool: string;
+  /** Alternative tool names that also satisfy this prerequisite (e.g., rag_context for context). */
+  aliases?: string[];
   args?: string;
   scope: PrerequisiteScope;
 }
@@ -555,10 +557,10 @@ export const PHASE_PREREQUISITES: Record<LifecyclePhase, PrerequisiteRule[]> = {
       triggerCondition: (args) => args.status === "done",
       requiredTools: [
         { tool: "context", scope: "node" },
-        { tool: "context", scope: "project" },
+        { tool: "context", aliases: ["rag_context"], scope: "project" },
         { tool: "analyze", args: "implement_done", scope: "node" },
       ],
-      description: "Antes de done: chamar `context` (compact + rag) + `analyze(implement_done)`",
+      description: "Antes de done: chamar `context` + `rag_context` + `analyze(implement_done)`",
     },
   ],
   VALIDATE: [
@@ -643,7 +645,17 @@ export function checkPrerequisiteGate(
 
     for (const req of rule.requiredTools) {
       const lookupNodeId = req.scope === "node" ? (nodeId ?? null) : null;
-      const called = hasBeenCalled(lookupNodeId, req.tool, req.args);
+      let called = hasBeenCalled(lookupNodeId, req.tool, req.args);
+
+      // Check aliases (e.g., rag_context satisfies context requirement)
+      if (!called && req.aliases) {
+        for (const alias of req.aliases) {
+          if (hasBeenCalled(lookupNodeId, alias, req.args)) {
+            called = true;
+            break;
+          }
+        }
+      }
 
       if (!called) {
         const scopeHint = req.scope === "node" && nodeId

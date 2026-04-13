@@ -23,11 +23,13 @@ export interface Bm25Config {
   k1: number;
   /** Length normalization parameter. 0 = no normalization, 1 = full normalization. Default: 0.75 */
   b: number;
+  /** BM25+ delta parameter. Boosts short document scoring. 0 = standard BM25. Default: 1.0 */
+  delta: number;
 }
 
 /** Default BM25 parameters, tuned for PRD/code content. */
 /** Default BM25 parameters tuned for PRD/code content. */
-export const BM25_DEFAULTS: Readonly<Bm25Config> = { k1: 1.8, b: 0.75 };
+export const BM25_DEFAULTS: Readonly<Bm25Config> = { k1: 1.8, b: 0.75, delta: 1.0 };
 
 /** Module-level config — can be overridden for domain tuning. */
 let activeBm25Config: Bm25Config = { ...BM25_DEFAULTS };
@@ -105,8 +107,8 @@ export function rankChunksByBm25(
 
       const df = docFreq.get(term) ?? 0;
       const idf = Math.log((totalDocs - df + 0.5) / (df + 0.5) + 1);
-      const { k1, b } = activeBm25Config;
-      const tfNorm = (termTf * (k1 + 1)) / (termTf + k1 * (1 - b + b * (dl / avgDl)));
+      const { k1, b, delta } = activeBm25Config;
+      const tfNorm = (termTf * (k1 + 1)) / (termTf + k1 * (1 - b + b * (dl / avgDl))) + delta;
 
       score += idf * tfNorm;
     }

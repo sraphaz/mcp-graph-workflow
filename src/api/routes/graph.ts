@@ -6,10 +6,53 @@ import { graphToMermaid } from "../../core/graph/mermaid-export.js";
 export function createGraphRouter(storeRef: StoreRef): Router {
   const router = Router();
 
-  router.get("/", (_req, res, next) => {
+  router.get("/", (req, res, next) => {
     try {
-      const doc = storeRef.current.toGraphDocument();
-      res.json(doc);
+      const store = storeRef.current;
+
+      const rawLimit = req.query.limit ? Number(req.query.limit) : 100;
+      const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 1000) : 100;
+      const rawOffset = req.query.offset ? Number(req.query.offset) : 0;
+      const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
+      const status = req.query.status
+        ? (req.query.status as string).split(",") as NodeStatus[]
+        : undefined;
+      const type = req.query.type
+        ? (req.query.type as string).split(",") as NodeType[]
+        : undefined;
+      const search = req.query.search as string | undefined;
+
+      const { nodes, totalCount } = store.queryNodes({
+        limit,
+        offset,
+        status,
+        type,
+        search,
+      });
+
+      const nodeIds = new Set(nodes.map((n) => n.id));
+      const allEdges = store.getAllEdges();
+      const edges = allEdges.filter(
+        (e) => nodeIds.has(e.from) || nodeIds.has(e.to),
+      );
+
+      const hasMore = offset + nodes.length < totalCount;
+      const project = store.getProject();
+
+      res.json({
+        version: "1.0.0",
+        project,
+        nodes,
+        edges,
+        indexes: {},
+        meta: { sourceFiles: [], lastImport: null },
+        pagination: {
+          totalCount,
+          limit,
+          offset,
+          hasMore,
+        },
+      });
     } catch (err) {
       next(err);
     }

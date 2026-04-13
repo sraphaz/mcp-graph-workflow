@@ -29,6 +29,15 @@ export interface IndexResult {
   documentsIndexed: number;
 }
 
+/** Split array into chunks of maxSize. */
+function chunkArray<T>(arr: T[], maxSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += maxSize) {
+    chunks.push(arr.slice(i, i + maxSize));
+  }
+  return chunks;
+}
+
 /**
  * Index code analysis results into the knowledge store.
  */
@@ -48,31 +57,40 @@ export function indexCodeAnalysis(
       byLanguage.set(lang, group);
     }
 
-    // Create one knowledge doc per language
+    // Create knowledge docs per language, chunked to stay under content size limits
+    const MAX_SYMBOLS_PER_CHUNK = 500;
     for (const [language, symbols] of byLanguage) {
-      const symbolLines = symbols.map((s) => {
-        let line = `- ${s.kind} ${s.name} (${s.file})${s.exported ? " [exported]" : ""}`;
-        if (s.docstring) {
-          line += `\n  > ${s.docstring}`;
-        }
-        return line;
-      });
-      const content = `# Code Symbols — ${language} (${symbols.length} symbols)\n\n${symbolLines.join("\n")}`;
+      const chunks = chunkArray(symbols, MAX_SYMBOLS_PER_CHUNK);
+      for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
+        const chunk = chunks[chunkIdx];
+        const symbolLines = chunk.map((s) => {
+          let line = `- ${s.kind} ${s.name} (${s.file})${s.exported ? " [exported]" : ""}`;
+          if (s.docstring) {
+            line += `\n  > ${s.docstring}`;
+          }
+          return line;
+        });
+        const chunkLabel = chunks.length > 1 ? ` (chunk ${chunkIdx + 1}/${chunks.length})` : "";
+        const content = `# Code Symbols — ${language} (${chunk.length}/${symbols.length} symbols)${chunkLabel}\n\n${symbolLines.join("\n")}`;
 
-      store.insert({
-        sourceType: "code_context",
-        sourceId: `code_symbols:${language}:${new Date().toISOString()}`,
-        title: `Code Symbols — ${language} (${symbols.length} symbols)`,
-        content,
-        metadata: {
-          language,
-          symbolCount: symbols.length,
-          files: [...new Set(symbols.map((s) => s.file))],
-          phase: "IMPLEMENT",
-          indexedAt: new Date().toISOString(),
-        },
-      });
-      documentsIndexed++;
+        store.insert({
+          sourceType: "code_context",
+          sourceId: `code_symbols:${language}:${chunkIdx}:${new Date().toISOString()}`,
+          title: `Code Symbols — ${language}${chunkLabel} (${chunk.length} symbols)`,
+          content,
+          metadata: {
+            language,
+            symbolCount: chunk.length,
+            totalSymbols: symbols.length,
+            chunkIndex: chunkIdx,
+            totalChunks: chunks.length,
+            files: [...new Set(chunk.map((s) => s.file))],
+            phase: "IMPLEMENT",
+            indexedAt: new Date().toISOString(),
+          },
+        });
+        documentsIndexed++;
+      }
     }
   }
 

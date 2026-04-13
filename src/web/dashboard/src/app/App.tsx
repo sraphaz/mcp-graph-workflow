@@ -176,13 +176,9 @@ function AppContent(): React.JSX.Element {
             ) : (
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
-                  {/* Keep-alive: hide with CSS instead of unmounting to avoid expensive re-renders */}
-                  <div style={{ display: activeTab === "graph" ? "contents" : "none" }}>
-                    <GraphTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} onImportPrd={() => setImportOpen(true)} />
-                  </div>
-                  <div style={{ display: activeTab === "prd-backlog" ? "contents" : "none" }}>
-                    <PrdBacklogTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} />
-                  </div>
+                  {/* Conditional render: unmounts inactive tabs to reduce DOM nodes */}
+                  {activeTab === "graph" && <GraphTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} onImportPrd={() => setImportOpen(true)} />}
+                  {activeTab === "prd-backlog" && <PrdBacklogTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} />}
                   {activeTab === "kanban" && <KanbanTab />}
                   {activeTab === "journey" && <JourneyTab />}
                   {activeTab === "gitnexus" && <GitNexusTab />}

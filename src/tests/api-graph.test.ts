@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import request from "supertest";
 import { createTestApp, type TestContext } from "./helpers/test-app.js";
-import { generateId } from "../core/utils/id.js";
-import { now } from "../core/utils/time.js";
-import type { GraphEdge } from "../core/graph/graph-types.js";
-import { makeNode } from "./helpers/factories.js";
+import { makeNode, makeEdge } from "./helpers/factories.js";
 
 describe("API /api/v1/graph", () => {
   let ctx: TestContext;
@@ -31,6 +28,114 @@ describe("API /api/v1/graph", () => {
       expect(res.body.edges).toHaveLength(0);
       expect(res.body.indexes).toBeDefined();
       expect(res.body.meta).toBeDefined();
+      expect(res.body.pagination).toBeDefined();
+      expect(res.body.pagination.totalCount).toBe(1);
+    });
+
+    it("should paginate with limit and offset", async () => {
+      for (let i = 0; i < 10; i++) {
+        ctx.store.insertNode(makeNode({ title: `Task ${i}` }));
+      }
+
+      const res = await request(ctx.app).get("/api/v1/graph?limit=3&offset=0");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(3);
+      expect(res.body.pagination).toBeDefined();
+      expect(res.body.pagination.totalCount).toBe(10);
+      expect(res.body.pagination.limit).toBe(3);
+      expect(res.body.pagination.offset).toBe(0);
+      expect(res.body.pagination.hasMore).toBe(true);
+    });
+
+    it("should filter by status", async () => {
+      ctx.store.insertNode(makeNode({ title: "Done task", status: "done" }));
+      ctx.store.insertNode(makeNode({ title: "Backlog task", status: "backlog" }));
+      ctx.store.insertNode(makeNode({ title: "Another backlog", status: "backlog" }));
+
+      const res = await request(ctx.app).get("/api/v1/graph?status=backlog");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(2);
+      expect(res.body.nodes.every((n: { status: string }) => n.status === "backlog")).toBe(true);
+      expect(res.body.pagination.totalCount).toBe(2);
+    });
+
+    it("should filter by type", async () => {
+      ctx.store.insertNode(makeNode({ type: "task", title: "A task" }));
+      ctx.store.insertNode(makeNode({ type: "epic", title: "An epic" }));
+      ctx.store.insertNode(makeNode({ type: "risk", title: "A risk" }));
+
+      const res = await request(ctx.app).get("/api/v1/graph?type=task,epic");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(2);
+      expect(res.body.pagination.totalCount).toBe(2);
+    });
+
+    it("should filter by search term", async () => {
+      ctx.store.insertNode(makeNode({ title: "Session tracker module" }));
+      ctx.store.insertNode(makeNode({ title: "Database migration" }));
+
+      const res = await request(ctx.app).get("/api/v1/graph?search=session");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(1);
+      expect(res.body.nodes[0].title).toContain("Session");
+    });
+
+    it("should combine filters", async () => {
+      ctx.store.insertNode(makeNode({ type: "task", status: "done", title: "Done task A" }));
+      ctx.store.insertNode(makeNode({ type: "task", status: "backlog", title: "Backlog task" }));
+      ctx.store.insertNode(makeNode({ type: "epic", status: "done", title: "Done epic" }));
+
+      const res = await request(ctx.app).get("/api/v1/graph?status=done&type=task");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(1);
+      expect(res.body.nodes[0].title).toBe("Done task A");
+    });
+
+    it("should return hasMore=false on last page", async () => {
+      for (let i = 0; i < 5; i++) {
+        ctx.store.insertNode(makeNode({ title: `Task ${i}` }));
+      }
+
+      const res = await request(ctx.app).get("/api/v1/graph?limit=3&offset=3");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(2);
+      expect(res.body.pagination.hasMore).toBe(false);
+    });
+
+    it("should default to limit=100 when no params", async () => {
+      const res = await request(ctx.app).get("/api/v1/graph");
+
+      expect(res.status).toBe(200);
+      expect(res.body.pagination).toBeDefined();
+      expect(res.body.pagination.limit).toBe(100);
+      expect(res.body.pagination.offset).toBe(0);
+    });
+
+    it("should include edges only for returned nodes", async () => {
+      const nodeA = makeNode({ title: "Node A" });
+      const nodeB = makeNode({ title: "Node B" });
+      const nodeC = makeNode({ title: "Node C" });
+      ctx.store.insertNode(nodeA);
+      ctx.store.insertNode(nodeB);
+      ctx.store.insertNode(nodeC);
+      ctx.store.insertEdge(makeEdge(nodeA.id, nodeB.id));
+      ctx.store.insertEdge(makeEdge(nodeB.id, nodeC.id));
+
+      const res = await request(ctx.app).get("/api/v1/graph?limit=2&offset=0");
+
+      expect(res.status).toBe(200);
+      expect(res.body.nodes).toHaveLength(2);
+      // edges should only reference nodes in the current page
+      for (const edge of res.body.edges) {
+        const nodeIds = res.body.nodes.map((n: { id: string }) => n.id);
+        expect(nodeIds.includes(edge.from) || nodeIds.includes(edge.to)).toBe(true);
+      }
     });
   });
 
@@ -41,14 +146,7 @@ describe("API /api/v1/graph", () => {
       ctx.store.insertNode(nodeA);
       ctx.store.insertNode(nodeB);
 
-      const edge: GraphEdge = {
-        id: generateId("edge"),
-        from: nodeA.id,
-        to: nodeB.id,
-        relationType: "depends_on",
-        createdAt: now(),
-      };
-      ctx.store.insertEdge(edge);
+      ctx.store.insertEdge(makeEdge(nodeA.id, nodeB.id));
 
       const res = await request(ctx.app).get("/api/v1/graph/mermaid");
 

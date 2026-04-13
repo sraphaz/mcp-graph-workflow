@@ -4,6 +4,7 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { detectCurrentPhase, getPhaseGuidance, validatePhaseTransition, type LifecyclePhase, type StrictnessMode } from "../../core/planner/lifecycle-phase.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { generateAndIndexPhaseSummary } from "../../core/rag/phase-summary.js";
+import { runAdrChallengeGate } from "../../core/designer/adr-challenge-gate.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
@@ -91,6 +92,18 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
 
         if (!gateResult.allowed && force) {
           logger.warn("tool:set_phase:forced", { from: currentPhase, to: phase, unmetConditions: gateResult.unmetConditions });
+        }
+      }
+
+      // ADR Challenge Gate for DESIGN→PLAN transition
+      if (currentPhase === "DESIGN" && phase === "PLAN" && !force) {
+        const adrGateMode = store.getProjectSetting("lifecycle_strictness_mode") ?? currentMode;
+        const adrResult = runAdrChallengeGate(store, adrGateMode as "strict" | "advisory" | "off");
+
+        if (adrResult.blocked) {
+          const failedNames = adrResult.failedDecisions.map((d) => `${d.title} (score: ${d.score})`).join("; ");
+          logger.warn("tool:set_phase:adr_gate_blocked", { failed: adrResult.failedDecisions.length });
+          return mcpError(`adr_challenge_gate_blocked: ${adrResult.failedDecisions.length} decision(s) failed challenge: ${failedNames}. Hint: Use force:true to bypass, or improve the failing ADRs`);
         }
       }
 

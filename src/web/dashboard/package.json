@@ -11,6 +11,7 @@
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
     "@react-sigma/core": "^5.0.6",
+    "@tanstack/react-virtual": "^3.13.23",
     "@xyflow/react": "^12.8.2",
     "fast-xml-parser": "^5.5.9",
     "graphology": "^0.26.0",

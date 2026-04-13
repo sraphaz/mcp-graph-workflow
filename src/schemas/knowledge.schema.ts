@@ -11,6 +11,8 @@ export const KnowledgeSourceTypeSchema = z.enum([
   "constitution", "spec_template",
   // Harness engineering types (v3)
   "harness_scan",
+  // Challenge engine types (v7)
+  "challenge_report",
 ]);
 
 export const KnowledgeDocumentSchema = z.object({

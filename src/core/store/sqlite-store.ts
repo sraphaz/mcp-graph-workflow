@@ -486,6 +486,54 @@ export class SqliteStore {
     return rows.map(rowToNode);
   }
 
+  /** Paginated + filtered node query for dashboard API. */
+  queryNodes(opts: {
+    limit?: number;
+    offset?: number;
+    status?: NodeStatus[];
+    type?: NodeType[];
+    search?: string;
+  }): { nodes: GraphNode[]; totalCount: number } {
+    const pid = this.ensureProject();
+    const limit = opts.limit ?? 100;
+    const offset = opts.offset ?? 0;
+
+    const conditions: string[] = ["project_id = ?"];
+    const params: unknown[] = [pid];
+
+    if (opts.status && opts.status.length > 0) {
+      const placeholders = opts.status.map(() => "?").join(", ");
+      conditions.push(`status IN (${placeholders})`);
+      params.push(...opts.status);
+    }
+
+    if (opts.type && opts.type.length > 0) {
+      const placeholders = opts.type.map(() => "?").join(", ");
+      conditions.push(`type IN (${placeholders})`);
+      params.push(...opts.type);
+    }
+
+    if (opts.search) {
+      conditions.push("title LIKE ?");
+      params.push(`%${opts.search}%`);
+    }
+
+    const where = conditions.join(" AND ");
+
+    const countRow = this.db
+      .prepare(`SELECT COUNT(*) as cnt FROM nodes WHERE ${where}`)
+      .get(...params) as { cnt: number };
+    const totalCount = countRow.cnt;
+
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM nodes WHERE ${where} ORDER BY created_at LIMIT ? OFFSET ?`,
+      )
+      .all(...params, limit, offset) as NodeRow[];
+
+    return { nodes: rows.map(rowToNode), totalCount };
+  }
+
   getNodesByType(type: NodeType): GraphNode[] {
     const pid = this.ensureProject();
     const rows = this.db

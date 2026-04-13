@@ -13,6 +13,7 @@ import { KnowledgeStore } from "../store/knowledge-store.js";
 import { EmbeddingStore, type SimilarityResult } from "./embedding-store.js";
 import { TfIdfEmbeddingCache } from "./tfidf-embedding-cache.js";
 import { tokenize } from "../search/tokenizer.js";
+import { generateEmbedding } from "./embedding-generator.js";
 import { logger } from "../utils/logger.js";
 
 // ── TF-IDF Vectorizer ───────────────────────────
@@ -285,11 +286,37 @@ export async function indexAllEmbeddings(
     else indexedKnowledge++;
   }
 
-  const durationMs = Math.round(performance.now() - t0);
-  logger.debug("rag:fit+embed:all", { vocabSize: vectorizer.vocabSize, indexedNodes, indexedKnowledge, durationMs });
+  const tfidfDurationMs = Math.round(performance.now() - t0);
+  logger.debug("rag:fit+embed:all:tfidf", { vocabSize: vectorizer.vocabSize, indexedNodes, indexedKnowledge, durationMs: tfidfDurationMs });
+
+  // ONNX embedding pass — generate 384-dim neural embeddings alongside TF-IDF
+  const t1 = performance.now();
+  let onnxIndexed = 0;
+  for (const doc of allDocuments) {
+    try {
+      const onnxVec = await generateEmbedding(doc.text);
+      const allZero = onnxVec.every(v => v === 0);
+      if (!allZero) {
+        const isNode = doc.id.startsWith("node:");
+        embeddingStore.upsert({
+          id: `onnx:${doc.id}`,
+          source: isNode ? "node" : "knowledge",
+          sourceId: doc.id.replace(/^(node|knowledge):/, ""),
+          text: doc.text,
+          embedding: onnxVec,
+        }, 'onnx');
+        onnxIndexed++;
+      }
+    } catch {
+      // Graceful degradation — skip ONNX if it fails for a doc
+    }
+  }
+  const onnxDurationMs = Math.round(performance.now() - t1);
+  logger.debug("rag:fit+embed:all:onnx", { onnxIndexed, durationMs: onnxDurationMs });
+
   logger.info(
     `Indexed all embeddings (vocab size: ${vectorizer.vocabSize})`,
-    { nodes: indexedNodes, knowledge: indexedKnowledge },
+    { nodes: indexedNodes, knowledge: indexedKnowledge, onnx: onnxIndexed },
   );
 
   return { nodes: indexedNodes, knowledge: indexedKnowledge };
@@ -338,6 +365,24 @@ export async function incrementalIndex(
       text,
       embedding: vector,
     });
+
+    // Also generate ONNX embedding for this doc
+    try {
+      const onnxVec = await generateEmbedding(text);
+      const allZero = onnxVec.every(v => v === 0);
+      if (!allZero) {
+        embeddingStore.upsert({
+          id: `onnx:knowledge:${doc.id}`,
+          source: "knowledge",
+          sourceId: doc.id,
+          text,
+          embedding: onnxVec,
+        }, 'onnx');
+      }
+    } catch {
+      // Graceful degradation
+    }
+
     indexed++;
   }
 

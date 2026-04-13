@@ -116,6 +116,19 @@ describe("checkPrerequisiteGate", () => {
       );
       expect(warnings.length).toBe(2);
     });
+
+    it("should pass when rag_context is used as alias for context (project scope)", () => {
+      const warnings = checkPrerequisiteGate(
+        phase, toolName, toolArgs, "node-1",
+        mockHasBeenCalled([
+          ["node-1", "context"],
+          [null, "rag_context"],
+          ["node-1", "analyze", '{"mode":"implement_done"}'],
+        ]),
+        "strict",
+      );
+      expect(warnings).toEqual([]);
+    });
   });
 
   // ── VALIDATE phase ──

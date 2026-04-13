@@ -1,11 +1,14 @@
 /**
- * Harness Scan Cache — TTL-based caching for lifecycle wrapper.
+ * Harness Scan Cache — TTL + git hash invalidation cache for lifecycle wrapper.
  *
  * Avoids re-scanning on every MCP tool call by caching the last
- * HarnessScanResult with a 60-second TTL. Cache invalidates on
- * TTL expiry or manual reset.
+ * HarnessScanResult with a 60-second TTL. Cache invalidates on:
+ * - TTL expiry (>60s)
+ * - rootDir change
+ * - git HEAD hash change (detects new commits)
  */
 
+import { execSync } from "child_process";
 import { runHarnessScan, type HarnessScanResult } from "./harness-scan-runner.js";
 import { logger } from "../utils/logger.js";
 
@@ -15,23 +18,45 @@ interface CacheEntry {
   result: HarnessScanResult;
   cachedAt: number;
   rootDir: string;
+  gitHash: string | null;
 }
 
 let cache: CacheEntry | null = null;
 
 /**
- * Run harness scan with TTL-based caching.
- * Returns cached result if within TTL and same rootDir.
- * Returns null on any scan error (non-blocking).
+ * Get current git HEAD hash. Returns null if not a git repo or git unavailable.
+ */
+function getCurrentGitHash(rootDir: string): string | null {
+  try {
+    return execSync("git rev-parse HEAD", {
+      cwd: rootDir,
+      encoding: "utf-8",
+      timeout: 5000,
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Run harness scan with TTL-based + git-hash caching.
+ * Returns cached result if within TTL, same rootDir, and same git hash.
+ * Returns null on any scan error (non-blocking, preserves no cache state on failure).
  */
 export function runHarnessScanCached(
   rootDir: string,
   db?: import("better-sqlite3").Database,
 ): HarnessScanResult | null {
   const now = Date.now();
+  const currentHash = getCurrentGitHash(rootDir);
 
-  // Cache hit: same dir + within TTL
-  if (cache && cache.rootDir === rootDir && (now - cache.cachedAt) < CACHE_TTL_MS) {
+  // Cache hit: same dir + within TTL + same git hash
+  if (
+    cache &&
+    cache.rootDir === rootDir &&
+    (now - cache.cachedAt) < CACHE_TTL_MS &&
+    cache.gitHash === currentHash
+  ) {
     logger.debug("harness:cache:hit", { age: now - cache.cachedAt });
     return cache.result;
   }
@@ -39,8 +64,12 @@ export function runHarnessScanCached(
   // Cache miss: run scan
   try {
     const result = runHarnessScan(rootDir, db);
-    cache = { result, cachedAt: now, rootDir };
-    logger.debug("harness:cache:miss", { score: result.score, grade: result.grade });
+    cache = { result, cachedAt: now, rootDir, gitHash: currentHash };
+    logger.debug("harness:cache:miss", {
+      score: result.score,
+      grade: result.grade,
+      reason: !cache ? "empty" : "expired_or_invalidated",
+    });
     return result;
   } catch (err) {
     logger.warn("harness:cache:scan_failed", { error: String(err) });

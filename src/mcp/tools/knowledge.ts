@@ -442,8 +442,9 @@ async function handleReindex(
         results.code = { documentsIndexed: 0, note: "No code symbols found. Run code indexer first." };
       }
     } catch (err) {
-      logger.warn("code-indexer:reindex-failed", { error: String(err) });
-      results.code = { error: "Code symbol reindex failed" };
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      logger.warn("code-indexer:reindex-failed", { error: errorMsg });
+      results.code = { error: `Code symbol reindex failed: ${errorMsg}` };
     }
   }
 
