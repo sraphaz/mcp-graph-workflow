@@ -144,7 +144,7 @@ describe("Cross-Source Entity Integration", () => {
   });
 
   describe("multi-strategy search with entity graph", () => {
-    it("should find cross-source results via entity graph that FTS alone would miss", () => {
+    it("should find cross-source results via entity graph that FTS alone would miss", async () => {
       // Arrange: doc1 has "SqliteStore" and "persistence"
       const doc1 = knowledgeStore.insert({
         sourceType: "memory",
@@ -167,13 +167,13 @@ describe("Cross-Source Entity Integration", () => {
 
       // Act: Query for "SqliteStore persistence" — FTS will find doc1,
       // but entity graph should also surface doc2 (shares SqliteStore entity)
-      const results = multiStrategySearch(db, "SqliteStore persistence");
+      const results = await multiStrategySearch(db, "SqliteStore persistence");
 
       // Both docs should appear (entity graph connects them via shared entity)
       expect(results.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("should include entity_graph strategy in results when KG is populated", () => {
+    it("should include entity_graph strategy in results when KG is populated", async () => {
       const doc = knowledgeStore.insert({
         sourceType: "docs",
         sourceId: "docs:react",
@@ -183,7 +183,7 @@ describe("Cross-Source Entity Integration", () => {
 
       indexEntitiesForDoc(db, doc.id);
 
-      const results = multiStrategySearch(db, "React TypeScript");
+      const results = await multiStrategySearch(db, "React TypeScript");
       expect(results.length).toBeGreaterThan(0);
 
       // At least one result should have entity_graph strategy
@@ -390,7 +390,7 @@ import { generateId } from "@anthropic-ai/sdk"
   });
 
   describe("graceful degradation", () => {
-    it("should not break retrieval when KG is empty", () => {
+    it("should not break retrieval when KG is empty", async () => {
       knowledgeStore.insert({
         sourceType: "memory",
         sourceId: "memory:test",
@@ -399,7 +399,7 @@ import { generateId } from "@anthropic-ai/sdk"
       });
 
       // No entity indexing — KG is empty
-      const results = multiStrategySearch(db, "testing");
+      const results = await multiStrategySearch(db, "testing");
       expect(results.length).toBeGreaterThan(0);
       // Only FTS strategy should be present
       expect(results.every((r) => !r.strategies.includes("entity_graph"))).toBe(true);

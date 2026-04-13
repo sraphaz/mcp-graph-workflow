@@ -49,7 +49,7 @@ describe("indexAllEmbeddings", () => {
 
     expect(result.nodes).toBe(2);
     expect(result.knowledge).toBe(0);
-    expect(embeddingStore.count()).toBe(2);
+    expect(embeddingStore.count('tfidf')).toBe(2);
   });
 
   it("should index only knowledge docs when no nodes exist", async () => {
@@ -65,7 +65,7 @@ describe("indexAllEmbeddings", () => {
 
     expect(result.nodes).toBe(0);
     expect(result.knowledge).toBe(1);
-    expect(embeddingStore.count()).toBe(1);
+    expect(embeddingStore.count('tfidf')).toBe(1);
   });
 
   it("should index both nodes and knowledge docs with unified vocabulary", async () => {
@@ -90,7 +90,7 @@ describe("indexAllEmbeddings", () => {
 
     expect(result.nodes).toBe(2);
     expect(result.knowledge).toBe(2);
-    expect(embeddingStore.count()).toBe(4);
+    expect(embeddingStore.count('tfidf')).toBe(4);
   });
 
   it("should enable cross-source semantic search", async () => {
@@ -108,7 +108,7 @@ describe("indexAllEmbeddings", () => {
 
     const results = await semanticSearch(embeddingStore, "REST API Express", 10);
 
-    expect(results.length).toBe(2);
+    expect(results.length).toBeGreaterThanOrEqual(2);
     // Both node and knowledge should be found
     const sources = results.map((r) => r.source);
     expect(sources).toContain("node");

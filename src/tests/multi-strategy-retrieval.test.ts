@@ -46,7 +46,7 @@ describe("Multi-Strategy Retrieval", () => {
   });
 
   describe("multiStrategySearch", () => {
-    it("should return results from FTS search", () => {
+    it("should return results from FTS search", async () => {
       store.insert({
         sourceType: "memory",
         sourceId: "mem:auth",
@@ -60,12 +60,12 @@ describe("Multi-Strategy Retrieval", () => {
         content: "React hooks for state management and component lifecycle",
       });
 
-      const results = multiStrategySearch(db, "authentication JWT");
+      const results = await multiStrategySearch(db, "authentication JWT");
       expect(results.length).toBeGreaterThan(0);
       expect(results[0].title).toContain("Authentication");
     });
 
-    it("should enforce source diversity in top results", () => {
+    it("should enforce source diversity in top results", async () => {
       // Insert docs from same source type
       for (let i = 0; i < 5; i++) {
         store.insert({
@@ -82,7 +82,7 @@ describe("Multi-Strategy Retrieval", () => {
         content: "Database optimization and indexing in PostgreSQL",
       });
 
-      const results = multiStrategySearch(db, "database optimization");
+      const results = await multiStrategySearch(db, "database optimization");
       // Should include the docs result even if memory results dominate
       if (results.length > 1) {
         const sourceTypes = new Set(results.map((r) => r.sourceType));
@@ -90,7 +90,7 @@ describe("Multi-Strategy Retrieval", () => {
       }
     });
 
-    it("should apply quality score weighting", () => {
+    it("should apply quality score weighting", async () => {
       store.insert({
         sourceType: "memory",
         sourceId: "mem:high",
@@ -109,7 +109,7 @@ describe("Multi-Strategy Retrieval", () => {
       });
       db.prepare("UPDATE knowledge_documents SET quality_score = 0.2 WHERE source_id = 'mem:low'").run();
 
-      const results = multiStrategySearch(db, "authentication REST APIs");
+      const results = await multiStrategySearch(db, "authentication REST APIs");
       if (results.length >= 2) {
         // High quality doc should rank higher
         const highIdx = results.findIndex((r) => r.sourceId === "mem:high");
@@ -120,12 +120,12 @@ describe("Multi-Strategy Retrieval", () => {
       }
     });
 
-    it("should return empty array for no matches", () => {
-      const results = multiStrategySearch(db, "nonexistent topic xyz");
+    it("should return empty array for no matches", async () => {
+      const results = await multiStrategySearch(db, "nonexistent topic xyz");
       expect(results).toEqual([]);
     });
 
-    it("should respect limit parameter", () => {
+    it("should respect limit parameter", async () => {
       for (let i = 0; i < 20; i++) {
         store.insert({
           sourceType: "memory",
@@ -135,7 +135,7 @@ describe("Multi-Strategy Retrieval", () => {
         });
       }
 
-      const results = multiStrategySearch(db, "testing search", { limit: 5 });
+      const results = await multiStrategySearch(db, "testing search", { limit: 5 });
       expect(results.length).toBeLessThanOrEqual(5);
     });
   });

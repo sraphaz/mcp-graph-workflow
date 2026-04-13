@@ -16,7 +16,7 @@ describe('Hybrid RAG Scoring', () => {
   let store: SqliteStore;
   let embeddingStore: EmbeddingStore;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     store = SqliteStore.open(':memory:');
     store.initProject('Hybrid RAG Test');
     embeddingStore = new EmbeddingStore(store);
@@ -35,15 +35,15 @@ describe('Hybrid RAG Scoring', () => {
     ks.insert({ title: 'Kanban Board Design', content: 'React drag and drop Kanban board with swimlanes and WIP limits', sourceType: 'memory', sourceId: 'n4' });
 
     // Build embeddings
-    indexAllEmbeddings(store, embeddingStore);
+    await indexAllEmbeddings(store, embeddingStore);
   });
 
   afterEach(() => {
     store.close();
   });
 
-  it('should return results when searching with semantic strategy', () => {
-    const results = multiStrategySearch(store.getDb(), 'authentication login', {
+  it('should return results when searching with semantic strategy', async () => {
+    const results = await multiStrategySearch(store.getDb(), 'authentication login', {
       limit: 5,
       store,
       embeddingStore,
@@ -52,8 +52,8 @@ describe('Hybrid RAG Scoring', () => {
     expect(results.length).toBeGreaterThan(0);
   });
 
-  it('semantic strategy should boost auth-related docs for auth query', () => {
-    const results = multiStrategySearch(store.getDb(), 'authentication JWT OAuth', {
+  it('semantic strategy should boost auth-related docs for auth query', async () => {
+    const results = await multiStrategySearch(store.getDb(), 'authentication JWT OAuth', {
       limit: 5,
       store,
       embeddingStore,
@@ -64,8 +64,8 @@ describe('Hybrid RAG Scoring', () => {
     expect(hasAuth).toBe(true);
   });
 
-  it('should include semantic in strategies list when matches found', () => {
-    const results = multiStrategySearch(store.getDb(), 'authentication JWT', {
+  it('should include semantic in strategies list when matches found', async () => {
+    const results = await multiStrategySearch(store.getDb(), 'authentication JWT', {
       limit: 5,
       store,
       embeddingStore,
@@ -75,20 +75,20 @@ describe('Hybrid RAG Scoring', () => {
     expect(hasSemanticStrategy).toBe(true);
   });
 
-  it('should work without embeddingStore (backward compat)', () => {
-    const results = multiStrategySearch(store.getDb(), 'authentication', {
+  it('should work without embeddingStore (backward compat)', async () => {
+    const results = await multiStrategySearch(store.getDb(), 'authentication', {
       limit: 5,
       store,
     });
     expect(results.length).toBeGreaterThan(0);
   });
 
-  it('should not crash when embeddingStore has no embeddings', () => {
+  it('should not crash when embeddingStore has no embeddings', async () => {
     const freshStore = SqliteStore.open(':memory:');
     freshStore.initProject('Empty Test');
     const freshEmbedding = new EmbeddingStore(freshStore);
 
-    const results = multiStrategySearch(freshStore.getDb(), 'anything', {
+    const results = await multiStrategySearch(freshStore.getDb(), 'anything', {
       limit: 5,
       store: freshStore,
       embeddingStore: freshEmbedding,

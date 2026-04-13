@@ -239,7 +239,7 @@ describe("RAG Pipeline Integration", () => {
   });
 
   describe("end-to-end pipeline with real store", () => {
-    it("should run full pipeline: understand → search → post-process → cite → trace", () => {
+    it("should run full pipeline: understand → search → post-process → cite → trace", async () => {
       // Seed store with nodes and knowledge
       const n1 = makeNode({ title: "Implement FTS5 search", description: "Full-text search with BM25 ranking" });
       const n2 = makeNode({ title: "Add knowledge store", description: "SQLite-backed knowledge document storage" });
@@ -262,7 +262,7 @@ describe("RAG Pipeline Integration", () => {
       expect(understanding.intent).toBe("how_to");
 
       // 2. Multi-strategy search
-      const rawResults = multiStrategySearch(store.getDb(), understanding.rewrittenQuery, {
+      const rawResults = await multiStrategySearch(store.getDb(), understanding.rewrittenQuery, {
         limit: 20,
       });
 

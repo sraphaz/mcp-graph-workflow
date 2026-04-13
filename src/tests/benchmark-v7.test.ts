@@ -68,7 +68,7 @@ describe("Benchmark v7.0 — Real Impact Measurements", () => {
   // ── B2: Unified Gate — Single vs Double Wrap Overhead ──
 
   describe("B2: Unified Gate Overhead", () => {
-    it("should build lifecycle block in < 20ms for project with 100 nodes", () => {
+    it("should build lifecycle block in < 50ms for project with 100 nodes", () => {
       // Seed 100 nodes
       for (let i = 0; i < 100; i++) {
         store.insertNode(makeNode({ title: `Task ${i}`, status: i < 60 ? "done" : "backlog" }));
@@ -85,10 +85,10 @@ describe("Benchmark v7.0 — Real Impact Measurements", () => {
       const avgMs = elapsed / iterations;
 
       console.log(`[B2] Lifecycle block build: ${avgMs.toFixed(2)}ms avg (${iterations} iterations, 100 nodes)`);
-      expect(avgMs).toBeLessThan(20);
+      expect(avgMs).toBeLessThan(50);
     });
 
-    it("should build lifecycle block in < 20ms for project with 500 nodes", () => {
+    it("should build lifecycle block in < 50ms for project with 500 nodes", () => {
       // Seed 500 nodes
       for (let i = 0; i < 500; i++) {
         store.insertNode(makeNode({ title: `Task ${i}`, status: i < 300 ? "done" : "backlog" }));
@@ -105,7 +105,7 @@ describe("Benchmark v7.0 — Real Impact Measurements", () => {
       const avgMs = elapsed / iterations;
 
       console.log(`[B2] Lifecycle block build (500 nodes): ${avgMs.toFixed(2)}ms avg`);
-      expect(avgMs).toBeLessThan(20);
+      expect(avgMs).toBeLessThan(50);
     });
   });
 

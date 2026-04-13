@@ -15,7 +15,7 @@ describe("RAG LSP Strategy", () => {
     store = new KnowledgeStore(db);
   });
 
-  it("should work without lspBridge (strategy 5 not executed)", () => {
+  it("should work without lspBridge (strategy 5 not executed)", async () => {
     store.insert({
       sourceType: "memory",
       sourceId: "mem:auth",
@@ -23,7 +23,7 @@ describe("RAG LSP Strategy", () => {
       content: "JWT authentication with Express middleware and role-based access control",
     });
 
-    const results = multiStrategySearch(db, "authentication JWT");
+    const results = await multiStrategySearch(db, "authentication JWT");
     expect(results.length).toBeGreaterThan(0);
     // No LSP strategy tag
     for (const r of results) {
@@ -31,7 +31,7 @@ describe("RAG LSP Strategy", () => {
     }
   });
 
-  it("should boost code_context docs when lspBridge is provided with PascalCase entity", () => {
+  it("should boost code_context docs when lspBridge is provided with PascalCase entity", async () => {
     // Seed a code_context doc with a PascalCase name
     store.insert({
       sourceType: "code_context",
@@ -52,7 +52,7 @@ describe("RAG LSP Strategy", () => {
       ],
     };
 
-    const results = multiStrategySearch(db, "GraphStore operations", { lspBridge: mockBridge });
+    const results = await multiStrategySearch(db, "GraphStore operations", { lspBridge: mockBridge });
     expect(results.length).toBeGreaterThan(0);
 
     // The code_context doc mentioning GraphStore should appear
@@ -60,7 +60,7 @@ describe("RAG LSP Strategy", () => {
     expect(codeResult).toBeDefined();
   });
 
-  it("should boost lsp_result docs when lspBridge is provided", () => {
+  it("should boost lsp_result docs when lspBridge is provided", async () => {
     store.insert({
       sourceType: "lsp_result",
       sourceId: "lsp:CodeStore",
@@ -80,7 +80,7 @@ describe("RAG LSP Strategy", () => {
       ],
     };
 
-    const results = multiStrategySearch(db, "CodeStore methods", { lspBridge: mockBridge });
+    const results = await multiStrategySearch(db, "CodeStore methods", { lspBridge: mockBridge });
     expect(results.length).toBeGreaterThan(0);
 
     // The lsp_result doc should appear and have lsp strategy
@@ -90,7 +90,7 @@ describe("RAG LSP Strategy", () => {
     }
   });
 
-  it("should not break retrieval when LSP strategy throws", () => {
+  it("should not break retrieval when LSP strategy throws", async () => {
     store.insert({
       sourceType: "memory",
       sourceId: "mem:safe",
@@ -106,12 +106,12 @@ describe("RAG LSP Strategy", () => {
     };
 
     // The LSP strategy catches errors internally, so this should still work
-    const results = multiStrategySearch(db, "Safe Memory retrievable", { lspBridge: mockBridge });
+    const results = await multiStrategySearch(db, "Safe Memory retrievable", { lspBridge: mockBridge });
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].title).toContain("Safe");
   });
 
-  it("should skip LSP strategy when lspBridge is null", () => {
+  it("should skip LSP strategy when lspBridge is null", async () => {
     store.insert({
       sourceType: "code_context",
       sourceId: "code:MyClass",
@@ -119,7 +119,7 @@ describe("RAG LSP Strategy", () => {
       content: "MyClass handles data processing with complex algorithms",
     });
 
-    const results = multiStrategySearch(db, "MyClass processing", { lspBridge: null });
+    const results = await multiStrategySearch(db, "MyClass processing", { lspBridge: null });
     expect(results.length).toBeGreaterThan(0);
     // No LSP strategy tag
     for (const r of results) {
