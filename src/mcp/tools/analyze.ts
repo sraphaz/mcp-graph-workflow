@@ -95,12 +95,16 @@ const ANALYZE_MODES = z.enum([
   "code_quality",
   "test_coverage",
   "observability_check",
+  "harness_scan",
+  "harness_trend",
+  "harness_advice",
+  "harness_remediate",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
-    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk, economy_simulation (gold inflow vs outflow inflation detector — pass JSON params via nodeId: {playerCount, avgSessionHours, avgLevel}).",
+    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk, economy_simulation (gold inflow vs outflow inflation detector — pass JSON params via nodeId: {playerCount, avgSessionHours, avgLevel}), harness_scan (compute Harnessability Score across 4 dimensions: type coverage, test coverage, docs coverage, architecture fitness — returns score, grade A–D, breakdown, details, timestamp), harness_trend (show harness score evolution — returns last 10 snapshots with trend direction: improving/degrading/stable/no_data and delta), harness_advice (per-dimension remediation — returns file-level improvement suggestions for dimensions scoring < 70).",
     {
       mode: ANALYZE_MODES.describe("Analysis mode"),
       nodeId: z.string().optional().describe("Node ID (required for 'blockers'/'implement_done', optional for 'decompose'/'tdd_check'. For 'progress' mode, used as sprint name filter)"),
@@ -496,6 +500,147 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const report = checkObservability(process.cwd());
           logger.info("tool:analyze:observability_check:ok", { score: report.score, grade: report.grade });
           return mcpText({ ok: true, ...report });
+        }
+
+        case "harness_scan": {
+          const { runHarnessScan } = await import("../../core/harness/harness-scan-runner.js");
+          const report = runHarnessScan(process.cwd(), store.getDb());
+          logger.info("tool:analyze:harness_scan:ok", { score: report.score, grade: report.grade });
+
+          // Index scan result in KnowledgeStore for RAG retrieval (non-blocking)
+          try {
+            const ksHarness = new KnowledgeStore(store.getDb());
+            ksHarness.insert({
+              title: `Harness Scan — Grade ${report.grade} (${report.score}/100)`,
+              content: `Harnessability Score: ${report.score}/100 (Grade ${report.grade}). ${report.details.join(". ")}`,
+              sourceType: "harness_scan",
+              sourceId: `harness_scan_${report.timestamp}`,
+              metadata: { score: report.score, grade: report.grade, timestamp: report.timestamp },
+            });
+          } catch {
+            // non-blocking
+          }
+
+          return mcpText({ ok: true, mode, ...report });
+        }
+
+        case "harness_trend": {
+          const db = store.getDb();
+          const project = store.getActiveProject();
+          const projectId = project?.id ?? "default";
+
+          const rows = db
+            .prepare(
+              "SELECT score, grade, breakdown, git_commit, timestamp FROM harness_history WHERE project_id = ? ORDER BY timestamp DESC LIMIT 10",
+            )
+            .all(projectId) as Array<{
+              score: number;
+              grade: string;
+              breakdown: string;
+              git_commit: string | null;
+              timestamp: string;
+            }>;
+
+          // Reverse to ASC order for presentation
+          const history = rows.reverse().map((r) => ({
+            score: r.score,
+            grade: r.grade,
+            timestamp: r.timestamp,
+            gitCommit: r.git_commit,
+          }));
+
+          if (history.length === 0) {
+            logger.info("tool:analyze:harness_trend:no_data");
+            return mcpText({ ok: true, mode, history: [], trend: "no_data", delta: 0 });
+          }
+
+          const first = history[0].score;
+          const last = history[history.length - 1].score;
+          const delta = Math.round((last - first) * 10) / 10;
+          const absDelta = Math.abs(delta);
+
+          let trend: "improving" | "degrading" | "stable" | "no_data";
+          if (absDelta < 2) {
+            trend = "stable";
+          } else if (delta > 0) {
+            trend = "improving";
+          } else {
+            trend = "degrading";
+          }
+
+          logger.info("tool:analyze:harness_trend:ok", { entries: history.length, trend, delta });
+          return mcpText({ ok: true, mode, history, trend, delta });
+        }
+
+        case "harness_remediate": {
+          const { runHarnessScan: remScan } = await import("../../core/harness/harness-scan-runner.js");
+          const { evaluate: evalRemediation } = await import("../../core/harness/remediation-engine.js");
+          const remReport = remScan(process.cwd(), store.getDb(), undefined, { collectViolations: true });
+          const suggestions = evalRemediation(remReport.violations ?? [], store.getDb());
+          logger.info("tool:analyze:harness_remediate:ok", { score: remReport.score, suggestions: suggestions.length });
+          return mcpText({
+            ok: true,
+            mode,
+            score: remReport.score,
+            grade: remReport.grade,
+            suggestions: suggestions.map((s) => ({
+              ruleId: s.ruleId,
+              file: s.violation.file,
+              line: s.violation.line,
+              dimension: s.violation.dimension,
+              violationType: s.violation.violationType,
+              suggestedFix: s.suggestedFix,
+              confidence: s.confidence,
+              category: s.category,
+              priority: s.priority,
+            })),
+            totalViolations: remReport.violations?.length ?? 0,
+            message: suggestions.length === 0
+              ? "No actionable remediations — all dimensions healthy or suppressed"
+              : `${suggestions.length} remediation(s) found, sorted by priority`,
+          });
+        }
+
+        case "harness_advice": {
+          const { runHarnessScan } = await import("../../core/harness/harness-scan-runner.js");
+          const adviceReport = runHarnessScan(process.cwd(), store.getDb());
+          const breakdown = adviceReport.breakdown as Record<string, { score: number; weight: number }>;
+
+          interface AdviceFile { file: string; issue: string; suggestion: string }
+          interface AdviceEntry { dimension: string; score: number; files: AdviceFile[] }
+          const advice: AdviceEntry[] = [];
+
+          // For each dimension with score < 70, generate file-level advice
+          for (const [dim, info] of Object.entries(breakdown)) {
+            if (info.score >= 70) continue;
+
+            const files: AdviceFile[] = [];
+            const details = adviceReport.details.find((d) => d.toLowerCase().includes(dim.replace(/([A-Z])/g, " $1").toLowerCase().trim()));
+
+            if (dim === "types") {
+              files.push({ file: "src/**/*.ts", issue: `${info.score}% type coverage — files with 'any'`, suggestion: "Replace 'any' with explicit types. Run: grep -rn ': any\\|as any' src/" });
+            } else if (dim === "tests") {
+              files.push({ file: "src/**/*.ts", issue: `${info.score}% test coverage — modules without test files`, suggestion: "Create test files for untested modules in src/tests/" });
+            } else if (dim === "fitness") {
+              files.push({ file: "src/core/**/*.ts", issue: `${info.score}% fitness — architecture violations`, suggestion: details ?? "Fix dependency direction, circular deps, or barrel exports" });
+            } else if (dim === "docs") {
+              files.push({ file: "CLAUDE.md, README.md", issue: `${info.score}% docs coverage`, suggestion: "Ensure CLAUDE.md, README.md, and .claude/rules/ are comprehensive" });
+            } else if (dim === "naming") {
+              files.push({ file: "src/**/*.ts", issue: `${info.score}% naming clarity — generic or short names`, suggestion: "Rename variables like 'data', 'result', 'temp' to descriptive names" });
+            } else if (dim === "errorHandling") {
+              files.push({ file: "src/**/*.ts", issue: `${info.score}% error handling — raw throws or swallowed catches`, suggestion: "Use typed errors from utils/errors.ts instead of throw new Error()" });
+            } else if (dim === "contextDensity") {
+              files.push({ file: "src/**/*.ts", issue: `${info.score}% context density — exports without JSDoc`, suggestion: "Add /** JSDoc */ comments to all exported functions" });
+            }
+
+            if (files.length > 0) {
+              advice.push({ dimension: dim, score: info.score, files: files.slice(0, 10) });
+            }
+          }
+
+          const message = advice.length === 0 ? "Harness score healthy — all dimensions >= 70" : `${advice.length} dimension(s) need improvement`;
+          logger.info("tool:analyze:harness_advice:ok", { score: adviceReport.score, dimensions: advice.length });
+          return mcpText({ ok: true, mode, score: adviceReport.score, grade: adviceReport.grade, advice, message });
         }
 
         default: {

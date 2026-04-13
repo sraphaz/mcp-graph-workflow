@@ -1,6 +1,6 @@
 /**
  * Pipeline compound operation: start_task
- * Composes: next + context + rag_context + TDD hints + update_status(in_progress)
+ * Composes: next + context + context(rag) + TDD hints + update_status(in_progress)
  * Reduces 5-6 tool calls to 1.
  */
 
@@ -13,6 +13,11 @@ import { buildTaskContext } from "../context/compact-context.js";
 import { assembleContext } from "../context/context-assembler.js";
 import { generateTddHints, generateTddHintsFromTexts } from "../implementer/tdd-checker.js";
 import type { TddHint } from "../../schemas/implementer-schema.js";
+import { getHarnessPreflightWarning } from "../harness/harness-preflight.js";
+import type { HarnessPreflightWarning } from "../harness/harness-preflight.js";
+import { runHarnessScan } from "../harness/harness-scan-runner.js";
+import { evaluate as evaluateRemediations } from "../harness/remediation-engine.js";
+import type { RemediationSuggestion } from "../harness/violation-detail.js";
 import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 
@@ -29,6 +34,9 @@ export interface StartTaskResult {
   ragContext: AssembledContext | null;
   tddHints: TddHint[];
   startedAt: string | null;
+  harnessWarning: HarnessPreflightWarning | null;
+  /** Top 3 remediation suggestions when harness score < 70 */
+  topRemediations?: RemediationSuggestion[];
 }
 
 /**
@@ -100,7 +108,28 @@ export function startTask(
     ? generateTddHintsFromTexts(acTexts)
     : generateTddHints(taskNode);
 
-  // 5. Auto-start if requested
+  // 5. Harness pre-flight warning (non-blocking, advisory)
+  let harnessWarning: HarnessPreflightWarning | null = null;
+  try {
+    harnessWarning = getHarnessPreflightWarning(store.getDb());
+  } catch (err) {
+    logger.warn("pipeline:start_task:harness_preflight_failed", { error: String(err) });
+  }
+
+  // 5b. Top remediation suggestions when score < 70 (non-blocking)
+  let topRemediations: RemediationSuggestion[] | undefined;
+  try {
+    if (harnessWarning && harnessWarning.score < 70) {
+      const scan = runHarnessScan(process.cwd(), store.getDb(), undefined, { collectViolations: true });
+      if (scan.violations && scan.violations.length > 0) {
+        topRemediations = evaluateRemediations(scan.violations, store.getDb()).slice(0, 3);
+      }
+    }
+  } catch (err) {
+    logger.warn("pipeline:start_task:remediation_preflight_failed", { error: String(err) });
+  }
+
+  // 6. Auto-start if requested
   let startedAt: string | null = null;
   if (autoStart) {
     try {
@@ -124,5 +153,7 @@ export function startTask(
     ragContext,
     tddHints,
     startedAt,
+    harnessWarning,
+    ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
   };
 }

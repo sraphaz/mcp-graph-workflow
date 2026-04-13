@@ -5,18 +5,28 @@
  * Score: (tested modules / total modules) * 100.
  *
  * Part of the Harnessability Metric (Harness Engineering).
+ * v4: Optional collectViolations mode returns file-level ViolationDetail[].
  */
+
+import type { ViolationDetail } from "./violation-detail.js";
 
 export interface TestCoverageResult {
   testScore: number;
   totalModules: number;
   testedModules: number;
   emptyTests: number;
+  /** File-level violations — only present when collectViolations=true */
+  violations?: ViolationDetail[];
 }
 
 export interface TestFileInfo {
   name: string;
   hasAssertions: boolean;
+}
+
+export interface TestCoverageOptions {
+  /** When true, collect file-level violations. Default: false */
+  collectViolations?: boolean;
 }
 
 /**
@@ -26,13 +36,21 @@ export interface TestFileInfo {
 export function scanTestCoverage(
   moduleNames: string[],
   testFiles: TestFileInfo[],
+  options?: TestCoverageOptions,
 ): TestCoverageResult {
   if (moduleNames.length === 0) {
-    return { testScore: 100, totalModules: 0, testedModules: 0, emptyTests: 0 };
+    return {
+      testScore: 100, totalModules: 0, testedModules: 0, emptyTests: 0,
+      ...(options?.collectViolations ? { violations: [] } : {}),
+    };
   }
+
+  const collect = options?.collectViolations === true;
+  const violations: ViolationDetail[] = [];
 
   // Build set of test stems with assertions
   const testedStems = new Set<string>();
+  const emptyStems = new Set<string>();
   let emptyTests = 0;
 
   for (const tf of testFiles) {
@@ -41,19 +59,45 @@ export function scanTestCoverage(
       testedStems.add(stem);
     } else {
       emptyTests++;
+      emptyStems.add(stem);
     }
   }
 
   // Match modules to tests
   let testedModules = 0;
   for (const mod of moduleNames) {
-    // Try exact match and common variations
-    if (
+    const matched =
       testedStems.has(mod) ||
       testedStems.has(mod.replace(/_/g, '-')) ||
-      testedStems.has(mod.replace(/-/g, '_'))
-    ) {
+      testedStems.has(mod.replace(/-/g, '_'));
+
+    if (matched) {
       testedModules++;
+    } else if (collect) {
+      const hasEmpty =
+        emptyStems.has(mod) ||
+        emptyStems.has(mod.replace(/_/g, '-')) ||
+        emptyStems.has(mod.replace(/-/g, '_'));
+
+      if (hasEmpty) {
+        violations.push({
+          file: `src/tests/${mod}.test.ts`,
+          line: 1,
+          dimension: 'tests',
+          violationType: 'empty_test',
+          evidence: `Test file for ${mod} has 0 assertions`,
+          confidence: 0.9,
+        });
+      } else {
+        violations.push({
+          file: mod,
+          line: 1,
+          dimension: 'tests',
+          violationType: 'missing_test',
+          evidence: `No test file found for module ${mod}`,
+          confidence: 1.0,
+        });
+      }
     }
   }
 
@@ -64,5 +108,6 @@ export function scanTestCoverage(
     totalModules: moduleNames.length,
     testedModules,
     emptyTests,
+    ...(collect ? { violations } : {}),
   };
 }

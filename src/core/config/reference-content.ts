@@ -5,7 +5,7 @@
 
 export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (43 tools — v8.0 consolidated + spec-kit)
 
-#### Pipeline Tools (v6.0 — recommended)
+#### Pipeline Tools (v8.0 — recommended)
 
 | Tool | Quando usar |
 |------|-------------|
@@ -183,7 +183,7 @@ export const KNOWLEDGE_PIPELINE_SECTION = `### Pipeline de Conhecimento (Knowled
 Fontes indexadas automaticamente:
 - **Project memories** — ao escrever com \`write_memory\` (auto-indexa)
 - **PRD imports** — ao importar com \`import_prd\`
-- **Browser captures** — ao validar com \`validate_task\`
+- **Browser captures** — ao validar com \`validate(action: "task")\`
 - **Stack docs** — ao sincronizar com \`sync_stack_docs\`
 - **Sprint reports** — ao gerar com \`plan_sprint\`
 
@@ -303,7 +303,7 @@ export const AGENT_ANTIPATTERNS_SECTION = `### Erros Comuns de Agentes
 | Pular \`context(action:rag)\` em IMPLEMENT | RAG traz decisões de DESIGN + healing memories |
 | Criar tasks sem AC | AC é required — \`validate(ac)\` bloqueia sem ela |
 | Ignorar Code Intelligence em REVIEW | \`code_intelligence(impact)\` mostra blast radius |
-| Usar 6 calls separados (next+context+rag+...) | Usar \`start_task\` + \`finish_task\` (pipeline v6.0) |
+| Usar 6 calls separados (next+context+rag+...) | Usar \`start_task\` + \`finish_task\` (pipeline v8.0) |
 | Ignorar \`_lifecycle.nextAction\` na resposta | Seguir o nextAction — o grafo sabe o que fazer |`;
 
 export const FLOW_PRINCIPLES_SECTION = `### Princípios de Fluxo (Little's Law + Lean + TOC)
@@ -382,9 +382,9 @@ O \`next\` retorna \`tddHints\` — specs de teste inferidos dos AC:
 
 **Regra:** Se \`testabilityScore < 80%\`, reescrever AC antes de implementar.`;
 
-export const PIPELINE_TOOLS_SECTION = `### Pipeline Tools v6.0 (Agent Autopilot)
+export const PIPELINE_TOOLS_SECTION = `### Pipeline Tools v8.0 (Agent Autopilot)
 
-**Fluxo v6.0 (recomendado — 2 calls):**
+**Fluxo v8.0 (recomendado — 2 calls):**
 \`\`\`
 start_task → [implementar com TDD] → finish_task
 \`\`\`
@@ -753,6 +753,82 @@ export function getPipelineTools(): string {
   return PIPELINE_TOOLS_SECTION;
 }
 
+// ── Harness Engineering ─────────────────────────────────────
+
+export const HARNESS_SECTION = `## Harness Engineering — Agent Readiness Score
+
+### O que é
+Métrica composta (0-100) que mede quão preparado o código está para geração/manutenção por agentes AI.
+Quanto maior o score, menor o risco de alucinação e retrabalho.
+
+### 7 Dimensões
+
+| Dimensão | Peso | O que mede |
+|----------|------|------------|
+| Type Coverage | 25% | % arquivos sem \`any\` |
+| Test Coverage | 25% | Módulos com arquivo de teste correspondente |
+| Architecture Fitness | 15% | Deps direction, circular deps, barrel integrity |
+| Docs Coverage | 15% | CLAUDE.md, README, rules/, docs/ |
+| Naming Clarity | 10% | Nomes descritivos (sem data/result/temp/val genéricos) |
+| Error Handling | 5% | Typed errors, sem catch vazio, sem console.error |
+| Context Density | 5% | JSDoc em exports (contexto para agentes) |
+
+### Grades
+
+| Grade | Score | Significado |
+|-------|-------|-------------|
+| A | >= 85 | Excelente — baixo risco de alucinação |
+| B | >= 70 | Bom — deploy permitido |
+| C | >= 55 | Razoável — precisa melhorar |
+| D | < 55 | Crítico — alto risco de alucinação |
+
+### Comandos
+
+- \`analyze(mode: "harness_scan")\` — Scan completo, salva resultado em knowledge store
+- \`analyze(mode: "harness_trend")\` — Evolução do score (últimos 10 snapshots)
+- \`analyze(mode: "harness_advice")\` — Sugestões de melhoria por dimensão < 70
+- \`analyze(mode: "harness_remediate")\` — Deterministic Remediation Engine: file-level violations → actionable fix suggestions sorted by priority. Zero AI, 16 rules, suppression store for false-positives
+- \`npm run harness:scan\` — CLI local (human-readable output)
+
+### Workflow Diário por Fase
+
+| Fase | O que muda com Harness |
+|------|------------------------|
+| ANALYZE | Rodar harness_scan para baseline inicial |
+| DESIGN | Gate: score >= 55 (C) para avançar para PLAN |
+| PLAN | Sprint health mostra harness delta; tasks que melhoram dimensões fracas ganham prioridade via harnessBonus |
+| IMPLEMENT | start_task mostra harnessWarning se score < 70; finish_task detecta regressão > 5pts e retorna ruleSuggestions |
+| VALIDATE | Gate: sem regressão > 10pts |
+| REVIEW | Gate: score >= 55 (C) |
+| HANDOFF | Gate: score >= 55 (C) recomendado |
+| DEPLOY | Gate MAIS RÍGIDO: score >= 70 (B) obrigatório para release |
+| LISTENING | Score salvo como baseline pós-deploy para próximo ciclo |
+
+### Security
+
+Security NÃO é dimensão do harness — é quality gate paralelo (\`security_scanner\`).
+Harness mede "agent readiness" (tipos, testes, docs). Security mede "code correctness" (vulnerabilidades, secrets).
+Ambos são visíveis no lifecycle block de cada tool response.
+
+### Issue Pattern Tracker (Steering Loop)
+
+finish_task grava padrões recorrentes de falha DoD. Ao atingir 3 ocorrências,
+auto-sugere regras em \`.claude/rules/\`. Padrões rastreados:
+- \`missing_ac\` — Task sem acceptance criteria
+- \`status_skip\` — Pulo de status (ex: backlog → done)
+- \`orphan_node\` — Node sem parent
+- \`circular_dep\` — Dependência circular
+- \`oversized_task\` — Task L/XL sem subtasks
+- \`missing_description\` — Descrição vazia
+- \`missing_estimate\` — Sem xpSize ou estimateMinutes`;
+
+/**
+ * Get harness engineering reference content.
+ */
+export function getHarnessReference(): string {
+  return HARNESS_SECTION;
+}
+
 /**
  * Get all reference content combined.
  */
@@ -774,5 +850,6 @@ export function getFullReference(): string {
     TDD_ENFORCEMENT_SECTION,
     AGENT_ANTIPATTERNS_SECTION,
     CLI_COMMANDS,
+    HARNESS_SECTION,
   ].join("\n\n");
 }

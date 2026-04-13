@@ -1066,8 +1066,47 @@ const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 36,
+    description: "Remediation Engine v4: suppressions, validations, meta-rules tables",
+    sql: `
+      CREATE TABLE IF NOT EXISTS remediation_suppressions (
+        id TEXT PRIMARY KEY,
+        file TEXT NOT NULL,
+        violation_type TEXT NOT NULL,
+        dimension TEXT NOT NULL,
+        reason TEXT,
+        suppressed_at TEXT NOT NULL,
+        UNIQUE(file, violation_type)
+      );
+
+      CREATE TABLE IF NOT EXISTS remediation_validations (
+        id TEXT PRIMARY KEY,
+        rule_id TEXT NOT NULL,
+        file TEXT NOT NULL,
+        applied INTEGER NOT NULL DEFAULT 0,
+        score_before REAL,
+        score_after REAL,
+        confirmed INTEGER NOT NULL DEFAULT 0,
+        validated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS remediation_meta_rules (
+        id TEXT PRIMARY KEY,
+        dimension TEXT NOT NULL,
+        violation_type TEXT NOT NULL,
+        pattern TEXT NOT NULL,
+        fix_template TEXT NOT NULL,
+        confidence REAL NOT NULL DEFAULT 0.8,
+        confirmations INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `,
+  },
 ];
 
+/** Apply pending schema migrations to the database. */
 export function runMigrations(db: Database.Database): void {
   // Create migrations tracking table
   db.exec(`
@@ -1099,6 +1138,7 @@ export function runMigrations(db: Database.Database): void {
   }
 }
 
+/** Set SQLite pragmas for WAL mode, performance, and safety. */
 export function configureDb(db: Database.Database): void {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
