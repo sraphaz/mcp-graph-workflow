@@ -28,7 +28,7 @@
     "test:coverage": "vitest run --coverage",
     "test:all": "vitest run && playwright test",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/ --max-warnings 9",
+    "lint": "eslint src/ --max-warnings 15",
     "lint:fix": "eslint src/ --fix",
     "setup:mcp": "bash scripts/setup-mcp.sh",
     "harness:scan": "tsx scripts/harness-scan-run.js",

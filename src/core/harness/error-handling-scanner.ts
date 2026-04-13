@@ -118,7 +118,7 @@ export function scanErrorHandling(files: FileContent[], options?: ErrorHandlingO
 }
 
 /** Collect violations for a single file using a regex pattern */
-// eslint-disable-next-line security/detect-non-literal-regexp
+ 
 function collectPatternViolations(
   file: FileContent,
   pattern: RegExp,

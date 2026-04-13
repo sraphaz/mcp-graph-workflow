@@ -30,6 +30,7 @@ const CREATE_TABLE_SQL = `
     source_id TEXT NOT NULL,
     text TEXT NOT NULL,
     embedding BLOB NOT NULL,
+    embedding_type TEXT NOT NULL DEFAULT 'tfidf',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `;
@@ -92,6 +93,16 @@ export class EmbeddingStore {
   constructor(private sqliteStore: SqliteStore) {
     this.db = this.sqliteStore.getDb();
     this.db.exec(CREATE_TABLE_SQL);
+    this.ensureEmbeddingTypeColumn();
+  }
+
+  /** Add embedding_type column to existing tables that lack it. */
+  private ensureEmbeddingTypeColumn(): void {
+    const columns = this.db.prepare("PRAGMA table_info(embeddings)").all() as Array<{ name: string }>;
+    const hasColumn = columns.some(c => c.name === 'embedding_type');
+    if (!hasColumn) {
+      this.db.exec("ALTER TABLE embeddings ADD COLUMN embedding_type TEXT NOT NULL DEFAULT 'tfidf'");
+    }
   }
 
   /**

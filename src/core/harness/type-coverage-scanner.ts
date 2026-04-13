@@ -86,7 +86,7 @@ export function scanTypeCoverage(files: FileContent[], options?: TypeCoverageOpt
 }
 
 /** Collect violations for a single file using a regex pattern */
-// eslint-disable-next-line security/detect-non-literal-regexp
+ 
 function collectFileViolations(
   file: FileContent,
   pattern: RegExp,

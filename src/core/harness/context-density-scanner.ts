@@ -28,7 +28,7 @@ export interface ContextDensityOptions {
 }
 
 /** Detects exported function and arrow function declarations. */
-// eslint-disable-next-line no-control-regex, security/detect-unsafe-regex
+// eslint-disable-next-line security/detect-unsafe-regex
 const IS_EXPORT_FN_LINE = /^[ \t]*export\s+(?:async\s+)?function\s+[A-Za-z_$]|^[ \t]*export\s+const\s+[A-Za-z_$][A-Za-z0-9_$]*\s*=\s*(?:async\s*)?\(/;
 
 function isTestFile(path: string): boolean {

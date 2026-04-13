@@ -93,7 +93,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   smoke-test:
-    needs: [publish]
+    needs: [release-please, publish]
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10

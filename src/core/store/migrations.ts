@@ -1104,6 +1104,45 @@ const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 37,
+    description: "Agent tracking: modified_by, version columns + resource_locks table + embedding_type",
+    sql: `
+      -- Agent identity columns on nodes
+      ALTER TABLE nodes ADD COLUMN modified_by TEXT;
+      ALTER TABLE nodes ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+
+      -- Agent identity columns on edges
+      ALTER TABLE edges ADD COLUMN modified_by TEXT;
+      ALTER TABLE edges ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+
+      -- Agent identity on knowledge_documents
+      ALTER TABLE knowledge_documents ADD COLUMN modified_by TEXT;
+
+      -- Agent tracking in changelog
+      ALTER TABLE node_changelog ADD COLUMN agent_id TEXT;
+
+      -- Embedding type for dual-mode (tfidf vs onnx)
+      -- Note: embeddings table is created lazily by EmbeddingStore.
+      -- The column is added conditionally at EmbeddingStore init time.
+
+      -- Resource locks for multi-agent lease-based locking
+      CREATE TABLE IF NOT EXISTS resource_locks (
+        resource_id   TEXT PRIMARY KEY,
+        resource_type TEXT NOT NULL,
+        agent_id      TEXT NOT NULL,
+        lease_token   TEXT NOT NULL UNIQUE,
+        acquired_at   TEXT NOT NULL,
+        expires_at    TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_resource_locks_agent
+        ON resource_locks(agent_id);
+
+      CREATE INDEX IF NOT EXISTS idx_resource_locks_expires
+        ON resource_locks(expires_at);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

@@ -1,0 +1,76 @@
+# Break-glass manual publish workflow.
+# Use when release-please flow is disrupted and a version needs
+# to be published from an existing git tag.
+name: Manual Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to publish (e.g. v8.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache dashboard dependencies
+        id: dashboard-cache
+        uses: actions/cache@v5
+        with:
+          path: src/web/dashboard/node_modules
+          key: dashboard-ubuntu-latest-node22-${{ hashFiles('src/web/dashboard/package-lock.json') }}
+
+      - name: Install dashboard dependencies
+        if: steps.dashboard-cache.outputs.cache-hit != 'true'
+        run: cd src/web/dashboard && npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify package (dry run)
+        run: npm publish --dry-run --access public
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  smoke-test:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Wait for npm propagation
+        run: sleep 30
+      - name: Install published package
+        run: npm install -g @mcp-graph-workflow/mcp-graph@${{ inputs.tag }}
+      - name: Smoke test
+        run: |
+          mcp-graph --help
+          mcp-graph --version
+          echo "✅ Manual publish smoke test passed" >> $GITHUB_STEP_SUMMARY
