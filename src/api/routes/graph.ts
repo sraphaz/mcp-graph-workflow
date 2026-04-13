@@ -109,8 +109,8 @@ export function createGraphRouter(storeRef: StoreRef): Router {
       relatedIds.delete(node.id);
       const relatedNodes = Array.from(relatedIds)
         .map((id) => store.getNodeById(id))
-        .filter(Boolean)
-        .map((n) => ({ id: n!.id, title: n!.title, type: n!.type, status: n!.status }));
+        .filter((n): n is NonNullable<typeof n> => n !== null)
+        .map((n) => ({ id: n.id, title: n.title, type: n.type, status: n.status }));
 
       const children = store.getChildNodes(node.id);
 
