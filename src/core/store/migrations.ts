@@ -1143,6 +1143,22 @@ const migrations: Migration[] = [
         ON resource_locks(expires_at);
     `,
   },
+  {
+    version: 38,
+    description: "Cross-terminal event queue for teamTask mode",
+    sql: `
+      CREATE TABLE IF NOT EXISTS event_queue (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        payload    TEXT NOT NULL,
+        agent_id   TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_event_queue_created
+        ON event_queue(created_at);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

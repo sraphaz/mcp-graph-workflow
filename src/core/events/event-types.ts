@@ -51,7 +51,11 @@ export type GraphEventType =
   | "spec:synced"
   // Harness events (v3)
   | "harness:scan_completed"
-  | "harness:regression_detected";
+  | "harness:regression_detected"
+  // Multi-terminal orchestrator events (teamTask mode)
+  | "task:claimed"
+  | "task:released"
+  | "agent:heartbeat";
 
 export interface GraphEvent {
   type: GraphEventType;

@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { NodeType, NodeStatus } from "../../core/graph/graph-types.js";
 import { NodeTypeSchema, NodeStatusSchema } from "../../schemas/node.schema.js";
+import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
@@ -49,15 +50,41 @@ export function registerList(server: McpServer, store: SqliteStore): void {
       const total = nodes.length;
       const paginatedNodes = nodes.slice(offset, offset + limit);
 
-      const summary = paginatedNodes.map((n) => ({
-        id: n.id,
-        type: n.type,
-        title: n.title,
-        status: n.status,
-        priority: n.priority,
-        sprint: n.sprint ?? null,
-        parentId: n.parentId ?? null,
-      }));
+      // Build lock info map when teamTask mode is on
+      const teamTaskMode = store.getProjectSetting("team_task_mode") === "on";
+      let lockMap: Map<string, { agentId: string; expiresAt: string }> | undefined;
+      if (teamTaskMode) {
+        try {
+          const lm = new LockManager(store.getDb());
+          lockMap = new Map();
+          for (const lock of lm.listActive()) {
+            if (lock.resourceType === "task") {
+              const nodeId = lock.resourceId.replace("task:", "");
+              lockMap.set(nodeId, { agentId: lock.agentId, expiresAt: lock.expiresAt });
+            }
+          }
+        } catch { /* non-blocking */ }
+      }
+
+      const summary = paginatedNodes.map((n) => {
+        const base: Record<string, unknown> = {
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          status: n.status,
+          priority: n.priority,
+          sprint: n.sprint ?? null,
+          parentId: n.parentId ?? null,
+        };
+        if (lockMap) {
+          const lockInfo = lockMap.get(n.id);
+          if (lockInfo) {
+            base.lockedBy = lockInfo.agentId;
+            base.lockExpiresAt = lockInfo.expiresAt;
+          }
+        }
+        return base;
+      });
 
       logger.info("tool:list:ok", { total, limit, offset, returned: paginatedNodes.length });
       // Bug #065: warn when offset exceeds total
