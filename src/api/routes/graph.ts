@@ -58,6 +58,39 @@ export function createGraphRouter(storeRef: StoreRef): Router {
     }
   });
 
+  router.get("/summary", (_req, res, next) => {
+    try {
+      const store = storeRef.current;
+      const allNodes = store.getAllNodes();
+
+      // Build child count map
+      const childCountMap = new Map<string, number>();
+      for (const node of allNodes) {
+        if (node.parentId) {
+          childCountMap.set(node.parentId, (childCountMap.get(node.parentId) ?? 0) + 1);
+        }
+      }
+
+      // Project to lightweight summary
+      const nodes = allNodes.map((n) => ({
+        id: n.id,
+        title: n.title,
+        type: n.type,
+        status: n.status,
+        priority: n.priority,
+        parentId: n.parentId ?? null,
+        childCount: childCountMap.get(n.id) ?? 0,
+      }));
+
+      res.json({
+        nodes,
+        totalCount: nodes.length,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.get("/mermaid", (req, res, next) => {
     try {
       const doc = storeRef.current.toGraphDocument();
