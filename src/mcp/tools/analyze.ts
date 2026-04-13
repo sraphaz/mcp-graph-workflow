@@ -102,6 +102,7 @@ const ANALYZE_MODES = z.enum([
   "harness_advice",
   "harness_remediate",
   "adr_challenge",
+  "orphan_tasks",
 ]);
 
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
@@ -675,6 +676,21 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
               compositeScore: r.report.fitnessScore.composite,
               grade: r.report.fitnessScore.grade,
             })),
+          });
+        }
+
+        case "orphan_tasks": {
+          const { detectOrphanTasks } = await import("../../core/analyzer/orphan-task-detector.js");
+          const orphans = detectOrphanTasks(store, process.cwd());
+          logger.info("tool:analyze:orphan_tasks:ok", { count: orphans.length });
+          return mcpText({
+            ok: true,
+            mode,
+            orphanCandidates: orphans,
+            count: orphans.length,
+            hint: orphans.length > 0
+              ? "Review these tasks — they may already be implemented. Use update_status to mark them done."
+              : "No orphan tasks detected.",
           });
         }
 
