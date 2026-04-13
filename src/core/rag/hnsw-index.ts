@@ -100,7 +100,6 @@ export class HNSWIndex {
     this.efConstruction = config.efConstruction ?? 200;
     this.linearThreshold = config.linearThreshold ?? 100;
     this.mMax0 = this.M * 2;
-    this.mL = 1 / Math.log(this.M);
   }
 
   /** Number of indexed vectors. */
