@@ -242,7 +242,8 @@ function runBestPracticeChecks(
         { node: startNode, depth: 0, phase: "enter" },
       ];
       while (stack.length > 0) {
-        const frame = stack.pop()!;
+        const frame = stack.pop();
+        if (!frame) break;
         if (frame.phase === "exit") {
           inStack.delete(frame.node);
           continue;
