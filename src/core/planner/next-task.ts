@@ -52,22 +52,32 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
     doc.nodes.filter((n) => n.status === "done").map((n) => n.id),
   );
 
-  // Step 3: Find depends_on edges and filter out nodes with unresolved deps
-  const unblocked = eligible.filter((node) => {
-    const depsEdges = doc.edges.filter(
-      (e) => e.from === node.id && e.relationType === "depends_on",
-    );
-    // All dependency targets must be done
-    return depsEdges.every((e) => doneIds.has(e.to));
-  });
+  // Step 3: Find unresolved depends_on counts in one pass (avoid O(tasks*edges))
+  const eligibleIds = new Set(eligible.map((n) => n.id));
+  const unresolvedDepCount = new Map<string, number>();
+  for (const node of eligible) {
+    unresolvedDepCount.set(node.id, 0);
+  }
+
+  // Step 3.5: Precompute incoming depends_on counts for blocking impact
+  const incomingDependsCount = new Map<string, number>();
+
+  for (const edge of doc.edges) {
+    if (edge.relationType !== "depends_on") continue;
+
+    incomingDependsCount.set(edge.to, (incomingDependsCount.get(edge.to) ?? 0) + 1);
+
+    if (eligibleIds.has(edge.from) && !doneIds.has(edge.to)) {
+      unresolvedDepCount.set(edge.from, (unresolvedDepCount.get(edge.from) ?? 0) + 1);
+    }
+  }
+
+  const unblocked = eligible.filter((node) => (unresolvedDepCount.get(node.id) ?? 0) === 0);
 
   if (unblocked.length === 0) {
     // All eligible tasks have unresolved dependencies — return the one with fewest deps
     const withDepCount = eligible.map((node) => {
-      const deps = doc.edges.filter(
-        (e) => e.from === node.id && e.relationType === "depends_on" && !doneIds.has(e.to),
-      );
-      return { node, pendingDeps: deps.length };
+      return { node, pendingDeps: unresolvedDepCount.get(node.id) ?? 0 };
     });
     withDepCount.sort((a, b) => a.pendingDeps - b.pendingDeps);
     logger.debug("next:all-blocked", {
@@ -86,10 +96,7 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
   // Step 4.5: Compute blocking impact (how many downstream tasks depend on each)
   const blockingImpact = new Map<string, number>();
   for (const node of unblocked) {
-    const impact = doc.edges.filter(
-      (e) => e.to === node.id && e.relationType === "depends_on",
-    ).length;
-    blockingImpact.set(node.id, impact);
+    blockingImpact.set(node.id, incomingDependsCount.get(node.id) ?? 0);
   }
 
   // Step 5: Sort

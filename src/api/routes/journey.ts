@@ -42,6 +42,19 @@ const CreateEdgeSchema = z.object({
   type: z.string().optional(),
 });
 
+export const UpdateScreenSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  screenshot: z.string().optional(),
+  url: z.string().optional(),
+  screenType: z.string().optional(),
+  positionX: z.number().optional(),
+  positionY: z.number().optional(),
+  fields: z.array(z.record(z.string(), z.unknown())).optional(),
+  ctaButtons: z.array(z.record(z.string(), z.unknown())).optional(),
+  abVariants: z.array(z.record(z.string(), z.unknown())).optional(),
+});
+
 const ImportJourneySchema = z.object({
   journey: z.object({
     name: z.string().min(1),
@@ -160,10 +173,10 @@ export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => strin
 
   // ── Update a screen ───────────────────────────────
 
-  router.patch("/screens/:id", (req, res, next) => {
+  router.patch("/screens/:id", validateBody(UpdateScreenSchema), (req, res, next) => {
     try {
       const journeyStore = getJourneyStore(storeRef);
-      const updated = journeyStore.updateScreen(req.params.id as string, req.body);
+      const updated = journeyStore.updateScreen(req.params.id as string, req.body as z.infer<typeof UpdateScreenSchema>);
       if (!updated) {
         res.status(404).json({ error: "Screen not found" });
         return;

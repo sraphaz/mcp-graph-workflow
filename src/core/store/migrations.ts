@@ -1167,6 +1167,54 @@ const migrations: Migration[] = [
         ON nodes(project_id, parent_id);
     `,
   },
+  {
+    version: 40,
+    description: "Rename FTS sync triggers to explicit after_* names",
+    sql: `
+      DROP TRIGGER IF EXISTS nodes_fts_insert;
+      DROP TRIGGER IF EXISTS nodes_fts_delete;
+      DROP TRIGGER IF EXISTS nodes_fts_update;
+
+      CREATE TRIGGER IF NOT EXISTS nodes_fts_after_insert AFTER INSERT ON nodes BEGIN
+        INSERT INTO nodes_fts(rowid, title, description, tags)
+          VALUES (NEW.rowid, NEW.title, COALESCE(NEW.description, ''), COALESCE(NEW.tags, ''));
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS nodes_fts_after_delete AFTER DELETE ON nodes BEGIN
+        INSERT INTO nodes_fts(nodes_fts, rowid, title, description, tags)
+          VALUES ('delete', OLD.rowid, OLD.title, COALESCE(OLD.description, ''), COALESCE(OLD.tags, ''));
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS nodes_fts_after_update AFTER UPDATE ON nodes BEGIN
+        INSERT INTO nodes_fts(nodes_fts, rowid, title, description, tags)
+          VALUES ('delete', OLD.rowid, OLD.title, COALESCE(OLD.description, ''), COALESCE(OLD.tags, ''));
+        INSERT INTO nodes_fts(rowid, title, description, tags)
+          VALUES (NEW.rowid, NEW.title, COALESCE(NEW.description, ''), COALESCE(NEW.tags, ''));
+      END;
+    `,
+  },
+  {
+    version: 43,
+    description: "Deterministic edge deduplication by created_at/id ordering",
+    sql: `
+      DELETE FROM edges
+      WHERE rowid IN (
+        SELECT rowid FROM (
+          SELECT
+            rowid,
+            ROW_NUMBER() OVER (
+              PARTITION BY project_id, from_node, to_node, relation_type
+              ORDER BY COALESCE(created_at, ''), id, rowid
+            ) AS rn
+          FROM edges
+        ) ranked
+        WHERE ranked.rn > 1
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_edges_unique
+        ON edges(project_id, from_node, to_node, relation_type);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

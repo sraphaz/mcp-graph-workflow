@@ -13,27 +13,55 @@
  */
 
 /** Estimate BPE token count using word-boundary heuristics. */
+function isAsciiLetter(code: number): boolean {
+  return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+}
+
+function isAsciiDigit(code: number): boolean {
+  return code >= 48 && code <= 57;
+}
+
+function isWhitespace(code: number): boolean {
+  return code === 32 || code === 9 || code === 10 || code === 13 || code === 12 || code === 11;
+}
+
 export function estimateTokens(text: string): number {
   if (!text) return 0;
 
   let tokens = 0;
+  const len = text.length;
+  let i = 0;
 
-  // Split into word-like and non-word chunks
-  const parts = text.match(/[a-zA-Z]+|[0-9]+|[^\sa-zA-Z0-9]/g);
-  if (!parts) return 1;
+  while (i < len) {
+    const code = text.charCodeAt(i);
 
-  for (const part of parts) {
-    if (/^[a-zA-Z]+$/.test(part)) {
-      // Word: short words (<=6 chars) = 1 token, longer words = ceil(len/5)
-      tokens += part.length <= 6 ? 1 : Math.ceil(part.length / 5);
-    } else if (/^[0-9]+$/.test(part)) {
-      // Numbers: ~1 token per 3 digits
-      tokens += Math.ceil(part.length / 3);
-    } else {
-      // Symbols/punctuation: 1 token each
-      tokens += 1;
+    if (isWhitespace(code)) {
+      i++;
+      continue;
     }
+
+    if (isAsciiLetter(code)) {
+      const start = i;
+      i++;
+      while (i < len && isAsciiLetter(text.charCodeAt(i))) i++;
+      const wordLen = i - start;
+      tokens += wordLen <= 6 ? 1 : Math.ceil(wordLen / 5);
+      continue;
+    }
+
+    if (isAsciiDigit(code)) {
+      const start = i;
+      i++;
+      while (i < len && isAsciiDigit(text.charCodeAt(i))) i++;
+      const digitsLen = i - start;
+      tokens += Math.ceil(digitsLen / 3);
+      continue;
+    }
+
+    // Symbols/punctuation: 1 token each
+    tokens += 1;
+    i++;
   }
 
-  return Math.max(1, tokens);
+  return tokens;
 }

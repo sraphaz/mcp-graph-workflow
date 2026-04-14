@@ -23,6 +23,37 @@ export interface EnrichedContext {
   combined: string;
 }
 
+export class EnrichedContextTimeoutError extends Error {
+  constructor(operation: string, timeoutMs: number) {
+    super(`${operation} timed out after ${timeoutMs}ms`);
+    this.name = "EnrichedContextTimeoutError";
+  }
+}
+
+export async function withOperationTimeout<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  operationName: string,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        controller.signal.addEventListener(
+          "abort",
+          () => reject(new EnrichedContextTimeoutError(operationName, timeoutMs)),
+          { once: true },
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 /**
  * Filter memories that mention the given symbol (case-insensitive).
  */
@@ -73,23 +104,53 @@ function fetchCodeContext(
 export async function buildEnrichedContext(
   symbol: string,
   basePath: string,
-  _unused?: number,
+  timeoutMs = 5_000,
   options?: { db?: import("better-sqlite3").Database; projectId?: string },
 ): Promise<EnrichedContext> {
   logger.info("Building enriched context", { symbol, basePath });
 
   // Lazy migration: copy .serena/memories → workflow-graph/memories if needed
-  await migrateSerenaMemories(basePath);
+  try {
+    await withOperationTimeout(migrateSerenaMemories(basePath), timeoutMs, "migrateSerenaMemories");
+  } catch (err) {
+    logger.warn("Enriched context migration timeout/failure", {
+      symbol,
+      timeoutMs,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // Fetch data from both sources in parallel
-  const [memories, codeGraph] = await Promise.all([
-    readAllMemories(basePath),
-    Promise.resolve(fetchCodeContext(
-      symbol,
-      options?.db ?? null,
-      options?.projectId ?? "default",
-    )),
+  const [memoriesResult, codeGraphResult] = await Promise.allSettled([
+    withOperationTimeout(readAllMemories(basePath), timeoutMs, "readAllMemories"),
+    withOperationTimeout(
+      Promise.resolve(fetchCodeContext(
+        symbol,
+        options?.db ?? null,
+        options?.projectId ?? "default",
+      )),
+      timeoutMs,
+      "fetchCodeContext",
+    ),
   ]);
+
+  if (memoriesResult.status === "rejected") {
+    logger.warn("Enriched context memories unavailable", {
+      symbol,
+      timeoutMs,
+      error: memoriesResult.reason instanceof Error ? memoriesResult.reason.message : String(memoriesResult.reason),
+    });
+  }
+  if (codeGraphResult.status === "rejected") {
+    logger.warn("Enriched context code graph unavailable", {
+      symbol,
+      timeoutMs,
+      error: codeGraphResult.reason instanceof Error ? codeGraphResult.reason.message : String(codeGraphResult.reason),
+    });
+  }
+
+  const memories = memoriesResult.status === "fulfilled" ? memoriesResult.value : [];
+  const codeGraph = codeGraphResult.status === "fulfilled" ? codeGraphResult.value : { available: false };
 
   const memoriesAvailable = memories.length > 0;
   const relevantMemories = filterRelevantMemories(memories, symbol);

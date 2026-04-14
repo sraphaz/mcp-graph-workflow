@@ -13,6 +13,7 @@ import { searchCodeSymbols } from "../../core/code/code-search.js";
 import { detectProcesses } from "../../core/code/process-detector.js";
 import { isTypeScriptAvailable } from "../../core/code/ts-analyzer.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
+import { safeParseInt } from "../../core/utils/parse-query.js";
 import { logger } from "../../core/utils/logger.js";
 import { LspBridge } from "../../core/lsp/lsp-bridge.js";
 import { LspServerManager } from "../../core/lsp/lsp-server-manager.js";
@@ -181,8 +182,20 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
   // ── GET /full ─────────────────────────────────
   router.get("/full", (req, res, next) => {
     try {
-      const limit = parseInt(String(req.query.limit ?? "10000"), 10);
-      const offset = parseInt(String(req.query.offset ?? "0"), 10);
+      const limitResult = safeParseInt(req.query.limit as string | undefined, { min: 0, max: 100000, defaultValue: 10000 });
+      const offsetResult = safeParseInt(req.query.offset as string | undefined, { min: 0, defaultValue: 0 });
+
+      if (limitResult.error) {
+        res.status(400).json({ error: `Invalid limit: ${limitResult.error}` });
+        return;
+      }
+      if (offsetResult.error) {
+        res.status(400).json({ error: `Invalid offset: ${offsetResult.error}` });
+        return;
+      }
+
+      const limit = limitResult.value;
+      const offset = offsetResult.value;
       const codeStore = getCodeStore();
       const projectId = getProjectId();
       const graph = getFullGraph(codeStore, projectId, limit, offset);

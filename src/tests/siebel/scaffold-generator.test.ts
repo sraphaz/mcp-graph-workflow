@@ -250,5 +250,18 @@ describe("scaffold-generator", () => {
       const result = scaffoldSiebelObjects(request);
       expect(result.objects.length).toBeGreaterThan(0);
     });
+
+    it("should escape malicious field content in generated SIF XML", () => {
+      const request: ScaffoldRequest = {
+        description: "list applet for orders with fields: order number, <script>alert(1)</script>",
+        prefix: "CX_",
+        projectName: "Custom",
+        referenceObjects: REFERENCE_OBJECTS,
+      };
+
+      const result = scaffoldSiebelObjects(request);
+      expect(result.sifXml).not.toContain("<script>");
+      expect(result.sifXml).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    });
   });
 });

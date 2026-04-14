@@ -213,5 +213,22 @@ describe("sif-templates", () => {
       const parseResult = parseSifContent(xml, "empty.sif");
       expect(parseResult.objects.length).toBe(0);
     });
+
+    it("should escape child attribute values to prevent XML injection", () => {
+      const xml = buildSifXml([
+        {
+          type: "business_component",
+          name: "Safe BC",
+          projectName: "Safe Project",
+          attributes: { TABLE: "S_SAFE" },
+          children: [
+            { tag: "FIELD", attributes: { NAME: "<script>alert(1)</script>", COLUMN: "SAFE_COL" } },
+          ],
+        },
+      ]);
+
+      expect(xml).toContain('NAME="&lt;script&gt;alert(1)&lt;/script&gt;"');
+      expect(xml).not.toContain("<script>");
+    });
   });
 });

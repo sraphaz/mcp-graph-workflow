@@ -87,7 +87,9 @@ export function rankChunksByBm25(
 
   // Average document length (Bug #060: guard against zero to prevent NaN)
   const totalTokens = tokenizedChunks.reduce((sum, t) => sum + t.length, 0);
-  const avgDl = totalTokens > 0 ? totalTokens / totalDocs : 1;
+  // E3-T01: when all chunks are empty (totalTokens=0), return empty — no meaningful ranking
+  if (totalTokens === 0) return [];
+  const avgDl = totalTokens / totalDocs;
 
   // Score each chunk
   const ranked: RankedChunk[] = chunks.map((chunk, i) => {

@@ -24,6 +24,10 @@ describe("Improved token estimator", () => {
     expect(estimateTokens("")).toBe(0);
   });
 
+  it("handles whitespace-only strings as zero tokens", () => {
+    expect(estimateTokens("   \n\t  ")).toBe(0);
+  });
+
   it("handles single character", () => {
     expect(estimateTokens("a")).toBeGreaterThanOrEqual(1);
   });

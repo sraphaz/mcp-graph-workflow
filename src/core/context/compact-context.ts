@@ -213,10 +213,14 @@ export function buildTaskContext(
   nodeId: string,
   snapshot?: GraphSnapshot,
 ): TaskContext | null {
+  const snapshotNodeById = snapshot
+    ? new Map(snapshot.nodes.map((n) => [n.id, n]))
+    : null;
+
   // Helper: resolve node by ID using snapshot (O(1)) or store query
   const resolveNode = (id: string): GraphNode | null => {
-    if (snapshot) {
-      return snapshot.nodes.find((n) => n.id === id) ?? null;
+    if (snapshotNodeById) {
+      return snapshotNodeById.get(id) ?? null;
     }
     return store.getNodeById(id);
   };
@@ -235,18 +239,31 @@ export function buildTaskContext(
   }
 
   // Children — from snapshot or store
-  const childNodes = snapshot
-    ? snapshot.nodes.filter((n) => n.parentId === nodeId)
-    : store.getChildNodes(nodeId);
+  let childNodes: GraphNode[];
+  if (snapshot) {
+    childNodes = [];
+    for (const n of snapshot.nodes) {
+      if (n.parentId === nodeId) childNodes.push(n);
+    }
+  } else {
+    childNodes = store.getChildNodes(nodeId);
+  }
   const children = childNodes.map(toTaskSummary);
 
   // Incoming/outgoing edges — from snapshot or store
-  const incomingEdges = snapshot
-    ? snapshot.edges.filter((e) => e.to === nodeId)
-    : store.getEdgesTo(nodeId);
-  const outgoingEdges = snapshot
-    ? snapshot.edges.filter((e) => e.from === nodeId)
-    : store.getEdgesFrom(nodeId);
+  let incomingEdges: GraphEdge[];
+  let outgoingEdges: GraphEdge[];
+  if (snapshot) {
+    incomingEdges = [];
+    outgoingEdges = [];
+    for (const e of snapshot.edges) {
+      if (e.to === nodeId) incomingEdges.push(e);
+      if (e.from === nodeId) outgoingEdges.push(e);
+    }
+  } else {
+    incomingEdges = store.getEdgesTo(nodeId);
+    outgoingEdges = store.getEdgesFrom(nodeId);
+  }
 
   const blockers: BlockerInfo[] = [];
   const dependsOn: DependencyInfo[] = [];

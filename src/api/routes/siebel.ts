@@ -9,6 +9,7 @@ import { convertSifToGraph } from "../../core/siebel/sif-to-graph.js";
 import { analyzeSiebelImpact, detectCircularDeps } from "../../core/siebel/dependency-analyzer.js";
 import { indexSifContent } from "../../core/rag/siebel-indexer.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
+import { safeParseInt } from "../../core/utils/parse-query.js";
 import {
   loadSiebelConfig,
   addEnvironment,
@@ -128,10 +129,25 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
    */
   router.get("/objects", (req, res, next) => {
     try {
-      const { type, limit = "50", offset = "0" } = req.query as Record<string, string>;
+      const type = req.query.type as string | undefined;
+
+      const limitResult = safeParseInt(req.query.limit as string | undefined, { min: 0, max: 1000, defaultValue: 50 });
+      const offsetResult = safeParseInt(req.query.offset as string | undefined, { min: 0, defaultValue: 0 });
+
+      if (limitResult.error) {
+        res.status(400).json({ error: `Invalid limit: ${limitResult.error}` });
+        return;
+      }
+      if (offsetResult.error) {
+        res.status(400).json({ error: `Invalid offset: ${offsetResult.error}` });
+        return;
+      }
+
+      const limit = limitResult.value;
+      const offset = offsetResult.value;
       const knowledgeStore = new KnowledgeStore(storeRef.current.getDb());
 
-      const docs = knowledgeStore.search("Siebel", parseInt(limit) + parseInt(offset) + 50);
+      const docs = knowledgeStore.search("Siebel", limit + offset + 50);
       let siebelDocs = docs.filter(
         (d) => d.sourceType === "siebel_sif" || d.sourceType === "siebel_composer",
       );
@@ -140,7 +156,7 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
         siebelDocs = siebelDocs.filter((d) => d.metadata?.siebelType === type);
       }
 
-      const paged = siebelDocs.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
+      const paged = siebelDocs.slice(offset, offset + limit);
 
       res.json({
         objects: paged.map((d) => ({

@@ -1,5 +1,22 @@
 import { Router } from "express";
 import { getLogBuffer, clearLogBuffer } from "../../core/utils/logger.js";
+import type { LogEntry } from "../../schemas/log.schema.js";
+
+/**
+ * Remove the `stack` key from a log entry's context to prevent stack trace
+ * disclosure in the public logs API endpoint.
+ */
+export function stripStackFromLogContext(
+  ctx: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  if (!ctx) return undefined;
+  const { stack: _stack, ...safe } = ctx;
+  return safe;
+}
+
+function sanitizeLogEntry(entry: LogEntry): LogEntry {
+  return { ...entry, context: stripStackFromLogContext(entry.context) };
+}
 
 export function createLogsRouter(): Router {
   const router = Router();
@@ -30,7 +47,7 @@ export function createLogsRouter(): Router {
       logs = logs.filter((entry) => entry.message.toLowerCase().includes(term));
     }
 
-    res.json({ logs, total: logs.length });
+    res.json({ logs: logs.map(sanitizeLogEntry), total: logs.length });
   });
 
   /**

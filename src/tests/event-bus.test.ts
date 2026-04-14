@@ -82,4 +82,33 @@ describe("GraphEventBus", () => {
     expect(bus.listenerCount("node:created")).toBe(0);
     expect(bus.listenerCount("*")).toBe(0);
   });
+
+  it("should isolate subscriber failures and continue dispatching", () => {
+    const bus = new GraphEventBus();
+    const crashing = vi.fn(() => {
+      throw new Error("boom");
+    });
+    const healthy = vi.fn();
+
+    bus.on("node:created", crashing);
+    bus.on("node:created", healthy);
+    bus.emitTyped("node:created", { nodeId: "n1", title: "Task", nodeType: "task" });
+
+    expect(crashing).toHaveBeenCalledOnce();
+    expect(healthy).toHaveBeenCalledOnce();
+  });
+
+  it("should remove crashing subscribers after first failure", () => {
+    const bus = new GraphEventBus();
+    const crashing = vi.fn(() => {
+      throw new Error("boom");
+    });
+
+    bus.on("node:created", crashing);
+    bus.emitTyped("node:created", { nodeId: "n1", title: "Task", nodeType: "task" });
+    bus.emitTyped("node:created", { nodeId: "n2", title: "Task 2", nodeType: "task" });
+
+    expect(crashing).toHaveBeenCalledOnce();
+    expect(bus.listenerCount("node:created")).toBe(0);
+  });
 });

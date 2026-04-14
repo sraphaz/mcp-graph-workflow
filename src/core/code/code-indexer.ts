@@ -313,17 +313,20 @@ function resolveRelationIds(
   const resolved: Array<Omit<import("./code-types.js").CodeRelation, "id" | "indexedAt">> = [];
 
   for (const rel of relations) {
-    // Find source symbol ID
+    // Find source symbol ID — disambiguate by file path when multiple matches
     const fromCandidates = store.findSymbolsByName(rel.fromSymbol, projectId);
-    // For file-level imports, fromSymbol is the file path
     const from = fromCandidates.length > 0
-      ? fromCandidates[0]
+      ? (rel.file && fromCandidates.length > 1
+          ? fromCandidates.find(c => c.file === rel.file) ?? fromCandidates[0]
+          : fromCandidates[0])
       : null;
 
-    // Find target symbol ID
+    // Find target symbol ID — disambiguate by file path when multiple matches
     const toCandidates = store.findSymbolsByName(rel.toSymbol, projectId);
     const to = toCandidates.length > 0
-      ? toCandidates[0]
+      ? (rel.file && toCandidates.length > 1
+          ? toCandidates.find(c => c.file === rel.file) ?? toCandidates[0]
+          : toCandidates[0])
       : null;
 
     if (from && to) {

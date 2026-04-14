@@ -3,12 +3,20 @@
  */
 
 import { Router } from "express";
+import { z } from "zod/v4";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { buildKanbanBoard } from "../../core/kanban/kanban-builder.js";
 import { generateSuggestions } from "../../core/kanban/kanban-orchestrator.js";
 import { validateMove } from "../../core/kanban/kanban-validator.js";
 import { DEFAULT_KANBAN_CONFIG } from "../../core/kanban/kanban-types.js";
 import type { KanbanConfig, SwimlaneMode } from "../../core/kanban/kanban-types.js";
+import { validateBody } from "../middleware/validate.js";
+
+export const UpdateKanbanConfigSchema = z.object({
+  wipLimits: z.record(z.string(), z.number().int().nonnegative()).optional(),
+  columnOrder: z.array(z.string()).optional(),
+  swimlaneMode: z.string().optional(),
+});
 
 const KANBAN_SETTINGS_KEY = "kanban_config";
 
@@ -105,13 +113,14 @@ export function createKanbanRouter(storeRef: StoreRef): Router {
   });
 
   // PUT /config — update Kanban configuration
-  router.put("/config", (req, res, next) => {
+  router.put("/config", validateBody(UpdateKanbanConfigSchema), (req, res, next) => {
     try {
-      const newConfig = req.body as Partial<KanbanConfig>;
+      const newConfig = req.body as z.infer<typeof UpdateKanbanConfigSchema>;
       const current = loadConfig(storeRef);
       const merged: KanbanConfig = {
         ...current,
         ...newConfig,
+        swimlaneMode: (newConfig.swimlaneMode ?? current.swimlaneMode) as SwimlaneMode,
         wipLimits: { ...current.wipLimits, ...(newConfig.wipLimits ?? {}) },
       };
       saveConfig(storeRef, merged);

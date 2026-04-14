@@ -159,5 +159,17 @@ describe("plugin-generator", () => {
       expect(result.warnings.length).toBeGreaterThanOrEqual(1);
       expect(result.javaCode).toContain("No template available");
     });
+
+    it("should reject unsafe attributeContract values with quotes", () => {
+      expect(() => generatePlugin(makeOptions({
+        attributeContract: ["userId", "x\"); Runtime.getRuntime().exec(\"evil\") //"],
+      }))).toThrow("Invalid attributeContract");
+    });
+
+    it("should reject unsafe attributeContract values with newline", () => {
+      expect(() => generatePlugin(makeOptions({
+        attributeContract: ["line\nbreak"],
+      }))).toThrow("Invalid attributeContract");
+    });
   });
 });

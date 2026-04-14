@@ -32,6 +32,17 @@ export function validateJavaIdentifiers(opts: { className: string; packageName: 
   }
 }
 
+export function validateAttributeContract(attributes: readonly string[]): void {
+  for (const attribute of attributes) {
+    if (!/^[A-Za-z][A-Za-z0-9_.-]*$/.test(attribute)) {
+      throw new ValidationError(
+        "Invalid attributeContract: entries must be safe identifiers (letters, digits, underscore, dot, hyphen)",
+        [`attributeContract entry "${attribute}" contains invalid characters`],
+      );
+    }
+  }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────
 
 export interface GeneratePluginOptions {
@@ -79,6 +90,7 @@ export function generatePlugin(options: GeneratePluginOptions): GeneratePluginRe
 
   // Validate identifiers to prevent Java code injection via template variables
   validateJavaIdentifiers({ className, packageName, pluginName });
+  validateAttributeContract(attributeContract);
 
   // 1. Parse DaVinci code
   const analysis = parseDaVinciCode(code, {

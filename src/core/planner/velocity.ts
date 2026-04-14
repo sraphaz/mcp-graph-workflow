@@ -101,7 +101,7 @@ export function calculateVelocity(doc: GraphDocument): VelocitySummary {
 
   const totalTasksCompleted = doneTasks.length;
   const totalPoints = sprints.reduce((sum, s) => sum + s.totalPoints, 0);
-  const sprintCount = sprints.filter((s) => s.sprint !== "(no sprint)").length || 1;
+  const sprintCount = sprints.length > 0 ? sprints.length : 1;
 
   const allHours = sprints
     .flatMap((s) => s.tasks)

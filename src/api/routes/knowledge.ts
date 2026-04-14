@@ -13,6 +13,7 @@ import { exportKnowledge, importKnowledge, previewImport } from "../../core/know
 import { KnowledgePackageSchema } from "../../schemas/knowledge-package.schema.js";
 import { applyFeedback } from "../../core/rag/knowledge-feedback.js";
 import { logger } from "../../core/utils/logger.js";
+import { safeParseInt } from "../../core/utils/parse-query.js";
 
 const UploadSchema = z.object({
   title: z.string().min(1),
@@ -82,8 +83,21 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
   router.get("/", (req, res, next) => {
     try {
       const sourceType = req.query.sourceType as string | undefined;
-      const limit = req.query.limit ? Number(req.query.limit) : undefined;
-      const offset = req.query.offset ? Number(req.query.offset) : undefined;
+
+      const limitResult = safeParseInt(req.query.limit as string | undefined, { min: 0, max: 10000, defaultValue: -1 });
+      const offsetResult = safeParseInt(req.query.offset as string | undefined, { min: 0, defaultValue: 0 });
+
+      if (req.query.limit !== undefined && limitResult.error) {
+        res.status(400).json({ error: `Invalid limit: ${limitResult.error}` });
+        return;
+      }
+      if (req.query.offset !== undefined && offsetResult.error) {
+        res.status(400).json({ error: `Invalid offset: ${offsetResult.error}` });
+        return;
+      }
+
+      const limit = req.query.limit !== undefined ? limitResult.value : undefined;
+      const offset = req.query.offset !== undefined ? offsetResult.value : undefined;
       const knowledgeStore = getKnowledgeStore();
 
       const validSourceType = sourceType

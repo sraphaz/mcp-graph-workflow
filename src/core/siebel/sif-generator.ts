@@ -235,14 +235,29 @@ function runBestPracticeChecks(
     const visited = new Set<string>();
     const inStack = new Set<string>();
 
-    function hasCycle(node: string): boolean {
-      visited.add(node);
-      inStack.add(node);
-      for (const neighbor of adjMap.get(node) ?? []) {
-        if (inStack.has(neighbor)) return true;
-        if (!visited.has(neighbor) && hasCycle(neighbor)) return true;
+    // Iterative DFS with depth limit to prevent stack overflow on deep graphs
+    const MAX_DEPTH = 1000;
+    function hasCycle(startNode: string): boolean {
+      const stack: Array<{ node: string; depth: number; phase: "enter" | "exit" }> = [
+        { node: startNode, depth: 0, phase: "enter" },
+      ];
+      while (stack.length > 0) {
+        const frame = stack.pop()!;
+        if (frame.phase === "exit") {
+          inStack.delete(frame.node);
+          continue;
+        }
+        if (frame.depth > MAX_DEPTH) return true; // treat excessive depth as cycle
+        visited.add(frame.node);
+        inStack.add(frame.node);
+        stack.push({ node: frame.node, depth: frame.depth, phase: "exit" });
+        for (const neighbor of adjMap.get(frame.node) ?? []) {
+          if (inStack.has(neighbor)) return true;
+          if (!visited.has(neighbor)) {
+            stack.push({ node: neighbor, depth: frame.depth + 1, phase: "enter" });
+          }
+        }
       }
-      inStack.delete(node);
       return false;
     }
 

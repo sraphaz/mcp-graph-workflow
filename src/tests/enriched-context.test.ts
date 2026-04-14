@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 
 import {
   buildEnrichedContext,
+  withOperationTimeout,
+  EnrichedContextTimeoutError,
 } from "../core/integrations/enriched-context.js";
 
 describe("enriched-context", () => {
@@ -78,6 +80,21 @@ describe("enriched-context", () => {
       // Should include db-layer (mentions GraphStore) but may or may not include ui-guide
       const memNames = ctx.memories.relevantMemories.map((m) => m.name);
       expect(memNames).toContain("db-layer");
+    });
+  });
+
+  describe("withOperationTimeout", () => {
+    it("should reject with timeout error when operation hangs", async () => {
+      const never = new Promise<string>(() => undefined);
+
+      await expect(withOperationTimeout(never, 1, "hang-op")).rejects.toBeInstanceOf(
+        EnrichedContextTimeoutError,
+      );
+    });
+
+    it("should resolve when operation completes before timeout", async () => {
+      const result = await withOperationTimeout(Promise.resolve("ok"), 500, "fast-op");
+      expect(result).toBe("ok");
     });
   });
 });

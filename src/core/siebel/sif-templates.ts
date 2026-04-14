@@ -9,6 +9,19 @@ import { XMLBuilder } from "fast-xml-parser";
 import { logger } from "../utils/logger.js";
 import type { SifTemplateType } from "../../schemas/siebel.schema.js";
 
+/**
+ * Escape XML special characters in attribute values and text content.
+ * Prevents XML injection when user-supplied strings are embedded in SIF XML.
+ */
+export function escapeXmlValue(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 /** Child element definition for a SIF template object. */
 export interface SifTemplateChild {
   tag: string;
@@ -153,13 +166,13 @@ export function buildSifXml(objects: SifTemplateObject[]): string {
       }
 
       const element: Record<string, unknown> = {
-        "@_NAME": obj.name,
+        "@_NAME": escapeXmlValue(obj.name),
       };
 
       // Add attributes
       if (obj.attributes) {
         for (const [key, value] of Object.entries(obj.attributes)) {
-          element[`@_${key}`] = value;
+          element[`@_${key}`] = escapeXmlValue(value);
         }
       }
 
@@ -168,7 +181,7 @@ export function buildSifXml(objects: SifTemplateObject[]): string {
         for (const child of obj.children) {
           const childElement: Record<string, unknown> = {};
           for (const [key, value] of Object.entries(child.attributes)) {
-            childElement[`@_${key}`] = value;
+            childElement[`@_${key}`] = escapeXmlValue(value);
           }
 
           // Append to array of same-tag children

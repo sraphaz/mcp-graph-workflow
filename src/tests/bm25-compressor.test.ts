@@ -80,6 +80,16 @@ describe("BM25Compressor", () => {
       expect(selected.length).toBe(0);
     });
 
+    it("budget=0 returns empty (E3-T02)", () => {
+      expect(compressWithBm25(chunks, "Express", 0)).toHaveLength(0);
+    });
+
+    it("single oversized chunk is excluded when over budget (E3-T02)", () => {
+      const hugeChunk = "The quick brown fox jumps over the lazy dog ".repeat(100);
+      const selected = compressWithBm25([hugeChunk], "fox", 5);
+      expect(selected).toHaveLength(0);
+    });
+
     it("should include all chunks if budget allows", () => {
       const selected = compressWithBm25(chunks, "test", 10000);
       expect(selected.length).toBe(5);
@@ -90,6 +100,25 @@ describe("BM25Compressor", () => {
       const smallBudget = compressWithBm25(chunks, "database", 30);
 
       expect(smallBudget.length).toBeLessThanOrEqual(largeBudget.length);
+    });
+  });
+
+  describe("BM25 division-by-zero guards (E3-T01)", () => {
+    it("should return empty when corpus has totalTokens === 0 (only empty strings)", () => {
+      const result = rankChunksByBm25(["", "   ", ""], "query");
+      expect(result).toHaveLength(0);
+    });
+
+    it("should produce no NaN or Infinity in scores", () => {
+      const ranked = rankChunksByBm25(chunks, "Express");
+      for (const chunk of ranked) {
+        expect(Number.isFinite(chunk.score)).toBe(true);
+      }
+    });
+
+    it("totalTokens=0 single-chunk with empty string returns empty", () => {
+      const result = rankChunksByBm25([""], "test");
+      expect(result).toHaveLength(0);
     });
   });
 });

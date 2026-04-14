@@ -101,5 +101,18 @@ export async function extractContent(
 
   logger.info("Content extracted", { textLength: text.length, wordCount });
 
-  return { text, title, description, wordCount };
+  return {
+    text: sanitizeCapturedText(text),
+    title: title ? sanitizeCapturedText(title) : null,
+    description: description ? sanitizeCapturedText(description) : null,
+    wordCount,
+  };
+}
+
+/**
+ * Strip any residual HTML tags from captured text to prevent XSS when the
+ * content is later rendered in a browser context.
+ */
+export function sanitizeCapturedText(input: string): string {
+  return input.replace(/<[^>]*>/g, "");
 }

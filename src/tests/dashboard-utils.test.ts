@@ -11,6 +11,15 @@ import {
   isCodeGraphData,
   isImpactResult,
 } from "../web/dashboard/src/lib/code-graph-guards.js";
+import {
+  computeBurndownChartData,
+  computeRemaining,
+} from "../web/dashboard/src/lib/burndown-utils.js";
+import {
+  safePercentage,
+  safeEntries,
+} from "../web/dashboard/src/lib/runtime-guards.js";
+import type { FlowSnapshot } from "../web/dashboard/src/lib/types.js";
 
 // ── Minimal factory ──────────────────────────────
 
@@ -205,5 +214,89 @@ describe("isImpactResult", () => {
 
   it("should return false for object missing affectedSymbols", () => {
     expect(isImpactResult({ riskLevel: "low" })).toBe(false);
+  });
+});
+
+// ── computeBurndownChartData (E15-T02) ──────────────
+
+function makeSnapshot(overrides: Partial<FlowSnapshot> & { snapshotDate: string }): FlowSnapshot {
+  return {
+    backlogCount: 0,
+    readyCount: 0,
+    inProgressCount: 0,
+    blockedCount: 0,
+    doneCount: 0,
+    ...overrides,
+  };
+}
+
+describe("computeBurndownChartData — E15-T02", () => {
+  it("should return empty array for empty input (no crash)", () => {
+    expect(computeBurndownChartData([])).toEqual([]);
+  });
+
+  it("should return one entry for a single snapshot", () => {
+    const snap = makeSnapshot({ snapshotDate: "2025-01-15", backlogCount: 5, doneCount: 3 });
+    const result = computeBurndownChartData([snap]);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.actual).toBe(5); // backlog only in remaining
+    expect(result[0]!.date).toBe("01-15");
+  });
+
+  it("should compute decreasing ideal line over multiple snapshots", () => {
+    const snaps = [
+      makeSnapshot({ snapshotDate: "2025-01-01", backlogCount: 10, doneCount: 0 }),
+      makeSnapshot({ snapshotDate: "2025-01-02", backlogCount: 8, doneCount: 2 }),
+      makeSnapshot({ snapshotDate: "2025-01-03", backlogCount: 4, doneCount: 6 }),
+    ];
+    const result = computeBurndownChartData(snaps);
+    expect(result).toHaveLength(3);
+    expect(result[0]!.ideal).toBe(10);
+    expect(result[2]!.ideal).toBe(0);
+  });
+
+  it("should handle snapshot with all-zero counts (partial data)", () => {
+    const snap = makeSnapshot({ snapshotDate: "2025-06-01" });
+    const result = computeBurndownChartData([snap]);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.actual).toBe(0);
+    expect(result[0]!.ideal).toBe(0);
+  });
+
+  it("computeRemaining returns sum of non-done counts", () => {
+    const snap = makeSnapshot({
+      snapshotDate: "2025-01-01",
+      backlogCount: 3,
+      readyCount: 2,
+      inProgressCount: 1,
+      blockedCount: 1,
+      doneCount: 5,
+    });
+    expect(computeRemaining(snap)).toBe(7);
+  });
+});
+
+// ── runtime null guards (E15-T03, E15-T04) ─────────
+
+describe("runtime dashboard guards", () => {
+  it("safePercentage should coerce undefined/null/NaN to 0", () => {
+    expect(safePercentage(undefined)).toBe(0);
+    expect(safePercentage(null)).toBe(0);
+    expect(safePercentage(Number.NaN)).toBe(0);
+  });
+
+  it("safePercentage should clamp to [0, 100]", () => {
+    expect(safePercentage(-15)).toBe(0);
+    expect(safePercentage(35.7)).toBe(36);
+    expect(safePercentage(145)).toBe(100);
+  });
+
+  it("safeEntries should return empty array for nullish values", () => {
+    expect(safeEntries<number>(null)).toEqual([]);
+    expect(safeEntries<number>(undefined)).toEqual([]);
+  });
+
+  it("safeEntries should return entries for valid object", () => {
+    expect(safeEntries({ task: 3, epic: 1 })).toEqual([["task", 3], ["epic", 1]]);
   });
 });
