@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.2.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.1...mcp-graph-v9.2.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* **core:** Data integrity, async safety, and dashboard accessibility ([#165](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/165)) ([4a46073](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4a4607320a733a6f9c8940addf8a4472d0321a74))
+* relax benchmark-v7 thresholds 100ms→300ms for Windows CI ([e23a44e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/e23a44e254f95c54daa7dd1d516194b04656d137))
+
 ## [9.2.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.0...mcp-graph-v9.2.1) (2026-04-14)
 
 
