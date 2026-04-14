@@ -65,13 +65,12 @@ export function useLogs(): UseLogsResult {
 
     es.onerror = () => {
       es.close();
-      // Auto-reconnect after 5s
-      setTimeout(() => {
-        // Reconnect by re-mounting the effect
-      }, 5000);
     };
 
-    return () => es.close();
+    return () => {
+      es.removeEventListener("log:entry", handler);
+      es.close();
+    };
   }, []);
 
   return { logs, loading, clearLogs, refresh: fetchLogs };

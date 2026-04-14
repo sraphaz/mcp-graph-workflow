@@ -159,7 +159,8 @@ export function handleConstitutionList(
 
   if (!rows) return { ok: true, totalPrinciples: 0, byCategory: {} };
 
-  const metadata = JSON.parse(rows.metadata) as { principles?: PrincipleInput[] };
+  let metadata: { principles?: PrincipleInput[] } = {};
+  try { metadata = JSON.parse(rows.metadata) as { principles?: PrincipleInput[] }; } catch { /* corrupted constitution metadata */ }
   const principles = metadata.principles ?? [];
 
   const byCategory: Record<string, PrincipleInput[]> = {};
@@ -190,7 +191,8 @@ export function handleConstitutionCheck(
 
   if (!constitutionRow) return { ok: true, nodesChecked: 0, results: [] };
 
-  const constitutionMeta = JSON.parse(constitutionRow.metadata) as { principles?: PrincipleInput[] };
+  let constitutionMeta: { principles?: PrincipleInput[] } = {};
+  try { constitutionMeta = JSON.parse(constitutionRow.metadata) as { principles?: PrincipleInput[] }; } catch { /* corrupted */ }
 
   // Get nodes to check
   let nodes: Array<{ id: string; title: string; description: string | null }>;

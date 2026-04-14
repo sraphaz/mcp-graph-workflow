@@ -8,7 +8,7 @@
  * Fallback: Returns null when onnxruntime-node is not installed.
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, statSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { logger } from '../utils/logger.js';
 import { OnnxModelNotFoundError } from '../utils/errors.js';
@@ -34,6 +34,41 @@ const MAX_SEQUENCE_LENGTH = 128;
 const MODEL_BASE_URL = 'https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/onnx';
 const MODEL_URL = `${MODEL_BASE_URL}/model_quantized.onnx`;
 const TOKENIZER_URL = 'https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json';
+const DOWNLOAD_TIMEOUT_MS = 20_000;
+
+/**
+ * Mean-pool the token embeddings and L2-normalize the result.
+ * E3-T04: guards validTokens===0 to avoid NaN (division by zero).
+ * Exported for unit testing without loading the ONNX model.
+ */
+export function meanPoolAndNormalize(
+  data: Float32Array,
+  validTokens: number,
+  dim: number,
+): number[] {
+  const embedding = new Array<number>(dim).fill(0);
+  // E3-T04: when all tokens are masked out, return a zero vector
+  if (validTokens === 0) return embedding;
+
+  for (let t = 0; t < validTokens; t++) {
+    for (let d = 0; d < dim; d++) {
+      embedding[d] += data[t * dim + d];
+    }
+  }
+
+  let norm = 0;
+  for (let d = 0; d < dim; d++) {
+    embedding[d] /= validTokens;
+    norm += embedding[d] * embedding[d];
+  }
+  norm = Math.sqrt(norm);
+  if (norm > 0) {
+    for (let d = 0; d < dim; d++) {
+      embedding[d] /= norm;
+    }
+  }
+  return embedding;
+}
 
 // ── ONNX availability check ──
 
@@ -59,7 +94,21 @@ export async function isOnnxAvailable(): Promise<boolean> {
 async function downloadFile(url: string, destPath: string): Promise<void> {
   logger.info('onnx:download', { url, dest: destPath });
 
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(url, { signal: controller.signal });
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new OnnxModelNotFoundError(`Download timeout for: ${url} (${DOWNLOAD_TIMEOUT_MS}ms)`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   if (!response.ok) {
     throw new OnnxModelNotFoundError(`Failed to download: ${url} (${response.status})`);
   }
@@ -73,6 +122,25 @@ async function ensureModelFiles(modelsDir: string): Promise<{ modelPath: string;
   const modelDir = join(modelsDir, MODEL_NAME);
   const modelPath = join(modelDir, MODEL_FILENAME);
   const tokenizerPath = join(modelDir, TOKENIZER_FILENAME);
+
+  // Validate file integrity — delete corrupted/truncated files
+  const MIN_MODEL_SIZE = 1024; // 1KB minimum for a valid ONNX model
+  if (existsSync(modelPath)) {
+    const size = statSync(modelPath).size;
+    if (size < MIN_MODEL_SIZE) {
+      logger.warn('onnx:corrupted-model', { modelPath, sizeBytes: size, minRequired: MIN_MODEL_SIZE });
+      unlinkSync(modelPath);
+    }
+  }
+  if (existsSync(tokenizerPath)) {
+    try {
+      const raw = readFileSync(tokenizerPath, 'utf-8');
+      JSON.parse(raw); // validate JSON integrity
+    } catch {
+      logger.warn('onnx:corrupted-tokenizer', { tokenizerPath });
+      unlinkSync(tokenizerPath);
+    }
+  }
 
   if (existsSync(modelPath) && existsSync(tokenizerPath)) {
     logger.debug('onnx:cache-hit', { modelDir });
@@ -99,9 +167,14 @@ interface TokenizerConfig {
   };
 }
 
-function loadTokenizer(tokenizerPath: string): TokenizerConfig {
-  const raw = readFileSync(tokenizerPath, 'utf-8');
-  return JSON.parse(raw) as TokenizerConfig;
+function loadTokenizer(tokenizerPath: string): TokenizerConfig | null {
+  try {
+    const raw = readFileSync(tokenizerPath, 'utf-8');
+    return JSON.parse(raw) as TokenizerConfig;
+  } catch (err) {
+    logger.warn('onnx:tokenizer-load-failed', { tokenizerPath, error: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
 }
 
 function tokenize(text: string, vocab: Record<string, number>): number[] {
@@ -149,6 +222,9 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
     this.session = await ort.InferenceSession.create(this.modelPath);
 
     const config = loadTokenizer(this.tokenizerPath);
+    if (!config) {
+      throw new OnnxModelNotFoundError(`Failed to load tokenizer: ${this.tokenizerPath}`);
+    }
     this.vocab = config.model?.vocab ?? {};
 
     logger.info('onnx:session-created', { model: this.modelPath });
@@ -187,28 +263,8 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
     }
 
     const data = lastHidden.data as Float32Array;
-    const embedding = new Array<number>(EMBEDDING_DIM).fill(0);
     const validTokens = attentionMask.filter(m => m === 1).length;
-
-    for (let t = 0; t < validTokens; t++) {
-      for (let d = 0; d < EMBEDDING_DIM; d++) {
-        embedding[d] += data[t * EMBEDDING_DIM + d];
-      }
-    }
-
-    let norm = 0;
-    for (let d = 0; d < EMBEDDING_DIM; d++) {
-      embedding[d] /= validTokens;
-      norm += embedding[d] * embedding[d];
-    }
-    norm = Math.sqrt(norm);
-    if (norm > 0) {
-      for (let d = 0; d < EMBEDDING_DIM; d++) {
-        embedding[d] /= norm;
-      }
-    }
-
-    return embedding;
+    return meanPoolAndNormalize(data, validTokens, EMBEDDING_DIM);
   }
 
   async generateBatch(texts: string[]): Promise<number[][]> {
@@ -234,6 +290,11 @@ export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvi
     return new OnnxEmbeddingProvider(modelPath, tokenizerPath);
   } catch (err) {
     logger.error('onnx:provider-init-failed', { error: err instanceof Error ? err.message : String(err) });
+    logger.warn('onnx:fallback', {
+      reason: err instanceof Error ? err.message : String(err),
+      action: 'return-null-provider',
+      modelsDir,
+    });
     return null;
   }
 }

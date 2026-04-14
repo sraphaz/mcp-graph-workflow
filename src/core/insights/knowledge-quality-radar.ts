@@ -53,12 +53,14 @@ export function calculateKnowledgeQuality(knowledgeStore: KnowledgeStore): Knowl
 
   const metrics: KnowledgeQualityMetric[] = [];
 
-  for (const [sourceType, count] of Object.entries(bySource)) {
-    const avgRaw = avgBySource[sourceType] ?? 0.5;
+  for (const [sourceType, rawCount] of Object.entries(bySource)) {
+    const count = Number.isFinite(rawCount) ? rawCount : 0;
+    const safeTotal = Number.isFinite(total) && total > 0 ? total : 1;
+    const avgRaw = Number.isFinite(avgBySource[sourceType]) ? avgBySource[sourceType] : 0.5;
     const avgQuality = Math.round(avgRaw * 100);
 
     // Score combines quality and relative count contribution
-    const countRatio = Math.min(count / Math.max(total * 0.2, 1), 1);
+    const countRatio = Math.min(count / Math.max(safeTotal * 0.2, 1), 1);
     const score = Math.round(avgQuality * 0.7 + countRatio * 100 * 0.3);
 
     metrics.push({

@@ -147,7 +147,9 @@ function mergeBySemanticSimilarity(
       let meta: Record<string, unknown> = {};
       try {
         if (matchDoc.metadata) meta = JSON.parse(matchDoc.metadata) as Record<string, unknown>;
-      } catch { /* keep empty meta */ }
+      } catch {
+        logger.warn("rem-phase:corrupted-metadata", { docId: match.id });
+      }
       meta.merged_into = id;
       meta.merged_at = new Date().toISOString();
       meta.pre_merge_score = currentScore;
@@ -194,6 +196,7 @@ function processPriorityDocs(
       try {
         meta = JSON.parse(doc.metadata) as Record<string, unknown>;
       } catch {
+        logger.warn("rem-phase:corrupted-metadata-boost", { docId: doc.id });
         continue;
       }
 

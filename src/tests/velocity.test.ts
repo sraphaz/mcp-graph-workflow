@@ -76,3 +76,52 @@ describe("calculateVelocity — byCategory", () => {
     expect(codeCategory!.avgCompletionHours).toBeGreaterThan(0);
   });
 });
+
+describe("calculateVelocity — null/undefined timestamps", () => {
+  it("should handle nodes with null createdAt gracefully", () => {
+    const doc = makeDoc([
+      { createdAt: undefined as unknown as string, updatedAt: "2026-01-01T02:00:00Z" },
+      { createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T02:00:00Z" },
+    ]);
+
+    const result = calculateVelocity(doc);
+    expect(result).toBeDefined();
+    expect(result.overall).toBeDefined();
+    if (result.overall.avgCompletionHours !== null) {
+      expect(Number.isFinite(result.overall.avgCompletionHours)).toBe(true);
+    }
+  });
+
+  it("should handle nodes with null updatedAt gracefully", () => {
+    const doc = makeDoc([
+      { createdAt: "2026-01-01T00:00:00Z", updatedAt: undefined as unknown as string },
+    ]);
+
+    const result = calculateVelocity(doc);
+    expect(result).toBeDefined();
+    expect(result.overall).toBeDefined();
+  });
+
+  it("should produce no NaN values in overall", () => {
+    const doc = makeDoc([
+      { createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T04:00:00Z" },
+      { createdAt: undefined as unknown as string, updatedAt: undefined as unknown as string },
+    ]);
+
+    const result = calculateVelocity(doc);
+    expect(result.overall.avgCompletionHours === null || Number.isFinite(result.overall.avgCompletionHours)).toBe(true);
+    expect(Number.isFinite(result.overall.totalTasksCompleted)).toBe(true);
+    expect(Number.isFinite(result.overall.totalPoints)).toBe(true);
+  });
+
+  it("should include unassigned sprint bucket in avgPointsPerSprint denominator", () => {
+    const doc = makeDoc([
+      { sprint: "sprint-1", xpSize: "M" as const }, // 3 points
+      { sprint: "(no sprint)", xpSize: "M" as const }, // 3 points
+    ]);
+
+    const result = calculateVelocity(doc);
+    // 6 total points across 2 sprint buckets ("sprint-1" + "(no sprint)") = 3.0
+    expect(result.overall.avgPointsPerSprint).toBe(3);
+  });
+});

@@ -5,6 +5,7 @@ import { DreamCycleConfigSchema } from "../../core/dream/dream-types.js";
 import { getDreamCycle, listDreamCycles } from "../../core/dream/dream-store.js";
 import { GraphEventBus } from "../../core/events/event-bus.js";
 import { EmbeddingStore } from "../../core/rag/embedding-store.js";
+import { logger } from "../../core/utils/logger.js";
 
 export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus): Router {
   const router = Router();
@@ -37,18 +38,17 @@ export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus):
         return;
       }
 
-      // Start cycle asynchronously
-      let cycleId = "";
-      dreamEngine.runCycle(parseResult.data).then((result) => {
-        cycleId = result.id;
-      }).catch(() => { /* error handled by engine + events */ });
+      // Start cycle in background — runCycle sets cycleId synchronously before first await
+      dreamEngine.runCycle(parseResult.data).catch((err) => {
+        logger.error("dream:cycle-failed", {
+          cycleId: dreamEngine.getStatus().cycleId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
 
-      // Return immediately — the cycle runs in background
-      // We need to give the engine a tick to set the cycleId
-      setTimeout(() => {
-        const currentStatus = dreamEngine.getStatus();
-        res.status(202).json({ ok: true, cycleId: currentStatus.cycleId ?? cycleId });
-      }, 10);
+      // cycleId is available immediately (set synchronously in runCycle before any await)
+      const cycleId = dreamEngine.getStatus().cycleId ?? "";
+      res.status(202).json({ ok: true, cycleId });
     } catch (err) {
       next(err);
     }

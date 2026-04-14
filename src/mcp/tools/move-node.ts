@@ -77,6 +77,9 @@ export function registerMoveNode(server: McpServer, store: SqliteStore): void {
       }
 
       const updated = store.getNodeById(id);
+      if (!updated) {
+        return mcpError(`Node ${id} not found after move operation`);
+      }
 
       logger.info("tool:move_node:ok", { nodeId: id, from: oldParentId ?? null, to: newParentId });
       return mcpText({

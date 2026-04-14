@@ -3,6 +3,11 @@ import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
 
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T | undefined = undefined): T | undefined {
+  if (!raw) return fallback;
+  try { return JSON.parse(raw) as T; } catch { logger.warn("journey-store:corrupted-json", { raw: raw.slice(0, 80) }); return fallback; }
+}
+
 // ── Row types ────────────────────────────────────────────
 
 interface JourneyMapRow {
@@ -127,7 +132,7 @@ function mapRowToMap(row: JourneyMapRow): JourneyMap {
     name: row.name,
     url: row.url ?? undefined,
     description: row.description ?? undefined,
-    metadata: row.metadata ? JSON.parse(row.metadata) as Record<string, unknown> : undefined,
+    metadata: safeJsonParse<Record<string, unknown>>(row.metadata),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -142,9 +147,9 @@ function mapRowToScreen(row: JourneyScreenRow): JourneyScreen {
     screenshot: row.screenshot ?? undefined,
     url: row.url ?? undefined,
     screenType: row.screen_type,
-    fields: row.fields ? JSON.parse(row.fields) as JourneyField[] : undefined,
-    ctas: row.ctas ? JSON.parse(row.ctas) as string[] : undefined,
-    metadata: row.metadata ? JSON.parse(row.metadata) as Record<string, unknown> : undefined,
+    fields: safeJsonParse<JourneyField[]>(row.fields),
+    ctas: safeJsonParse<string[]>(row.ctas),
+    metadata: safeJsonParse<Record<string, unknown>>(row.metadata),
     positionX: row.position_x,
     positionY: row.position_y,
     createdAt: row.created_at,
@@ -160,7 +165,7 @@ function mapRowToEdge(row: JourneyEdgeRow): JourneyEdge {
     to: row.to_screen,
     label: row.label ?? undefined,
     type: row.edge_type,
-    metadata: row.metadata ? JSON.parse(row.metadata) as Record<string, unknown> : undefined,
+    metadata: safeJsonParse<Record<string, unknown>>(row.metadata),
     createdAt: row.created_at,
   };
 }
@@ -171,7 +176,7 @@ function mapRowToVariant(row: JourneyVariantRow): JourneyVariant {
     mapId: row.map_id,
     name: row.name,
     description: row.description ?? undefined,
-    path: JSON.parse(row.path) as string[],
+    path: safeJsonParse<string[]>(row.path) ?? [],
     createdAt: row.created_at,
   };
 }

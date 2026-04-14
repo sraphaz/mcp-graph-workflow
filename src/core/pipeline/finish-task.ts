@@ -204,9 +204,13 @@ export function finishTask(
           // Re-record pre-fix state from stored snapshot data
           const preFixData = store.getProjectSetting("harness_prefix_violations");
           if (preFixData) {
-            const preFixViolations = JSON.parse(preFixData);
-            const sid = validator.recordPreFixState(preFixViolations);
-            remediationValidation = validator.validatePostFix(sid, scanWithViolations.violations);
+            try {
+              const preFixViolations = JSON.parse(preFixData);
+              const sid = validator.recordPreFixState(preFixViolations);
+              remediationValidation = validator.validatePostFix(sid, scanWithViolations.violations);
+            } catch {
+              logger.warn("finish-task:corrupted-prefix-violations", { preFixData: preFixData.slice(0, 100) });
+            }
           }
         }
         // Clear snapshot after validation

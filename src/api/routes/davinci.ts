@@ -1,6 +1,27 @@
 import { Router } from "express";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { mkdirSync } from "node:fs";
+import { ValidationError } from "../../core/utils/errors.js";
+
+/**
+ * Sanitize a DaVinci plugin name to prevent path traversal attacks.
+ * Accepts only kebab-case names with alphanumeric characters, hyphens, and underscores.
+ * @throws ValidationError if the name is unsafe or invalid
+ */
+export function sanitizePluginName(pluginName: string): string {
+  if (pluginName.includes("..") || pluginName.includes("/") || pluginName.includes("\\")) {
+    throw new ValidationError("Invalid pluginName: must not contain path separators or traversal sequences", [
+      `pluginName "${pluginName}" contains unsafe characters`,
+    ]);
+  }
+  const safe = basename(pluginName);
+  if (safe !== pluginName || !/^[a-zA-Z0-9_-]+$/.test(safe)) {
+    throw new ValidationError("Invalid pluginName: must contain only alphanumeric characters, hyphens, and underscores", [
+      `pluginName "${pluginName}" is not a safe path component`,
+    ]);
+  }
+  return safe;
+}
 import { checkBuildEnvironment, scaffoldMavenProject, runMavenBuild } from "../../core/davinci/build-runner.js";
 import { parseDaVinciCode } from "../../core/davinci/davinci-parser.js";
 import { detectPluginType } from "../../core/davinci/plugin-type-detector.js";
@@ -129,7 +150,8 @@ export function createDavinciRouter(): Router {
       }
 
       // 3. Scaffold project on disk
-      const outputDir = join(process.cwd(), "workflow-graph", "davinci-builds", `${pluginName}-${Date.now()}`);
+      const safePluginName = sanitizePluginName(pluginName as string);
+      const outputDir = join(process.cwd(), "workflow-graph", "davinci-builds", `${safePluginName}-${Date.now()}`);
       mkdirSync(outputDir, { recursive: true });
 
       const template = getTemplate(genResult.pluginType, sdk);
@@ -154,8 +176,8 @@ export function createDavinciRouter(): Router {
         projectDir: scaffold.projectDir,
         jarPath: buildResult.jarPath ?? null,
         buildDurationMs: buildResult.durationMs,
-        buildOutput: buildResult.stdout.slice(0, 2000),
-        buildErrors: buildResult.stderr.slice(0, 2000),
+        buildOutput: (buildResult.stdout ?? "").slice(0, 2000),
+        buildErrors: (buildResult.stderr ?? "").slice(0, 2000),
         environment: env,
         warnings: genResult.warnings,
       });

@@ -124,9 +124,13 @@ export function registerCloneNode(server: McpServer, store: SqliteStore): void {
       const clone = store.getDb().transaction(() => {
         return cloneSingle(store, source, parentForClone, timestamp);
       })();
-      indexNodeAsKnowledge(store.getDb(), clone);
-      logger.info("tool:clone_node:ok", { sourceId: id, deep: false, cloneId: clone.id });
-      return mcpText({ ok: true, node: clone });
+      const verified = store.getNodeById(clone.id);
+      if (!verified) {
+        return mcpError(`Clone failed: node ${clone.id} not found after insert`);
+      }
+      indexNodeAsKnowledge(store.getDb(), verified);
+      logger.info("tool:clone_node:ok", { sourceId: id, deep: false, cloneId: verified.id });
+      return mcpText({ ok: true, node: verified });
     },
   );
 }

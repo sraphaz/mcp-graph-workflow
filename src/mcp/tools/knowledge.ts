@@ -179,7 +179,10 @@ async function handleExport(
   if (subAction === "import") {
     const absolutePath = assertPathInsideProject(targetPath);
     const raw = readFileSync(absolutePath, "utf-8");
-    const json = JSON.parse(raw) as unknown;
+    let json: unknown;
+    try { json = JSON.parse(raw); } catch (err) {
+      return mcpError(`Invalid JSON in knowledge package: ${err instanceof Error ? err.message : String(err)}`);
+    }
 
     const parsed = KnowledgePackageSchema.safeParse(json);
     if (!parsed.success) {
@@ -207,7 +210,10 @@ async function handleExport(
   if (subAction === "preview") {
     const absolutePath = assertPathInsideProject(targetPath);
     const raw = readFileSync(absolutePath, "utf-8");
-    const json = JSON.parse(raw) as unknown;
+    let json: unknown;
+    try { json = JSON.parse(raw); } catch (err) {
+      return mcpError(`Invalid JSON in knowledge package: ${err instanceof Error ? err.message : String(err)}`);
+    }
 
     const parsed = KnowledgePackageSchema.safeParse(json);
     if (!parsed.success) {

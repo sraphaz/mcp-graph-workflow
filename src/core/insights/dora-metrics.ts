@@ -45,8 +45,10 @@ export function calculateDoraMetrics(store: SqliteStore): DoraMetrics {
       .map((n) => {
         const created = new Date(n.created_at).getTime();
         const done = new Date(n.updated_at).getTime();
+        if (!Number.isFinite(created) || !Number.isFinite(done)) return null;
         return Math.max(0, (done - created) / (1000 * 60 * 60)); // hours
       })
+      .filter((v): v is number => v !== null)
       .sort((a, b) => a - b);
 
     const leadTime = {
@@ -134,10 +136,16 @@ export function calculateDoraMetrics(store: SqliteStore): DoraMetrics {
   }
 }
 
-function percentile(sortedValues: number[], p: number): number {
-  if (sortedValues.length === 0) return 0;
-  const idx = Math.ceil(p * sortedValues.length) - 1;
-  return sortedValues[Math.max(0, idx)];
+/**
+ * Nearest-rank percentile calculation.
+ * @internal Exported for testing.
+ */
+export function percentile(sortedValues: number[], p: number): number {
+  const values = sortedValues.filter(Number.isFinite).sort((a, b) => a - b);
+  if (values.length === 0) return 0;
+  const clampedP = Math.min(1, Math.max(0, p));
+  const idx = Math.ceil(clampedP * values.length) - 1;
+  return values[Math.max(0, Math.min(idx, values.length - 1))];
 }
 
 function emptyMetrics(): DoraMetrics {

@@ -46,7 +46,7 @@ function rowToDoc(row: KnowledgeRow): KnowledgeDocument {
     content: row.content,
     contentHash: row.content_hash,
     chunkIndex: row.chunk_index,
-    metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+    metadata: row.metadata ? (() => { try { return JSON.parse(row.metadata); } catch { return undefined; } })() : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

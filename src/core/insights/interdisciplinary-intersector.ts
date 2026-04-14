@@ -14,6 +14,11 @@ import { TfIdfIndex } from "../search/tfidf.js";
 import { extractEntitiesFromText } from "../rag/entity-extractor.js";
 import { logger } from "../utils/logger.js";
 
+function safeParseJson(raw: string | null | undefined): Record<string, unknown> | undefined {
+  if (!raw) return undefined;
+  try { return JSON.parse(raw) as Record<string, unknown>; } catch { return undefined; }
+}
+
 // ── Types ──────────────────────────────────────────────────
 
 export interface IntersectionCandidate {
@@ -81,7 +86,10 @@ function buildGroups(db: Database.Database): DocGroup[] {
   const byType = new Map<string, DocGroup>();
 
   for (const row of rows) {
-    const meta = row.metadata ? (JSON.parse(row.metadata) as Record<string, unknown>) : null;
+    let meta: Record<string, unknown> | null = null;
+    if (row.metadata) {
+      try { meta = JSON.parse(row.metadata) as Record<string, unknown>; } catch { /* corrupted metadata — skip */ }
+    }
     let group = byType.get(row.source_type);
     if (!group) {
       group = {
@@ -338,7 +346,7 @@ export function listIntersections(
     content: row.content,
     contentHash: row.content_hash,
     chunkIndex: row.chunk_index,
-    metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+    metadata: safeParseJson(row.metadata),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));

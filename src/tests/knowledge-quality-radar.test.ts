@@ -75,4 +75,34 @@ describe("calculateKnowledgeQuality", () => {
     const capture = result.find((m: KnowledgeQualityMetric) => m.sourceType === "web_capture");
     expect(capture?.isLow).toBe(false);
   });
+
+  it("should produce valid scores even when count/total values are NaN-inducing", () => {
+    // Insert a document so total > 0
+    knowledgeStore.insert({ sourceType: "prd", sourceId: "s1", title: "Doc", content: "content" });
+
+    const result = calculateKnowledgeQuality(knowledgeStore);
+    for (const metric of result) {
+      expect(Number.isFinite(metric.score)).toBe(true);
+      expect(Number.isFinite(metric.avgQuality)).toBe(true);
+      expect(Number.isFinite(metric.count)).toBe(true);
+      expect(metric.score).toBeGreaterThanOrEqual(0);
+      expect(metric.score).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it("should handle corrupted avgBySource with NaN gracefully", () => {
+    // Insert document then corrupt the quality_score in DB
+    knowledgeStore.insert({ sourceType: "prd", sourceId: "s1", title: "Doc", content: "content" });
+    const db = (knowledgeStore as unknown as { db: import("better-sqlite3").Database }).db;
+    db.prepare("UPDATE knowledge_documents SET quality_score = NULL WHERE source_type = 'prd'").run();
+
+    const result = calculateKnowledgeQuality(knowledgeStore);
+    const prd = result.find((m: KnowledgeQualityMetric) => m.sourceType === "prd");
+
+    expect(prd).toBeDefined();
+    expect(Number.isFinite(prd!.score)).toBe(true);
+    expect(Number.isFinite(prd!.avgQuality)).toBe(true);
+    expect(prd!.score).toBeGreaterThanOrEqual(0);
+    expect(prd!.score).toBeLessThanOrEqual(100);
+  });
 });

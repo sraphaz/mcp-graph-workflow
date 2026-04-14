@@ -73,6 +73,10 @@ export function analyzeImpact(
     return { symbol: name, affectedSymbols: [], riskLevel: "low" };
   }
 
+  const MAX_AFFECTED = 500;
+  const TIMEOUT_MS = 5_000;
+  const startTime = Date.now();
+
   const visited = new Set<string>();
   const affected: AffectedSymbol[] = [];
 
@@ -81,10 +85,22 @@ export function analyzeImpact(
   for (const t of targets) visited.add(t.id);
 
   while (frontier.length > 0) {
+    // Guard: max affected nodes limit
+    if (affected.length >= MAX_AFFECTED) {
+      logger.warn("graph-traversal:max-affected-reached", { symbol: name, limit: MAX_AFFECTED });
+      break;
+    }
+    // Guard: timeout
+    if (Date.now() - startTime > TIMEOUT_MS) {
+      logger.warn("graph-traversal:timeout", { symbol: name, timeoutMs: TIMEOUT_MS, affected: affected.length });
+      break;
+    }
+
     const nextFrontier: Array<{ id: string; depth: number }> = [];
 
     for (const { id, depth } of frontier) {
       if (depth >= maxDepth) continue;
+      if (affected.length >= MAX_AFFECTED) break;
 
       const relations = direction === "upstream"
         ? store.getRelationsTo(id)

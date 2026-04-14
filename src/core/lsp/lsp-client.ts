@@ -253,10 +253,23 @@ export class LspClient extends EventEmitter {
    * Handles chunked delivery: data is accumulated in an internal buffer
    * and complete messages are extracted as they become available.
    */
+  private static readonly MAX_BUFFER_SIZE = 100 * 1024 * 1024; // 100MB
+
   private handleData(data: Buffer): void {
     this.buffer = Buffer.concat([this.buffer, data]);
 
-     
+    // Guard: kill LSP if buffer exceeds max size (DoS prevention)
+    if (this.buffer.byteLength > LspClient.MAX_BUFFER_SIZE) {
+      logger.error("LSP buffer overflow — killing process", {
+        bufferSize: this.buffer.byteLength,
+        maxSize: LspClient.MAX_BUFFER_SIZE,
+        command: this.command,
+      });
+      this.buffer = Buffer.alloc(0);
+      this.kill();
+      return;
+    }
+
     while (true) {
       const headerStr = this.buffer.toString("ascii", 0, Math.min(this.buffer.byteLength, 256));
       const match = HEADER_REGEX.exec(headerStr);
@@ -266,6 +279,16 @@ export class LspClient extends EventEmitter {
       }
 
       const contentLength = parseInt(match[1], 10);
+
+      // Guard: reject oversized Content-Length
+      if (contentLength > LspClient.MAX_BUFFER_SIZE) {
+        logger.error("LSP Content-Length exceeds max buffer size — discarding", {
+          contentLength,
+          maxSize: LspClient.MAX_BUFFER_SIZE,
+        });
+        this.buffer = Buffer.alloc(0);
+        break;
+      }
       const headerEnd = match.index + match[0].length;
       const totalLength = headerEnd + contentLength;
 

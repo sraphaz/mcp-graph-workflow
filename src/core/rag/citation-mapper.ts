@@ -39,7 +39,7 @@ export function mapCitations(results: RankedResult[]): Citation[] {
     sourceId: r.sourceId,
     title: r.title,
     snippet: r.content.length > MAX_SNIPPET_LENGTH
-      ? r.content.slice(0, MAX_SNIPPET_LENGTH)
+      ? r.content.slice(0, MAX_SNIPPET_LENGTH) + "..."
       : r.content,
     relevanceScore: r.score,
     position: i + 1,
