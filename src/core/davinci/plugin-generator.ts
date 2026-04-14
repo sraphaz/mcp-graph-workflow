@@ -6,6 +6,31 @@ import type { TargetSdkMode } from "./plugin-type-detector.js";
 import { getTemplate, renderTemplate } from "./template-registry.js";
 import { generatePom } from "./pom-generator.js";
 import type { TargetSdk } from "./pom-generator.js";
+import { ValidationError } from "../utils/errors.js";
+
+// ── Identifier validation ──────────────────────────────────────────────
+
+/** Validates that Java identifier inputs contain only safe characters to prevent template injection. */
+export function validateJavaIdentifiers(opts: { className: string; packageName: string; pluginName: string }): void {
+  if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(opts.className)) {
+    throw new ValidationError(
+      "Invalid className: must be a valid Java identifier (letters, digits, underscores; start with a letter)",
+      [`className "${opts.className}" contains invalid characters`],
+    );
+  }
+  if (!opts.packageName.split(".").every((seg) => /^[a-z][a-z0-9_]*$/.test(seg))) {
+    throw new ValidationError(
+      "Invalid packageName: must be a valid Java package name (lowercase dot-separated identifiers)",
+      [`packageName "${opts.packageName}" contains invalid characters`],
+    );
+  }
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(opts.pluginName)) {
+    throw new ValidationError(
+      "Invalid pluginName: must contain only alphanumeric characters, hyphens, and underscores",
+      [`pluginName "${opts.pluginName}" contains invalid characters`],
+    );
+  }
+}
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -51,6 +76,9 @@ export function generatePlugin(options: GeneratePluginOptions): GeneratePluginRe
     javaVersion,
     sdkPath,
   } = options;
+
+  // Validate identifiers to prevent Java code injection via template variables
+  validateJavaIdentifiers({ className, packageName, pluginName });
 
   // 1. Parse DaVinci code
   const analysis = parseDaVinciCode(code, {

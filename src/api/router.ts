@@ -15,7 +15,6 @@ import { createSkillsRouter } from "./routes/skills.js";
 import { createCaptureRouter } from "./routes/capture.js";
 import { createDocsCacheRouter } from "./routes/docs-cache.js";
 import { createContextRouter } from "./routes/context.js";
-import { createEventsRouter } from "./routes/events.js";
 import { createCodeGraphRouter } from "./routes/code-graph.js";
 import { createRagRouter } from "./routes/rag.js";
 import { createKnowledgeRouter } from "./routes/knowledge.js";
@@ -99,7 +98,9 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   }
 
   if (eventBus) {
-    router.use("/events", createEventsRouter(eventBus));
+    // NOTE: SSE is already handled by createEventsSseRouter above.
+    // createEventsRouter was previously also mounted at /events causing a
+    // duplicate route — it is intentionally omitted here (E14-T09 fix).
 
     let emitting = false;
     setLogListener((entry) => {
@@ -121,6 +122,11 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
       }
     });
   }
+
+  // 404 handler — must come before errorHandler (E14-T08 fix)
+  router.use((_req, res) => {
+    res.status(404).json({ error: "Not found" });
+  });
 
   router.use(errorHandler);
 
