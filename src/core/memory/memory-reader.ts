@@ -4,7 +4,7 @@
  */
 
 import path from "node:path";
-import { readdir, readFile, writeFile, mkdir, unlink } from "node:fs/promises";
+import { readdir, readFile, writeFile, mkdir, unlink, rename } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { logger } from "../utils/logger.js";
 import { STORE_DIR } from "../utils/constants.js";
@@ -112,7 +112,10 @@ export async function writeMemory(basePath: string, name: string, content: strin
     await mkdir(dir, { recursive: true });
   }
 
-  await writeFile(filePath, content, "utf-8");
+  // Atomic write: write to temp file then rename (prevents corrupted reads on concurrent access)
+  const tmpPath = `${filePath}.tmp.${Date.now()}`;
+  await writeFile(tmpPath, content, "utf-8");
+  await rename(tmpPath, filePath);
   logger.info("Memory written", { name, sizeBytes: Buffer.byteLength(content, "utf-8") });
 }
 
