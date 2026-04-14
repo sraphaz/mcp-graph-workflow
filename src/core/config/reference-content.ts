@@ -96,7 +96,7 @@ export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (40 tools — v
 
 | Tool | Quando usar |
 |------|-------------|
-| \`code_intelligence\` | Análise semântica via LSP: definition, references, hover, rename, call_hierarchy, diagnostics, symbols. Multi-language (TS, Python, Rust, Go, Java, C/C++, Ruby, PHP, Kotlin, Swift, C#, Lua) |
+| \`code_intelligence\` | Análise semântica via LSP (15 modos): \`definition\`, \`references\`, \`hover\`, \`rename\`, \`apply_rename\`, \`call_hierarchy_in\`, \`call_hierarchy_out\`, \`diagnostics\`, \`document_symbols\`, \`workspace_symbols\`, \`languages\`, \`status\`, \`format_document\`, \`code_actions\`, \`apply_code_action\`. Multi-language: TS, Python, Rust, Go, Java, C/C++, Ruby, PHP, Kotlin, Swift, C#, Lua |
 
 #### Knowledge (consolidated v8.0)
 
@@ -176,7 +176,16 @@ export const ANALYZE_MODES_SECTION = `### Modos do analyze por fase
 | VALIDATE | \`config_coverage\` | Cobertura de config schemas |
 | VALIDATE | \`metric_coverage\` | Métricas para itens de alto risco |
 | VALIDATE | \`concurrency_risk\` | Detecção de race conditions |
-| IMPLEMENT | \`economy_simulation\` | Simulação de economia (inflação, gold balance) |`;
+| IMPLEMENT | \`economy_simulation\` | Simulação de economia (inflação, gold balance) |
+| IMPLEMENT | \`code_sync\` | Verifica sincronização code-graph (design → código real) |
+| PLAN | \`smart_decompose\` | Decomposição avançada com sizing e dependency inference |
+| PLAN | \`cfd\` | Cumulative Flow Diagram — análise de flow metrics do sprint |
+| ANY | \`security_scan\` | Vulnerabilidades (npm audit + secrets grep + Zod boundaries) |
+| ANY | \`code_quality\` | Métricas de qualidade (complexity, duplication, naming) |
+| ANY | \`test_coverage\` | Cobertura de testes (module→test file mapping) |
+| ANY | \`observability_check\` | Verificação de observabilidade (logger, structured logs, error handling) |
+| DESIGN | \`adr_challenge\` | Desafia ADRs com alternativas e trade-offs |
+| ANY | \`orphan_tasks\` | Detecta tasks órfãs (sem parent, sem edges) |`;
 
 export const KNOWLEDGE_PIPELINE_SECTION = `### Pipeline de Conhecimento (Knowledge Store + RAG)
 
@@ -191,6 +200,15 @@ Recuperação: \`context(action:rag)\` monta contexto phase-aware com budget de 
 - 60% contexto do grafo (nodes, deps, status)
 - 30% knowledge store (BM25 + TF-IDF)
 - 10% metadata de fase
+
+#### Features avançadas do RAG
+- **Citation mapping** — cada resultado inclui fonte, snippet e confidence (\`rag/citation-mapper.ts\`)
+- **Source contribution** — rastreia quais fontes contribuíram para cada resposta (\`rag/source-contribution.ts\`)
+- **Entity indexing** — extração de entidades nomeadas para enriquecer busca (\`rag/entity-indexer.ts\`)
+- **RAG trace** — trace completo query→retrieval→ranking→synthesis (\`rag/rag-trace.ts\`)
+- **Query understanding** — reescrita e decomposição de queries (\`rag/query-understanding.ts\`)
+- **Corrective RAG** — validação pós-retrieval com correção automática (\`rag/post-retrieval.ts\`)
+- **ONNX embeddings** — embeddings neurais 384-dim via all-MiniLM-L6-v2 (\`rag/onnx-embeddings.ts\`)
 
 Manual: \`knowledge(action:reindex)\` para rebuild completo do índice.`;
 
@@ -238,13 +256,13 @@ Antes de mudar de fase, rodar o analyze mode correspondente:
 | De → Para | Gate (analyze mode) | Pré-requisitos |
 |-----------|---------------------|----------------|
 | ANALYZE → DESIGN | — | ≥1 epic/requirement no grafo |
-| DESIGN → PLAN | \`design_ready\` | ADRs, interfaces, coupling check |
+| DESIGN → PLAN | \`design_ready\` | ADRs, interfaces, coupling + harness ≥ 55 |
 | PLAN → IMPLEMENT | — | \`sync_stack_docs\` + \`plan_sprint\` executados |
 | IMPLEMENT → VALIDATE | \`validate_ready\` | ≥50% tasks done com AC testável |
 | VALIDATE → REVIEW | \`done_integrity\` + \`status_flow\` | Todos checks passam |
 | REVIEW → HANDOFF | \`review_ready\` | Export + blast radius ok |
 | HANDOFF → DEPLOY | \`handoff_ready\` + \`doc_completeness\` | Snapshot + memories salvos |
-| DEPLOY → LISTENING | \`deploy_ready\` + \`release_check\` | Release validado |`;
+| DEPLOY → LISTENING | \`deploy_ready\` + \`release_check\` | Release validado + harness ≥ 70 |`;
 
 export const DOD_SECTION = `### Definition of Done (8 Checks)
 
@@ -400,7 +418,8 @@ Compõe: \`next\` + \`context(compact)\` + \`context(rag)\` + TDD hints + \`upda
 - \`contextDetail?\` — "summary" | "standard" | "deep" (default: standard)
 - \`ragBudget?\` — token budget para RAG (default: 4000)
 - \`autoStart?\` — marca in_progress automaticamente (default: true)
-Retorna: task + context + ragContext + tddHints + startedAt
+- \`agentId?\` — ID do agente para teamTask mode (lock exclusivo)
+Retorna: task + context + ragContext + tddHints + startedAt (+ leaseToken em teamTask mode)
 
 #### finish_task
 Compõe: DoD (9 checks) + AC validation + \`update_status(done)\` + epic promotion + next
@@ -408,6 +427,8 @@ Compõe: DoD (9 checks) + AC validation + \`update_status(done)\` + epic promoti
 - \`rationale?\` — decisão técnica (indexada como AI decision para RAG futuro)
 - \`testFiles?\` — arquivos de teste associados
 - \`autoNext?\` — retorna próxima task recomendada (default: true)
+- \`agentId?\` — ID do agente (verifica ownership em teamTask mode)
+- \`leaseToken?\` — token do start_task (libera o lock)
 Retorna: dodReport + status (done|blocked) + blockers + epicPromotion + nextTask
 
 #### Agent State Machine (nextAction)
@@ -420,12 +441,152 @@ Toda resposta de tool inclui \`_lifecycle.nextAction\` com a próxima ação rec
 
 O agente segue o \`nextAction\` — o grafo dirige o workflow, não o agente.`;
 
+export const TEAM_TASK_SECTION = `### Multi-Terminal Orchestrator (teamTask mode)
+
+Permite **2+ agentes Claude** trabalhando em paralelo no mesmo projeto com lock exclusivo por task.
+
+#### Quando usar
+- Múltiplos terminais Claude Code abertos no mesmo repositório
+- Paralelizar bug fixes, features independentes, ou sprint tasks
+- Cada terminal opera como agente independente com ID único
+
+#### Como ativar
+\`\`\`
+start_task(agentId: "agent-1")    → retorna leaseToken
+[implementar com TDD]
+finish_task(nodeId: "...", agentId: "agent-1", leaseToken: "<token>")
+\`\`\`
+
+#### Semântica de locks
+- \`start_task(agentId)\` — **claim exclusivo**: task fica locked para esse agente
+- \`next(agentId)\` — exclui tasks locked por outros agentes da sugestão
+- \`finish_task(agentId, leaseToken)\` — verifica ownership antes de marcar done
+- Tasks locked por agentes inativos são liberadas automaticamente (orphan detection)
+
+#### Sem teamTask mode (default)
+Quando \`agentId\` não é fornecido, o fluxo funciona normalmente sem locks — ideal para terminal único.
+
+#### Dashboard
+A aba Overview mostra atividade por agente em tempo real via SSE events.`;
+
+export const DREAM_MODE_SECTION = `### Dream Mode (Consolidação de Conhecimento)
+
+Motor de consolidação inspirado em ciclos REM do sono. Faz merge, boost e cleanup do knowledge store.
+
+#### Quando usar
+- Após importar muitos documentos (PRDs, captures, memories)
+- Quando knowledge store tem duplicatas ou dados stale
+- Na fase DESIGN para consolidar decisões e padrões
+
+#### Como usar
+\`\`\`
+dream(action: "start")                    → inicia ciclo completo
+dream(action: "start", phases: ["rem"])   → apenas merge de duplicatas
+dream(action: "cancel")                   → cancela ciclo em andamento
+dream(action: "status")                   → status do ciclo atual
+dream(action: "history")                  → histórico de ciclos
+\`\`\`
+
+#### Fases do ciclo
+1. **NREM** — Cleanup: remove documentos stale, normaliza scores
+2. **REM** — Merge: encontra documentos similares via embeddings, faz soft-merge
+3. **Boost** — Prioriza: aumenta quality_score de docs com metadata "blocker"/"error"
+
+#### Dashboard
+Aba Dream mostra ciclos, métricas antes/depois, e merge clusters.`;
+
+export const AGENT_ACTIVITY_SECTION = `### Agent Activity (Monitoramento Multi-Agente)
+
+Rastreia heartbeat e atividade de agentes em teamTask mode via SSE events.
+
+#### Eventos monitorados
+- \`agent:heartbeat\` — ping periódico com agentId e task atual
+- \`agent:task_claimed\` — agente fez start_task com lock
+- \`agent:task_released\` — agente fez finish_task, lock liberado
+- \`agent:orphan_detected\` — task locked por agente inativo
+
+#### API
+- \`GET /api/v1/agents\` — lista agentes ativos com último heartbeat
+- \`GET /api/v1/events\` (SSE) — stream de eventos em tempo real
+
+#### Dashboard
+Aba Overview mostra agent activity monitor com status por agente e tasks em andamento.`;
+
+export const ADVANCED_TOOLS_SECTION = `### Ferramentas Avançadas
+
+#### Journey Mapping (\`journey\`)
+Mapeia fluxos de UI capturados via Playwright. Actions: \`list\`, \`get\`, \`search\`, \`index\`.
+- **Screens** — telas capturadas com campos de formulário e CTAs detectados
+- **Variants** — A/B test tracking com paths diferentes por variante
+- **Form fields** — extração automática de inputs, selects, textareas
+- **CTAs** — detecção de call-to-action buttons e links
+
+#### Language Translate (\`translate\`)
+Conversão de código entre linguagens. Actions: \`convert\`, \`analyze\`, \`jobs\`, \`batch_convert\`.
+- **13 linguagens** — TS, Python, Rust, Go, Java, C/C++, Ruby, PHP, Kotlin, Swift, C#, Lua, Haskell
+- **Confidence scoring** — equivalência semântica 0-100 por conversão
+- **Batch mode** — converter múltiplos arquivos em paralelo
+- **Graph integration** — resultados visualizados no React Flow graph
+
+#### DaVinci Converter (\`davinci\`)
+Converte DaVinci JS customizations em PingAccess/PingFederate Java plugins.
+Actions: \`analyze\`, \`build\`, \`convert\`, \`batch_convert\`.
+- **Plugin types** — custom_function, html_template, css_override
+- **Maven scaffold** — gera projeto Maven completo com pom.xml
+- **Build** — compila para JAR via Maven (requer JDK + Maven instalados)
+- **Variable resolution** — template vars \`{{var}}\` resolvidas automaticamente`;
+
+export const OPERATIONAL_TOOLS_SECTION = `### Ferramentas Operacionais
+
+#### Graph Health (\`graph_health\`)
+Diagnóstico unificado do grafo. Combina 5 health checks num único scan.
+- \`graph_health(action: "scan")\` — roda todos os checks, retorna score 0-100 + issues
+- Checks: orphan nodes, circular deps, stale in_progress, missing AC, oversized tasks
+- \`graph_health(action: "heal")\` — aplica correções automáticas para issues encontradas
+
+#### Doctor (\`npx mcp-graph doctor\`)
+Validação de ambiente (15+ checks): Node.js version, SQLite, MCP servers, git, disk space, migrations, FTS5 index integrity, embedding store, ONNX model, knowledge store.
+- \`npx mcp-graph doctor --json\` — output estruturado para automação
+
+#### Snapshot (\`snapshot\`)
+Backup/restore completo do grafo. Crítico para HANDOFF e DEPLOY.
+- \`snapshot(action: "create")\` — cria snapshot com timestamp + metadata
+- \`snapshot(action: "restore", id: "<snapshot_id>")\` — restaura estado completo
+- \`snapshot(action: "list")\` — lista snapshots disponíveis
+- Recomendado: criar snapshot antes de DEPLOY e ao final de HANDOFF
+
+#### Siebel Integration (\`siebel\`)
+8 ações para integração com Siebel CRM via SIF (Siebel Interface Format):
+- \`import_sif\` — importa arquivo .sif para o grafo
+- \`export_sif\` — exporta objetos do grafo como .sif
+- \`validate_sif\` — valida integridade de arquivo SIF
+- \`compose_sif\` — compõe SIF a partir de múltiplos objetos
+- \`list_objects\` — lista objetos Siebel indexados
+- \`get_object\` — detalhes de um objeto específico
+- \`search\` — busca full-text em objetos Siebel
+- \`templates\` — templates de composição disponíveis
+
+#### Harness Remediation (\`analyze(mode: "harness_remediate")\`)
+Engine determinístico de remediação — 16 regras sem AI, produz fix suggestions file-level:
+- Analisa cada arquivo contra regras (missing types, empty catches, console.log, etc.)
+- Ordena violations por prioridade (impacto no harness score)
+- Suppression store para false-positives (\`harness_suppress\`)
+- Integrado com \`finish_task\`: se harness regride > 5pts, mostra ruleSuggestions
+
+#### Issue Pattern Tracker (Steering Loop)
+\`finish_task\` grava padrões recorrentes de falha DoD. Ao atingir **3 ocorrências** do mesmo padrão, auto-sugere regras em \`.claude/rules/\`.
+Padrões rastreados: \`missing_ac\`, \`status_skip\`, \`orphan_node\`, \`circular_dep\`, \`oversized_task\`, \`missing_description\`, \`missing_estimate\`.
+O agente recebe \`ruleSuggestions\` no response de \`finish_task\` quando patterns são detectados.`;
+
 export const CLI_COMMANDS = `### Comandos essenciais
 
 \`\`\`bash
+npx mcp-graph init             # Inicializar mcp-graph no projeto (CLAUDE.md, .mcp.json, gitignore)
+npx mcp-graph update           # Atualizar configs para última versão
+npx mcp-graph import <file>    # Importar PRD (.md, .txt, .pdf, .html) diretamente no grafo
+npx mcp-graph index            # Reindexar knowledge store, rebuild embeddings, refresh docs cache
 npx mcp-graph stats            # Estatísticas do grafo
 npx mcp-graph list             # Listar nodes
-npx mcp-graph update           # Atualizar configs para última versão
 npx mcp-graph doctor           # Validar ambiente de execução
 npx mcp-graph doctor --json    # Diagnóstico em JSON estruturado
 npx mcp-graph serve --port 3000  # Dashboard visual

@@ -19,6 +19,11 @@ import {
   TDD_ENFORCEMENT_SECTION,
   AGENT_ANTIPATTERNS_SECTION,
   PIPELINE_TOOLS_SECTION,
+  TEAM_TASK_SECTION,
+  DREAM_MODE_SECTION,
+  AGENT_ACTIVITY_SECTION,
+  ADVANCED_TOOLS_SECTION,
+  OPERATIONAL_TOOLS_SECTION,
   CLI_COMMANDS as CLI_COMMANDS_REF,
   HARNESS_SECTION,
 } from "./reference-content.js";
@@ -65,12 +70,20 @@ const SPECKIT_SECTION = `### Spec-Driven Development (spec-kit)
 
 | Tool | A\u00E7\u00E3o | Descri\u00E7\u00E3o |
 |------|------|-----------|
-| \`constitution\` | create, update, list, check | Princ\u00EDpios governantes do projeto \u2014 indexados no RAG, validados em quality gates |
-| \`plugin\` | install, remove, enable, disable, list, info | Sistema de extens\u00F5es din\u00E2micas com persist\u00EAncia SQLite |
-| \`preset\` | list, apply, show, create | Presets de workflow: default, strict-tdd, agile-light, enterprise |
+| \`constitution\` | create, update, list, check | Princ\u00EDpios governantes do projeto \u2014 indexados no RAG, validados em quality gates. \`check\` valida nodes contra princ\u00EDpios |
+| \`plugin\` | install, remove, enable, disable, list, info | Extens\u00F5es din\u00E2micas (SQLite). Plugins alteram behavior de tools sem modificar c\u00F3digo |
+| \`preset\` | list, apply, show, create | Presets de workflow que alteram gates, WIP limits, e prerequisites |
 | \`spec\` | generate, validate, list_templates | Templates de spec por fase (ANALYZE, DESIGN, PLAN, IMPLEMENT) |
-| \`spec_sync\` | sync, status, history, link | Specs como documentos vivos \u2014 versionamento + sync bidirecional |
+| \`spec_sync\` | sync, status, history, link | Specs como documentos vivos \u2014 versionamento + sync bidirecional. Links: derived_from, implements, validates |
 | \`agent_format\` | generate, list_formats, list_agents | Gera instru\u00E7\u00F5es para 6+ AI agents (markdown, TOML, skill.md, JSON) |
+
+#### Presets dispon\u00EDveis
+| Preset | Quando usar | O que muda |
+|--------|-------------|------------|
+| \`default\` | Projetos normais | Gates advisory, WIP=1, prerequisites advisory |
+| \`strict-tdd\` | Projetos cr\u00EDticos | Gates strict, TDD obrigat\u00F3rio, prerequisites strict, harness >= 70 |
+| \`agile-light\` | Prototipagem r\u00E1pida | Gates off, WIP=3, sem prerequisites |
+| \`enterprise\` | Compliance/audit | Gates strict, security_scan obrigat\u00F3rio, doc_completeness required |
 
 **Fluxo recomendado:**
 1. \`constitution create\` \u2014 definir princ\u00EDpios do projeto
@@ -90,7 +103,7 @@ Memory files s\u00E3o **snapshots point-in-time**, n\u00E3o estado live. Contage
 
 > **Nunca confiar em contagens de progresso de memories. Sempre verificar no c\u00F3digo antes de planejar.**`;
 
-const LEAN_DISCOVERY_HINT = `> **Referências detalhadas on-demand:** Use \`help\` tool para consultar: \`tools\`, \`analyze_modes\`, \`skills\`, \`cli\`, \`knowledge\`, \`workflow\`, \`gates\`, \`dod\`, \`dor\`, \`prerequisites\`, \`workflows\`, \`flow\`, \`quality_metrics\`, \`tdd\`, \`pipeline\`, \`antipatterns\`.`;
+const LEAN_DISCOVERY_HINT = `> **Referências detalhadas on-demand:** Use \`help\` tool para consultar: \`tools\`, \`analyze_modes\`, \`skills\`, \`cli\`, \`knowledge\`, \`workflow\`, \`gates\`, \`dod\`, \`dor\`, \`prerequisites\`, \`workflows\`, \`flow\`, \`quality_metrics\`, \`tdd\`, \`pipeline\`, \`antipatterns\`, \`harness\`, \`dream\`, \`siebel\`, \`davinci\`, \`translate\`, \`journey\`, \`teamtask\`, \`snapshot\`, \`graph_health\`.`;
 
 function buildSectionBody(projectName: string, mode: "lean" | "full" = "full"): string {
   const header = `## mcp-graph — ${projectName}
@@ -182,6 +195,16 @@ ${MEMORY_VERIFICATION_RULE}
 ${AGENT_ANTIPATTERNS_SECTION}
 
 ${PIPELINE_TOOLS_SECTION}
+
+${TEAM_TASK_SECTION}
+
+${DREAM_MODE_SECTION}
+
+${AGENT_ACTIVITY_SECTION}
+
+${ADVANCED_TOOLS_SECTION}
+
+${OPERATIONAL_TOOLS_SECTION}
 
 ${CLI_COMMANDS_REF}`;
 }
