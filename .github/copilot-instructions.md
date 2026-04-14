@@ -48,13 +48,13 @@ Antes de mudar de fase, rodar o analyze mode correspondente:
 | De → Para | Gate (analyze mode) | Pré-requisitos |
 |-----------|---------------------|----------------|
 | ANALYZE → DESIGN | — | ≥1 epic/requirement no grafo |
-| DESIGN → PLAN | `design_ready` | ADRs, interfaces, coupling check |
+| DESIGN → PLAN | `design_ready` | ADRs, interfaces, coupling + harness ≥ 55 |
 | PLAN → IMPLEMENT | — | `sync_stack_docs` + `plan_sprint` executados |
 | IMPLEMENT → VALIDATE | `validate_ready` | ≥50% tasks done com AC testável |
 | VALIDATE → REVIEW | `done_integrity` + `status_flow` | Todos checks passam |
 | REVIEW → HANDOFF | `review_ready` | Export + blast radius ok |
 | HANDOFF → DEPLOY | `handoff_ready` + `doc_completeness` | Snapshot + memories salvos |
-| DEPLOY → LISTENING | `deploy_ready` + `release_check` | Release validado |
+| DEPLOY → LISTENING | `deploy_ready` + `release_check` | Release validado + harness ≥ 70 |
 
 ### Definition of Done (8 Checks)
 
@@ -122,12 +122,20 @@ parar de implementar e validar. Otimizar o gargalo, não produzir mais WIP.
 
 | Tool | Ação | Descrição |
 |------|------|-----------|
-| `constitution` | create, update, list, check | Princípios governantes do projeto — indexados no RAG, validados em quality gates |
-| `plugin` | install, remove, enable, disable, list, info | Sistema de extensões dinâmicas com persistência SQLite |
-| `preset` | list, apply, show, create | Presets de workflow: default, strict-tdd, agile-light, enterprise |
+| `constitution` | create, update, list, check | Princípios governantes do projeto — indexados no RAG, validados em quality gates. `check` valida nodes contra princípios |
+| `plugin` | install, remove, enable, disable, list, info | Extensões dinâmicas (SQLite). Plugins alteram behavior de tools sem modificar código |
+| `preset` | list, apply, show, create | Presets de workflow que alteram gates, WIP limits, e prerequisites |
 | `spec` | generate, validate, list_templates | Templates de spec por fase (ANALYZE, DESIGN, PLAN, IMPLEMENT) |
-| `spec_sync` | sync, status, history, link | Specs como documentos vivos — versionamento + sync bidirecional |
+| `spec_sync` | sync, status, history, link | Specs como documentos vivos — versionamento + sync bidirecional. Links: derived_from, implements, validates |
 | `agent_format` | generate, list_formats, list_agents | Gera instruções para 6+ AI agents (markdown, TOML, skill.md, JSON) |
+
+#### Presets disponíveis
+| Preset | Quando usar | O que muda |
+|--------|-------------|------------|
+| `default` | Projetos normais | Gates advisory, WIP=1, prerequisites advisory |
+| `strict-tdd` | Projetos críticos | Gates strict, TDD obrigatório, prerequisites strict, harness >= 70 |
+| `agile-light` | Prototipagem rápida | Gates off, WIP=3, sem prerequisites |
+| `enterprise` | Compliance/audit | Gates strict, security_scan obrigatório, doc_completeness required |
 
 **Fluxo recomendado:**
 1. `constitution create` — definir princípios do projeto
@@ -214,5 +222,5 @@ Memory files são **snapshots point-in-time**, não estado live. Contagens de pr
 
 > **Nunca confiar em contagens de progresso de memories. Sempre verificar no código antes de planejar.**
 
-> **Referências detalhadas on-demand:** Use `help` tool para consultar: `tools`, `analyze_modes`, `skills`, `cli`, `knowledge`, `workflow`, `gates`, `dod`, `dor`, `prerequisites`, `workflows`, `flow`, `quality_metrics`, `tdd`, `pipeline`, `antipatterns`.
+> **Referências detalhadas on-demand:** Use `help` tool para consultar: `tools`, `analyze_modes`, `skills`, `cli`, `knowledge`, `workflow`, `gates`, `dod`, `dor`, `prerequisites`, `workflows`, `flow`, `quality_metrics`, `tdd`, `pipeline`, `antipatterns`, `harness`, `dream`, `siebel`, `davinci`, `translate`, `journey`, `teamtask`, `snapshot`, `graph_health`.
 <!-- mcp-graph:end -->

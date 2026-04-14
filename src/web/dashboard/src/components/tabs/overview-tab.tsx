@@ -15,6 +15,7 @@ import {
 import { useInsights } from "@/hooks/use-insights";
 import { HealthGauge } from "@/components/charts/health-gauge";
 import { STATUS_COLORS } from "@/lib/constants";
+import { safePercentage } from "@/lib/runtime-guards";
 import type { TabId } from "@/components/layout/nav-config";
 
 interface OverviewTabProps {
@@ -235,16 +236,21 @@ export const OverviewTab = memo(function OverviewTab({ onNavigate }: OverviewTab
           </div>
           <div className="space-y-2">
             {metrics.statusDistribution?.map((sd) => (
+              (() => {
+                const percentage = safePercentage(sd.percentage);
+                return (
               <div key={sd.status} className="flex items-center gap-2">
                 <span className="text-[10px] w-16 text-muted truncate">{sd.status.replace("_", " ")}</span>
                 <div className="flex-1 h-3 rounded-full bg-surface-elevated overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${sd.percentage}%`, backgroundColor: STATUS_COLORS[sd.status] || "#6b7280" }}
+                    style={{ width: `${percentage}%`, backgroundColor: STATUS_COLORS[sd.status] || "#6b7280" }}
                   />
                 </div>
                 <span className="text-[10px] font-mono text-muted w-10 text-right">{sd.count}</span>
               </div>
+                );
+              })()
             ))}
           </div>
         </div>
@@ -258,18 +264,23 @@ export const OverviewTab = memo(function OverviewTab({ onNavigate }: OverviewTab
           {metrics.sprintProgress && metrics.sprintProgress.length > 0 ? (
             <div className="space-y-2.5">
               {metrics.sprintProgress.slice(0, 5).map((sp) => (
+                (() => {
+                  const percentage = safePercentage(sp.percentage);
+                  return (
                 <div key={sp.sprint}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-foreground">{sp.sprint}</span>
-                    <span className="text-[10px] text-muted">{sp.done}/{sp.total} ({sp.percentage}%)</span>
+                    <span className="text-[10px] text-muted">{sp.done}/{sp.total} ({percentage}%)</span>
                   </div>
                   <div className="h-2 rounded-full bg-surface-elevated overflow-hidden">
                     <div
                       className="h-full rounded-full bg-accent transition-all"
-                      style={{ width: `${sp.percentage}%` }}
+                      style={{ width: `${percentage}%` }}
                     />
                   </div>
                 </div>
+                  );
+                })()
               ))}
             </div>
           ) : (

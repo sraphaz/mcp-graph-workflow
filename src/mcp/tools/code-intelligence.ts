@@ -117,7 +117,7 @@ export function handleLanguages(): ReturnType<typeof mcpText> {
     supportedLanguages: reg.getAllConfigs().map((c) => c.languageId),
   };
 
-  const text = JSON.stringify(response, null, 2);
+  const text = JSON.stringify(response);
   return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
 }
 
@@ -197,7 +197,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
               })),
               lspAvailable: defs.length > 0,
             };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -236,7 +236,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
                       references: refs,
                       tier: "full" as const,
                     };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -248,7 +248,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             const response = hover
               ? { ok: true, mode: "hover" as const, ...hover }
               : { ok: true, mode: "hover" as const, signature: null, lspAvailable: false };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -267,7 +267,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
                   edits: edit.changes,
                 }
               : { ok: true, mode: "rename" as const, lspAvailable: false };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -277,7 +277,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
             const items = await lspBridge.callHierarchyIncoming(file, line, character);
             const response = { ok: true, mode: "call_hierarchy_in" as const, items };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -287,7 +287,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
             const items = await lspBridge.callHierarchyOutgoing(file, line, character);
             const response = { ok: true, mode: "call_hierarchy_out" as const, items };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -334,7 +334,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
 
             const thResponse = { ok: true, mode, query, direction, symbol: targetSymbol.name, hierarchy };
-            const thText = JSON.stringify(thResponse, null, 2);
+            const thText = JSON.stringify(thResponse);
             return mcpText({ ...thResponse, estimatedTokens: estimateTokens(thText) });
           }
 
@@ -347,7 +347,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
             const diags = await lspBridge.getDiagnostics(file);
             const response = { ok: true, mode: "diagnostics" as const, file, diagnostics: diags };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -360,7 +360,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
             const syms = await lspBridge.getDocumentSymbols(file);
             const response = { ok: true, mode: "document_symbols" as const, file, symbols: syms };
-            const text = JSON.stringify(response, null, 2);
+            const text = JSON.stringify(response);
             return mcpText({ ...response, estimatedTokens: estimateTokens(text) });
           }
 
@@ -387,7 +387,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
                 score: r.score,
               })),
             };
-            const wsText = JSON.stringify(wsResponse, null, 2);
+            const wsText = JSON.stringify(wsResponse);
             return mcpText({ ...wsResponse, estimatedTokens: estimateTokens(wsText) });
           }
 

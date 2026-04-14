@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   applySection,
   generateClaudeMdSection,
+  generateCodexAgentsMdSection,
   MARKER_START,
   MARKER_END,
 } from "../core/config/ai-memory-generator.js";
@@ -56,5 +57,28 @@ ${MARKER_END}
     const second = applySection(first, section);
 
     expect(first).toBe(second);
+  });
+
+  it("should generate Codex AGENTS.md instructions with Codex-specific guidance", () => {
+    const section = generateCodexAgentsMdSection("test-project", "lean");
+
+    expect(section).toContain(MARKER_START);
+    expect(section).toContain(MARKER_END);
+    expect(section).toContain("AGENTS.md");
+    expect(section).toContain(".agents/skills");
+    expect(section).toContain("$graph-implement");
+    expect(section).toContain("Plan Mode");
+    expect(section).toContain("apply_patch");
+  });
+
+  it("should apply Codex AGENTS.md section idempotently", () => {
+    const section = generateCodexAgentsMdSection("test-project", "lean");
+
+    const first = applySection("# Project\n", section);
+    const second = applySection(first, section);
+
+    expect(first).toBe(second);
+    expect(first.split(MARKER_START).length).toBe(2);
+    expect(first.split(MARKER_END).length).toBe(2);
   });
 });

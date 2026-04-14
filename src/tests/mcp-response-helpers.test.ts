@@ -9,9 +9,9 @@ describe("mcpText", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true, count: 5 });
   });
 
-  it("should pretty-print JSON with 2 spaces", () => {
+  it("should use compact JSON (no pretty-printing) to save tokens", () => {
     const result = mcpText({ a: 1 });
-    expect(result.content[0].text).toBe(JSON.stringify({ a: 1 }, null, 2));
+    expect(result.content[0].text).toBe(JSON.stringify({ a: 1 }));
   });
 
   it("should not have isError flag", () => {

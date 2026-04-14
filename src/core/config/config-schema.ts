@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 import { LspConfigOverrideSchema } from "../lsp/lsp-types.js";
 
-export const ContextModeSchema = z.enum(["lean", "full"]);
+export const ContextModeSchema = z.enum(["ultra-lean", "lean", "full"]);
 export type ContextMode = z.infer<typeof ContextModeSchema>;
 
 export const ConfigSchema = z.object({

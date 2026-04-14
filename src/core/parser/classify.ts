@@ -69,6 +69,31 @@ function matchesAny(text: string, patterns: RegExp[]): boolean {
   return patterns.some((p) => p.test(text));
 }
 
+function isTaskNumberToken(token: string): boolean {
+  const normalized = token.replace(/[:.)-]+$/g, "");
+  const prefixed = normalized.match(/^[A-Za-z]+-(.+)$/);
+  const numericPath = prefixed?.[1] ?? normalized;
+  const parts = numericPath.split(/[.-]/);
+
+  return parts.length > 0 && parts.every((part) => part.length > 0 && /^\d+$/.test(part));
+}
+
+function isExplicitTaskHeading(text: string): boolean {
+  const trimmed = text.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (/\bentregas?\b/i.test(trimmed)) return true;
+
+  const keyword = lower.startsWith("tarefa") ? "tarefa" : lower.startsWith("task") ? "task" : undefined;
+  if (!keyword) return false;
+
+  const rest = trimmed.slice(keyword.length).trim();
+  if (/^[:#-]\s*\S/.test(rest)) return true;
+
+  const [firstToken] = rest.split(/\s+/);
+  return firstToken !== undefined && isTaskNumberToken(firstToken);
+}
+
 const METADATA_PATTERNS = [
   /^\*\*(?:Size|Tamanho)\s*:/i,
   /^\*\*(?:Priority|Prioridade)\s*:/i,
@@ -105,7 +130,7 @@ export function classifySectionTitle(title: string, level: number): { type: Bloc
   if (/\brequisito/i.test(lower) || /\brequirement/i.test(lower)) return { type: "requirement", confidence: 0.9 };
 
   if (level === 1 || matchesAny(lower, EPIC_TITLE_PATTERNS)) return { type: "epic", confidence: 0.8 };
-  if (/\btask\b/i.test(lower) || /\bentrega/i.test(lower)) return { type: "task", confidence: 0.85 };
+  if (isExplicitTaskHeading(title)) return { type: "task", confidence: 0.85 };
 
   // Heading-level fallback: promote by structural position (only for actual headings)
   if (level >= 1 && level <= 2) return { type: "epic", confidence: 0.7 };

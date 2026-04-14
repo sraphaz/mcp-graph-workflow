@@ -8,6 +8,7 @@
 
 import type { LockManager } from "../store/lock-manager.js";
 import type { SqliteEventBridge } from "../events/sqlite-event-bridge.js";
+import { McpGraphError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 const DEFAULT_INTERVAL_MS = 30_000; // 30 seconds
@@ -26,6 +27,9 @@ export class AgentHeartbeat {
    * Start the heartbeat interval.
    */
   start(intervalMs: number = DEFAULT_INTERVAL_MS): void {
+    if (!this.agentId) {
+      throw new McpGraphError("AgentHeartbeat requires a valid agentId");
+    }
     if (this.timer) return;
     this.timer = setInterval(() => {
       try {

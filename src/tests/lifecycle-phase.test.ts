@@ -186,42 +186,10 @@ describe("getPhaseGuidance", () => {
     expect(guidance.suggestedTools).toContain("update_status");
   });
 
-  it("should include suggestedMcpAgents for IMPLEMENT phase", () => {
-    const guidance = getPhaseGuidance("IMPLEMENT");
-    expect(guidance.suggestedMcpAgents).toBeDefined();
-    expect(guidance.suggestedMcpAgents!.length).toBeGreaterThan(0);
-    const names = guidance.suggestedMcpAgents!.map((a) => a.name);
-    expect(names).toContain("code-graph");
-    expect(names).toContain("context7");
-  });
-
-  it("should include suggestedMcpAgents for DESIGN phase with code-graph", () => {
-    const guidance = getPhaseGuidance("DESIGN");
-    expect(guidance.suggestedMcpAgents).toBeDefined();
-    const names = guidance.suggestedMcpAgents!.map((a) => a.name);
-    expect(names).toContain("code-graph");
-  });
-
-  it("should include suggestedMcpAgents for VALIDATE phase with playwright", () => {
-    const guidance = getPhaseGuidance("VALIDATE");
-    expect(guidance.suggestedMcpAgents).toBeDefined();
-    const names = guidance.suggestedMcpAgents!.map((a) => a.name);
-    expect(names).toContain("playwright");
-    expect(names).toContain("code-graph");
-  });
-
-  it("should have no suggestedMcpAgents for ANALYZE and LISTENING phases", () => {
-    for (const phase of ["ANALYZE", "LISTENING"] as LifecyclePhase[]) {
+  it("should not include suggestedMcpAgents (removed for token optimization)", () => {
+    for (const phase of ["IMPLEMENT", "DESIGN", "VALIDATE", "ANALYZE", "LISTENING"] as LifecyclePhase[]) {
       const guidance = getPhaseGuidance(phase);
       expect(guidance.suggestedMcpAgents ?? []).toHaveLength(0);
     }
-  });
-
-  it("should include tools array in McpAgentSuggestion", () => {
-    const guidance = getPhaseGuidance("IMPLEMENT");
-    const codeGraph = guidance.suggestedMcpAgents!.find((a) => a.name === "code-graph");
-    expect(codeGraph).toBeDefined();
-    expect(codeGraph!.tools).toBeDefined();
-    expect(codeGraph!.tools!.length).toBeGreaterThan(0);
   });
 });

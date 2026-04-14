@@ -90,17 +90,10 @@ describe("buildLifecycleBlock", () => {
     }
   });
 
-  it("should keep suggestedSkills and recommendedSkills as distinct arrays", () => {
+  it("should not include suggestedSkills (removed for token optimization)", () => {
     const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
     const block = buildLifecycleBlock(doc);
-
-    // suggestedSkills = static from guidance, recommendedSkills = dynamic from graph state
-    if (block.suggestedSkills && block.recommendedSkills) {
-      expect(Array.isArray(block.suggestedSkills)).toBe(true);
-      expect(Array.isArray(block.recommendedSkills)).toBe(true);
-      // They should be different objects
-      expect(block.suggestedSkills).not.toBe(block.recommendedSkills);
-    }
+    expect(block.suggestedSkills).toBeUndefined();
   });
 });
 
@@ -174,68 +167,18 @@ describe("detectWarnings", () => {
   });
 });
 
-describe("buildLifecycleBlock suggestedSkills", () => {
-  it("should include suggestedSkills for IMPLEMENT phase", () => {
+describe("buildLifecycleBlock suggestedSkills (removed for token optimization)", () => {
+  it("should not include suggestedSkills in any phase", () => {
     const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
     const block = buildLifecycleBlock(doc);
-    expect(block.phase).toBe("IMPLEMENT");
-    expect(block.suggestedSkills).toBeDefined();
-    expect(block.suggestedSkills!.length).toBeGreaterThan(0);
-    expect(block.suggestedSkills).toContain("subagent-driven-development");
-    expect(block.suggestedSkills).toContain("xp-bootstrap");
-  });
-
-  it("should include suggestedSkills for ANALYZE phase", () => {
-    const doc = makeDoc();
-    const block = buildLifecycleBlock(doc);
-    expect(block.phase).toBe("ANALYZE");
-    expect(block.suggestedSkills).toBeDefined();
-    expect(block.suggestedSkills).toContain("create-prd-chat-mode");
-  });
-
-  it("should include suggestedSkills for VALIDATE phase", () => {
-    const doc = makeDoc([
-      { type: "task", status: "done", sprint: "s1" },
-      { type: "task", status: "done", sprint: "s1" },
-      { type: "task", status: "ready", sprint: "s1" },
-    ]);
-    const block = buildLifecycleBlock(doc);
-    expect(block.phase).toBe("VALIDATE");
-    expect(block.suggestedSkills).toBeDefined();
-    expect(block.suggestedSkills).toContain("playwright-explore-website");
-    expect(block.suggestedSkills).toContain("e2e-testing");
+    expect(block.suggestedSkills).toBeUndefined();
   });
 });
 
-describe("buildLifecycleBlock suggestedMcpAgents", () => {
-  it("should include suggestedMcpAgents for IMPLEMENT phase", () => {
+describe("buildLifecycleBlock suggestedMcpAgents (removed for token optimization)", () => {
+  it("should not include suggestedMcpAgents in any phase", () => {
     const doc = makeDoc([{ type: "task", status: "in_progress", sprint: "s1" }]);
     const block = buildLifecycleBlock(doc);
-    expect(block.phase).toBe("IMPLEMENT");
-    expect(block.suggestedMcpAgents).toBeDefined();
-    expect(block.suggestedMcpAgents!.length).toBeGreaterThan(0);
-    const names = block.suggestedMcpAgents!.map((a) => a.name);
-    expect(names).toContain("code-graph");
-    expect(names).toContain("context7");
-  });
-
-  it("should not include suggestedMcpAgents for ANALYZE phase", () => {
-    const doc = makeDoc();
-    const block = buildLifecycleBlock(doc);
-    expect(block.phase).toBe("ANALYZE");
-    expect(block.suggestedMcpAgents ?? []).toHaveLength(0);
-  });
-
-  it("should include playwright for VALIDATE phase", () => {
-    const doc = makeDoc([
-      { type: "task", status: "done", sprint: "s1" },
-      { type: "task", status: "done", sprint: "s1" },
-      { type: "task", status: "ready", sprint: "s1" },
-    ]);
-    const block = buildLifecycleBlock(doc);
-    expect(block.phase).toBe("VALIDATE");
-    expect(block.suggestedMcpAgents).toBeDefined();
-    const names = block.suggestedMcpAgents!.map((a) => a.name);
-    expect(names).toContain("playwright");
+    expect(block.suggestedMcpAgents).toBeUndefined();
   });
 });

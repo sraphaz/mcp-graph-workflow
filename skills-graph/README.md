@@ -10,7 +10,7 @@
 |---|---|---|---|
 | **Claude Code** | Sim (nativo) | SKILL.md em diretorio | `~/.claude/skills/<name>/SKILL.md` |
 | **GitHub Copilot** | Sim (com ajustes) | `.github/copilot-instructions.md` ou custom instructions | `.github/copilot-instructions.md` |
-| **Codex CLI** | Sim (com ajustes) | `AGENTS.md` ou instructions file | `.codex/AGENTS.md` |
+| **Codex CLI** | Sim (com ajustes) | `AGENTS.md` + repo skills | `AGENTS.md`, `.agents/skills/` |
 
 ### Diferencias entre plataformas
 
@@ -18,7 +18,7 @@
 
 **GitHub Copilot** usa `copilot-instructions.md` para instrucoes customizadas. As skills precisam ser adaptadas: remover referencias a MCP tools (`mcp__mcp-graph__*`) e focar no checklist/metodologia. Copilot nao tem MCP integration, entao as partes de `start_task`/`finish_task` nao se aplicam.
 
-**Codex CLI** usa `AGENTS.md` como instrucoes. Formato similar ao Claude Code mas sem slash commands.
+**Codex CLI** usa `AGENTS.md` como instrucoes de projeto e `.agents/skills/<name>/SKILL.md` para skills repo-scoped. Formato similar ao Claude Code mas sem slash commands; invoque skills com `$skill-name`.
 
 ## Configuracao
 
@@ -78,10 +78,13 @@ cat skills-graph/graph-security.md skills-graph/graph-tests.md \
 ### Codex CLI
 
 ```bash
-# Copiar skills para instrucoes do Codex
-mkdir -p .codex
-cat skills-graph/graph-implement.md skills-graph/graph-tests.md \
-    > .codex/AGENTS.md
+# Instalar skills repo-scoped do Codex
+mkdir -p .agents/skills
+for skill in skills-graph/graph-*.md; do
+  name=$(basename "$skill" .md)
+  mkdir -p ".agents/skills/$name"
+  cp "$skill" ".agents/skills/$name/SKILL.md"
+done
 ```
 
 ## Catalogo de Skills (35)

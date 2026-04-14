@@ -1,5 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from "recharts";
 import type { FlowSnapshot } from "@/lib/types";
+import { computeBurndownChartData } from "@/lib/burndown-utils";
 
 interface BurndownChartProps {
   data: FlowSnapshot[];
@@ -7,25 +8,14 @@ interface BurndownChartProps {
 }
 
 export function BurndownChart({ data, className }: BurndownChartProps): React.JSX.Element {
-  if (data.length === 0) {
+  const chartData = computeBurndownChartData(data);
+  if (chartData.length === 0) {
     return (
       <div className={`flex items-center justify-center text-sm text-muted h-[220px] ${className ?? ""}`}>
         No burndown data available
       </div>
     );
   }
-
-  const total = data[0].backlogCount + data[0].readyCount + data[0].inProgressCount + data[0].blockedCount + data[0].doneCount;
-
-  const chartData = data.map((s, i) => {
-    const remaining = s.backlogCount + s.readyCount + s.inProgressCount + s.blockedCount;
-    const idealRemaining = Math.max(0, total - (total / Math.max(data.length - 1, 1)) * i);
-    return {
-      date: s.snapshotDate.slice(5),
-      actual: remaining,
-      ideal: Math.round(idealRemaining),
-    };
-  });
 
   return (
     <div className={className}>

@@ -55,7 +55,7 @@ async function handleReadMemory(
     };
   }
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(memory, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify(memory) }],
   };
 }
 

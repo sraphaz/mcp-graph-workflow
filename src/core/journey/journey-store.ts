@@ -1,11 +1,12 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
+import { McpGraphError, getErrorMessage } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 function safeJsonParse<T>(raw: string | null | undefined, fallback: T | undefined = undefined): T | undefined {
   if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch { logger.warn("journey-store:corrupted-json", { raw: raw.slice(0, 80) }); return fallback; }
+  try { return JSON.parse(raw) as T; } catch (err) { logger.warn("journey-store:corrupted-json", { raw: raw.slice(0, 80), error: getErrorMessage(err) }); return fallback; }
 }
 
 // ── Row types ────────────────────────────────────────────
@@ -225,6 +226,9 @@ export class JourneyStore {
   }
 
   createMap(input: { name: string; url?: string; description?: string; metadata?: Record<string, unknown> }): JourneyMap {
+    if (!input.name || input.name.trim().length === 0) {
+      throw new McpGraphError("Journey map name cannot be empty");
+    }
     const id = generateId("jmap");
     const ts = now();
     this.db

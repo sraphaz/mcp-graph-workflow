@@ -12,6 +12,7 @@ import { LifecycleHeatmap } from "@/components/charts/lifecycle-heatmap";
 import { AgentActivityMonitor } from "@/components/charts/agent-activity-monitor";
 import { KnowledgeQualityRadar } from "@/components/charts/knowledge-quality-radar";
 import { STATUS_COLORS } from "@/lib/constants";
+import { safeEntries } from "@/lib/runtime-guards";
 import type { NodeType, NodeStatus, GraphNode } from "@/lib/types";
 
 const KPI_TOOLTIPS: Record<string, string> = {
@@ -92,7 +93,7 @@ export function InsightsTab(): React.JSX.Element {
 
   const { metrics, bottlenecks, stats, knowledgeStats, healthScore, phaseDistribution } = data;
 
-  const typeData = Object.entries(stats.byType)
+  const typeData = safeEntries(stats.byType)
     .filter(([, count]) => count > 0)
     .map(([type, count]) => ({ type: type as NodeType, count }));
 

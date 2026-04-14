@@ -6,6 +6,7 @@
  * Tier 3 (deep):     ~500+ tok/node — full context + knowledge docs
  */
 
+import { getErrorMessage } from "../utils/errors.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphNode } from "../graph/graph-types.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
@@ -152,7 +153,8 @@ function findRelevantKnowledge(
       sourceType: r.sourceType,
       score: Math.round(r.score * 1000) / 1000,
     }));
-  } catch {
+  } catch (err) {
+    logger.debug("tiered-context: knowledge fetch failed", { error: getErrorMessage(err) });
     return [];
   }
 }

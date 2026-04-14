@@ -165,12 +165,12 @@ export function buildLifecycleBlock(doc: GraphDocument, options?: LifecycleBlock
     try {
       const knowledgeStore = new KnowledgeStore(options.store.getDb());
       const phaseQuery = `phase ${phase} context`;
-      const results = knowledgeStore.searchWithPhaseBoost(phaseQuery, phase, 3);
+      const results = knowledgeStore.searchWithPhaseBoost(phaseQuery, phase, 1);
       if (results.length > 0) {
         phaseKnowledge = results.map((r) => ({
           title: r.title,
           sourceType: r.sourceType,
-          snippet: r.content.length > 200 ? r.content.slice(0, 200) + "..." : r.content,
+          snippet: r.content.length > 100 ? r.content.slice(0, 100) + "..." : r.content,
           phase: (r.metadata?.phase as string) ?? undefined,
         }));
       }
@@ -222,10 +222,10 @@ export function appendLifecycleToResponse(responseJson: string, doc: GraphDocume
   try {
     const parsed = JSON.parse(responseJson);
     parsed._lifecycle = buildLifecycleBlock(doc);
-    return JSON.stringify(parsed, null, 2);
+    return JSON.stringify(parsed);
   } catch {
     const block = buildLifecycleBlock(doc);
-    return responseJson + "\n\n---\n_lifecycle: " + JSON.stringify(block, null, 2);
+    return responseJson + "\n\n---\n_lifecycle: " + JSON.stringify(block);
   }
 }
 
@@ -342,7 +342,7 @@ export function buildCodeIntelBlock(
 /** Build an error response when a tool is blocked by the code intelligence gate. */
 export function buildBlockedResponseCodeIntel(toolName: string, warnings: CodeIntelWarning[]): ToolCallResult {
   return {
-    content: [{ type: "text", text: JSON.stringify({ error: "code_intelligence_gate_blocked", tool: toolName, warnings, hint: "Run knowledge(action:reindex) to build the code index, or use set_phase({codeIntelligence:'advisory'}) to switch to advisory mode." }, null, 2) }],
+    content: [{ type: "text", text: JSON.stringify({ error: "code_intelligence_gate_blocked", tool: toolName, warnings, hint: "Run knowledge(action:reindex) to build the code index, or use set_phase({codeIntelligence:'advisory'}) to switch to advisory mode." }) }],
     isError: true,
   };
 }
@@ -364,7 +364,7 @@ interface ToolCallResult {
 function buildBlockedResponse(toolName: string, phase: LifecyclePhase, warnings: LifecycleWarning[]): ToolCallResult {
   const errorWarnings = warnings.filter((w) => w.severity === "error");
   return {
-    content: [{ type: "text" as const, text: JSON.stringify({ error: "lifecycle_gate_blocked", phase, tool: toolName, reason: errorWarnings.map((w) => w.message).join("; "), warnings: errorWarnings, hint: "Use set_phase com force:true para bypass, ou mude para mode:'advisory' com set_phase({phase:'auto', mode:'advisory'})" }, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify({ error: "lifecycle_gate_blocked", phase, tool: toolName, reason: errorWarnings.map((w) => w.message).join("; "), warnings: errorWarnings, hint: "Use set_phase com force:true para bypass, ou mude para mode:'advisory' com set_phase({phase:'auto', mode:'advisory'})" }) }],
     isError: true,
   };
 }
@@ -620,8 +620,8 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         }
       }
 
-      // ── Append _lifecycle block ──
-      if (postCtx && result && Array.isArray(result.content)) {
+      // ── Append _lifecycle block (skip for read-only tools to save tokens) ──
+      if (postCtx && result && Array.isArray(result.content) && !READ_ONLY_TOOLS.has(name)) {
         try {
           const lifecycleBlock = buildLifecycleBlock(postCtx.doc, {
             toolName: name,
@@ -644,14 +644,14 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
             logger.debug("unified-gate: nextAction computation skipped", { tool: name });
           }
 
-          result.content.push({ type: "text", text: JSON.stringify({ _lifecycle: lifecycleBlock }, null, 2) });
+          result.content.push({ type: "text", text: JSON.stringify({ _lifecycle: lifecycleBlock }) });
         } catch {
           logger.debug("unified-gate: lifecycle block skipped", { tool: name });
         }
       }
 
-      // ── Append _code_intelligence block ──
-      if (postCtx && postCtx.codeIntelMode !== "off" && result && Array.isArray(result.content)) {
+      // ── Append _code_intelligence block (skip for read-only tools to save tokens) ──
+      if (postCtx && postCtx.codeIntelMode !== "off" && result && Array.isArray(result.content) && !READ_ONLY_TOOLS.has(name)) {
         try {
           const project = store.getProject();
           if (project) {
@@ -666,7 +666,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
             }
             const enrichmentMode = name === "set_phase" ? loadCodeIntelMode(store) : effectiveMode;
             const block = buildCodeIntelBlock(codeStore, project.id, postCtx.phase, enrichmentMode, name, args);
-            result.content.push({ type: "text", text: JSON.stringify({ _code_intelligence: block }, null, 2) });
+            result.content.push({ type: "text", text: JSON.stringify({ _code_intelligence: block }) });
           }
         } catch {
           logger.debug("unified-gate: code intelligence block skipped", { tool: name });

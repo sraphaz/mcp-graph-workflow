@@ -54,7 +54,7 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
       // Index sprint plan into knowledge store for cross-phase RAG
       try {
         const knowledgeStore = new KnowledgeStore(store.getDb());
-        const planText = JSON.stringify(report, null, 2);
+        const planText = JSON.stringify(report);
         const sourceId = `sprint_plan:${new Date().toISOString()}`;
         const taskCount = report.recommendedOrder.length;
         const velocity = report.summary.avgVelocity ?? 0;

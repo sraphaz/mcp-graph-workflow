@@ -11,6 +11,7 @@
 import type { GraphDocument, GraphNode, GraphEdge } from "../graph/graph-types.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
 import { getNodeAcTexts } from "../utils/ac-helpers.js";
+import { PlannerError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface NextTaskResult {
@@ -25,6 +26,9 @@ export interface NextTaskOptions {
 
 /** Find the highest-priority unblocked task to work on next. */
 export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): NextTaskResult | null {
+  if (!doc || !doc.nodes) {
+    throw new PlannerError("Invalid graph document: missing nodes");
+  }
   const { lockedTaskIds } = options ?? {};
 
   // Step 1: Filter eligible nodes

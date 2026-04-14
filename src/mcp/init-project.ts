@@ -1,5 +1,6 @@
 import { writeFileSync, existsSync, readFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { logger } from "../core/utils/logger.js";
 import { GraphNotInitializedError } from "../core/utils/errors.js";
@@ -8,7 +9,12 @@ import { installAllMcpDeps } from "../core/integrations/mcp-deps-installer.js";
 import { installLspDeps } from "../core/lsp/lsp-deps-installer.js";
 import { detectProjectLanguages } from "../core/lsp/language-detector.js";
 import { ServerRegistry } from "../core/lsp/server-registry.js";
-import { generateClaudeMdSection, generateCopilotInstructions, applySection } from "../core/config/ai-memory-generator.js";
+import {
+  generateClaudeMdSection,
+  generateCopilotInstructions,
+  generateCodexAgentsMdSection,
+  applySection,
+} from "../core/config/ai-memory-generator.js";
 import { loadConfig } from "../core/config/config-loader.js";
 import { ensureClaudeIgnore, ensureCopilotIgnore } from "../core/config/ignore-templates.js";
 import { introspectTools } from "../core/docs/tool-introspector.js";
@@ -20,6 +26,33 @@ import { STORE_DIR } from "../core/utils/constants.js";
 
 const MCP_CONFIG_FILE = ".mcp.json";
 const GITIGNORE_ENTRY = "workflow-graph/";
+const CODEX_SKILL_NAMES = [
+  "graph-prd",
+  "graph-analyze",
+  "graph-design",
+  "graph-plan",
+  "graph-implement",
+  "graph-validate",
+  "graph-review",
+  "graph-handoff",
+  "graph-deploy",
+  "graph-listening",
+  "graph-security",
+  "graph-tests",
+  "graph-quality-assurance",
+  "graph-bug-hunter",
+  "graph-fix-bugs",
+  "graph-performance",
+  "graph-refactor",
+  "graph-docs",
+  "graph-architecture",
+  "graph-api-design",
+  "graph-dependency",
+  "graph-accessibility",
+  "harness-engineering",
+  "kanban-orchestrator",
+  "ui-ux-pro-max",
+] as const;
 
 // --- Update types ---
 
@@ -165,7 +198,7 @@ function ensureGitignore(projectDir: string, dryRun?: boolean): UpdateStepResult
   return { step: "gitignore", status: "updated", message: ".gitignore updated with workflow-graph/" };
 }
 
-function generateAndWriteClaudeMd(projectDir: string, dryRun?: boolean, contextMode?: "lean" | "full"): UpdateStepResult {
+function generateAndWriteClaudeMd(projectDir: string, dryRun?: boolean, contextMode?: "ultra-lean" | "lean" | "full"): UpdateStepResult {
   const projectName = path.basename(projectDir);
   const claudeMdPath = path.join(projectDir, "CLAUDE.md");
   const section = generateClaudeMdSection(projectName, contextMode ?? "lean");
@@ -194,7 +227,7 @@ function generateAndWriteClaudeMd(projectDir: string, dryRun?: boolean, contextM
   };
 }
 
-function generateAndWriteCopilotInstructions(projectDir: string, dryRun?: boolean, contextMode?: "lean" | "full"): UpdateStepResult {
+function generateAndWriteCopilotInstructions(projectDir: string, dryRun?: boolean, contextMode?: "ultra-lean" | "lean" | "full"): UpdateStepResult {
   const projectName = path.basename(projectDir);
   const githubDir = path.join(projectDir, ".github");
   const copilotPath = path.join(githubDir, "copilot-instructions.md");
@@ -222,6 +255,130 @@ function generateAndWriteCopilotInstructions(projectDir: string, dryRun?: boolea
     step: "copilot-md",
     status: fileExists ? "updated" : "created",
     message: fileExists ? "copilot-instructions.md updated" : "copilot-instructions.md created",
+  };
+}
+
+function generateAndWriteCodexAgentsMd(projectDir: string, dryRun?: boolean, contextMode?: "ultra-lean" | "lean" | "full"): UpdateStepResult {
+  const projectName = path.basename(projectDir);
+  const agentsMdPath = path.join(projectDir, "AGENTS.md");
+  const section = generateCodexAgentsMdSection(projectName, contextMode ?? "lean");
+
+  const fileExists = existsSync(agentsMdPath);
+  let existing = "";
+  if (fileExists) {
+    existing = readFileSync(agentsMdPath, "utf-8");
+  }
+
+  const result = applySection(existing, section);
+
+  if (fileExists && existing === result) {
+    return { step: "codex-md", status: "up-to-date", message: "AGENTS.md up-to-date" };
+  }
+
+  if (!dryRun) {
+    writeFileSync(agentsMdPath, result, "utf-8");
+    logger.info("AGENTS.md updated with Codex mcp-graph instructions", { path: agentsMdPath });
+  }
+
+  return {
+    step: "codex-md",
+    status: fileExists ? "updated" : "created",
+    message: fileExists ? "AGENTS.md updated" : "AGENTS.md created",
+  };
+}
+
+function getCodexSkillAssetDirs(): string[] {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  return [
+    path.resolve(currentDir, "../assets/codex-skills"),
+    path.resolve(currentDir, "../../dist/assets/codex-skills"),
+    path.resolve(currentDir, "../../skills-graph"),
+    path.resolve(process.cwd(), "dist/assets/codex-skills"),
+    path.resolve(process.cwd(), "skills-graph"),
+  ];
+}
+
+function getCodexSkillSourcePath(skillName: string): string | null {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+
+  if (skillName === "ui-ux-pro-max") {
+    const uiCandidates = [
+      path.resolve(currentDir, "../assets/codex-skills/ui-ux-pro-max.md"),
+      path.resolve(currentDir, "../../dist/assets/codex-skills/ui-ux-pro-max.md"),
+      path.resolve(currentDir, "../../.claude/skills/ui-ux-pro-max/SKILL.md"),
+      path.resolve(process.cwd(), ".claude/skills/ui-ux-pro-max/SKILL.md"),
+    ];
+    return uiCandidates.find((candidate) => existsSync(candidate)) ?? null;
+  }
+
+  for (const assetDir of getCodexSkillAssetDirs()) {
+    const candidate = path.join(assetDir, `${skillName}.md`);
+    if (existsSync(candidate)) return candidate;
+  }
+
+  return null;
+}
+
+function generateFallbackCodexSkill(skillName: string): string {
+  return `---\nname: ${skillName}\ndescription: mcp-graph Codex skill generated as a fallback because the packaged skill asset was unavailable.\n---\n\n# ${skillName}\n\nUse this skill with the mcp-graph lifecycle. Load project context with mcp-graph tools before making changes.\n`;
+}
+
+function adaptCodexSkillContent(skillName: string, content: string): string {
+  const source = content.trim().length > 0 ? content : generateFallbackCodexSkill(skillName);
+  return source
+    .replaceAll("/graph-", "$graph-")
+    .replaceAll("rag_context", "context(action: \"rag\")")
+    .replaceAll("mcp__mcp-graph__rag_context", "mcp__mcp-graph__context")
+    .replaceAll("mcp__mcp-graph__add_node", "mcp__mcp-graph__node")
+    .replaceAll("mcp__mcp-graph__update_node", "mcp__mcp-graph__node")
+    .concat("\n\n## Codex Notes\n\n- In Codex Plan Mode, use this skill for planning only and do not mutate files.\n- During implementation, follow the project `AGENTS.md` rules and use `apply_patch` for manual edits.\n");
+}
+
+function generateAndWriteCodexSkills(projectDir: string, dryRun?: boolean): UpdateStepResult {
+  const skillsRoot = path.join(projectDir, ".agents", "skills");
+  let created = 0;
+  let updated = 0;
+  let missingSources = 0;
+
+  for (const skillName of CODEX_SKILL_NAMES) {
+    const sourcePath = getCodexSkillSourcePath(skillName);
+    const rawContent = sourcePath ? readFileSync(sourcePath, "utf-8") : generateFallbackCodexSkill(skillName);
+    if (!sourcePath) missingSources++;
+
+    const nextContent = adaptCodexSkillContent(skillName, rawContent).trimEnd() + "\n";
+    const skillDir = path.join(skillsRoot, skillName);
+    const skillPath = path.join(skillDir, "SKILL.md");
+    const exists = existsSync(skillPath);
+    const current = exists ? readFileSync(skillPath, "utf-8") : "";
+
+    if (exists && current === nextContent) {
+      continue;
+    }
+
+    if (!dryRun) {
+      mkdirSync(skillDir, { recursive: true });
+      writeFileSync(skillPath, nextContent, "utf-8");
+    }
+
+    if (exists) {
+      updated++;
+    } else {
+      created++;
+    }
+  }
+
+  if (created === 0 && updated === 0) {
+    return {
+      step: "codex-skills",
+      status: "up-to-date",
+      message: `.agents/skills up-to-date (${CODEX_SKILL_NAMES.length} skills)`,
+    };
+  }
+
+  return {
+    step: "codex-skills",
+    status: created > 0 ? "created" : "updated",
+    message: `${created} Codex skill(s) ${dryRun ? "would be created" : "created"}, ${updated} ${dryRun ? "would be updated" : "updated"}${missingSources > 0 ? `, ${missingSources} fallback(s)` : ""}`,
   };
 }
 
@@ -343,6 +500,8 @@ export async function runUpdate(
   const ctxMode = config.contextMode;
   if (shouldRun("claude-md")) steps.push(generateAndWriteClaudeMd(projectDir, options.dryRun, ctxMode));
   if (shouldRun("copilot-md")) steps.push(generateAndWriteCopilotInstructions(projectDir, options.dryRun, ctxMode));
+  if (shouldRun("codex-md")) steps.push(generateAndWriteCodexAgentsMd(projectDir, options.dryRun, ctxMode));
+  if (shouldRun("codex-skills")) steps.push(generateAndWriteCodexSkills(projectDir, options.dryRun));
 
   // 5. Ignore files (create if missing, never overwrite)
   if (shouldRun("ignore-files") && !options.dryRun) {
@@ -396,6 +555,8 @@ export async function runInit(projectDir: string): Promise<void> {
   const initConfig = loadConfig(projectDir);
   generateAndWriteClaudeMd(projectDir, undefined, initConfig.contextMode);
   generateAndWriteCopilotInstructions(projectDir, undefined, initConfig.contextMode);
+  generateAndWriteCodexAgentsMd(projectDir, undefined, initConfig.contextMode);
+  generateAndWriteCodexSkills(projectDir);
 
   // Generate ignore files (does NOT overwrite existing)
   ensureClaudeIgnore(projectDir);

@@ -126,7 +126,7 @@ export const PhaseIndicator = memo(function PhaseIndicator({
                 </div>
               </div>
             )}
-            {guidance.suggestedSkills.length > 0 && (
+            {(guidance.suggestedSkills?.length ?? 0) > 0 && (
               <div>
                 <span className="text-[9px] font-semibold text-muted uppercase tracking-wider">Skills</span>
                 <div className="flex flex-wrap gap-1 mt-0.5">

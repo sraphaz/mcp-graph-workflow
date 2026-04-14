@@ -12,11 +12,14 @@ import { DEFAULT_KANBAN_CONFIG } from "../../core/kanban/kanban-types.js";
 import type { KanbanConfig, SwimlaneMode } from "../../core/kanban/kanban-types.js";
 import { validateBody } from "../middleware/validate.js";
 
+const STATUS_MAX = 100;
+const COLUMN_MAX = 50;
+
 export const UpdateKanbanConfigSchema = z.object({
-  wipLimits: z.record(z.string(), z.number().int().nonnegative()).optional(),
-  columnOrder: z.array(z.string()).optional(),
-  swimlaneMode: z.string().optional(),
-});
+  wipLimits: z.record(z.string().max(STATUS_MAX), z.number().int().nonnegative()).optional(),
+  columnOrder: z.array(z.string().max(STATUS_MAX)).max(COLUMN_MAX).optional(),
+  swimlaneMode: z.enum(["none", "epic", "sprint"]).optional(),
+}).strict();
 
 const KANBAN_SETTINGS_KEY = "kanban_config";
 

@@ -9,6 +9,7 @@ import { analyzeScope } from "../analyzer/scope-analyzer.js";
 import { analyzeBacklogHealth } from "../listener/backlog-health.js";
 import { checkDoneIntegrity } from "../validator/done-integrity-checker.js";
 import { checkStatusFlow } from "../validator/status-flow-checker.js";
+import { GraphIntegrityError, getErrorMessage } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface HealthIssue {
@@ -31,6 +32,9 @@ export interface HealthReport {
  * Run a comprehensive health scan on the graph, combining multiple analyzers.
  */
 export function scanGraphHealth(doc: GraphDocument): HealthReport {
+  if (!doc || !doc.nodes) {
+    throw new GraphIntegrityError("Invalid graph document: missing nodes");
+  }
   const start = performance.now();
   const issues: HealthIssue[] = [];
 
@@ -45,8 +49,8 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
         message: `Dependency cycle detected: ${cycle.join(" → ")}`,
       });
     }
-  } catch {
-    logger.debug("graph-health: cycle detection skipped");
+  } catch (err) {
+    logger.debug("graph-health: cycle detection skipped", { error: getErrorMessage(err) });
   }
 
   // 2. Orphan detection via scope analysis
@@ -60,8 +64,8 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
         message: `Orphan ${orphan.type}: "${orphan.title}" — no parent or edges`,
       });
     }
-  } catch {
-    logger.debug("graph-health: scope analysis skipped");
+  } catch (err) {
+    logger.debug("graph-health: scope analysis skipped", { error: getErrorMessage(err) });
   }
 
   // 3. Backlog health — stuck and stale tasks
@@ -75,8 +79,8 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
         message: `Stale task: "${stale.title}" — ${stale.daysInBacklog} days in backlog`,
       });
     }
-  } catch {
-    logger.debug("graph-health: backlog health skipped");
+  } catch (err) {
+    logger.debug("graph-health: backlog health skipped", { error: getErrorMessage(err) });
   }
 
   // 4. Done integrity — done tasks with unresolved deps or blocked status
@@ -90,8 +94,8 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
         message: `Done integrity: "${issue.title}" — ${issue.details}`,
       });
     }
-  } catch {
-    logger.debug("graph-health: done integrity skipped");
+  } catch (err) {
+    logger.debug("graph-health: done integrity skipped", { error: getErrorMessage(err) });
   }
 
   // 5. Status flow — tasks done without proper transitions
@@ -105,8 +109,8 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
         message: `Status flow: "${violation.title}" — ${violation.currentStatus} without proper transitions`,
       });
     }
-  } catch {
-    logger.debug("graph-health: status flow skipped");
+  } catch (err) {
+    logger.debug("graph-health: status flow skipped", { error: getErrorMessage(err) });
   }
 
   // 6. Oversized tasks — tasks with too many children and no decomposition
@@ -124,8 +128,8 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
         }
       }
     }
-  } catch {
-    logger.debug("graph-health: oversized check skipped");
+  } catch (err) {
+    logger.debug("graph-health: oversized check skipped", { error: getErrorMessage(err) });
   }
 
   const elapsed = performance.now() - start;

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { SqliteStore } from "../store/sqlite-store.js";
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
+import { McpGraphError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import type { CheckResult, DoctorReport } from "./doctor-types.js";
 import {
@@ -32,6 +33,9 @@ function buildSummary(checks: CheckResult[]): DoctorReport["summary"] {
  * Run all doctor checks and return a structured report.
  */
 export async function runDoctor(basePath: string): Promise<DoctorReport> {
+  if (!basePath) {
+    throw new McpGraphError("Doctor requires a valid base path");
+  }
   logger.info("Running doctor checks", { basePath });
 
   const checks: CheckResult[] = [];

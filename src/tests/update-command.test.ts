@@ -70,6 +70,22 @@ describe("runUpdate", () => {
     expect(report.hasChanges).toBe(true);
   });
 
+  it("should detect changes in AGENTS.md and report updated", async () => {
+    initTestProject();
+
+    await runUpdate(TEST_DIR);
+
+    const agentsPath = path.join(TEST_DIR, "AGENTS.md");
+    writeFileSync(agentsPath, "# My Project\n", "utf-8");
+
+    const report = await runUpdate(TEST_DIR);
+    const codexStep = report.steps.find((s) => s.step === "codex-md");
+
+    expect(codexStep).toBeDefined();
+    expect(codexStep!.status).toBe("updated");
+    expect(report.hasChanges).toBe(true);
+  });
+
   it("should detect changes in .mcp.json and report updated", async () => {
     initTestProject();
 
@@ -96,6 +112,14 @@ describe("runUpdate", () => {
     expect(report.steps[0].step).toBe("claude-md");
   });
 
+  it("should respect --only filter for Codex instruction files", async () => {
+    initTestProject();
+
+    const report = await runUpdate(TEST_DIR, { only: ["codex-md", "codex-skills"] });
+
+    expect(report.steps.map((s) => s.step)).toEqual(["codex-md", "codex-skills"]);
+  });
+
   it("should not write files when dryRun is true", async () => {
     initTestProject();
 
@@ -111,6 +135,12 @@ describe("runUpdate", () => {
     // Verify the file was NOT actually written
     const claudePath = path.join(TEST_DIR, "CLAUDE.md");
     expect(existsSync(claudePath)).toBe(false);
+
+    const agentsPath = path.join(TEST_DIR, "AGENTS.md");
+    expect(existsSync(agentsPath)).toBe(false);
+
+    const codexSkillPath = path.join(TEST_DIR, ".agents", "skills", "graph-implement", "SKILL.md");
+    expect(existsSync(codexSkillPath)).toBe(false);
   });
 
   it("should report created when file does not exist", async () => {
@@ -136,5 +166,7 @@ describe("runUpdate", () => {
     expect(stepNames).toContain("deps");
     expect(stepNames).toContain("claude-md");
     expect(stepNames).toContain("copilot-md");
+    expect(stepNames).toContain("codex-md");
+    expect(stepNames).toContain("codex-skills");
   });
 });

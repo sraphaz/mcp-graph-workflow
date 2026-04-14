@@ -137,81 +137,49 @@ function hasNewFeedbackNodes(
 
 const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
   ANALYZE: {
-    reminder: "Fase ANALYZE: Crie o PRD a partir da ideia. Defina requisitos, restrições e critérios de aceitação antes de qualquer código.",
+    reminder: "ANALYZE: PRD + requisitos antes de código.",
     suggestedTools: ["import_prd", "add_node", "analyze", "validate_ac", "search"],
-    principles: ["Definir antes de construir", "PRD como contrato", "Requisitos claros e mensuráveis"],
-    suggestedSkills: ["create-prd-chat-mode", "business-analyst", "product-manager"],
+    principles: ["Definir antes de construir", "Requisitos mensuráveis"],
   },
   DESIGN: {
-    reminder: "Fase DESIGN: Defina a arquitetura e tome decisões técnicas. Use analyze para validar qualidade arquitetural.",
+    reminder: "DESIGN: Arquitetura + ADRs + interfaces.",
     suggestedTools: ["add_node", "edge", "analyze", "export"],
-    principles: ["Skeleton & Organs", "ADR documentado", "Interface-first", "Traceability"],
-    suggestedMcpAgents: [
-      { name: "code-graph", action: "Análise de impacto e blast radius da proposta arquitetural", tools: ["impact", "context"] },
-    ],
-    suggestedSkills: ["breakdown-epic-arch", "context-architect", "backend-architect"],
+    principles: ["Skeleton & Organs", "Interface-first"],
   },
   PLAN: {
-    reminder: "Fase PLAN: Planeje o sprint, decomponha tasks grandes e sincronize documentação das libs.",
+    reminder: "PLAN: Sprint planning + decomposição + sync docs.",
     suggestedTools: ["plan_sprint", "analyze", "sync_stack_docs", "edge"],
-    principles: ["Decomposição atômica", "Sprint planning baseado em velocidade", "Dependências explícitas"],
-    suggestedMcpAgents: [
-      { name: "context7", action: "Consultar docs atualizadas das libs do stack", tools: ["resolve-library-id", "query-docs"] },
-    ],
-    suggestedSkills: ["breakdown-feature-prd", "track-with-mcp-graph"],
+    principles: ["Decomposição atômica", "Dependências explícitas"],
   },
   IMPLEMENT: {
-    reminder: "Fase IMPLEMENT: TDD obrigatório — Red → Green → Refactor. Escreva o teste ANTES da implementação. Use `context` para token-efficiency.",
+    reminder: "IMPLEMENT: TDD Red→Green→Refactor. Test first.",
     suggestedTools: ["next", "context", "update_status", "validate", "analyze"],
-    principles: ["TDD Red→Green→Refactor", "Anti-one-shot", "Code detachment", "Decomposição atômica"],
-    suggestedMcpAgents: [
-      { name: "code-graph", action: "Impact analysis antes de editar, busca de contexto de symbols", tools: ["impact", "context", "search"] },
-      { name: "context7", action: "Consultar API docs das libs em uso", tools: ["query-docs"] },
-    ],
-    suggestedSkills: ["subagent-driven-development", "xp-bootstrap"],
+    principles: ["TDD Red→Green→Refactor", "Anti-one-shot"],
   },
   VALIDATE: {
-    reminder: "Fase VALIDATE: Valide tasks completadas com testes E2E (Playwright). Verifique critérios de aceitação.",
+    reminder: "VALIDATE: E2E + AC verification.",
     suggestedTools: ["validate", "metrics", "analyze", "list"],
-    principles: ["Validação automatizada", "Critérios de aceitação como contrato", "Zero tolerance para regressões", "AC quality como contrato", "Done integrity"],
-    suggestedMcpAgents: [
-      { name: "code-graph", action: "Verificar impacto das mudanças nos symbols afetados", tools: ["impact", "search"] },
-      { name: "playwright", action: "Testes E2E no browser, screenshots e validação visual", tools: ["browser_navigate", "browser_snapshot", "browser_click"] },
-    ],
-    suggestedSkills: ["playwright-explore-website", "playwright-generate-test", "playwright-tester-mode", "e2e-testing"],
+    principles: ["Zero tolerance regressões", "AC como contrato"],
   },
   REVIEW: {
-    reminder: "Fase REVIEW: Revise o código, verifique blast radius e garanta que nada quebrou. Exporte o grafo para revisão.",
+    reminder: "REVIEW: Code review + blast radius.",
     suggestedTools: ["export", "metrics", "analyze"],
-    principles: ["Code review obrigatório", "Blast radius check", "Non-regression rule", "Velocity stability", "Scope integrity"],
-    suggestedMcpAgents: [
-      { name: "code-graph", action: "Blast radius final e verificação de escopo", tools: ["impact", "search"] },
-    ],
-    suggestedSkills: ["code-reviewer", "code-review-checklist", "review-and-refactor", "log-standardization-framework", "observability-engineer"],
+    principles: ["Blast radius check", "Non-regression rule"],
   },
   HANDOFF: {
-    reminder: "Fase HANDOFF: Crie o PR, documente decisões e exporte o grafo. Prepare para entrega.",
+    reminder: "HANDOFF: PR + docs + export grafo.",
     suggestedTools: ["export", "snapshot", "metrics", "analyze"],
-    principles: ["Documentação como entrega", "Grafo exportado", "Knowledge base atualizada", "Doc completeness", "Knowledge captured"],
-    suggestedMcpAgents: [
-      { name: "code-graph", action: "Scope check final antes do PR", tools: ["impact", "search"] },
-    ],
-    suggestedSkills: ["delivery-checklist", "pr-documentation", "knowledge-capture"],
+    principles: ["Documentação como entrega", "Knowledge captured"],
   },
   DEPLOY: {
-    reminder: "Fase DEPLOY: Valide CI pipeline, execute release, e verifique post-release smoke tests.",
+    reminder: "DEPLOY: CI + release + smoke tests.",
     suggestedTools: ["export", "snapshot", "analyze", "metrics"],
-    principles: ["CI green before release", "Semantic versioning", "Post-release validation", "Rollback ready"],
-    suggestedMcpAgents: [
-      { name: "code-graph", action: "Final scope and impact check", tools: ["impact", "search"] },
-    ],
-    suggestedSkills: ["deployment-engineer", "devops-deploy", "git-pushing"],
+    principles: ["CI green before release", "Post-release validation"],
   },
   LISTENING: {
-    reminder: "Fase LISTENING: Colete feedback e adicione novos nodes ao grafo. Inicie novo ciclo se necessário.",
+    reminder: "LISTENING: Feedback → novos nodes → novo ciclo.",
     suggestedTools: ["add_node", "import_prd", "search", "list", "analyze"],
-    principles: ["Feedback contínuo", "Iteração incremental", "CLAUDE.md como spec evolutiva", "Backlog health", "Tech debt tracking"],
-    suggestedSkills: ["feedback-collector", "iteration-planner", "metrics-retrospective"],
+    principles: ["Feedback contínuo", "Iteração incremental"],
   },
 };
 

@@ -4,6 +4,7 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
+import { McpGraphError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface DoraMetrics {
@@ -22,6 +23,9 @@ export interface DoraMetrics {
  * Calculate DORA metrics from graph node data.
  */
 export function calculateDoraMetrics(store: SqliteStore): DoraMetrics {
+  if (!store) {
+    throw new McpGraphError("DORA metrics require a valid SqliteStore");
+  }
   const db = store.getDb();
   const project = store.getProject();
   if (!project) {

@@ -105,6 +105,10 @@ const ANALYZE_MODES = z.enum([
   "orphan_tasks",
 ]);
 
+function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean {
+  return doc.nodes.some((node) => node.id === nodeId);
+}
+
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
@@ -247,6 +251,9 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         }
 
         case "tdd_check": {
+          if (nodeId && !hasNode(doc, nodeId)) {
+            return mcpError(`Node not found: ${nodeId}`);
+          }
           const phase = detectCurrentPhase(doc);
           const tddReport = checkTddAdherence(doc, nodeId);
           logger.info("tool:analyze:tdd_check:ok", { tasks: tddReport.tasks.length, overallTestability: tddReport.overallTestability });
@@ -454,9 +461,12 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "smart_decompose": {
           if (!nodeId) return mcpError("smart_decompose requires a nodeId");
+          if (!hasNode(doc, nodeId)) {
+            return mcpError(`Node not found: ${nodeId}`);
+          }
           const { smartDecompose } = await import("../../core/planner/smart-decompose.js");
           const decomposeResult = smartDecompose(store, nodeId);
-          if (!decomposeResult) return mcpText({ ok: false, mode: "smart_decompose", message: "Node not found or has no acceptance criteria" });
+          if (!decomposeResult) return mcpText({ ok: false, mode: "smart_decompose", message: "Node has no acceptance criteria" });
           logger.info("tool:analyze:smart_decompose:ok", { subtasks: decomposeResult.subtasks.length });
           return mcpText({ ok: true, mode: "smart_decompose", ...decomposeResult });
         }
@@ -649,6 +659,13 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "adr_challenge": {
           if (nodeId) {
+            const node = doc.nodes.find((n) => n.id === nodeId);
+            if (!node) {
+              return mcpError(`Node not found: ${nodeId}`);
+            }
+            if (node.type !== "decision") {
+              return mcpError(`InvalidNodeType: expected 'decision', got '${node.type}'`);
+            }
             const result = runAdrChallenge(store, nodeId);
             const serialized = serializeChallengeReport(result.report, "standard");
             return mcpText({

@@ -258,6 +258,32 @@ describe("runInit", () => {
     expect(content).toContain("mcp-graph");
   });
 
+  it("should create AGENTS.md with Codex mcp-graph instructions", async () => {
+    const { runInit } = await import("../mcp/init-project.js");
+    await runInit(tmpDir);
+
+    const agentsMdPath = path.join(tmpDir, "AGENTS.md");
+    expect(existsSync(agentsMdPath)).toBe(true);
+
+    const content = readFileSync(agentsMdPath, "utf-8");
+    expect(content).toContain("mcp-graph");
+    expect(content).toContain(".agents/skills");
+    expect(content).toContain("$graph-implement");
+  });
+
+  it("should create essential Codex skills", async () => {
+    const { runInit } = await import("../mcp/init-project.js");
+    await runInit(tmpDir);
+
+    const skillPath = path.join(tmpDir, ".agents", "skills", "graph-implement", "SKILL.md");
+    expect(existsSync(skillPath)).toBe(true);
+
+    const content = readFileSync(skillPath, "utf-8");
+    expect(content).toContain("name: graph-implement");
+    expect(content).toContain("description:");
+    expect(content).toContain("$graph-implement");
+  });
+
   it("should create .vscode/mcp.json", async () => {
     const { runInit } = await import("../mcp/init-project.js");
     await runInit(tmpDir);

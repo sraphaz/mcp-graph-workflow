@@ -4,6 +4,7 @@
  */
 
 import { execSync } from "node:child_process";
+import { McpGraphError } from "../utils/errors.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { logger } from "../utils/logger.js";
 
@@ -84,6 +85,9 @@ function runTypecheck(projectPath: string): QualityCheck {
  * Run a code quality check on the project.
  */
 export function checkCodeQuality(projectPath: string): CodeQualityReport {
+  if (!projectPath) {
+    throw new McpGraphError("Code quality check requires a valid project path");
+  }
   const checks: QualityCheck[] = [];
   const allFindings: QualityFinding[] = [];
 

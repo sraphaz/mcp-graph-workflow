@@ -7,6 +7,7 @@
 import { readdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
+import { McpGraphError } from "../utils/errors.js";
 import type { CodeStore } from "./code-store.js";
 import type { CodeAnalyzer, IndexResult } from "./code-types.js";
 import { isTypeScriptAvailable } from "./ts-analyzer.js";
@@ -83,6 +84,9 @@ export class CodeIndexer {
     private readonly projectId: string,
     analyzers?: CodeAnalyzer[],
   ) {
+    if (!projectId) {
+      throw new McpGraphError("CodeIndexer requires a valid projectId");
+    }
     const effectiveAnalyzers = analyzers ?? [new TsAnalyzer()];
     this.extensionMap = new Map();
     for (const analyzer of effectiveAnalyzers) {

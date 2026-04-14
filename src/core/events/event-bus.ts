@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { McpGraphError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import type { GraphEvent, GraphEventType } from "./event-types.js";
 
@@ -19,6 +20,9 @@ export class GraphEventBus {
 
   /** Emit a graph event with error boundaries — one crashing handler won't stop others */
   emit(event: GraphEvent): void {
+    if (!event || !event.type) {
+      throw new McpGraphError("Cannot emit event without type");
+    }
     logger.info("Event emitted", { type: event.type });
     this.emitter.emit(event.type, event);
     this.emitter.emit("*", event);

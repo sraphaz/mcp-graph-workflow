@@ -2,6 +2,7 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphNode, RelationType } from "../graph/graph-types.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
+import { McpGraphError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface TaskTemplate {
@@ -37,6 +38,9 @@ export function instantiateTemplate(
   variables: Record<string, string>,
   parentId?: string,
 ): TemplateInstantiationResult {
+  if (!template || !template.nodeDefinitions || template.nodeDefinitions.length === 0) {
+    throw new McpGraphError("Template must have at least one node definition");
+  }
   const nodesCreated: string[] = [];
   const edgesCreated: string[] = [];
   const errors: string[] = [];

@@ -174,6 +174,16 @@ describe("E14-T06: UpdateScreenSchema — journey PATCH body validation", () => 
     const result = UpdateScreenSchema.safeParse({ title: "My Screen", description: "A desc" });
     expect(result.success).toBe(true);
   });
+
+  it("should reject unknown keys", () => {
+    const result = UpdateScreenSchema.safeParse({ title: "My Screen", unsafe: true });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject oversized text fields", () => {
+    const result = UpdateScreenSchema.safeParse({ title: "x".repeat(501) });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("E14-T07: UpdateKanbanConfigSchema — kanban PUT body validation", () => {
@@ -184,6 +194,16 @@ describe("E14-T07: UpdateKanbanConfigSchema — kanban PUT body validation", () 
   it("should accept a valid partial kanban config", () => {
     const result = UpdateKanbanConfigSchema.safeParse({ wipLimits: { in_progress: 3 } });
     expect(result.success).toBe(true);
+  });
+
+  it("should reject unknown config keys", () => {
+    const result = UpdateKanbanConfigSchema.safeParse({ unsafe: true });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject invalid swimlane values", () => {
+    const result = UpdateKanbanConfigSchema.safeParse({ swimlaneMode: "all" });
+    expect(result.success).toBe(false);
   });
 });
 

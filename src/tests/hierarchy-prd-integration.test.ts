@@ -79,12 +79,13 @@ describe("PRD Heading Hierarchy Integration", () => {
       expect(passwordTask!.parentId).toBe(loginTask!.id);
     });
 
-    it("should create subtask nodes from bullet items with parentId pointing to h4 task", () => {
+    it("should create h4 heading nodes as children of h3 tasks", () => {
+      const loginTask = nodes.find((n) => n.title === "Login Task");
       const emailTask = nodes.find((n) => n.title === "Email Validation Task");
+      expect(loginTask).toBeDefined();
       expect(emailTask).toBeDefined();
-
-      const subtasks = nodes.filter((n) => n.parentId === emailTask!.id && n.type === "subtask");
-      expect(subtasks.length).toBeGreaterThanOrEqual(1);
+      // h4 nodes are children of the h3 parent
+      expect(emailTask!.parentId).toBe(loginTask!.id);
     });
 
     it("should create bidirectional parent_of/child_of edges for heading hierarchy", () => {

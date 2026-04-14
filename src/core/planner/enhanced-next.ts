@@ -10,6 +10,7 @@ import { findNextTask, type NextTaskResult } from "./next-task.js";
 import { calculateVelocity } from "./velocity.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import type { LockManager } from "../store/lock-manager.js";
+import { PlannerError, getErrorMessage } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 /** Maps common task tags to harness dimension keys */
@@ -58,6 +59,9 @@ export function findEnhancedNextTask(
   store: SqliteStore,
   options?: EnhancedNextOptions,
 ): EnhancedNextResult | null {
+  if (!doc || !doc.nodes) {
+    throw new PlannerError("Invalid graph document: missing nodes");
+  }
   // Build locked task IDs set for teamTask mode
   let lockedTaskIds: Set<string> | undefined;
   if (options?.lockManager && options?.agentId) {
@@ -112,8 +116,8 @@ export function findEnhancedNextTask(
         }
       }
     }
-  } catch {
-    // non-blocking
+  } catch (err) {
+    logger.debug("enhanced-next: harness scan failed", { error: getErrorMessage(err) });
   }
 
   logger.info("Enhanced next task", {
@@ -160,7 +164,8 @@ function assessKnowledgeCoverage(store: SqliteStore, node: GraphNode): number {
     }
 
     return Math.min(1, matchedTerms.size / terms.length);
-  } catch {
+  } catch (err) {
+    logger.debug("enhanced-next: knowledge coverage failed", { error: getErrorMessage(err) });
     return 0;
   }
 }

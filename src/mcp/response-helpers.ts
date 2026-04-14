@@ -10,10 +10,10 @@ export interface McpToolResponse {
   isError?: boolean;
 }
 
-/** Format a success response with pretty-printed JSON. */
+/** Format a success response with compact JSON (saves ~25-30% tokens). */
 export function mcpText(data: unknown): McpToolResponse {
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify(data) }],
   };
 }
 

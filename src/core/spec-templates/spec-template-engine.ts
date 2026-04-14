@@ -18,6 +18,10 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+function replaceVariable(text: string, key: string, value: unknown): string {
+  return text.split(`{{${key}}}`).join(String(value));
+}
+
 /**
  * Generate a markdown spec document from a template + variables.
  * Replaces {{variable}} placeholders and optionally appends constitution principles.
@@ -43,8 +47,7 @@ export function generateSpecDocument(
       let placeholder = section.placeholder;
       // Replace variables in placeholders
       for (const [key, value] of Object.entries(variables)) {
-        // eslint-disable-next-line security/detect-non-literal-regexp
-        placeholder = placeholder.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), String(value));
+        placeholder = replaceVariable(placeholder, key, value);
       }
       lines.push(placeholder);
     } else {
@@ -67,8 +70,7 @@ export function generateSpecDocument(
   // Replace any remaining variables in the full document
   let result = lines.join("\n");
   for (const [key, value] of Object.entries(variables)) {
-    // eslint-disable-next-line security/detect-non-literal-regexp
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), String(value));
+    result = replaceVariable(result, key, value);
   }
 
   return result;
@@ -126,11 +128,16 @@ export function validateSpecDocument(
  * Extract content of a specific section (between its ## heading and the next ##).
  */
 function extractSectionContent(content: string, sectionTitle: string): string {
-  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  // eslint-disable-next-line security/detect-non-literal-regexp
-  const pattern = new RegExp(`^##\\s+${escapedTitle}\\s*\\n([\\s\\S]*?)(?=^##\\s|$)`, "m");
-  const match = pattern.exec(content);
-  return match ? match[1].trim() : "";
+  const lines = content.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === `## ${sectionTitle}`);
+  if (start === -1) return "";
+
+  const collected: string[] = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    if (lines[i].startsWith("## ")) break;
+    collected.push(lines[i]);
+  }
+  return collected.join("\n").trim();
 }
 
 /**

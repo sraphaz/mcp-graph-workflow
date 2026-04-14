@@ -21,12 +21,19 @@ export function useSSE(onEvent: (event: SSEEvent, data: unknown) => void): void 
 
   const esRef = useRef<EventSource | null>(null);
   const backoffRef = useRef(INITIAL_BACKOFF_MS);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const disposedRef = useRef(false);
 
   const connect = useCallback(() => {
+    if (disposedRef.current) return;
     // Close any existing connection before creating a new one
     if (esRef.current) {
       esRef.current.close();
       esRef.current = null;
+    }
+    if (reconnectTimeoutRef.current !== null) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
 
     const es = new EventSource("/api/v1/events");
@@ -67,13 +74,24 @@ export function useSSE(onEvent: (event: SSEEvent, data: unknown) => void): void 
       // Exponential backoff: start at 1s, double each retry, max 30s
       const delay = backoffRef.current;
       backoffRef.current = Math.min(backoffRef.current * 2, MAX_BACKOFF_MS);
-      setTimeout(connect, delay);
+      if (!disposedRef.current) {
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          reconnectTimeoutRef.current = null;
+          connect();
+        }, delay);
+      }
     };
   }, []);
 
   useEffect(() => {
+    disposedRef.current = false;
     connect();
     return () => {
+      disposedRef.current = true;
+      if (reconnectTimeoutRef.current !== null) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
       if (esRef.current) {
         esRef.current.close();
         esRef.current = null;

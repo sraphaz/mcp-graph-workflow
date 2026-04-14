@@ -75,6 +75,30 @@ describe("Spec template engine", () => {
       const h2Count = (markdown.match(/^## /gm) ?? []).length;
       expect(h2Count).toBeGreaterThanOrEqual(5);
     });
+
+    it("should treat variable names as literal placeholders", () => {
+      const template = {
+        name: "literal-template",
+        phase: "PLAN" as const,
+        description: "Template with metacharacter variable names",
+        constitution: false,
+        variables: {},
+        sections: [
+          {
+            title: "Literal",
+            description: "Literal section",
+            required: true,
+            placeholder: "{{a.*}} {{abc}}",
+          },
+        ],
+      };
+
+      const markdown = generateSpecDocument(template, {
+        "a.*": "SAFE",
+      });
+
+      expect(markdown).toContain("SAFE {{abc}}");
+    });
   });
 
   describe("validateSpecDocument", () => {

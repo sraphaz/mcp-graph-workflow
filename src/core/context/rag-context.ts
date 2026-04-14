@@ -3,6 +3,7 @@
  * suitable for LLM consumption with token budget management.
  */
 
+import { ContextBuildError, getErrorMessage } from "../utils/errors.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { GraphSnapshotCache } from "../store/graph-snapshot-cache.js";
@@ -80,6 +81,9 @@ export function ragBuildContext(
   tokenBudget: number = DEFAULT_TOKEN_BUDGET,
   phase?: LifecyclePhase,
 ): RagContext {
+  if (!query || query.trim().length === 0) {
+    throw new ContextBuildError("RAG context query cannot be empty");
+  }
   // Check cache first
   const cacheKey = `default:${query.trim().toLowerCase()}:${tokenBudget}:${phase ?? "none"}`;
   const cached = ragContextCache.get(cacheKey) as RagContext | undefined;
@@ -122,8 +126,8 @@ export function ragBuildContext(
           .slice(0, 10);
         searchResults = matched.map((node) => ({ node, score: 0.5 }));
       }
-    } catch {
-      logger.debug("RAG substring fallback also failed");
+    } catch (err) {
+      logger.debug("RAG substring fallback also failed", { error: getErrorMessage(err) });
     }
   }
 
@@ -158,8 +162,9 @@ export function ragBuildContext(
       } else {
         kResults = knowledgeStore.searchWithQuality(effectiveQuery, 10);
       }
-    } catch {
+    } catch (err) {
       // Fall back to basic search if quality columns not yet available
+      logger.debug("rag-context: quality search fallback", { error: getErrorMessage(err) });
       kResults = knowledgeStore.search(effectiveQuery, 10);
     }
     knowledgeResults = kResults.slice(0, 5).map((r) => ({
@@ -169,9 +174,9 @@ export function ragBuildContext(
       content: r.content.length > 500 ? r.content.slice(0, 500) + "..." : r.content,
       score: Math.round(r.score * 1000) / 1000,
     }));
-  } catch {
+  } catch (err) {
     // Knowledge search may fail if no knowledge docs exist — that's OK
-    logger.debug("Knowledge FTS search returned no results or errored");
+    logger.debug("Knowledge FTS search returned no results or errored", { error: getErrorMessage(err) });
   }
 
   // Fallback: if knowledge store returned nothing, synthesize from node descriptions

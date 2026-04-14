@@ -10,6 +10,7 @@ import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
+import { DeployReadinessError, getErrorMessage } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface DeployReadinessOptions {
@@ -22,6 +23,9 @@ export function checkDeployReadiness(
   doc: GraphDocument,
   opts?: DeployReadinessOptions,
 ): DeployReadinessReport {
+  if (!doc || !doc.nodes) {
+    throw new DeployReadinessError("Invalid graph document: missing nodes");
+  }
   const checks: DeployReadinessCheck[] = [];
 
   const tasks = doc.nodes.filter((n) => TASK_TYPES.has(n.type));
@@ -124,8 +128,8 @@ export function checkDeployReadiness(
         severity: "recommended",
       });
     }
-  } catch {
-    // non-blocking
+  } catch (err) {
+    logger.debug("deploy-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──

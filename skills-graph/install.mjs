@@ -103,14 +103,17 @@ function installGitHubCopilot() {
 }
 
 function installCodexCLI(method) {
-  const base = join(process.cwd(), ".codex", "agents");
+  const base = join(process.cwd(), ".agents", "skills");
   ensureDir(base);
   let count = 0;
 
   for (const file of SKILL_FILES) {
     const name = basename(file, ".md");
+    const skillDir = join(base, name);
+    ensureDir(skillDir);
+
     const src = join(SKILLS_DIR, file);
-    const dest = join(base, file);
+    const dest = join(skillDir, "SKILL.md");
 
     const action = method === "symlink" ? safeLink(src, dest) : safeCopy(src, dest);
     log(`  \u2713 ${name} (${action})`);
@@ -130,7 +133,7 @@ async function main() {
   log("Select platform:");
   log("  1) Claude Code      (~/.claude/skills/)");
   log("  2) GitHub Copilot   (.github/copilot-instructions.md)");
-  log("  3) Codex CLI        (.codex/agents/)");
+  log("  3) Codex CLI        (.agents/skills/)");
   log("  4) All platforms");
   log("");
 

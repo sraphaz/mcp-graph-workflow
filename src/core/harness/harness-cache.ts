@@ -10,6 +10,7 @@
 
 import { execSync } from "child_process";
 import { runHarnessScan, type HarnessScanResult } from "./harness-scan-runner.js";
+import { McpGraphError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 const CACHE_TTL_MS = 60_000; // 60 seconds
@@ -47,6 +48,9 @@ export function runHarnessScanCached(
   rootDir: string,
   db?: import("better-sqlite3").Database,
 ): HarnessScanResult | null {
+  if (!rootDir) {
+    throw new McpGraphError("Harness scan requires a valid rootDir");
+  }
   const now = Date.now();
   const currentHash = getCurrentGitHash(rootDir);
 

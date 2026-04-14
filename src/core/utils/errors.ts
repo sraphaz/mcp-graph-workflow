@@ -113,6 +113,42 @@ export class LockConflictError extends McpGraphError {
   }
 }
 
+// ── Planner errors ──
+
+export class PlannerError extends McpGraphError {
+  constructor(message: string) {
+    super(`Planner error: ${message}`);
+    this.name = "PlannerError";
+  }
+}
+
+// ── Graph integrity errors ──
+
+export class GraphIntegrityError extends McpGraphError {
+  constructor(message: string) {
+    super(`Graph integrity error: ${message}`);
+    this.name = "GraphIntegrityError";
+  }
+}
+
+// ── Context errors ──
+
+export class ContextBuildError extends McpGraphError {
+  constructor(message: string) {
+    super(`Context build error: ${message}`);
+    this.name = "ContextBuildError";
+  }
+}
+
+// ── Deploy errors ──
+
+export class DeployReadinessError extends McpGraphError {
+  constructor(message: string) {
+    super(`Deploy readiness error: ${message}`);
+    this.name = "DeployReadinessError";
+  }
+}
+
 // ── Lifecycle errors ──
 
 export class LifecycleGateError extends McpGraphError {

@@ -1,5 +1,10 @@
 import { z } from "zod/v4";
 
+const ID_MAX = 200;
+const TITLE_MAX = 500;
+const CONTENT_MAX = 1_000_000;
+const QUERY_MAX = 10_000;
+
 export const KnowledgeSourceTypeSchema = z.enum([
   "upload", "serena", "memory", "code_context", "docs", "web_capture", "prd", "design", "sprint_plan", "phase_summary", "skill",
   "journey", "siebel_sif", "siebel_sif_raw", "siebel_composer", "siebel_generated", "siebel_docs", "swagger",
@@ -16,14 +21,14 @@ export const KnowledgeSourceTypeSchema = z.enum([
 ]);
 
 export const KnowledgeDocumentSchema = z.object({
-  id: z.string(),
+  id: z.string().max(ID_MAX),
   sourceType: KnowledgeSourceTypeSchema,
-  sourceId: z.string(),
-  title: z.string(),
-  content: z.string(),
-  contentHash: z.string(),
+  sourceId: z.string().max(ID_MAX),
+  title: z.string().max(TITLE_MAX),
+  content: z.string().max(CONTENT_MAX),
+  contentHash: z.string().max(ID_MAX),
   chunkIndex: z.number().int().min(0),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: z.record(z.string().max(ID_MAX), z.unknown()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   qualityScore: z.number().min(0).max(1).optional(),
@@ -37,9 +42,9 @@ export const KnowledgeRelationTypeSchema = z.enum([
 ]);
 
 export const KnowledgeRelationSchema = z.object({
-  id: z.string(),
-  fromDocId: z.string(),
-  toDocId: z.string(),
+  id: z.string().max(ID_MAX),
+  fromDocId: z.string().max(ID_MAX),
+  toDocId: z.string().max(ID_MAX),
   relation: KnowledgeRelationTypeSchema,
   score: z.number().min(0).max(1).default(1.0),
   createdAt: z.string(),
@@ -51,10 +56,10 @@ export const KnowledgeUsageActionSchema = z.enum([
 
 export const KnowledgeUsageLogSchema = z.object({
   id: z.number().int(),
-  docId: z.string(),
-  query: z.string(),
+  docId: z.string().max(ID_MAX),
+  query: z.string().max(QUERY_MAX),
   action: KnowledgeUsageActionSchema,
-  context: z.record(z.string(), z.unknown()).optional(),
+  context: z.record(z.string().max(ID_MAX), z.unknown()).optional(),
   createdAt: z.string(),
 });
 

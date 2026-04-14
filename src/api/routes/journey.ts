@@ -9,87 +9,72 @@ import { GraphNotInitializedError } from "../../core/utils/errors.js";
 import { STORE_DIR } from "../../core/utils/constants.js";
 
 const JOURNEY_SCREENSHOTS_DIR = "journey-screenshots";
+const ID_MAX = 100;
+const TITLE_MAX = 500;
+const TEXT_MAX = 10_000;
+const URL_MAX = 2000;
+const ARRAY_MAX = 1000;
 
 const CreateMapSchema = z.object({
-  name: z.string().min(1),
-  url: z.string().optional(),
-  description: z.string().optional(),
-});
+  name: z.string().min(1).max(TITLE_MAX),
+  url: z.string().max(URL_MAX).optional(),
+  description: z.string().max(TEXT_MAX).optional(),
+}).strict();
+
+const JourneyFieldSchema = z.object({
+  name: z.string().max(TITLE_MAX),
+  type: z.string().max(ID_MAX),
+  required: z.boolean().optional(),
+  label: z.string().max(TITLE_MAX).optional(),
+  options: z.array(z.string().max(TITLE_MAX)).max(ARRAY_MAX).optional(),
+}).strict();
 
 const CreateScreenSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
-  screenshot: z.string().optional(),
-  url: z.string().optional(),
-  screenType: z.string().optional(),
-  fields: z.array(z.object({
-    name: z.string(),
-    type: z.string(),
-    required: z.boolean().optional(),
-    label: z.string().optional(),
-    options: z.array(z.string()).optional(),
-  })).optional(),
-  ctas: z.array(z.string()).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().min(1).max(TITLE_MAX),
+  description: z.string().max(TEXT_MAX).optional(),
+  screenshot: z.string().max(URL_MAX).optional(),
+  url: z.string().max(URL_MAX).optional(),
+  screenType: z.string().max(ID_MAX).optional(),
+  fields: z.array(JourneyFieldSchema).max(ARRAY_MAX).optional(),
+  ctas: z.array(z.string().max(TITLE_MAX)).max(ARRAY_MAX).optional(),
+  metadata: z.record(z.string().max(ID_MAX), z.unknown()).optional(),
   positionX: z.number().optional(),
   positionY: z.number().optional(),
-});
+}).strict();
 
 const CreateEdgeSchema = z.object({
-  from: z.string().min(1),
-  to: z.string().min(1),
-  label: z.string().optional(),
-  type: z.string().optional(),
-});
+  from: z.string().min(1).max(ID_MAX),
+  to: z.string().min(1).max(ID_MAX),
+  label: z.string().max(TITLE_MAX).optional(),
+  type: z.string().max(ID_MAX).optional(),
+}).strict();
 
 export const UpdateScreenSchema = z.object({
-  title: z.string().min(1).optional(),
-  description: z.string().optional(),
-  screenshot: z.string().optional(),
-  url: z.string().optional(),
-  screenType: z.string().optional(),
+  title: z.string().min(1).max(TITLE_MAX).optional(),
+  description: z.string().max(TEXT_MAX).optional(),
+  screenshot: z.string().max(URL_MAX).optional(),
+  url: z.string().max(URL_MAX).optional(),
+  screenType: z.string().max(ID_MAX).optional(),
   positionX: z.number().optional(),
   positionY: z.number().optional(),
-  fields: z.array(z.record(z.string(), z.unknown())).optional(),
-  ctaButtons: z.array(z.record(z.string(), z.unknown())).optional(),
-  abVariants: z.array(z.record(z.string(), z.unknown())).optional(),
-});
+  fields: z.array(z.record(z.string().max(ID_MAX), z.unknown())).max(ARRAY_MAX).optional(),
+  ctaButtons: z.array(z.record(z.string().max(ID_MAX), z.unknown())).max(ARRAY_MAX).optional(),
+  abVariants: z.array(z.record(z.string().max(ID_MAX), z.unknown())).max(ARRAY_MAX).optional(),
+}).strict();
 
 const ImportJourneySchema = z.object({
-  journey: z.object({
-    name: z.string().min(1),
-    url: z.string().optional(),
-    description: z.string().optional(),
-  }),
+  journey: CreateMapSchema,
   screens: z.array(z.object({
-    id: z.string().optional(),
-    title: z.string().min(1),
-    description: z.string().optional(),
-    screenshot: z.string().optional(),
-    url: z.string().optional(),
-    screenType: z.string().optional(),
-    fields: z.array(z.object({
-      name: z.string(),
-      type: z.string(),
-      required: z.boolean().optional(),
-      label: z.string().optional(),
-      options: z.array(z.string()).optional(),
-    })).optional(),
-    ctas: z.array(z.string()).optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
-  })),
-  edges: z.array(z.object({
-    from: z.string().min(1),
-    to: z.string().min(1),
-    label: z.string().optional(),
-    type: z.string().optional(),
-  })),
+    id: z.string().max(ID_MAX).optional(),
+    ...CreateScreenSchema.shape,
+  }).strict()).max(ARRAY_MAX),
+  edges: z.array(CreateEdgeSchema).max(ARRAY_MAX),
   variants: z.record(z.string(), z.object({
-    name: z.string(),
-    description: z.string().optional(),
-    path: z.array(z.string()),
-  })).optional(),
-});
+    name: z.string().max(TITLE_MAX),
+    description: z.string().max(TEXT_MAX).optional(),
+    path: z.array(z.string().max(ID_MAX)).max(ARRAY_MAX),
+  }).strict()).optional(),
+}).strict();
 
 function getJourneyStore(storeRef: StoreRef): JourneyStore {
   const store = storeRef.current;

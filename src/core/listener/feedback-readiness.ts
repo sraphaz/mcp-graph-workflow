@@ -10,6 +10,7 @@ import { analyzeBacklogHealth } from "./backlog-health.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
+import { McpGraphError, getErrorMessage } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface ListeningReadinessOptions {
@@ -136,12 +137,15 @@ export function checkListeningReadiness(
         severity: "recommended",
       });
     }
-  } catch {
-    // non-blocking
+  } catch (err) {
+    logger.debug("listening-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──
   const totalChecks = checks.length;
+  if (totalChecks === 0) {
+    throw new McpGraphError("Listening readiness: no checks were generated");
+  }
   const passedChecks = checks.filter((c) => c.passed).length;
   const score = Math.round((passedChecks / totalChecks) * 100);
   const grade = scoreToGrade(score);

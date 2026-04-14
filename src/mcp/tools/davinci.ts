@@ -68,7 +68,7 @@ function handleAnalyze(params: DavinciParams): ReturnType<typeof mcpText> {
     analysis,
     resolvedVariables,
     detection,
-  }, null, 2));
+  }));
 }
 
 async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<ReturnType<typeof mcpText>> {
@@ -86,7 +86,7 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
       ok: true,
       action: "environment_check",
       environment: env,
-    }, null, 2));
+    }));
   }
 
   if (!env.readyToBuild) {
@@ -96,7 +96,7 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
       reason: "Build environment not ready",
       environment: env,
       hint: env.instructions.join(" | "),
-    }, null, 2));
+    }));
   }
 
   // Update job status to building
@@ -142,7 +142,7 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
     },
     validation: buildValidation.issues,
     environment: env,
-  }, null, 2));
+  }));
 }
 
 function convertSingle(
@@ -257,7 +257,7 @@ function handleConvert(params: DavinciParams, store: SqliteStore): ReturnType<ty
 
   const sdk: TargetSdk = targetSdk ?? "pingfederate";
   const result = convertSingle(code, pluginName, packageName, className, sdk, pluginType, store);
-  return mcpText(JSON.stringify(result, null, 2));
+  return mcpText(JSON.stringify(result));
 }
 
 function handleBatchConvert(params: DavinciParams, store: SqliteStore): ReturnType<typeof mcpText> {
@@ -298,7 +298,7 @@ function handleBatchConvert(params: DavinciParams, store: SqliteStore): ReturnTy
     success: successCount,
     failed: failCount,
     results,
-  }, null, 2));
+  }));
 }
 
 /* ------------------------------------------------------------------ */

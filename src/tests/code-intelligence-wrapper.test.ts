@@ -381,9 +381,9 @@ describe("wrapToolsWithCodeIntelligence", () => {
     const tools = (server as { _registeredTools: Record<string, { handler: (...args: unknown[]) => Promise<unknown> }> })._registeredTools;
     const result = await tools.list.handler({}) as { content: Array<{ type: string; text: string }>; isError?: boolean };
 
-    // Should execute (not blocked) and have enrichment appended
+    // Should execute (not blocked) — read-only tools skip enrichment blocks for token savings
     expect(result.isError).toBeUndefined();
-    expect(result.content.length).toBeGreaterThan(1);
+    expect(result.content.length).toBe(1);
   });
 
   it("should allow mutating tools in strict mode when index exists", async () => {

@@ -1,83 +1,43 @@
-/**
- * Harness Engineering — Barrel file
- *
- * Single entry point for all harness module exports.
- * Consumers should import from this file instead of individual modules.
- */
-
-// ── Violation Detail Types (Remediation Engine v4) ─────
-export type {
-  ViolationDetail,
-  RemediationSuggestion,
-  ValidationResult,
-  HarnessDimension,
-  RemediationCategory,
-} from "./violation-detail.js";
-
-// ── Remediation Rules (v4) ─────────────────────────────
-export { listRules, findRule, resolveTemplate, type RemediationRule } from "./remediation-rules.js";
-
-// ── Suppression Store (v4) ─────────────────────────────
-export { SuppressionStore, type SuppressionRecord } from "./remediation-suppression.js";
-
-// ── Remediation Engine (v4) ────────────────────────────
-export { evaluate as evaluateRemediations } from "./remediation-engine.js";
-
-// ── Remediation Validator (v4) ─────────────────────────
-export { RemediationValidator, type PostFixResult } from "./remediation-validator.js";
-
-// ── Harness Trends (v4) ────────────────────────────────
-export { getTrends, predictGradeTarget, type TrendResult, type GradePrediction } from "./harness-trends.js";
-
-// ── Sensor Fusion (v4) ─────────────────────────────────
-export { fuseSensors, type DimensionScores, type SensorCluster } from "./sensor-fusion.js";
-
-// ── Core Score ──────────────────────────────────────────
-export {
-  computeHarnessabilityScore,
-  type HarnessabilityInput,
-  type HarnessabilityResult,
-  type DimensionBreakdown,
-} from "./harnessability-score.js";
-
-// ── Scan Runner ─────────────────────────────────────────
-export {
-  runHarnessScan,
-  type HarnessScanResult,
-} from "./harness-scan-runner.js";
-
-// ── Preflight & Regression ──────────────────────────────
-export {
-  getHarnessPreflightWarning,
-  getHarnessRegressionReport,
-  type HarnessPreflightWarning,
-  type HarnessRegressionReport,
-} from "./harness-preflight.js";
-
-// ── Issue Pattern Tracker ───────────────────────────────
-export {
-  IssuePatternTracker,
-  type IssuePattern,
-  type PatternStats,
-  type RuleSuggestion,
-} from "./issue-pattern-tracker.js";
-
-// ── Scanners ────────────────────────────────────────────
-export { scanTypeCoverage, type TypeCoverageResult, type FileContent } from "./type-coverage-scanner.js";
-export { scanTestCoverage, type TestCoverageResult, type TestFileInfo } from "./test-coverage-scanner.js";
-export { scanDocsCoverage, type DocsCoverageInput, type DocsCoverageResult } from "./docs-coverage-scanner.js";
-export { scanNamingClarity, type NamingClarityResult } from "./naming-clarity-scanner.js";
-export { scanErrorHandling, type ErrorHandlingResult } from "./error-handling-scanner.js";
-export { scanContextDensity, type ContextDensityResult } from "./context-density-scanner.js";
-
-// ── Cache ───────────────────────────────────────────────
-export { runHarnessScanCached, resetHarnessCache } from "./harness-cache.js";
-
-// ── Fitness Functions ───────────────────────────────────
-export {
-  checkDependencyDirection,
-  checkCircularDependencies,
-  checkBarrelIntegrity,
-  type FitnessCheckResult,
-  type Violation,
-} from "./fitness-functions.js";
+export { registerAgentRole, getAgentRole } from './agent-role.js';
+export type { AgentRole, AgentRoleRegistration, StoredAgentRole } from './agent-role.js';
+export { scanContextDensity } from './context-density-scanner.js';
+export type { ContextDensityResult, ContextDensityOptions } from './context-density-scanner.js';
+export { saveHarnessMemory, getHarnessMemory } from './cross-session-memory.js';
+export type { HarnessMemoryState } from './cross-session-memory.js';
+export { scanDocsCoverage } from './docs-coverage-scanner.js';
+export type { DocsCoverageInput, DocsCoverageResult } from './docs-coverage-scanner.js';
+export { scanErrorHandling } from './error-handling-scanner.js';
+export type { ErrorHandlingResult, ErrorHandlingOptions } from './error-handling-scanner.js';
+export { checkDependencyDirection, checkCircularDependencies, checkBarrelIntegrity } from './fitness-functions.js';
+export type { Violation, FitnessCheckResult, FileContent, DirectoryInfo } from './fitness-functions.js';
+export { runHarnessScanCached, resetHarnessCache } from './harness-cache.js';
+export { getEvolutionReport } from './harness-evolution.js';
+export type { EvolutionReport } from './harness-evolution.js';
+export { getHarnessPreflightWarning, getHarnessRegressionReport } from './harness-preflight.js';
+export type { HarnessPreflightWarning, HarnessRegressionReport } from './harness-preflight.js';
+export { runHarnessScan } from './harness-scan-runner.js';
+export type { HarnessScanResult, HarnessScanOptions } from './harness-scan-runner.js';
+export { getTrends, predictGradeTarget } from './harness-trends.js';
+export type { TrendResult, GradePrediction } from './harness-trends.js';
+export { computeHarnessabilityScore } from './harnessability-score.js';
+export type { HarnessabilityInput, DimensionBreakdown, HarnessabilityResult } from './harnessability-score.js';
+export { IssuePatternTracker } from './issue-pattern-tracker.js';
+export type { IssuePattern, PatternStats, RuleSuggestion } from './issue-pattern-tracker.js';
+export { scanNamingClarity } from './naming-clarity-scanner.js';
+export type { NamingClarityResult, NamingClarityOptions } from './naming-clarity-scanner.js';
+export { calculateParetoPriority } from './pareto-priority.js';
+export type { DimensionGap, PrioritizedDimension } from './pareto-priority.js';
+export { evaluate } from './remediation-engine.js';
+export { listRules, findRule, resolveTemplate } from './remediation-rules.js';
+export type { RemediationRule } from './remediation-rules.js';
+export { SuppressionStore } from './remediation-suppression.js';
+export type { SuppressionRecord } from './remediation-suppression.js';
+export { RemediationValidator } from './remediation-validator.js';
+export type { PostFixResult } from './remediation-validator.js';
+export { fuseSensors } from './sensor-fusion.js';
+export type { DimensionScores, SensorCluster } from './sensor-fusion.js';
+export { scanTestCoverage } from './test-coverage-scanner.js';
+export type { TestCoverageResult, TestFileInfo, TestCoverageOptions } from './test-coverage-scanner.js';
+export { scanTypeCoverage } from './type-coverage-scanner.js';
+export type { TypeCoverageResult, TypeCoverageOptions } from './type-coverage-scanner.js';
+export type { HarnessDimension, RemediationCategory, ViolationDetail, RemediationSuggestion, ValidationResult } from './violation-detail.js';

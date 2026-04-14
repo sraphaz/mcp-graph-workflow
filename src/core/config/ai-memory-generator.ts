@@ -1,5 +1,6 @@
 /**
- * Generates AI instruction sections for CLAUDE.md and .github/copilot-instructions.md.
+ * Generates AI instruction sections for CLAUDE.md, AGENTS.md, and
+ * .github/copilot-instructions.md.
  * Both outputs are idempotent (use markers to detect existing sections).
  */
 
@@ -105,7 +106,16 @@ Memory files s\u00E3o **snapshots point-in-time**, n\u00E3o estado live. Contage
 
 const LEAN_DISCOVERY_HINT = `> **Referências detalhadas on-demand:** Use \`help\` tool para consultar: \`tools\`, \`analyze_modes\`, \`skills\`, \`cli\`, \`knowledge\`, \`workflow\`, \`gates\`, \`dod\`, \`dor\`, \`prerequisites\`, \`workflows\`, \`flow\`, \`quality_metrics\`, \`tdd\`, \`pipeline\`, \`antipatterns\`, \`harness\`, \`dream\`, \`siebel\`, \`davinci\`, \`translate\`, \`journey\`, \`teamtask\`, \`snapshot\`, \`graph_health\`.`;
 
-function buildSectionBody(projectName: string, mode: "lean" | "full" = "full"): string {
+const CODEX_AGENT_RULES = `### Codex-Specific Rules
+
+- Root project instructions live in \`AGENTS.md\`; repo-scoped skills live in \`.agents/skills/<skill>/SKILL.md\`.
+- Invoke skills explicitly with \`$graph-implement\`, \`$graph-security\`, or another installed skill name when a task needs that workflow.
+- In Codex Plan Mode, use mcp-graph and skills for discovery and planning only. Do not edit files until the user asks for implementation outside Plan Mode.
+- During implementation, use \`apply_patch\` for manual edits and preserve unrelated user changes in the worktree.
+- Respect sandbox and approval prompts. If a required command fails because of sandbox/network restrictions, rerun it with an approval request.
+- Do not spawn subagents unless the user explicitly asks for delegation or parallel agent work.`;
+
+function buildSectionBody(projectName: string, mode: "ultra-lean" | "lean" | "full" = "full"): string {
   const header = `## mcp-graph — ${projectName}
 
 Este projeto usa **mcp-graph** para gestão de execução via grafo persistente (SQLite).
@@ -124,6 +134,18 @@ start_task → [implementar com TDD] → finish_task
 \`\`\`
 next → context(compact) → context(rag) → [implementar com TDD] → analyze(implement_done) → update_status
 \`\`\``;
+
+  if (mode === "ultra-lean") {
+    return `${header}
+
+${workflow}
+
+${LIFECYCLE_SUMMARY}
+
+${MEMORY_VERIFICATION_RULE}
+
+${LEAN_DISCOVERY_HINT}`;
+  }
 
   if (mode === "lean") {
     return `${header}
@@ -210,7 +232,7 @@ ${CLI_COMMANDS_REF}`;
 }
 
 /** Generate the mcp-graph section for CLAUDE.md. */
-export function generateClaudeMdSection(projectName: string, mode: "lean" | "full" = "full"): string {
+export function generateClaudeMdSection(projectName: string, mode: "ultra-lean" | "lean" | "full" = "full"): string {
   return `
 ${MARKER_START}
 ${buildSectionBody(projectName, mode)}
@@ -219,9 +241,27 @@ ${MARKER_END}
 }
 
 /** Generate the mcp-graph section for copilot-instructions.md. */
-export function generateCopilotInstructions(projectName: string, mode: "lean" | "full" = "full"): string {
+export function generateCopilotInstructions(projectName: string, mode: "ultra-lean" | "lean" | "full" = "full"): string {
   return `${MARKER_START}
 ${buildSectionBody(projectName, mode)}
+${MARKER_END}
+`;
+}
+
+/** Generate the mcp-graph section for Codex AGENTS.md. */
+export function generateCodexAgentsMdSection(projectName: string, mode: "ultra-lean" | "lean" | "full" = "full"): string {
+  return `${MARKER_START}
+# AGENTS.md — ${projectName}
+
+${CODEX_AGENT_RULES}
+
+${buildSectionBody(projectName, mode)}
+
+### Codex Skills
+
+Essential mcp-graph workflows are installed as repo-scoped Codex skills in \`.agents/skills\`.
+Use \`$graph-implement\` for tracked TDD implementation, \`$graph-tests\` for test strategy,
+\`$graph-security\` for security review, and \`$ui-ux-pro-max\` for UI/UX work.
 ${MARKER_END}
 `;
 }

@@ -166,6 +166,15 @@ describe("classifySectionTitle", () => {
     expect(classifySectionTitle("Entregas", 2).type).toBe("task");
   });
 
+  it("only detects explicit task headings, not incidental task words", () => {
+    expect(classifySectionTitle("Task 4.1: Corrigir layout", 4).type).toBe("task");
+    expect(classifySectionTitle("Task: Corrigir layout", 4).type).toBe("task");
+
+    const phaseResult = classifySectionTitle("Fase 4 - Kanban e Detalhes de Task", 2);
+    expect(phaseResult.type).toBe("epic");
+    expect(phaseResult.confidence).toBe(0.7);
+  });
+
   it("detects requirement sections", () => {
     expect(classifySectionTitle("Requisitos Funcionais", 2).type).toBe("requirement");
   });
@@ -317,6 +326,26 @@ Descrição do task
     expect(taskBlock).toBeDefined();
     const acItems = taskBlock!.items.filter((i) => i.type === "acceptance_criteria");
     expect(acItems.length).toBe(3);
+  });
+
+  it("keeps h2 phase headings with incidental task words as epics", () => {
+    const prd = `# PRD
+
+## Fase 4 - Kanban e Detalhes de Task
+
+### Epic: Kanban com drawer estavel
+
+#### Task 4.1: Corrigir layout
+
+**Critérios de aceite:**
+- GIVEN usuario abre detalhes WHEN clica no item THEN drawer aparece
+`;
+    const result = extractEntities(prd);
+    const phaseBlock = result.blocks.find((b) => b.title === "Fase 4 - Kanban e Detalhes de Task");
+    expect(phaseBlock?.type).toBe("epic");
+
+    const taskBlock = result.blocks.find((b) => b.title === "Task 4.1: Corrigir layout");
+    expect(taskBlock?.type).toBe("task");
   });
 
   it("preserves AC classification from Gherkin patterns inside task blocks", () => {

@@ -5,11 +5,11 @@ import { captureWebPage } from "../../core/capture/web-capture.js";
 import { logger } from "../../core/utils/logger.js";
 
 const CaptureRequestSchema = z.object({
-  url: z.url("url must be a valid URL"),
-  selector: z.string().optional(),
+  url: z.url("url must be a valid URL").max(2000),
+  selector: z.string().max(500).optional(),
   timeout: z.number().int().positive().max(60_000).optional(),
-  waitForSelector: z.string().optional(),
-});
+  waitForSelector: z.string().max(500).optional(),
+}).strict();
 
 export function createCaptureRouter(): Router {
   const router = Router();

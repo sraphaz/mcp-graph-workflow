@@ -4,6 +4,7 @@
  * suitable for LLM consumption.
  */
 
+import { ContextBuildError, getErrorMessage } from "../utils/errors.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { GraphSnapshotCache } from "../store/graph-snapshot-cache.js";
@@ -89,6 +90,9 @@ export function assembleContext(
   query: string,
   options?: AssemblerOptions,
 ): AssembledContext {
+  if (!query || query.trim().length === 0) {
+    throw new ContextBuildError("Context assembly query cannot be empty");
+  }
   const tokenBudget = options?.tokenBudget ?? DEFAULT_TOKEN_BUDGET;
   const tier = options?.tier ?? "standard";
   const maxKnowledgeChunks = options?.maxKnowledgeChunks ?? 5;
@@ -173,8 +177,8 @@ export function assembleContext(
           }
         }
       }
-    } catch {
-      // non-blocking
+    } catch (err) {
+      logger.debug("context-assembler: quality search fallback", { error: getErrorMessage(err) });
     }
 
     if (kResults.length > 0) {
@@ -194,8 +198,8 @@ export function assembleContext(
         tokensUsed += chunk.tokens;
       }
     }
-  } catch {
-    logger.debug("Knowledge search unavailable during assembly");
+  } catch (err) {
+    logger.debug("Knowledge search unavailable during assembly", { error: getErrorMessage(err) });
   }
 
   breakdown.knowledge = tokensUsed - knowledgeTokensBefore;
@@ -236,8 +240,8 @@ export function assembleContext(
           communityTokensUsed += tokens;
         }
       }
-    } catch {
-      logger.debug("Graph community context unavailable during assembly");
+    } catch (err) {
+      logger.debug("Graph community context unavailable during assembly", { error: getErrorMessage(err) });
     }
   }
   breakdown.graph_community = tokensUsed - communityTokensBefore;
@@ -337,8 +341,8 @@ function findRelevantNodeIds(store: SqliteStore, query: string): string[] {
   try {
     const results = store.searchNodes(query, 5);
     if (results.length > 0) return results.map((r) => r.id);
-  } catch {
-    logger.debug("FTS search failed in context assembler, falling back to substring");
+  } catch (err) {
+    logger.debug("FTS search failed in context assembler, falling back to substring", { error: getErrorMessage(err) });
   }
 
   // Fallback: simple substring match on title/description
@@ -357,8 +361,8 @@ function findRelevantNodeIds(store: SqliteStore, query: string): string[] {
       )
       .slice(0, 10)
       .map((n) => n.id);
-  } catch {
-    logger.debug("Substring fallback also failed in context assembler");
+  } catch (err) {
+    logger.debug("Substring fallback also failed in context assembler", { error: getErrorMessage(err) });
     return [];
   }
 }

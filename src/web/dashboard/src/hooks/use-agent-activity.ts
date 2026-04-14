@@ -48,15 +48,24 @@ export function useAgentActivity(): {
     const es = new EventSource("/api/v1/events");
     eventSourceRef.current = es;
 
-    es.addEventListener("agent:heartbeat", () => {
-      // Re-fetch on heartbeat to get latest status
+    const onHeartbeat = () => {
       void load();
-    });
+    };
+    const onTaskClaimed = () => {
+      void load();
+    };
+    const onTaskReleased = () => {
+      void load();
+    };
 
-    es.addEventListener("task:claimed", () => void load());
-    es.addEventListener("task:released", () => void load());
+    es.addEventListener("agent:heartbeat", onHeartbeat);
+    es.addEventListener("task:claimed", onTaskClaimed);
+    es.addEventListener("task:released", onTaskReleased);
 
     return () => {
+      es.removeEventListener("agent:heartbeat", onHeartbeat);
+      es.removeEventListener("task:claimed", onTaskClaimed);
+      es.removeEventListener("task:released", onTaskReleased);
       es.close();
       eventSourceRef.current = null;
     };

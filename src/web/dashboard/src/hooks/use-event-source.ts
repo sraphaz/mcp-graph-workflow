@@ -36,23 +36,30 @@ export function useEventSource(
   const [connected, setConnected] = useState(false);
   const [lastEvent, setLastEvent] = useState<GraphSSEEvent | null>(null);
   const sourceRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const disposedRef = useRef(false);
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
 
   const connect = useCallback(() => {
+    if (disposedRef.current) return;
     if (sourceRef.current) {
       sourceRef.current.close();
+    }
+    if (reconnectTimeoutRef.current !== null) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
 
     const baseUrl = window.location.origin;
     const source = new EventSource(`${baseUrl}/api/v1/events/stream`);
     sourceRef.current = source;
 
-    source.addEventListener("connected", () => {
+    const onConnected = () => {
       setConnected(true);
-    });
+    };
 
-    source.addEventListener("graph", (e: MessageEvent) => {
+    const onGraph = (e: MessageEvent) => {
       try {
         const event: GraphSSEEvent = JSON.parse(e.data);
 
@@ -66,22 +73,36 @@ export function useEventSource(
       } catch {
         // Invalid JSON — ignore
       }
-    });
+    };
+
+    source.addEventListener("connected", onConnected);
+    source.addEventListener("graph", onGraph);
 
     source.onerror = () => {
       setConnected(false);
       source.close();
       sourceRef.current = null;
+      source.removeEventListener("connected", onConnected);
+      source.removeEventListener("graph", onGraph);
 
-      if (autoReconnect) {
-        setTimeout(connect, reconnectDelay);
+      if (autoReconnect && !disposedRef.current) {
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          reconnectTimeoutRef.current = null;
+          connect();
+        }, reconnectDelay);
       }
     };
   }, [autoReconnect, reconnectDelay, eventTypes]);
 
   useEffect(() => {
+    disposedRef.current = false;
     connect();
     return () => {
+      disposedRef.current = true;
+      if (reconnectTimeoutRef.current !== null) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
       sourceRef.current?.close();
       sourceRef.current = null;
     };
