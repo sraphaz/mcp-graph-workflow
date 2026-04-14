@@ -48,10 +48,8 @@ const CLASSIFICATIONS: ToolClassification[] = [
   { toolName: "plan_sprint", layer: "L2_Heuristic", rationale: "Velocity-based sprint planning heuristic" },
   { toolName: "set_phase", layer: "L2_Heuristic", rationale: "Lifecycle state machine transition" },
   { toolName: "forecast", layer: "L2_Heuristic", rationale: "DORA metrics calculation from historical data" },
-  { toolName: "self_healing", layer: "L2_Heuristic", rationale: "MAPE-K error categorization FSM" },
   { toolName: "kanban", layer: "L2_Heuristic", rationale: "WIP limits and flow state machine" },
   { toolName: "graph_health", layer: "L2_Heuristic", rationale: "Multi-analyzer scan composition" },
-  { toolName: "intersect_knowledge", layer: "L2_Heuristic", rationale: "Cross-domain knowledge intersection heuristic" },
   { toolName: "help", layer: "L2_Heuristic", rationale: "Topic-based help routing" },
   { toolName: "manage_skill", layer: "L2_Heuristic", rationale: "Skill CRUD + phase-based recommendation" },
   { toolName: "code_intelligence", layer: "L2_Heuristic", rationale: "AST analysis + symbol graph traversal" },
@@ -63,7 +61,6 @@ const CLASSIFICATIONS: ToolClassification[] = [
 
   // L4 — Meta-Rule Learning
   { toolName: "write_memory", layer: "L4_MetaRule", rationale: "Persist AI decisions as reusable rules" },
-  { toolName: "learn_from_project", layer: "L4_MetaRule", rationale: "Cross-project knowledge transfer with dedup" },
 
   // Translation tools (L0 — deterministic AST transforms, consolidated)
   { toolName: "translate", layer: "L0_SQL", rationale: "AST-based code translation, analysis, and job management" },

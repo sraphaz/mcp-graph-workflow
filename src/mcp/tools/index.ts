@@ -39,12 +39,6 @@ import { registerStartTask } from "./start-task.js";
 import { registerFinishTask } from "./finish-task.js";
 // Predictive analytics (v8.0)
 import { registerForecast } from "./forecast.js";
-// Cross-project learning (v8.0)
-import { registerLearnFromProject } from "./learn-from-project.js";
-// Interdisciplinary knowledge intersector
-import { registerIntersectKnowledge } from "./intersect-knowledge.js";
-// Self-healing MAPE-K engine
-import { registerSelfHealing } from "./self-healing.js";
 // Kanban orchestrator
 import { registerKanban } from "./kanban.js";
 // Graph health scanner
@@ -108,9 +102,6 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerStartTask(server, store, lockManager);
   registerFinishTask(server, store, lockManager);
   registerForecast(server, store);
-  registerLearnFromProject(server, store);
-  registerIntersectKnowledge(server, store);
-  registerSelfHealing(server, store);
   registerKanban(server, store);
   registerGraphHealth(server, store);
   registerConstitution(server, store);

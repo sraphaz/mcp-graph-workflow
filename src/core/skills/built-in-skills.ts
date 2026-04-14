@@ -627,10 +627,9 @@ export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
     category: "analyze",
     phases: ["ANALYZE", "DESIGN", "LISTENING"],
     instructions:
-      "Use intersect_knowledge(discover) to find cross-domain knowledge intersections. " +
+      "Use knowledge(action:'search') to find cross-domain knowledge intersections. " +
       "Review the generated insights for novel skill ideas. Filter by concept for targeted discovery. " +
-      "Use intersect_knowledge(list) to review previous intersections. " +
-      "Use intersect_knowledge(detail, docId) to get full details of a specific intersection. " +
+      "Use rag_context for deep semantic search across knowledge sources. " +
       "Combine with write_memory to save promising intersection patterns.",
   },
   {
@@ -639,12 +638,10 @@ export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
     category: "validate",
     phases: ["ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE", "REVIEW", "HANDOFF", "DEPLOY", "LISTENING"],
     instructions:
-      "Use the self_healing MCP tool to proactively scan, diagnose, and heal the execution graph. " +
-      "Run 'scan' to detect stuck tasks, broken dependencies, cycles, orphans, and oversized tasks. " +
-      "Run 'diagnose' for prioritized issues with planned actions. " +
-      "Run 'heal' with dryRun=true first, review the report, then dryRun=false to apply fixes. " +
-      "Always run before sprint planning and after bulk imports. " +
-      "Implements MAPE-K (Monitor, Analyze, Plan, Execute, Knowledge) autonomic computing loop.",
+      "Use graph_health(action:'scan') to proactively scan the execution graph for issues. " +
+      "Use analyze(mode:'blockers') and analyze(mode:'cycles') to detect stuck tasks and dependency problems. " +
+      "Review the report and use update_status to fix status inconsistencies. " +
+      "Always run before sprint planning and after bulk imports.",
   },
 ] as const;
 

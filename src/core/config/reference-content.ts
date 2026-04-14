@@ -3,7 +3,7 @@
  * Shared between the generator (full mode) and the help MCP tool (on-demand).
  */
 
-export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (43 tools — v8.0 consolidated + spec-kit)
+export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (40 tools — v8.0 consolidated + spec-kit)
 
 #### Pipeline Tools (v8.0 — recommended)
 

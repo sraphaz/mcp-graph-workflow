@@ -88,7 +88,7 @@ describe("tool completeness", () => {
 
   it("should claim correct tool count (v8.0 consolidated)", () => {
     const section = generateClaudeMdSection("test");
-    expect(section).toContain("43 tools");
+    expect(section).toContain("40 tools");
   });
 
   it("should include deprecated tools reference", () => {
@@ -159,7 +159,7 @@ describe("copilot instructions parity", () => {
     const content = generateCopilotInstructions("test");
     expect(content).toContain("Projeto & Grafo");
     expect(content).toContain("Contexto & RAG");
-    expect(content).toContain("43 tools");
+    expect(content).toContain("40 tools");
   });
 
   it("should include analyze modes", () => {
@@ -311,7 +311,7 @@ describe("lean mode", () => {
     expect(section).toContain("start_task");
     expect(section).toContain("finish_task");
     expect(section).toContain("nextAction");
-    expect(section).toContain("43 tools");
+    expect(section).toContain("40 tools");
   });
 
   it("full mode should be much larger than lean mode", () => {

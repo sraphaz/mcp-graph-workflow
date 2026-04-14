@@ -5,7 +5,7 @@ describe('Deterministic Layers Harness', () => {
   it('should classify all tools as deterministic (L0-L4)', () => {
     const classifications = classifyTools();
     // After v8.0 consolidation (davinci, siebel, knowledge, context, rag_context etc. merged)
-    expect(classifications.length).toBeGreaterThanOrEqual(40);
+    expect(classifications.length).toBeGreaterThanOrEqual(37);
     
     // Ensure every tool has a layer and rationale
     classifications.forEach(tool => {

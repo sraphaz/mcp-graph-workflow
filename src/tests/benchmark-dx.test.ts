@@ -52,7 +52,7 @@ describe("Benchmark: DX Metrics SLOs", () => {
     console.log(`  L4 (Meta-Rule): ${distribution.L4_MetaRule}`);
 
     // All tools should be classified (reduced after v8.0 consolidation)
-    expect(classifications.length).toBeGreaterThanOrEqual(40);
+    expect(classifications.length).toBeGreaterThanOrEqual(37);
 
     // Distribution should cover all layers
     expect(distribution.L0_SQL).toBeGreaterThan(0);
