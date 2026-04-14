@@ -12,6 +12,7 @@ import { FolderOpen, FileUp, Globe } from "lucide-react";
 import { SkeletonPage } from "@/components/layout/skeleton";
 
 // Lazy-load tabs
+const OverviewTab = lazy(() => import("@/components/tabs/overview-tab").then((m) => ({ default: m.OverviewTab })));
 const GraphTab = lazy(() => import("@/components/tabs/graph-tab").then((m) => ({ default: m.GraphTab })));
 const PrdBacklogTab = lazy(() => import("@/components/tabs/prd-backlog-tab").then((m) => ({ default: m.PrdBacklogTab })));
 const KanbanTab = lazy(() => import("@/components/tabs/kanban-tab").then((m) => ({ default: m.KanbanTab })));
@@ -31,6 +32,7 @@ const DavinciTab = lazy(() => import("@/components/davinci/davinci-tab").then((m
 const HarnessTab = lazy(() => import("@/components/tabs/harness-tab").then((m) => ({ default: m.HarnessTab })));
 
 const TAB_LABELS: Record<TabId, string> = {
+  overview: "Overview",
   graph: "Graph",
   "prd-backlog": "PRD & Backlog",
   kanban: "Kanban",
@@ -84,7 +86,7 @@ function LoadingFallback(): React.JSX.Element {
 }
 
 function AppContent(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<TabId>("graph");
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [importOpen, setImportOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [openFolderOpen, setOpenFolderOpen] = useState(false);
@@ -177,6 +179,7 @@ function AppContent(): React.JSX.Element {
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                   {/* Conditional render: unmounts inactive tabs to reduce DOM nodes */}
+                  {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
                   {activeTab === "graph" && <GraphTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} onImportPrd={() => setImportOpen(true)} />}
                   {activeTab === "prd-backlog" && <PrdBacklogTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} />}
                   {activeTab === "kanban" && <KanbanTab />}

@@ -23,6 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 export type TabId =
+  | "overview"
   | "graph"
   | "prd-backlog"
   | "kanban"
@@ -63,6 +64,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Visualize",
     icon: LayoutDashboard,
     items: [
+      { id: "overview", label: "Overview", icon: LayoutDashboard },
       { id: "graph", label: "Graph", icon: GitFork },
       { id: "prd-backlog", label: "PRD & Backlog", icon: ClipboardList },
       { id: "kanban", label: "Kanban", icon: Columns3 },
