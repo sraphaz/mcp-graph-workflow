@@ -53,7 +53,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
   const rowVirtualizer = useVirtualizer({
     count: paged.length,
     getScrollElement: () => tableBodyRef.current?.parentElement ?? null,
-    estimateSize: () => 32,
+    estimateSize: () => 44,
     overscan: 5,
   });
 
@@ -127,27 +127,27 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    <td className="px-3 py-1.5 max-w-[200px] truncate">{node.title}</td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-3 py-2.5 max-w-[200px] truncate">{node.title}</td>
+                    <td className="px-3 py-2.5">
                       <span
-                        className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                        className="text-xs px-1.5 py-0.5 rounded font-medium"
                         style={{ background: `${NODE_TYPE_COLORS[node.type]}20`, color: NODE_TYPE_COLORS[node.type] }}
                       >
                         {node.type}
                       </span>
                     </td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-3 py-2.5">
                       <span
-                        className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                        className="text-xs px-1.5 py-0.5 rounded-full font-medium"
                         style={{ background: `${STATUS_COLORS[node.status]}20`, color: STATUS_COLORS[node.status] }}
                       >
                         {node.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-3 py-1.5 text-center">{node.priority}</td>
-                    <td className="px-3 py-1.5 text-center">{node.xpSize || "-"}</td>
-                    <td className="px-3 py-1.5">{node.sprint || "-"}</td>
-                    <td className="px-3 py-1.5 max-w-[150px] truncate text-muted">
+                    <td className="px-3 py-2.5 text-center">{node.priority}</td>
+                    <td className="px-3 py-2.5 text-center">{node.xpSize || "-"}</td>
+                    <td className="px-3 py-2.5">{node.sprint || "-"}</td>
+                    <td className="px-3 py-2.5 max-w-[150px] truncate text-muted">
                       {node.parentId ? (parentMap.get(node.parentId) ?? "-") : "-"}
                     </td>
                   </tr>
