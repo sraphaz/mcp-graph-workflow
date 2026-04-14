@@ -83,7 +83,7 @@ export async function isOnnxAvailable(): Promise<boolean> {
     onnxAvailableCache = true;
   } catch {
     onnxAvailableCache = false;
-    logger.debug('onnx:check', { available: false, reason: 'onnxruntime-node not installed' });
+    logger.warn('onnx:unavailable', { reason: 'onnxruntime-node not installed — RAG will use hash embeddings (degraded mode)' });
   }
 
   return onnxAvailableCache;
@@ -281,7 +281,7 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
 export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvider | null> {
   const available = await isOnnxAvailable();
   if (!available) {
-    logger.debug('onnx:provider', { available: false });
+    logger.warn('onnx:provider-degraded', { available: false, impact: 'RAG operates with hash embeddings instead of neural — lower search quality' });
     return null;
   }
 
