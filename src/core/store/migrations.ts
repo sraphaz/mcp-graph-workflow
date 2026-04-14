@@ -1215,6 +1215,37 @@ const migrations: Migration[] = [
         ON edges(project_id, from_node, to_node, relation_type);
     `,
   },
+  {
+    version: 44,
+    description: "Add ON DELETE CASCADE to edges foreign keys",
+    sql: `
+      -- SQLite cannot ALTER FK constraints, so recreate the table
+      CREATE TABLE IF NOT EXISTS edges_new (
+        id            TEXT PRIMARY KEY,
+        project_id    TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        from_node     TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+        to_node       TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+        relation_type TEXT NOT NULL,
+        weight        REAL,
+        reason        TEXT,
+        metadata      TEXT,
+        created_at    TEXT NOT NULL,
+        modified_by   TEXT,
+        version       INTEGER NOT NULL DEFAULT 1
+      );
+
+      INSERT OR IGNORE INTO edges_new SELECT * FROM edges;
+      DROP TABLE edges;
+      ALTER TABLE edges_new RENAME TO edges;
+
+      -- Recreate indexes
+      CREATE INDEX IF NOT EXISTS idx_edges_project ON edges(project_id);
+      CREATE INDEX IF NOT EXISTS idx_edges_from    ON edges(from_node);
+      CREATE INDEX IF NOT EXISTS idx_edges_to      ON edges(to_node);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_edges_unique
+        ON edges(project_id, from_node, to_node, relation_type);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
