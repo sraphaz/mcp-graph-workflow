@@ -110,7 +110,7 @@ export class TfIdfVectorizer {
    * Falls back to hash-based embedding if vocabulary not built.
    */
   embed(text: string): number[] {
-    if (!this.vocab || !this.idf) {
+    if (!this.vocab || !this.idf || this.vocab.size === 0) {
       return hashEmbed(text, 128);
     }
     return computeTfIdfVector(tokenize(text), this.vocab, this.idf);
@@ -292,6 +292,7 @@ export async function indexAllEmbeddings(
   // ONNX embedding pass — generate 384-dim neural embeddings alongside TF-IDF
   const t1 = performance.now();
   let onnxIndexed = 0;
+  let onnxFailed = 0;
   for (const doc of allDocuments) {
     try {
       const onnxVec = await generateEmbedding(doc.text);
@@ -308,11 +309,14 @@ export async function indexAllEmbeddings(
         onnxIndexed++;
       }
     } catch {
-      // Graceful degradation — skip ONNX if it fails for a doc
+      onnxFailed++;
     }
   }
   const onnxDurationMs = Math.round(performance.now() - t1);
-  logger.debug("rag:fit+embed:all:onnx", { onnxIndexed, durationMs: onnxDurationMs });
+  if (onnxFailed > 0 && allDocuments.length > 0 && onnxFailed / allDocuments.length > 0.5) {
+    logger.warn("rag:onnx:high-failure-rate", { onnxFailed, total: allDocuments.length, failureRate: Math.round((onnxFailed / allDocuments.length) * 100) });
+  }
+  logger.debug("rag:fit+embed:all:onnx", { onnxIndexed, onnxFailed, durationMs: onnxDurationMs });
 
   logger.info(
     `Indexed all embeddings (vocab size: ${vectorizer.vocabSize})`,

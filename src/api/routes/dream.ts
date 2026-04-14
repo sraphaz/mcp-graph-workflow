@@ -84,7 +84,8 @@ export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus):
    */
   router.get("/history", (req, res, next) => {
     try {
-      const limit = req.query.limit ? Number(req.query.limit) : 50;
+      const rawLimit = req.query.limit ? Number(req.query.limit) : 50;
+      const limit = Number.isFinite(rawLimit) && rawLimit >= 1 ? Math.min(rawLimit, 500) : 50;
       const db = storeRef.current.getDb();
       const cycles = listDreamCycles(db, limit);
       res.json(cycles);
