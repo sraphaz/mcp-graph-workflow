@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.2.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.2...mcp-graph-v9.2.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* **core:** Schema hardening, barrel exports, and dashboard fixes ([#166](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/166)) ([45fdce4](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/45fdce4f5beb9d274e6c3e6325a9de68a57e0ad3))
+
 ## [9.2.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.1...mcp-graph-v9.2.2) (2026-04-14)
 
 
