@@ -86,7 +86,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@mcp-graph-workflow/mcp-graph": "^6.3.0",
+    "@mcp-graph-workflow/mcp-graph": "^9.1.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "adm-zip": "^0.5.17",
     "better-sqlite3": "^12.6.2",
@@ -131,10 +131,10 @@
   },
   "lint-staged": {
     "src/**/*.ts": [
-      "eslint --max-warnings 9"
+      "eslint --no-warn-ignored --max-warnings 9"
     ],
     "src/**/*.tsx": [
-      "eslint --max-warnings 9"
+      "eslint --no-warn-ignored --max-warnings 9"
     ]
   }
 }

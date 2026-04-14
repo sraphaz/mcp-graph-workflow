@@ -33,10 +33,10 @@ describe('NAV_GROUPS structure', () => {
     expect(ids).toEqual(['visualization', 'intelligence', 'tools', 'system']);
   });
 
-  it('visualization group should contain Graph, PRD & Backlog, Kanban, Journey', () => {
+  it('visualization group should contain Overview, Graph, PRD & Backlog, Kanban, Journey', () => {
     const vizGroup = NAV_GROUPS.find((g) => g.id === 'visualization')!;
     const tabIds = vizGroup.items.map((i) => i.id);
-    expect(tabIds).toEqual(['graph', 'prd-backlog', 'kanban', 'journey']);
+    expect(tabIds).toEqual(['overview', 'graph', 'prd-backlog', 'kanban', 'journey']);
   });
 
   it('intelligence group should contain Code Graph, Memories, Insights, Skills, Harness', () => {
@@ -57,11 +57,11 @@ describe('NAV_GROUPS structure', () => {
     expect(tabIds).toEqual(['docs', 'logs']);
   });
 
-  it('all 17 tabs should be present across all groups (no duplicates)', () => {
+  it('all 18 tabs should be present across all groups (no duplicates)', () => {
     const allTabIds = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
-    expect(allTabIds).toHaveLength(17);
+    expect(allTabIds).toHaveLength(18);
     const expectedIds = new Set([
-      'graph', 'prd-backlog', 'kanban', 'journey',
+      'overview', 'graph', 'prd-backlog', 'kanban', 'journey',
       'gitnexus', 'memories', 'insights', 'skills', 'harness',
       'context', 'benchmark', 'languages', 'davinci', 'siebel', 'lsp',
       'docs', 'logs',
@@ -72,7 +72,7 @@ describe('NAV_GROUPS structure', () => {
   it('should export NAV_ITEMS as flat array for backward compat', () => {
     expect(NAV_ITEMS).toBeDefined();
     expect(Array.isArray(NAV_ITEMS)).toBe(true);
-    expect(NAV_ITEMS).toHaveLength(17);
+    expect(NAV_ITEMS).toHaveLength(18);
   });
 
   it('NAV_ITEMS should equal the flat of NAV_GROUPS items', () => {

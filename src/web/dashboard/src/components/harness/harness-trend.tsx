@@ -26,7 +26,7 @@ export function HarnessTrend(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/harness/trend")
+    fetch("/api/v1/harness/trend")
       .then((res) => res.json())
       .then((json) => setData(json as TrendData))
       .catch((err) => setError(String(err)));

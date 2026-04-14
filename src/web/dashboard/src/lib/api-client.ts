@@ -89,7 +89,7 @@ export const apiClient = {
   },
 
   // Graph
-  getGraph: () => request<GraphDocument>("/graph"),
+  getGraph: () => request<GraphDocument>("/graph?limit=1000"),
 
   // Import (multipart)
   importFile: async (file: File, force = false) => {
@@ -112,6 +112,15 @@ export const apiClient = {
   getBottlenecks: () => request("/insights/bottlenecks"),
   getRecommendations: () => request<{ recommendations: Array<{ phase: string; skill: string; reason: string }> }>("/insights/recommendations"),
   getMetrics: () => request("/insights/metrics"),
+  getPhaseDistribution: () =>
+    request<Array<{ phase: string; taskCount: number; percentage: number; color: string }>>("/insights/phase-distribution"),
+
+  getKnowledgeQuality: () =>
+    request<Array<{ sourceType: string; count: number; avgQuality: number; score: number; isLow: boolean }>>("/insights/knowledge-quality"),
+
+  // Agents
+  getAgentActivity: () =>
+    request<{ agents: Array<{ agentId: string; status: string; lastHeartbeat: string; activeLocks: number; currentTaskId: string | null }>; teamTaskEnabled: boolean }>("/agents"),
   getSkills: () => request<{ skills: Skill[]; totalTokens: number }>("/skills"),
   getSkillPreferences: () => request<{ preferences: Record<string, boolean> }>("/skills/preferences"),
   toggleSkill: (name: string, enabled: boolean) =>

@@ -9,7 +9,7 @@ Dados armazenados em `workflow-graph/graph.db` (local, gitignored).
 **O mcp-graph é a fonte de verdade ABSOLUTA. Nenhuma implementação acontece fora do grafo.**
 
 1. **Node deve existir** — antes de escrever QUALQUER código, o node correspondente DEVE existir no grafo
-2. **Fluxo obrigatório** — `start_task → [implementar com TDD] → finish_task` (pipeline v6.0) ou `next → context → rag_context → [TDD] → analyze(implement_done) → update_status` (granular) — SEM EXCEÇÕES
+2. **Fluxo obrigatório** — `start_task → [implementar com TDD] → finish_task` (pipeline v8.0) ou `next → context(compact) → context(rag) → [TDD] → analyze(implement_done) → update_status` (granular) — SEM EXCEÇÕES
 3. **Epic = estrutura primeiro** — criar Epic + tasks filhas + edges ANTES de implementar
 4. **Status tracking** — `update_status → in_progress` ANTES de codar, `→ done` APÓS completar
 5. **Validação** — usar `validate` (action: `ac`) após cada task para checar critérios de aceitação
@@ -19,14 +19,14 @@ Dados armazenados em `workflow-graph/graph.db` (local, gitignored).
 
 ### Fluxo de trabalho OBRIGATÓRIO
 
-**Pipeline v6.0 (recomendado — 2 calls):**
+**Pipeline v8.0 (recomendado — 2 calls):**
 ```
 start_task → [implementar com TDD] → finish_task
 ```
 
 **Granular (6 calls — disponível para controle fino):**
 ```
-next → context → rag_context → [implementar com TDD] → analyze(implement_done) → update_status
+next → context(compact) → context(rag) → [implementar com TDD] → analyze(implement_done) → update_status
 ```
 
 ### Lifecycle (9 fases)
@@ -35,7 +35,7 @@ next → context → rag_context → [implementar com TDD] → analyze(implement
 2. **DESIGN** — Arquitetura, decisões técnicas (`add_node`, `edge`, `analyze`)
 3. **PLAN** — Sprint planning, decomposição (`plan_sprint`, `analyze`, `sync_stack_docs`)
 4. **IMPLEMENT** — TDD Red→Green→Refactor (`next`, `context`, `update_status`, `analyze` — modes: implement_done, tdd_check, progress)
-5. **VALIDATE** — Testes E2E, critérios de aceitação (`validate_task`, `metrics`)
+5. **VALIDATE** — Testes E2E, critérios de aceitação (`validate`, `metrics`)
 6. **REVIEW** — Code review, blast radius (`export`, `metrics`)
 7. **HANDOFF** — PR, documentação, entrega (`export`, `snapshot`)
 8. **DEPLOY** — CI pipeline, release, post-release validation (`export`, `snapshot`, `analyze`)
@@ -115,6 +115,93 @@ parar de implementar e validar. Otimizar o gargalo, não produzir mais WIP.
 - **Decomposição atômica** — Cada task deve ser completável em ≤2h.
 - **Code detachment** — Se a IA errou, explique o erro via prompt. Nunca edite manualmente.
 - **CLAUDE.md como spec evolutiva** — Documente padrões e decisões aqui.
+
+### Spec-Driven Development (spec-kit)
+
+6 ferramentas adicionais para desenvolvimento guiado por especificações:
+
+| Tool | Ação | Descrição |
+|------|------|-----------|
+| `constitution` | create, update, list, check | Princípios governantes do projeto — indexados no RAG, validados em quality gates |
+| `plugin` | install, remove, enable, disable, list, info | Sistema de extensões dinâmicas com persistência SQLite |
+| `preset` | list, apply, show, create | Presets de workflow: default, strict-tdd, agile-light, enterprise |
+| `spec` | generate, validate, list_templates | Templates de spec por fase (ANALYZE, DESIGN, PLAN, IMPLEMENT) |
+| `spec_sync` | sync, status, history, link | Specs como documentos vivos — versionamento + sync bidirecional |
+| `agent_format` | generate, list_formats, list_agents | Gera instruções para 6+ AI agents (markdown, TOML, skill.md, JSON) |
+
+**Fluxo recomendado:**
+1. `constitution create` — definir princípios do projeto
+2. `preset apply` — escolher workflow (strict-tdd, agile-light, enterprise)
+3. `spec generate` — gerar spec a partir de template
+4. `spec validate` — validar spec contra template
+5. `spec_sync link` — conectar spec com nodes do grafo
+
+## Harness Engineering — Agent Readiness Score
+
+### O que é
+Métrica composta (0-100) que mede quão preparado o código está para geração/manutenção por agentes AI.
+Quanto maior o score, menor o risco de alucinação e retrabalho.
+
+### 7 Dimensões
+
+| Dimensão | Peso | O que mede |
+|----------|------|------------|
+| Type Coverage | 25% | % arquivos sem `any` |
+| Test Coverage | 25% | Módulos com arquivo de teste correspondente |
+| Architecture Fitness | 15% | Deps direction, circular deps, barrel integrity |
+| Docs Coverage | 15% | CLAUDE.md, README, rules/, docs/ |
+| Naming Clarity | 10% | Nomes descritivos (sem data/result/temp/val genéricos) |
+| Error Handling | 5% | Typed errors, sem catch vazio, sem console.error |
+| Context Density | 5% | JSDoc em exports (contexto para agentes) |
+
+### Grades
+
+| Grade | Score | Significado |
+|-------|-------|-------------|
+| A | >= 85 | Excelente — baixo risco de alucinação |
+| B | >= 70 | Bom — deploy permitido |
+| C | >= 55 | Razoável — precisa melhorar |
+| D | < 55 | Crítico — alto risco de alucinação |
+
+### Comandos
+
+- `analyze(mode: "harness_scan")` — Scan completo, salva resultado em knowledge store
+- `analyze(mode: "harness_trend")` — Evolução do score (últimos 10 snapshots)
+- `analyze(mode: "harness_advice")` — Sugestões de melhoria por dimensão < 70
+- `analyze(mode: "harness_remediate")` — Deterministic Remediation Engine: file-level violations → actionable fix suggestions sorted by priority. Zero AI, 16 rules, suppression store for false-positives
+- `npm run harness:scan` — CLI local (human-readable output)
+
+### Workflow Diário por Fase
+
+| Fase | O que muda com Harness |
+|------|------------------------|
+| ANALYZE | Rodar harness_scan para baseline inicial |
+| DESIGN | Gate: score >= 55 (C) para avançar para PLAN |
+| PLAN | Sprint health mostra harness delta; tasks que melhoram dimensões fracas ganham prioridade via harnessBonus |
+| IMPLEMENT | start_task mostra harnessWarning se score < 70; finish_task detecta regressão > 5pts e retorna ruleSuggestions |
+| VALIDATE | Gate: sem regressão > 10pts |
+| REVIEW | Gate: score >= 55 (C) |
+| HANDOFF | Gate: score >= 55 (C) recomendado |
+| DEPLOY | Gate MAIS RÍGIDO: score >= 70 (B) obrigatório para release |
+| LISTENING | Score salvo como baseline pós-deploy para próximo ciclo |
+
+### Security
+
+Security NÃO é dimensão do harness — é quality gate paralelo (`security_scanner`).
+Harness mede "agent readiness" (tipos, testes, docs). Security mede "code correctness" (vulnerabilidades, secrets).
+Ambos são visíveis no lifecycle block de cada tool response.
+
+### Issue Pattern Tracker (Steering Loop)
+
+finish_task grava padrões recorrentes de falha DoD. Ao atingir 3 ocorrências,
+auto-sugere regras em `.claude/rules/`. Padrões rastreados:
+- `missing_ac` — Task sem acceptance criteria
+- `status_skip` — Pulo de status (ex: backlog → done)
+- `orphan_node` — Node sem parent
+- `circular_dep` — Dependência circular
+- `oversized_task` — Task L/XL sem subtasks
+- `missing_description` — Descrição vazia
+- `missing_estimate` — Sem xpSize ou estimateMinutes
 
 ### Memory ≠ Estado Atual
 

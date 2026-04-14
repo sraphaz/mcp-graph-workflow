@@ -176,13 +176,13 @@ function AppContent(): React.JSX.Element {
                 {error}
               </div>
             ) : (
-              <ErrorBoundary>
+              <ErrorBoundary key={activeTab}>
                 <Suspense fallback={<LoadingFallback />}>
                   {/* Conditional render: unmounts inactive tabs to reduce DOM nodes */}
                   {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
                   {activeTab === "graph" && <GraphTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} onImportPrd={() => setImportOpen(true)} />}
                   {activeTab === "prd-backlog" && <PrdBacklogTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} />}
-                  {activeTab === "kanban" && <KanbanTab />}
+                  {activeTab === "kanban" && <KanbanTab onNavigate={setActiveTab} />}
                   {activeTab === "journey" && <JourneyTab />}
                   {activeTab === "gitnexus" && <GitNexusTab />}
                   {activeTab === "memories" && <MemoriesTab />}

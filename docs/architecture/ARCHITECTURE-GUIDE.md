@@ -25,18 +25,17 @@ Thin orchestration layer. Commands call core functions and format output. No bus
 **Protocol:** Model Context Protocol (Streamable HTTP + Stdio)
 
 <!-- mcp-graph:arch-mcp:start -->
-45 tool registrations (45 active, 0 deprecated) via `@modelcontextprotocol/sdk`. Two transport modes:
+45 tool registrations (45 active + 0 deprecated shims) via `@modelcontextprotocol/sdk`. Two transport modes:
 
 - **HTTP** (`server.ts`) — Express server with `/mcp` endpoint + REST API + static dashboard
 - **Stdio** (`stdio.ts`) — Standard I/O transport for direct MCP client integration
 
 Tool categories:
-- **Core** (38) — analyze, clone_node, context, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, help, import_graph, import_prd, init, journey, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory
-- **Translation** (3) — analyze_translation, translate_code, translation_jobs
+- **Core** (40) — agent_format, analyze, clone_node, constitution, context, delete_memory, edge, export, finish_task, forecast, graph_health, help, import_graph, import_prd, init, journey, kanban, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, plugin, preset, read_memory, search, set_phase, show, snapshot, spec, spec_sync, start_task, sync_stack_docs, template, update_status, validate, write_memory
 - **Code Intelligence** (1) — code_intelligence
-- **Knowledge** (3) — export_knowledge, knowledge_feedback, knowledge_stats
-- **Siebel CRM** (8) — siebel_analyze, siebel_composer, siebel_env, siebel_generate_sif, siebel_import_docs, siebel_import_sif, siebel_search, siebel_validate
-- **Deprecated shims** — none (all deprecated tools removed in v7.0)
+- **Translation** (2) — davinci, translate
+- **Knowledge** (1) — knowledge
+- **Siebel CRM** (1) — siebel
 <!-- mcp-graph:arch-mcp:end -->
 
 ### Layer 3: REST API — `src/api/`
@@ -44,7 +43,7 @@ Tool categories:
 **Framework:** Express v5
 
 <!-- mcp-graph:arch-api:start -->
-30 routers, 130+ endpoints. Modular router architecture:
+30 routers, 165 endpoints. Modular router architecture:
 <!-- mcp-graph:arch-api:end -->
 
 ```

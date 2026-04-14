@@ -17,7 +17,7 @@ import { WorkflowNode } from "./workflow-node";
 import { WorkflowEdge } from "./workflow-edge";
 import { FilterPanel } from "./filter-panel";
 import { HierarchyTreePanel } from "./hierarchy-tree-panel";
-import { NodeDetailPanel } from "./node-detail-panel";
+import { NodeDetailDrawer } from "./node-detail-drawer";
 import { NodeTable } from "./node-table";
 import { EdgeCreateDialog } from "./edge-create-dialog";
 import { toFlowNodes, toFlowEdges, applyDagreLayout, shouldSkipLayout, type WorkflowNodeData, type WorkflowEdgeData } from "./graph-utils";
@@ -42,12 +42,14 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
   const [direction, setDirection] = useState<"TB" | "LR">("TB");
   const [filterStatuses, setFilterStatuses] = useState<Set<string>>(new Set());
   const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set());
+  const [filterSprints, setFilterSprints] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
 
   // Defer filter values so checkbox updates are visually immediate
   const deferredStatuses = useDeferredValue(filterStatuses);
   const deferredTypes = useDeferredValue(filterTypes);
+  const deferredSprints = useDeferredValue(filterSprints);
   const deferredDirection = useDeferredValue(direction);
 
   // Track previous layout node IDs to skip redundant Dagre runs
@@ -88,9 +90,9 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
   }, []);
 
   const applyLayout = useCallback(
-    (statuses: Set<string>, types: Set<string>, dir: "TB" | "LR") => {
+    (statuses: Set<string>, types: Set<string>, sprints: Set<string>, dir: "TB" | "LR") => {
       const visibleGraphNodes = getVisibleNodes(graph.nodes, expandedIds, childrenMap);
-      const filters = { statuses, types };
+      const filters = { statuses, types, sprints };
       const flowNodes = toFlowNodes(visibleGraphNodes, filters, childrenMap, expandedIds, handleNodeExpand);
       const nextIds = flowNodes.map((n) => n.id);
 
@@ -110,8 +112,8 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
   );
 
   useEffect(() => {
-    applyLayout(deferredStatuses, deferredTypes, deferredDirection);
-  }, [graph, applyLayout, deferredStatuses, deferredTypes, deferredDirection]);
+    applyLayout(deferredStatuses, deferredTypes, deferredSprints, deferredDirection);
+  }, [graph, applyLayout, deferredStatuses, deferredTypes, deferredSprints, deferredDirection]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node<WorkflowNodeData>) => {
@@ -169,10 +171,29 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
     });
   }, []);
 
+  const toggleSprint = useCallback((sprint: string) => {
+    setFilterSprints((prev) => {
+      const next = new Set(prev);
+      if (next.has(sprint)) next.delete(sprint);
+      else next.add(sprint);
+      return next;
+    });
+  }, []);
+
   const clearFilters = useCallback(() => {
     setFilterStatuses(new Set());
     setFilterTypes(new Set());
+    setFilterSprints(new Set());
   }, []);
+
+  // Available sprints for filter dropdown
+  const availableSprints = useMemo(() => {
+    const sprints = new Set<string>();
+    for (const n of graph.nodes) {
+      if (n.sprint) sprints.add(n.sprint);
+    }
+    return [...sprints].sort();
+  }, [graph.nodes]);
 
   // Visible nodes for the table (respects expansion + filters)
   const visibleTableNodes = useMemo(() => {
@@ -180,6 +201,7 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
     return visible.filter((n) => {
       if (filterStatuses.size && !filterStatuses.has(n.status)) return false;
       if (filterTypes.size && !filterTypes.has(n.type)) return false;
+      if (filterSprints.size && !filterSprints.has(n.sprint ?? "")) return false;
       return true;
     });
   }, [graph.nodes, expandedIds, childrenMap, filterStatuses, filterTypes]);
@@ -197,9 +219,12 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
       <FilterPanel
         statuses={filterStatuses}
         types={filterTypes}
+        sprints={filterSprints}
+        availableSprints={availableSprints}
         direction={direction}
         onStatusToggle={toggleStatus}
         onTypeToggle={toggleType}
+        onSprintToggle={toggleSprint}
         onDirectionChange={setDirection}
         onClear={clearFilters}
         visibleNodeCount={visibleTableNodes.length}
@@ -249,16 +274,14 @@ export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element 
           )}
         </div>
 
-        {selectedNode && (
-          <NodeDetailPanel
-            node={selectedNode}
-            edges={graph.edges}
-            allNodes={graph.nodes}
-            childrenMap={childrenMap}
-            onClose={() => setSelectedNode(null)}
-            onNodeNavigate={handleNodeNavigate}
-          />
-        )}
+        <NodeDetailDrawer
+          node={selectedNode}
+          edges={graph.edges}
+          allNodes={graph.nodes}
+          childrenMap={childrenMap}
+          onClose={() => setSelectedNode(null)}
+          onNodeNavigate={handleNodeNavigate}
+        />
       </div>
 
       <NodeTable nodes={visibleTableNodes} allNodes={graph.nodes} onNodeClick={handleTableNodeClick} />

@@ -32,6 +32,7 @@ import { createDreamRouter } from "./routes/dream.js";
 import { createDavinciRouter } from "./routes/davinci.js";
 import { createKanbanRouter } from "./routes/kanban.js";
 import { createEventsSseRouter } from "./routes/events-sse.js";
+import { createAgentsRouter } from "./routes/agents.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -91,6 +92,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/davinci", createDavinciRouter());
   router.use("/kanban", createKanbanRouter(storeRef));
   router.use("/events", createEventsSseRouter(eventBus ?? undefined));
+  router.use("/agents", createAgentsRouter(storeRef));
 
   if (storeManager) {
     router.use("/folder", createFolderRouter(storeManager));

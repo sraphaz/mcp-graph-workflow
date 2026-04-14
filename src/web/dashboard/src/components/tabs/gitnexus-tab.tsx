@@ -997,10 +997,10 @@ function CosmosGraphPanel({
           labelSize: 11,
           labelFont: "monospace",
           labelWeight: "bold",
-          labelRenderedSizeThreshold: 10,
-          labelDensity: 0.5,
+          labelRenderedSizeThreshold: 12,
+          labelDensity: 0.3,
           renderLabels: true,
-          renderEdgeLabels: true,
+          renderEdgeLabels: false,
           enableEdgeEvents: false,
           defaultEdgeType: "arrow",
           edgeProgramClasses: { arrow: EdgeArrowProgram, line: EdgeLineProgram },
@@ -1151,17 +1151,20 @@ function CosmosGraphLoader({
     }
 
     // ForceAtlas2 layout — organic clustering
+    // Scale iterations down for large graphs to keep UI responsive
     if (g.order > 0) {
+      const nodeCount = g.order;
+      const iterations = nodeCount > 3000 ? 80 : nodeCount > 1000 ? 120 : nodeCount > 500 ? 180 : 150;
       forceAtlas2.assign(g, {
-        iterations: g.order > 500 ? 250 : 180,
+        iterations,
         settings: {
-          gravity: 0.3,
-          scalingRatio: g.order > 200 ? 8 : 4,
-          barnesHutOptimize: g.order > 50,
-          barnesHutTheta: 0.5,
+          gravity: nodeCount > 2000 ? 0.5 : 0.3,
+          scalingRatio: nodeCount > 2000 ? 12 : nodeCount > 200 ? 8 : 4,
+          barnesHutOptimize: nodeCount > 50,
+          barnesHutTheta: nodeCount > 2000 ? 0.8 : 0.5,
           strongGravityMode: false,
-          slowDown: 3,
-          adjustSizes: true,
+          slowDown: nodeCount > 2000 ? 5 : 3,
+          adjustSizes: nodeCount <= 2000,
           linLogMode: true, // Better cluster separation
           outboundAttractionDistribution: true,
         },

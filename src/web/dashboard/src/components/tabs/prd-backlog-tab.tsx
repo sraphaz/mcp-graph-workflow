@@ -19,7 +19,7 @@ import { STATUS_COLORS } from "@/lib/constants";
 import { buildChildrenMap, getVisibleNodes } from "@/lib/graph-hierarchy";
 import { WorkflowNode } from "@/components/graph/workflow-node";
 import { WorkflowEdge } from "@/components/graph/workflow-edge";
-import { NodeDetailPanel } from "@/components/graph/node-detail-panel";
+import { NodeDetailDrawer } from "@/components/graph/node-detail-drawer";
 import { toFlowNodes, toFlowEdges, applyDagreLayout, type WorkflowNodeData, type WorkflowEdgeData } from "@/components/graph/graph-utils";
 import { BacklogList } from "@/components/backlog/backlog-list";
 import { useEffect } from "react";
@@ -89,6 +89,16 @@ function PrdBacklogFlow({ graph }: { graph: GraphDocument }): React.JSX.Element 
     setSelectedNode(node);
   }, []);
 
+  const handleNodeNavigate = useCallback((nodeId: string) => {
+    const target = graph.nodes.find((n) => n.id === nodeId);
+    if (target) setSelectedNode(target);
+    // Center the graph on the target node
+    const flowNode = nodes.find((n) => n.id === nodeId);
+    if (flowNode && flowNode.position) {
+      fitView({ nodes: [{ id: nodeId }], duration: 400, padding: 0.5 });
+    }
+  }, [graph.nodes, nodes, fitView]);
+
   // Progress stats
   const stats = useMemo(() => {
     const total = graph.nodes.length;
@@ -135,7 +145,7 @@ function PrdBacklogFlow({ graph }: { graph: GraphDocument }): React.JSX.Element 
       </div>
 
       {/* Right: Backlog list */}
-      <div className="w-96 border-l border-edge flex flex-col overflow-hidden">
+      <div className="w-[480px] border-l border-edge flex flex-col overflow-hidden">
         {/* Progress bar */}
         <div className="px-4 py-3 border-b border-edge bg-surface-alt">
           <div className="flex justify-between text-sm mb-1">
@@ -164,10 +174,15 @@ function PrdBacklogFlow({ graph }: { graph: GraphDocument }): React.JSX.Element 
         </div>
       </div>
 
-      {/* Detail panel */}
-      {selectedNode && (
-        <NodeDetailPanel node={selectedNode} onClose={() => setSelectedNode(null)} />
-      )}
+      {/* Detail drawer */}
+      <NodeDetailDrawer
+        node={selectedNode}
+        edges={graph.edges}
+        allNodes={graph.nodes}
+        childrenMap={childrenMap}
+        onClose={() => setSelectedNode(null)}
+        onNodeNavigate={handleNodeNavigate}
+      />
     </div>
   );
 }
@@ -184,7 +199,7 @@ export function PrdBacklogTab({ graph, loading, error, onRetry }: PrdBacklogTabP
           <div className="flex-1 bg-surface-alt animate-pulse" />
         </div>
         {/* Right: Sidebar skeleton */}
-        <div className="w-96 border-l border-edge flex flex-col">
+        <div className="w-[480px] border-l border-edge flex flex-col">
           <div className="px-4 py-3 border-b border-edge bg-surface-alt space-y-2">
             <div className="flex justify-between">
               <div className="h-4 w-28 rounded bg-surface animate-pulse" />

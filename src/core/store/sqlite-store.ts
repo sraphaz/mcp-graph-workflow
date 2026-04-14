@@ -80,6 +80,20 @@ interface EdgeRow {
 
 // ── Mapping helpers ──────────────────────────────────────
 
+/** Safely serialize a value to JSON, replacing NaN/Infinity with null and catching circular refs. */
+function safeJsonStringify(value: unknown, field: string, nodeId: string): string | null {
+  if (value === null || value === undefined) return null;
+  try {
+    return JSON.stringify(value, (_key, v) => {
+      if (typeof v === "number" && !Number.isFinite(v)) return null;
+      return v;
+    });
+  } catch (err) {
+    logger.warn("Failed to serialize node field", { nodeId, field, error: String(err) });
+    return null;
+  }
+}
+
 function nodeToRow(node: GraphNode, projectId: string): NodeRow {
   return {
     id: node.id,
@@ -91,19 +105,17 @@ function nodeToRow(node: GraphNode, projectId: string): NodeRow {
     priority: node.priority,
     xp_size: node.xpSize ?? null,
     estimate_minutes: node.estimateMinutes ?? null,
-    tags: node.tags ? JSON.stringify(node.tags) : null,
+    tags: safeJsonStringify(node.tags, "tags", node.id),
     parent_id: node.parentId ?? null,
     sprint: node.sprint ?? null,
     source_file: node.sourceRef?.file ?? null,
     source_start_line: node.sourceRef?.startLine ?? null,
     source_end_line: node.sourceRef?.endLine ?? null,
     source_confidence: node.sourceRef?.confidence ?? null,
-    acceptance_criteria: node.acceptanceCriteria
-      ? JSON.stringify(node.acceptanceCriteria)
-      : null,
-    test_files: node.testFiles ? JSON.stringify(node.testFiles) : null,
+    acceptance_criteria: safeJsonStringify(node.acceptanceCriteria, "acceptanceCriteria", node.id),
+    test_files: safeJsonStringify(node.testFiles, "testFiles", node.id),
     blocked: node.blocked ? 1 : 0,
-    metadata: node.metadata ? JSON.stringify(node.metadata) : null,
+    metadata: safeJsonStringify(node.metadata, "metadata", node.id),
     created_at: node.createdAt,
     updated_at: node.updatedAt,
   };
@@ -125,18 +137,30 @@ function rowToNode(row: NodeRow): GraphNode {
   if (row.xp_size) node.xpSize = row.xp_size as GraphNode["xpSize"];
   if (row.estimate_minutes != null) node.estimateMinutes = row.estimate_minutes;
   if (row.tags) {
-    try { node.tags = JSON.parse(row.tags); } catch { node.tags = []; }
+    try { node.tags = JSON.parse(row.tags); } catch {
+      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "tags" });
+      node.tags = [];
+    }
   }
   if (row.parent_id) node.parentId = row.parent_id;
   if (row.sprint) node.sprint = row.sprint;
   if (row.acceptance_criteria) {
-    try { node.acceptanceCriteria = JSON.parse(row.acceptance_criteria); } catch { node.acceptanceCriteria = []; }
+    try { node.acceptanceCriteria = JSON.parse(row.acceptance_criteria); } catch {
+      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "acceptanceCriteria" });
+      node.acceptanceCriteria = [];
+    }
   }
   if (row.test_files) {
-    try { node.testFiles = JSON.parse(row.test_files); } catch { node.testFiles = []; }
+    try { node.testFiles = JSON.parse(row.test_files); } catch {
+      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "testFiles" });
+      node.testFiles = [];
+    }
   }
   if (row.metadata) {
-    try { node.metadata = JSON.parse(row.metadata); } catch { node.metadata = {}; }
+    try { node.metadata = JSON.parse(row.metadata); } catch {
+      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "metadata" });
+      node.metadata = {};
+    }
   }
 
   if (row.source_file) {
@@ -151,6 +175,7 @@ function rowToNode(row: NodeRow): GraphNode {
 }
 
 const MAX_EDGE_METADATA_SIZE = 100_000;
+const MAX_NODE_METADATA_SIZE = 100_000;
 
 function edgeToRow(edge: GraphEdge, projectId: string): EdgeRow {
   // Bug #055: validate edge metadata JSON size
@@ -450,23 +475,34 @@ export class SqliteStore {
       }
       throw err;
     }
+    // Bug #E1-T14: validate node metadata JSON size
+    if (node.metadata) {
+      const metadataJson = JSON.stringify(node.metadata);
+      if (metadataJson.length > MAX_NODE_METADATA_SIZE) {
+        throw new ValidationError(`Node metadata too large (${metadataJson.length} chars, max ${MAX_NODE_METADATA_SIZE})`, []);
+      }
+    }
+
     const pid = this.ensureProject();
     const normalized = { ...node, description: normalizeNewlines(node.description) };
     const row = nodeToRow(normalized, pid);
-    this.db
-      .prepare(
-        `INSERT INTO nodes
-          (id, project_id, type, title, description, status, priority,
-           xp_size, estimate_minutes, tags, parent_id, sprint,
-           source_file, source_start_line, source_end_line, source_confidence,
-           acceptance_criteria, test_files, blocked, metadata, created_at, updated_at, modified_by)
-         VALUES
-          (@id, @project_id, @type, @title, @description, @status, @priority,
-           @xp_size, @estimate_minutes, @tags, @parent_id, @sprint,
-           @source_file, @source_start_line, @source_end_line, @source_confidence,
-           @acceptance_criteria, @test_files, @blocked, @metadata, @created_at, @updated_at, @modified_by)`,
-      )
-      .run({ ...row, modified_by: options?.agentId ?? null });
+    this.db.transaction(() => {
+      this.db
+        .prepare(
+          `INSERT INTO nodes
+            (id, project_id, type, title, description, status, priority,
+             xp_size, estimate_minutes, tags, parent_id, sprint,
+             source_file, source_start_line, source_end_line, source_confidence,
+             acceptance_criteria, test_files, blocked, metadata, created_at, updated_at, modified_by)
+           VALUES
+            (@id, @project_id, @type, @title, @description, @status, @priority,
+             @xp_size, @estimate_minutes, @tags, @parent_id, @sprint,
+             @source_file, @source_start_line, @source_end_line, @source_confidence,
+             @acceptance_criteria, @test_files, @blocked, @metadata, @created_at, @updated_at, @modified_by)`,
+        )
+        .run({ ...row, modified_by: options?.agentId ?? null });
+    })();
+    // Event emitted AFTER transaction succeeds
     this._eventBus?.emitTyped("node:created", { nodeId: node.id, title: node.title, nodeType: node.type });
   }
 
@@ -601,6 +637,23 @@ export class SqliteStore {
     return this.getNodeById(id);
   }
 
+  /** Walk up the parent chain from newParentId; return true if nodeId is found (cycle). */
+  private detectParentCycle(nodeId: string, newParentId: string): boolean {
+    const pid = this.ensureProject();
+    let current: string | null = newParentId;
+    const visited = new Set<string>();
+    while (current) {
+      if (current === nodeId) return true;
+      if (visited.has(current)) return false;
+      visited.add(current);
+      const parent = this.db.prepare(
+        "SELECT parent_id FROM nodes WHERE id = ? AND project_id = ?",
+      ).get(current, pid) as { parent_id: string | null } | undefined;
+      current = parent?.parent_id ?? null;
+    }
+    return false;
+  }
+
   updateNode(
     id: string,
     fields: Partial<
@@ -659,6 +712,11 @@ export class SqliteStore {
       params.push(fields.tags ? JSON.stringify(fields.tags) : null);
     }
     if (fields.parentId !== undefined) {
+      if (fields.parentId !== null && fields.parentId !== undefined) {
+        if (fields.parentId === id || this.detectParentCycle(id, fields.parentId)) {
+          throw new ValidationError(`Setting parentId '${fields.parentId}' on node '${id}' would create a cycle`, []);
+        }
+      }
       setClauses.push("parent_id = ?");
       params.push(fields.parentId ?? null);
     }
@@ -683,6 +741,13 @@ export class SqliteStore {
       params.push(fields.testFiles ? JSON.stringify(fields.testFiles) : null);
     }
     if (fields.metadata !== undefined) {
+      // Bug #E1-T14: validate node metadata JSON size
+      if (fields.metadata) {
+        const metadataJson = JSON.stringify(fields.metadata);
+        if (metadataJson.length > MAX_NODE_METADATA_SIZE) {
+          throw new ValidationError(`Node metadata too large (${metadataJson.length} chars, max ${MAX_NODE_METADATA_SIZE})`, []);
+        }
+      }
       setClauses.push("metadata = ?");
       params.push(fields.metadata ? JSON.stringify(fields.metadata) : null);
     }
@@ -920,6 +985,10 @@ export class SqliteStore {
   clearImportedNodes(sourceFile: string): { nodesDeleted: number; edgesDeleted: number } {
     const pid = this.ensureProject();
     logger.debug("tx:clear-imported", { sourceFile });
+
+    // Safety snapshot before destructive operation
+    const snapshotId = this.createSnapshot();
+    logger.info("clear-imported:snapshot-created", { sourceFile, snapshotId });
 
     const cleared = this.db.transaction(() => {
       // Find node IDs from this source file

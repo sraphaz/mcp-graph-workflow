@@ -81,38 +81,40 @@ export class KnowledgeStore {
     }
     const hash = contentHash(doc.content);
 
-    // Check for duplicate content
-    const existing = this.db
-      .prepare("SELECT * FROM knowledge_documents WHERE content_hash = ? AND source_id = ?")
-      .get(hash, doc.sourceId) as KnowledgeRow | undefined;
+    // Bug #E1-T05: wrap dedup check + insert in transaction to prevent race condition
+    return this.db.transaction(() => {
+      const existing = this.db
+        .prepare("SELECT * FROM knowledge_documents WHERE content_hash = ? AND source_id = ?")
+        .get(hash, doc.sourceId) as KnowledgeRow | undefined;
 
-    if (existing) {
-      logger.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
-      return rowToDoc(existing);
-    }
+      if (existing) {
+        logger.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
+        return rowToDoc(existing);
+      }
 
-    const id = generateId("kdoc");
-    const timestamp = now();
+      const id = generateId("kdoc");
+      const timestamp = now();
 
-    this.db.prepare(
-      `INSERT INTO knowledge_documents
-        (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      id,
-      doc.sourceType,
-      doc.sourceId,
-      doc.title,
-      doc.content,
-      hash,
-      doc.chunkIndex ?? 0,
-      doc.metadata ? JSON.stringify(doc.metadata) : null,
-      timestamp,
-      timestamp,
-    );
+      this.db.prepare(
+        `INSERT INTO knowledge_documents
+          (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        id,
+        doc.sourceType,
+        doc.sourceId,
+        doc.title,
+        doc.content,
+        hash,
+        doc.chunkIndex ?? 0,
+        doc.metadata ? JSON.stringify(doc.metadata) : null,
+        timestamp,
+        timestamp,
+      );
 
-    logger.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
-    return this.getById(id) as KnowledgeDocument;
+      logger.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
+      return this.getById(id) as KnowledgeDocument;
+    })();
   }
 
   /**
@@ -293,7 +295,7 @@ export class KnowledgeStore {
     // Select lowest quality, least used, oldest first
     const targetRows = this.db.prepare(`
       SELECT id FROM knowledge_documents
-      ORDER BY quality_score ASC, usage_count ASC, created_at ASC
+      ORDER BY COALESCE(quality_score, 0) ASC, COALESCE(usage_count, 0) ASC, created_at ASC
       LIMIT ?
     `).all(excess) as Array<{ id: string }>;
 

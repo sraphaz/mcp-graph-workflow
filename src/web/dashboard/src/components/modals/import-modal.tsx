@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
 
 interface ImportModalProps {
@@ -42,6 +42,15 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): Re
       setSubmitting(false);
     }
   }, [file, force, onClose, onImported]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 

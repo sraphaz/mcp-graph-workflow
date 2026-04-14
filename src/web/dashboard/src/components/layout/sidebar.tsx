@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, useEffect, useRef } from "react";
+import { memo, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTheme } from "@/providers/theme-provider";
 import { ProjectSelector } from "./project-selector";
 import {
@@ -9,6 +9,7 @@ import {
   PanelLeft,
   Menu,
   X,
+  Search,
 } from "lucide-react";
 import { NAV_GROUPS } from "./nav-config";
 import { SidebarGroup } from "./sidebar-group";
@@ -34,6 +35,8 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
     }
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [tabSearch, setTabSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
 
   const toggleCollapsed = useCallback(() => {
@@ -96,6 +99,31 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
     return () => drawer.removeEventListener("keydown", trapFocus);
   }, [mobileOpen]);
 
+  // Cmd+K / Ctrl+K to focus sidebar search
+  useEffect(() => {
+    function handleCmdK(e: KeyboardEvent): void {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        if (collapsed) setCollapsed(false);
+      }
+    }
+    document.addEventListener("keydown", handleCmdK);
+    return () => document.removeEventListener("keydown", handleCmdK);
+  }, [collapsed]);
+
+  // Filter nav groups by search
+  const filteredGroups = useMemo(() => {
+    if (!tabSearch.trim()) return NAV_GROUPS;
+    const q = tabSearch.toLowerCase();
+    return NAV_GROUPS
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => item.label.toLowerCase().includes(q)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [tabSearch]);
+
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
     if (mobileOpen) {
@@ -122,9 +150,28 @@ export const Sidebar = memo(function Sidebar({ activeTab, onTabChange }: Sidebar
         )}
       </div>
 
+      {/* Quick Search */}
+      {!collapsed && (
+        <div className="px-3 pt-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search tabs... (⌘K)"
+              value={tabSearch}
+              onChange={(e) => setTabSearch(e.target.value)}
+              className="w-full pl-7 pr-2 py-1.5 text-xs bg-surface border border-edge rounded-md focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Nav Groups */}
       <nav role="navigation" aria-label="Main navigation" className="flex-1 overflow-y-auto py-2 px-2">
-        {NAV_GROUPS.map((group) => (
+        {filteredGroups.length === 0 && tabSearch ? (
+          <div className="px-3 py-4 text-xs text-muted text-center">No tabs match</div>
+        ) : filteredGroups.map((group) => (
           <SidebarGroup
             key={group.id}
             group={group}

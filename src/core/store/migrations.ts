@@ -1159,6 +1159,14 @@ const migrations: Migration[] = [
         ON event_queue(created_at);
     `,
   },
+  {
+    version: 39,
+    description: "Composite index (project_id, parent_id) for node queries",
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_nodes_project_parent
+        ON nodes(project_id, parent_id);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

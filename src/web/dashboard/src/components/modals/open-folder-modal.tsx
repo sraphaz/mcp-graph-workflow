@@ -23,6 +23,16 @@ export function OpenFolderModal({ open, onClose, onFolderChanged }: OpenFolderMo
   const [browseError, setBrowseError] = useState("");
   const [showBrowser, setShowBrowser] = useState(false);
 
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   // Load current folder info when modal opens
   useEffect(() => {
     if (!open) return;

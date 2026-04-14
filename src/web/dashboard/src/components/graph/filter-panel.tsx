@@ -5,9 +5,12 @@ import { ALL_STATUSES, ALL_TYPES, STATUS_COLORS, NODE_TYPE_COLORS } from "@/lib/
 interface FilterPanelProps {
   statuses: Set<string>;
   types: Set<string>;
+  sprints?: Set<string>;
+  availableSprints?: string[];
   direction: "TB" | "LR";
   onStatusToggle: (status: NodeStatus) => void;
   onTypeToggle: (type: NodeType) => void;
+  onSprintToggle?: (sprint: string) => void;
   onDirectionChange: (dir: "TB" | "LR") => void;
   onClear: () => void;
   visibleNodeCount: number;
@@ -19,9 +22,12 @@ interface FilterPanelProps {
 export const FilterPanel = memo(function FilterPanel({
   statuses,
   types,
+  sprints,
+  availableSprints,
   direction,
   onStatusToggle,
   onTypeToggle,
+  onSprintToggle,
   onDirectionChange,
   onClear,
   visibleNodeCount,
@@ -52,7 +58,7 @@ export const FilterPanel = memo(function FilterPanel({
 
       <div className="w-px h-4 bg-edge" />
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="font-medium text-muted">Type:</span>
         {ALL_TYPES.map((t) => (
           <label key={t} className="flex items-center gap-1 cursor-pointer">
@@ -70,6 +76,26 @@ export const FilterPanel = memo(function FilterPanel({
           </label>
         ))}
       </div>
+
+      {availableSprints && availableSprints.length > 0 && onSprintToggle && (
+        <>
+          <div className="w-px h-4 bg-edge" />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-medium text-muted">Sprint:</span>
+            {availableSprints.map((s) => (
+              <label key={s} className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sprints?.has(s) ?? false}
+                  onChange={() => onSprintToggle(s)}
+                  className="w-3 h-3"
+                />
+                <span>{s}</span>
+              </label>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="w-px h-4 bg-edge" />
 

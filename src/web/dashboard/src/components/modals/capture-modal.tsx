@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
 
 interface CaptureModalProps {
@@ -71,6 +71,15 @@ export function CaptureModal({ open, onClose, onImported }: CaptureModalProps): 
     await navigator.clipboard.writeText(result.text);
     setStatus({ type: "success", message: "Copied to clipboard!" });
   }, [result]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 

@@ -1,12 +1,18 @@
-import { RefreshCw, AlertCircle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { RefreshCw, AlertCircle, X } from "lucide-react";
 import { useInsights } from "@/hooks/use-insights";
+import { apiClient } from "@/lib/api-client";
 import { HealthGauge } from "@/components/charts/health-gauge";
 import { StatusDonut } from "@/components/charts/status-donut";
 import { TypeBarChart } from "@/components/charts/type-bar-chart";
 import { SprintBars } from "@/components/charts/sprint-bars";
 import { KnowledgeBar } from "@/components/charts/knowledge-bar";
 import { BottleneckCards } from "@/components/insights/bottleneck-cards";
-import type { NodeType } from "@/lib/types";
+import { LifecycleHeatmap } from "@/components/charts/lifecycle-heatmap";
+import { AgentActivityMonitor } from "@/components/charts/agent-activity-monitor";
+import { KnowledgeQualityRadar } from "@/components/charts/knowledge-quality-radar";
+import { STATUS_COLORS } from "@/lib/constants";
+import type { NodeType, NodeStatus, GraphNode } from "@/lib/types";
 
 const KPI_TOOLTIPS: Record<string, string> = {
   "Total Tasks": "Number of task and subtask nodes in the graph",
@@ -40,6 +46,26 @@ function InsightsSkeleton(): React.JSX.Element {
 
 export function InsightsTab(): React.JSX.Element {
   const { data, loading, error, refresh } = useInsights();
+  const [statusFilter, setStatusFilter] = useState<NodeStatus | null>(null);
+  const [filteredNodes, setFilteredNodes] = useState<GraphNode[]>([]);
+  const [filterLoading, setFilterLoading] = useState(false);
+
+  const handleSliceClick = useCallback((status: NodeStatus) => {
+    setStatusFilter((prev) => (prev === status ? null : status));
+  }, []);
+
+  useEffect(() => {
+    if (!statusFilter) {
+      setFilteredNodes([]);
+      return;
+    }
+    setFilterLoading(true);
+    apiClient
+      .getNodes({ status: statusFilter })
+      .then((nodes) => setFilteredNodes(nodes))
+      .catch(() => setFilteredNodes([]))
+      .finally(() => setFilterLoading(false));
+  }, [statusFilter]);
 
   if (error) {
     return (
@@ -64,7 +90,7 @@ export function InsightsTab(): React.JSX.Element {
     return <InsightsSkeleton />;
   }
 
-  const { metrics, bottlenecks, stats, knowledgeStats, healthScore } = data;
+  const { metrics, bottlenecks, stats, knowledgeStats, healthScore, phaseDistribution } = data;
 
   const typeData = Object.entries(stats.byType)
     .filter(([, count]) => count > 0)
@@ -98,12 +124,56 @@ export function InsightsTab(): React.JSX.Element {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard title="Status Distribution">
-          <StatusDonut data={metrics.statusDistribution} />
+          <StatusDonut
+            data={metrics.statusDistribution}
+            onSliceClick={handleSliceClick}
+            activeStatus={statusFilter}
+          />
+          {statusFilter && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setStatusFilter(null)}
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full border border-edge bg-surface-elevated hover:bg-surface transition-colors cursor-pointer"
+              >
+                Filtered: {statusFilter.replace("_", " ")}
+                <X className="w-3 h-3" />
+              </button>
+              {filterLoading ? (
+                <div className="mt-2 space-y-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-6 rounded bg-surface animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                  {filteredNodes.length === 0 ? (
+                    <p className="text-[10px] text-muted">No nodes found</p>
+                  ) : (
+                    filteredNodes.map((node) => {
+                      const color = STATUS_COLORS[node.status] ?? "#9e9e9e";
+                      return (
+                        <div key={node.id} className="flex items-center gap-1.5 text-xs px-1.5 py-1 rounded hover:bg-surface-elevated">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                          <span className="truncate">{node.title}</span>
+                          <span className="text-[9px] text-muted ml-auto shrink-0">{node.type}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </ChartCard>
         <ChartCard title="Node Types">
           <TypeBarChart data={typeData} />
         </ChartCard>
       </div>
+
+      <ChartCard title="Lifecycle Phases">
+        <LifecycleHeatmap data={phaseDistribution} />
+      </ChartCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard title="Sprint Progress">
@@ -113,6 +183,14 @@ export function InsightsTab(): React.JSX.Element {
           <KnowledgeBar data={knowledgeStats.bySource} />
         </ChartCard>
       </div>
+
+      <ChartCard title="Knowledge Quality">
+        <KnowledgeQualityRadar />
+      </ChartCard>
+
+      <ChartCard title="Agent Activity">
+        <AgentActivityMonitor />
+      </ChartCard>
 
       <section>
         <h3 className="text-sm font-semibold mb-3">Bottlenecks</h3>

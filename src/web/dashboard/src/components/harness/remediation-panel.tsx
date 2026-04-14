@@ -44,7 +44,7 @@ export function RemediationPanel(): React.JSX.Element {
   const [suppressing, setSuppressing] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
-    fetch("/api/harness/remediate")
+    fetch("/api/v1/harness/remediate")
       .then((res) => res.json())
       .then((json) => setData(json as RemediateResponse))
       .catch((err) => setError(String(err)));
@@ -58,7 +58,7 @@ export function RemediationPanel(): React.JSX.Element {
     const key = `${suggestion.file}:${suggestion.violationType}`;
     setSuppressing(key);
     try {
-      const res = await fetch("/api/harness/remediate/suppress", {
+      const res = await fetch("/api/v1/harness/remediate/suppress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

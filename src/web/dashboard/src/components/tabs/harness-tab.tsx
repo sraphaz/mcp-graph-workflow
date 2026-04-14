@@ -7,7 +7,7 @@ import { RemediationPanel } from "@/components/harness/remediation-panel";
 
 export function HarnessTab(): React.JSX.Element {
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl mx-auto space-y-6 overflow-y-auto h-full">
       <h2 className="text-lg font-semibold text-white">Harnessability Score</h2>
       <p className="text-sm text-gray-400">
         Agent-readiness metric — measures how safe it is for an AI agent to work on this codebase.

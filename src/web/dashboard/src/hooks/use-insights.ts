@@ -3,12 +3,20 @@ import { apiClient } from "@/lib/api-client";
 import { computeHealthScore } from "@/lib/health-score";
 import type { Metrics, Bottlenecks, GraphStats, KnowledgeStats } from "@/lib/types";
 
+export interface PhaseDistributionEntry {
+  phase: string;
+  taskCount: number;
+  percentage: number;
+  color: string;
+}
+
 export interface InsightsData {
   metrics: Metrics;
   bottlenecks: Bottlenecks;
   stats: GraphStats;
   knowledgeStats: KnowledgeStats;
   healthScore: number;
+  phaseDistribution: PhaseDistributionEntry[];
 }
 
 export function useInsights(): {
@@ -38,6 +46,7 @@ export function useInsights(): {
         apiClient.getBottlenecks() as Promise<Bottlenecks>,
         apiClient.getStats(),
         apiClient.getKnowledgeStats(),
+        apiClient.getPhaseDistribution(),
       ]);
 
       // If aborted, bail out
@@ -48,6 +57,8 @@ export function useInsights(): {
       const stats = results[2].status === "fulfilled" ? results[2].value : null;
       const knowledgeStats: KnowledgeStats =
         results[3].status === "fulfilled" ? results[3].value : { total: 0, bySource: {} };
+      const phaseDistribution: PhaseDistributionEntry[] =
+        results[4].status === "fulfilled" ? results[4].value : [];
 
       if (!metrics || !bottlenecks || !stats) {
         setError("Failed to load one or more insight endpoints");
@@ -62,7 +73,7 @@ export function useInsights(): {
         oversizedCount: bottlenecks.oversizedTasks.length,
       });
 
-      setData({ metrics, bottlenecks, stats, knowledgeStats, healthScore });
+      setData({ metrics, bottlenecks, stats, knowledgeStats, healthScore, phaseDistribution });
     } catch (err) {
       if (controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : "Failed to load insights");

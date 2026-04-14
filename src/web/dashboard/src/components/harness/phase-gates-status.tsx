@@ -32,7 +32,7 @@ export function PhaseGatesStatus(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/harness/score")
+    fetch("/api/v1/harness/score")
       .then((res) => res.json())
       .then((json) => setData(json as ScoreResponse))
       .catch((err) => setError(String(err)));

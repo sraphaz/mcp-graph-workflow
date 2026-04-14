@@ -1,18 +1,17 @@
 # MCP Tools Reference
 
 <!-- mcp-graph:tools-summary:start -->
-> 45 tools organized in 5 categories — complete parameter reference.
-> v7.0: 6 deprecated tools removed (add_node, delete_node, update_node, validate_ac, validate_task, list_skills). New: `graph_health`. See [Migration Guide](../MIGRATION-v7.md).
+> 45 tools + 0 deprecated organized in 6 categories — complete parameter reference.
 
 ## Summary
 
 | Category | Tools | Count |
 |----------|-------|-------|
-| Core | analyze, clone_node, context, context_compress, davinci_analyze, davinci_build, davinci_convert, delete_memory, edge, export, finish_task, forecast, graph_health, help, import_graph, import_prd, init, intersect_knowledge, journey, kanban, knowledge_prune, learn_from_project, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, rag_context, read_memory, reindex_knowledge, search, self_healing, set_phase, show, snapshot, start_task, sync_stack_docs, template, update_status, validate, write_memory | 44 |
-| Translation | analyze_translation, translate_code, translation_jobs | 3 |
+| Core | agent_format, analyze, clone_node, constitution, context, delete_memory, edge, export, finish_task, forecast, graph_health, help, import_graph, import_prd, init, journey, kanban, list, list_memories, manage_skill, metrics, move_node, next, node, plan_sprint, plugin, preset, read_memory, search, set_phase, show, snapshot, spec, spec_sync, start_task, sync_stack_docs, template, update_status, validate, write_memory | 40 |
 | Code Intelligence | code_intelligence | 1 |
-| Knowledge | export_knowledge, knowledge_feedback, knowledge_stats | 3 |
-| Siebel CRM | siebel_analyze, siebel_composer, siebel_env, siebel_generate_sif, siebel_import_docs, siebel_import_sif, siebel_search, siebel_validate | 8 |
+| Translation | davinci, translate | 2 |
+| Knowledge | knowledge | 1 |
+| Siebel CRM | siebel | 1 |
 <!-- mcp-graph:tools-summary:end -->
 
 ---

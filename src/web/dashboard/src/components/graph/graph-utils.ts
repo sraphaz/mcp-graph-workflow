@@ -28,7 +28,7 @@ const NODE_HEIGHT = 80;
 
 export function toFlowNodes(
   nodes: GraphNode[],
-  filters?: { statuses?: Set<string>; types?: Set<string> },
+  filters?: { statuses?: Set<string>; types?: Set<string>; sprints?: Set<string> },
   childrenMap?: Map<string, string[]>,
   expandedIds?: Set<string>,
   onExpand?: (nodeId: string) => void,
@@ -37,6 +37,7 @@ export function toFlowNodes(
     .filter((n) => {
       if (filters?.statuses?.size && !filters.statuses.has(n.status)) return false;
       if (filters?.types?.size && !filters.types.has(n.type)) return false;
+      if (filters?.sprints?.size && !filters.sprints.has(n.sprint ?? "")) return false;
       return true;
     })
     .map((n) => {

@@ -39,7 +39,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   const hasRelationships = edgeSummary.outgoing.length > 0 || edgeSummary.incoming.length > 0;
 
   return (
-    <div className="w-80 border-l border-edge bg-surface-alt overflow-y-auto p-4">
+    <div className="w-full h-full border-l border-edge bg-surface-alt overflow-y-auto p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold">Node Details</h3>
         <button
@@ -130,6 +130,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
                     label={style.label}
                     color={style.color}
                     targetTitle={target?.title ?? edge.to}
+                    targetStatus={target?.status}
                     targetId={edge.to}
                     onNavigate={onNodeNavigate}
                   />
@@ -145,6 +146,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
                     label={style.label}
                     color={style.color}
                     targetTitle={source?.title ?? edge.from}
+                    targetStatus={source?.status}
                     targetId={edge.from}
                     onNavigate={onNodeNavigate}
                   />
@@ -213,6 +215,7 @@ function EdgeItem({
   label,
   color,
   targetTitle,
+  targetStatus,
   targetId,
   onNavigate,
 }: {
@@ -220,18 +223,28 @@ function EdgeItem({
   label: string;
   color: string;
   targetTitle: string;
+  targetStatus?: string;
   targetId: string;
   onNavigate?: (id: string) => void;
 }): React.JSX.Element {
   const arrow = direction === "out" ? "\u2192" : "\u2190";
+  const statusColor = targetStatus ? (STATUS_COLORS[targetStatus as keyof typeof STATUS_COLORS] ?? "#9e9e9e") : undefined;
   return (
     <button
       onClick={() => onNavigate?.(targetId)}
-      className="w-full text-left flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-surface-elevated transition-colors text-xs"
+      className="w-full text-left flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-surface-elevated transition-colors text-xs cursor-pointer"
     >
       <span style={{ color }}>{arrow}</span>
-      <span className="text-[10px] text-muted">{label}</span>
+      <span className="text-[10px] text-muted shrink-0">{label}</span>
       <span className="truncate font-medium">{targetTitle}</span>
+      {statusColor && (
+        <span
+          className="ml-auto shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-medium"
+          style={{ background: `${statusColor}20`, color: statusColor }}
+        >
+          {(targetStatus ?? "").replace("_", " ")}
+        </span>
+      )}
     </button>
   );
 }

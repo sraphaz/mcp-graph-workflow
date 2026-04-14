@@ -32,7 +32,7 @@ export function HarnessGauge(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/harness/score")
+    fetch("/api/v1/harness/score")
       .then((res) => res.json())
       .then((json) => setData(json as HarnessScore))
       .catch((err) => setError(String(err)));

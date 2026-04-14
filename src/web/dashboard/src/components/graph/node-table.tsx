@@ -1,8 +1,8 @@
-import { memo, useState, useMemo, useDeferredValue, useRef, useCallback } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { memo, useState, useMemo, useDeferredValue, useCallback } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import type { GraphNode } from "@/lib/types";
 import { STATUS_COLORS, NODE_TYPE_COLORS } from "@/lib/constants";
+import { parseFacetedSearch, applyFacetedFilter } from "@/lib/faceted-search";
 
 interface NodeTableProps {
   nodes: GraphNode[];
@@ -14,14 +14,14 @@ type SortKey = "title" | "type" | "status" | "priority" | "xpSize" | "sprint" | 
 
 const PAGE_SIZE = 50;
 const COLUMN_STORAGE_KEY = "mcp-graph-table-columns";
-const ALL_COLUMNS: Array<{ key: SortKey; label: string }> = [
-  { key: "title", label: "Title" },
-  { key: "type", label: "Type" },
-  { key: "status", label: "Status" },
-  { key: "priority", label: "Priority" },
-  { key: "xpSize", label: "Size" },
-  { key: "sprint", label: "Sprint" },
-  { key: "parentId", label: "Parent" },
+const ALL_COLUMNS: Array<{ key: SortKey; label: string; width: string }> = [
+  { key: "title", label: "Title", width: "40%" },
+  { key: "type", label: "Type", width: "10%" },
+  { key: "status", label: "Status", width: "10%" },
+  { key: "priority", label: "Priority", width: "8%" },
+  { key: "xpSize", label: "Size", width: "7%" },
+  { key: "sprint", label: "Sprint", width: "12%" },
+  { key: "parentId", label: "Parent", width: "13%" },
 ];
 const DEFAULT_VISIBLE: SortKey[] = ["title", "type", "status", "priority", "xpSize"];
 
@@ -68,14 +68,8 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
 
   const filtered = useMemo(() => {
     if (!deferredSearch) return nodes;
-    const q = deferredSearch.toLowerCase();
-    return nodes.filter(
-      (n) =>
-        n.title.toLowerCase().includes(q) ||
-        n.type.toLowerCase().includes(q) ||
-        n.status.toLowerCase().includes(q) ||
-        (n.sprint || "").toLowerCase().includes(q),
-    );
+    const query = parseFacetedSearch(deferredSearch);
+    return applyFacetedFilter(nodes, query);
   }, [nodes, deferredSearch]);
 
   const sorted = useMemo(() => {
@@ -89,14 +83,6 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const paged = useMemo(() => sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [sorted, page]);
-
-  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
-  const rowVirtualizer = useVirtualizer({
-    count: paged.length,
-    getScrollElement: () => tableBodyRef.current?.parentElement ?? null,
-    estimateSize: () => 44,
-    overscan: 5,
-  });
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -114,7 +100,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
       <div className="flex items-center gap-2 px-4 py-2 bg-surface-alt">
         <input
           type="text"
-          placeholder="Search nodes..."
+          placeholder="Search... (status:done type:task sprint:v9.2)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 max-w-xs px-2 py-1 text-sm border border-edge rounded bg-surface"
@@ -154,7 +140,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
         </div>
       </div>
       <div className="overflow-x-auto max-h-64">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead>
             <tr className="bg-surface-elevated">
               {headers.map((h) => (
@@ -162,6 +148,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
                   key={h.key}
                   onClick={() => handleSort(h.key)}
                   className="px-3 py-1.5 text-left text-xs font-medium text-muted cursor-pointer hover:text-foreground"
+                  style={{ width: h.width }}
                 >
                   {h.label}
                   {sortKey === h.key && (sortDir === "asc" ? " ↑" : " ↓")}
@@ -169,7 +156,7 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
               ))}
             </tr>
           </thead>
-          <tbody ref={tableBodyRef} style={{ position: "relative", height: `${rowVirtualizer.getTotalSize()}px` }}>
+          <tbody>
             {paged.length === 0 ? (
               <tr>
                 <td colSpan={headers.length} className="px-3 py-4 text-center text-muted">
@@ -177,23 +164,13 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
                 </td>
               </tr>
             ) : (
-              rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const node = paged[virtualRow.index];
-                return (
+              paged.map((node) => (
                   <tr
                     key={node.id}
                     onClick={() => onNodeClick(node)}
                     className="border-t border-edge hover:bg-surface-alt cursor-pointer"
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
                   >
-                    {visibleCols.has("title") && <td className="px-3 py-2.5 max-w-[200px] truncate">{node.title}</td>}
+                    {visibleCols.has("title") && <td className="px-3 py-2.5 truncate">{node.title}</td>}
                     {visibleCols.has("type") && (
                       <td className="px-3 py-2.5">
                         <span
@@ -218,13 +195,12 @@ export const NodeTable = memo(function NodeTable({ nodes, allNodes = [], onNodeC
                     {visibleCols.has("xpSize") && <td className="px-3 py-2.5 text-center">{node.xpSize || "-"}</td>}
                     {visibleCols.has("sprint") && <td className="px-3 py-2.5">{node.sprint || "-"}</td>}
                     {visibleCols.has("parentId") && (
-                      <td className="px-3 py-2.5 max-w-[150px] truncate text-muted">
+                      <td className="px-3 py-2.5 truncate text-muted">
                         {node.parentId ? (parentMap.get(node.parentId) ?? "-") : "-"}
                       </td>
                     )}
                   </tr>
-                );
-              })
+              ))
             )}
           </tbody>
         </table>

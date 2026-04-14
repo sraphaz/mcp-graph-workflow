@@ -5,9 +5,11 @@ import type { NodeStatus } from "@/lib/types";
 interface StatusDonutProps {
   data: Array<{ status: NodeStatus; count: number; percentage: number }>;
   className?: string;
+  onSliceClick?: (status: NodeStatus) => void;
+  activeStatus?: NodeStatus | null;
 }
 
-export function StatusDonut({ data, className }: StatusDonutProps): React.JSX.Element {
+export function StatusDonut({ data, className, onSliceClick, activeStatus }: StatusDonutProps): React.JSX.Element {
   const filtered = data.filter((d) => d.count > 0);
 
   if (filtered.length === 0) {
@@ -22,7 +24,15 @@ export function StatusDonut({ data, className }: StatusDonutProps): React.JSX.El
     name: STATUS_LABELS[d.status],
     value: d.count,
     fill: STATUS_COLORS[d.status],
+    status: d.status,
   }));
+
+  const handleClick = onSliceClick
+    ? (_data: unknown, index: number): void => {
+        const entry = chartData[index];
+        if (entry) onSliceClick(entry.status);
+      }
+    : undefined;
 
   return (
     <div className={className}>
@@ -38,9 +48,17 @@ export function StatusDonut({ data, className }: StatusDonutProps): React.JSX.El
             outerRadius={80}
             paddingAngle={2}
             strokeWidth={0}
+            onClick={handleClick}
+            style={onSliceClick ? { cursor: "pointer" } : undefined}
           >
             {chartData.map((entry) => (
-              <Cell key={entry.name} fill={entry.fill} />
+              <Cell
+                key={entry.name}
+                fill={entry.fill}
+                opacity={activeStatus && activeStatus !== entry.status ? 0.3 : 1}
+                stroke={activeStatus === entry.status ? entry.fill : undefined}
+                strokeWidth={activeStatus === entry.status ? 3 : 0}
+              />
             ))}
           </Pie>
           <Tooltip

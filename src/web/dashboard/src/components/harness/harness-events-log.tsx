@@ -37,7 +37,7 @@ export function HarnessEventsLog(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/harness/events")
+    fetch("/api/v1/harness/events")
       .then((res) => res.json())
       .then((json) => setData(json as EventsResponse))
       .catch((err) => setError(String(err)));

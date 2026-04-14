@@ -38,7 +38,7 @@ export function IssuePatternTracker(): React.JSX.Element {
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetch("/api/harness/patterns")
+    fetch("/api/v1/harness/patterns")
       .then((res) => res.json())
       .then((json) => setData(json as PatternsResponse))
       .catch((err) => setError(String(err)));
