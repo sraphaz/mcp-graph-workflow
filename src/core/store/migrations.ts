@@ -1235,6 +1235,10 @@ export function runMigrations(db: Database.Database): void {
       .map((row) => (row as { version: number }).version),
   );
 
+  // Migrations that delete large amounts of data and benefit from VACUUM
+  const VACUUM_AFTER_VERSIONS = new Set([10, 17, 30]);
+  let needsVacuum = false;
+
   for (const migration of migrations) {
     if (applied.has(migration.version)) continue;
 
@@ -1246,6 +1250,20 @@ export function runMigrations(db: Database.Database): void {
       ).run(migration.version, migration.description, new Date().toISOString());
     })();
     logger.info("migration:ok", { version: migration.version });
+
+    if (VACUUM_AFTER_VERSIONS.has(migration.version)) {
+      needsVacuum = true;
+    }
+  }
+
+  // VACUUM must run outside any transaction to reclaim space after heavy deletions
+  if (needsVacuum) {
+    try {
+      db.exec("VACUUM");
+      logger.info("migration:vacuum:ok");
+    } catch (err) {
+      logger.warn("migration:vacuum:failed", { error: err instanceof Error ? err.message : String(err) });
+    }
   }
 }
 
