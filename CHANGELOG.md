@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.1.0...mcp-graph-v9.2.0) (2026-04-14)
+
+
+### Features
+
+* column toggle in node table — hide/show columns with localStorage ([dc1b132](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/dc1b132c7b2c7eaf1e11aca2cfcff34f1475886a))
+* multi-agent observability, store resilience, and dashboard insights ([7996573](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/79965737b2a809ed4d4e9dd22dff6a3e08ae2406))
+* Overview dashboard tab — KPI cards, health gauge, quick actions ([53f7204](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/53f7204f683305f63a0aef0b9c60c4b7aaf47741))
+* vector quantization — Float64 to Int8 scalar compression for embeddings ([f1125e1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f1125e1b43afd5d43e03f71cc26320c1fc299f7e))
+
+
+### Bug Fixes
+
+* align test assertions with async multiStrategySearch, migration 38, and dual embeddings ([558dc38](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/558dc38a6a34b50fdbdc7e41b3e897e846293635))
+* increase touch targets in node table — py-1.5→py-2.5, badges text-xs ([4641bec](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4641bec2946c96c3986fb3b28a9a2326d47aba4c))
+* relax PPR benchmark threshold 10ms→50ms for CI runner variability ([c4cd737](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c4cd73735adabbc079983073edc740a4494202d6))
+* resolve high-severity npm audit vulnerabilities (hono, basic-ftp) ([81db2b1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/81db2b123873633bfbea02291ff5ba429758e907))
+
 ## [9.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.0.0...mcp-graph-v9.1.0) (2026-04-13)
 
 
