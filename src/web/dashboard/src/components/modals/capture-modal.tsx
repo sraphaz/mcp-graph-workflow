@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { apiClient } from "@/lib/api-client";
+import { useDialogA11y } from "@/hooks/use-dialog-a11y";
 
 interface CaptureModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ export function CaptureModal({ open, onClose, onImported }: CaptureModalProps): 
   const [status, setStatus] = useState<{ type: "info" | "success" | "error"; message: string } | null>(null);
   const [result, setResult] = useState<CaptureResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const dialogRef = useDialogA11y(open, onClose);
 
   const handleCapture = useCallback(async () => {
     if (!url.trim()) {
@@ -72,15 +74,6 @@ export function CaptureModal({ open, onClose, onImported }: CaptureModalProps): 
     setStatus({ type: "success", message: "Copied to clipboard!" });
   }, [result]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   return (
@@ -88,9 +81,16 @@ export function CaptureModal({ open, onClose, onImported }: CaptureModalProps): 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-surface rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="capture-modal-title"
+        tabIndex={-1}
+        className="bg-surface rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Capture Web Page</h2>
+          <h2 id="capture-modal-title" className="text-lg font-semibold">Capture Web Page</h2>
           <button onClick={onClose} className="text-muted hover:text-foreground text-xl">&times;</button>
         </div>
 

@@ -11,6 +11,7 @@
  */
 
 import type Database from "better-sqlite3";
+import { McpGraphError } from "../utils/errors.js";
 import type { DreamCycleConfig, DreamCycleResult, DreamStatus, DreamPhase } from "./dream-types.js";
 import { DreamCycleConfigSchema, DEFAULT_DREAM_CONFIG } from "./dream-types.js";
 import { saveDreamCycle, updateDreamCycle } from "./dream-store.js";
@@ -150,7 +151,7 @@ export class DreamEngine {
       const errorMessage = err instanceof Error ? err.message : String(err);
       this.emitEvent("dream:cycle_failed", { cycleId, errorMessage });
       logger.error("dream:cycle:failed", { cycleId, error: errorMessage });
-      throw err;
+      throw new McpGraphError(`Dream cycle ${cycleId} failed: ${errorMessage}`);
     } finally {
       this.running = false;
       this.currentPhase = undefined;
@@ -212,7 +213,7 @@ export class DreamEngine {
     nremResult: DreamCycleResult["phases"]["nrem"],
     initial: DreamCycleResult,
   ): DreamCycleResult {
-    return {
+    const result: DreamCycleResult = {
       ...initial,
       id: cycleId,
       startedAt,
@@ -221,5 +222,14 @@ export class DreamEngine {
       config,
       phases: { ...initial.phases, nrem: nremResult },
     };
+
+    // Bug #E13-T05: persist cancelled status to DB and emit event
+    if (!config.dryRun) {
+      updateDreamCycle(this.db, result);
+    }
+    this.emitEvent("dream:cycle_cancelled", { cycleId, phase: this.currentPhase });
+    logger.info("dream:cycle:cancelled", { cycleId, phase: this.currentPhase });
+
+    return result;
   }
 }

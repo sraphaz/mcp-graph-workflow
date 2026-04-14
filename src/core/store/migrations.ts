@@ -1246,6 +1246,23 @@ const migrations: Migration[] = [
         ON edges(project_id, from_node, to_node, relation_type);
     `,
   },
+  {
+    version: 45,
+    description: "Add UNIQUE constraint on knowledge_documents(content_hash, source_id) to prevent dedup race condition",
+    sql: `
+      -- Remove any existing duplicates (keep oldest by rowid)
+      DELETE FROM knowledge_documents
+        WHERE rowid NOT IN (
+          SELECT MIN(rowid)
+          FROM knowledge_documents
+          GROUP BY content_hash, source_id
+        );
+
+      -- Add UNIQUE index to enforce dedup at DB level
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_knowledge_content_hash_source_id
+        ON knowledge_documents(content_hash, source_id);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

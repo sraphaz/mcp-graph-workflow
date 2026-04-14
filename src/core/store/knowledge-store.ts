@@ -80,41 +80,39 @@ export class KnowledgeStore {
       throw new McpGraphError(`Content too large (${doc.content.length} chars, max ${KnowledgeStore.MAX_CONTENT_SIZE}). Chunk the content before indexing.`);
     }
     const hash = contentHash(doc.content);
+    const id = generateId("kdoc");
+    const timestamp = now();
 
-    // Bug #E1-T05: wrap dedup check + insert in transaction to prevent race condition
-    return this.db.transaction(() => {
+    // Bug #E1-T05: use INSERT OR IGNORE with UNIQUE(content_hash, source_id) constraint
+    // to prevent race condition — no SELECT+INSERT gap where duplicates can sneak in
+    const result = this.db.prepare(
+      `INSERT OR IGNORE INTO knowledge_documents
+        (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      id,
+      doc.sourceType,
+      doc.sourceId,
+      doc.title,
+      doc.content,
+      hash,
+      doc.chunkIndex ?? 0,
+      doc.metadata ? JSON.stringify(doc.metadata) : null,
+      timestamp,
+      timestamp,
+    );
+
+    if (result.changes === 0) {
+      // Dedup hit — return existing document
+      logger.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
       const existing = this.db
         .prepare("SELECT * FROM knowledge_documents WHERE content_hash = ? AND source_id = ?")
-        .get(hash, doc.sourceId) as KnowledgeRow | undefined;
+        .get(hash, doc.sourceId) as KnowledgeRow;
+      return rowToDoc(existing);
+    }
 
-      if (existing) {
-        logger.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
-        return rowToDoc(existing);
-      }
-
-      const id = generateId("kdoc");
-      const timestamp = now();
-
-      this.db.prepare(
-        `INSERT INTO knowledge_documents
-          (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(
-        id,
-        doc.sourceType,
-        doc.sourceId,
-        doc.title,
-        doc.content,
-        hash,
-        doc.chunkIndex ?? 0,
-        doc.metadata ? JSON.stringify(doc.metadata) : null,
-        timestamp,
-        timestamp,
-      );
-
-      logger.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
-      return this.getById(id) as KnowledgeDocument;
-    })();
+    logger.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
+    return this.getById(id) as KnowledgeDocument;
   }
 
   /**

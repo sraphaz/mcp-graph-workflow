@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { apiClient } from "@/lib/api-client";
+import { useDialogA11y } from "@/hooks/use-dialog-a11y";
 
 interface ImportModalProps {
   open: boolean;
@@ -14,6 +15,7 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): Re
   const [submitting, setSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogA11y(open, onClose);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -43,15 +45,6 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): Re
     }
   }, [file, force, onClose, onImported]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   return (
@@ -59,9 +52,16 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): Re
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-surface rounded-lg shadow-xl w-full max-w-md p-6">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-modal-title"
+        tabIndex={-1}
+        className="bg-surface rounded-lg shadow-xl w-full max-w-md p-6"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Import PRD</h2>
+          <h2 id="import-modal-title" className="text-lg font-semibold">Import PRD</h2>
           <button onClick={onClose} className="text-muted hover:text-foreground text-xl">&times;</button>
         </div>
 

@@ -83,14 +83,25 @@ interface EdgeRow {
 /** Safely serialize a value to JSON, replacing NaN/Infinity with null and catching circular refs. */
 function safeJsonStringify(value: unknown, field: string, nodeId: string): string | null {
   if (value === null || value === undefined) return null;
+  let hadNonFinite = false;
   try {
-    return JSON.stringify(value, (_key, v) => {
-      if (typeof v === "number" && !Number.isFinite(v)) return null;
+    const result = JSON.stringify(value, (_key, v) => {
+      if (typeof v === "number" && !Number.isFinite(v)) {
+        hadNonFinite = true;
+        return null;
+      }
       return v;
     });
+    if (hadNonFinite) {
+      logger.warn("Non-finite number sanitized to null in node field", { nodeId, field });
+    }
+    return result;
   } catch (err) {
     logger.warn("Failed to serialize node field", { nodeId, field, error: String(err) });
-    return null;
+    throw new ValidationError(
+      `Invalid JSON in field '${field}' for node '${nodeId}': ${String(err)}`,
+      [{ field, nodeId, error: String(err) }],
+    );
   }
 }
 
@@ -178,8 +189,29 @@ const MAX_EDGE_METADATA_SIZE = 100_000;
 const MAX_NODE_METADATA_SIZE = 100_000;
 
 function edgeToRow(edge: GraphEdge, projectId: string): EdgeRow {
-  // Bug #055: validate edge metadata JSON size
-  const metadataJson = edge.metadata ? JSON.stringify(edge.metadata) : null;
+  // Bug #055: validate edge metadata JSON size + Bug #E1-T04: validate JSON
+  let metadataJson: string | null = null;
+  if (edge.metadata) {
+    let hadNonFinite = false;
+    try {
+      metadataJson = JSON.stringify(edge.metadata, (_key, v) => {
+        if (typeof v === "number" && !Number.isFinite(v)) {
+          hadNonFinite = true;
+          return null;
+        }
+        return v;
+      });
+    } catch (err) {
+      logger.warn("Failed to serialize edge metadata", { edgeId: edge.id, error: String(err) });
+      throw new ValidationError(
+        `Invalid JSON in field 'metadata' for edge '${edge.id}': ${String(err)}`,
+        [{ field: "metadata", edgeId: edge.id, error: String(err) }],
+      );
+    }
+    if (hadNonFinite) {
+      logger.warn("Non-finite number sanitized to null in edge metadata", { edgeId: edge.id });
+    }
+  }
   if (metadataJson && metadataJson.length > MAX_EDGE_METADATA_SIZE) {
     throw new ValidationError(`Edge metadata too large (${metadataJson.length} chars, max ${MAX_EDGE_METADATA_SIZE})`, []);
   }
@@ -481,6 +513,10 @@ export class SqliteStore {
       if (metadataJson.length > MAX_NODE_METADATA_SIZE) {
         throw new ValidationError(`Node metadata too large (${metadataJson.length} chars, max ${MAX_NODE_METADATA_SIZE})`, []);
       }
+    }
+    // Bug #E1-T09: reject self-referencing parentId on insert
+    if (node.parentId && node.parentId === node.id) {
+      throw new ValidationError(`Node '${node.id}' cannot be its own parent`, []);
     }
 
     const pid = this.ensureProject();
@@ -925,16 +961,26 @@ export class SqliteStore {
       throw err;
     }
     const pid = this.ensureProject();
-    const row = edgeToRow(edge, pid);
-    const result = this.db
-      .prepare(
-        `INSERT OR IGNORE INTO edges
-          (id, project_id, from_node, to_node, relation_type, weight, reason, metadata, created_at)
-         VALUES
-          (@id, @project_id, @from_node, @to_node, @relation_type, @weight, @reason, @metadata, @created_at)`,
-      )
-      .run(row);
-    if (result.changes > 0) {
+    // Bug #E4-T02: check node existence inside transaction to prevent TOCTOU
+    const inserted = this.db.transaction(() => {
+      const fromExists = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?").get(edge.from, pid);
+      const toExists = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?").get(edge.to, pid);
+      if (!fromExists || !toExists) {
+        logger.debug("edge:insert:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to, fromExists: !!fromExists, toExists: !!toExists });
+        return false;
+      }
+      const row = edgeToRow(edge, pid);
+      this.db
+        .prepare(
+          `INSERT OR IGNORE INTO edges
+            (id, project_id, from_node, to_node, relation_type, weight, reason, metadata, created_at)
+           VALUES
+            (@id, @project_id, @from_node, @to_node, @relation_type, @weight, @reason, @metadata, @created_at)`,
+        )
+        .run(row);
+      return true;
+    })();
+    if (inserted) {
       this._eventBus?.emitTyped("edge:created", { edgeId: edge.id, from: edge.from, to: edge.to, relationType: edge.relationType });
     }
   }
@@ -1055,7 +1101,15 @@ export class SqliteStore {
           )
           .run(row);
       }
+      // Bug #E4-T02: validate node existence inside transaction before edge insert
+      const nodeExistsStmt = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?");
       for (const edge of edges) {
+        const fromExists = nodeExistsStmt.get(edge.from, pid);
+        const toExists = nodeExistsStmt.get(edge.to, pid);
+        if (!fromExists || !toExists) {
+          logger.debug("bulk-insert:edge:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to });
+          continue;
+        }
         const row = edgeToRow(edge, pid);
         this.db
           .prepare(
@@ -1102,7 +1156,15 @@ export class SqliteStore {
           .run(row);
         nodesInserted += result.changes;
       }
+      // Bug #E4-T02: validate node existence inside transaction before edge insert
+      const nodeExistsStmt = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?");
       for (const edge of edges) {
+        const fromExists = nodeExistsStmt.get(edge.from, pid);
+        const toExists = nodeExistsStmt.get(edge.to, pid);
+        if (!fromExists || !toExists) {
+          logger.debug("merge-insert:edge:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to });
+          continue;
+        }
         const row = edgeToRow(edge, pid);
         const result = this.db
           .prepare(
@@ -1265,7 +1327,7 @@ export class SqliteStore {
 
   // ── Restore snapshot ──────────────────────────
 
-  restoreSnapshot(snapshotId: number): void {
+  restoreSnapshot(snapshotId: number): { nodesValid: number; nodesInvalid: number; edgesRestored: number } {
     const pid = this.ensureProject();
     logger.debug("tx:restore-snapshot", { snapshotId });
     const row = this.db
@@ -1288,11 +1350,29 @@ export class SqliteStore {
       throw new McpGraphError(`Corrupt snapshot ${snapshotId}: ${err instanceof Error ? err.message : String(err)}`);
     }
 
+    // Bug #E1-T11: validate each node with GraphNodeSchema before insert
+    const validNodes: GraphNode[] = [];
+    let nodesInvalid = 0;
+    for (const node of doc.nodes) {
+      const result = GraphNodeSchema.safeParse(node);
+      if (result.success) {
+        validNodes.push(result.data as GraphNode);
+      } else {
+        nodesInvalid++;
+        logger.warn("Invalid node in snapshot — skipped", {
+          snapshotId,
+          nodeId: (node as unknown as Record<string, unknown>).id ?? "unknown",
+          issues: result.error.issues.map((i) => i.message).join("; "),
+        });
+      }
+    }
+
+    let edgesRestored = 0;
     this.db.transaction(() => {
       this.db.prepare("DELETE FROM edges WHERE project_id = ?").run(pid);
       this.db.prepare("DELETE FROM nodes WHERE project_id = ?").run(pid);
 
-      for (const node of doc.nodes) {
+      for (const node of validNodes) {
         const r = nodeToRow(node, pid);
         this.db
           .prepare(
@@ -1319,8 +1399,20 @@ export class SqliteStore {
               (@id, @project_id, @from_node, @to_node, @relation_type, @weight, @reason, @metadata, @created_at)`,
           )
           .run(r);
+        edgesRestored++;
       }
     })();
+
+    if (nodesInvalid > 0) {
+      logger.info("Snapshot restored with invalid nodes skipped", {
+        snapshotId,
+        nodesValid: validNodes.length,
+        nodesInvalid,
+        edgesRestored,
+      });
+    }
+
+    return { nodesValid: validNodes.length, nodesInvalid, edgesRestored };
   }
 
   listSnapshots(): Array<{ snapshotId: number; createdAt: string }> {

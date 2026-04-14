@@ -31,6 +31,7 @@ export type GraphEventType =
   | "dream:phase_started"
   | "dream:phase_completed"
   | "dream:cycle_completed"
+  | "dream:cycle_cancelled"
   | "dream:cycle_failed"
   // Constitution events (spec-kit v8)
   | "constitution:created"

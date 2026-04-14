@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
 import type { BrowseEntry } from "@/lib/types";
+import { useDialogA11y } from "@/hooks/use-dialog-a11y";
 
 interface OpenFolderModalProps {
   open: boolean;
@@ -22,16 +23,7 @@ export function OpenFolderModal({ open, onClose, onFolderChanged }: OpenFolderMo
   const [browseLoading, setBrowseLoading] = useState(false);
   const [browseError, setBrowseError] = useState("");
   const [showBrowser, setShowBrowser] = useState(false);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  const dialogRef = useDialogA11y(open, onClose);
 
   // Load current folder info when modal opens
   useEffect(() => {
@@ -106,9 +98,16 @@ export function OpenFolderModal({ open, onClose, onFolderChanged }: OpenFolderMo
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-surface rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[80vh] flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="open-folder-modal-title"
+        tabIndex={-1}
+        className="bg-surface rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[80vh] flex flex-col"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Open Folder</h2>
+          <h2 id="open-folder-modal-title" className="text-lg font-semibold">Open Folder</h2>
           <button onClick={onClose} className="text-muted hover:text-foreground text-xl">&times;</button>
         </div>
 
@@ -128,7 +127,6 @@ export function OpenFolderModal({ open, onClose, onFolderChanged }: OpenFolderMo
               onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
               placeholder="/path/to/project"
               className="flex-1 px-3 py-2 text-sm bg-surface-alt border border-edge rounded font-mono focus:outline-none focus:border-accent"
-              autoFocus
             />
             <button
               onClick={() => void handleSubmit()}

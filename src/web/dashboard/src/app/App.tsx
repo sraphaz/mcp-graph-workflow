@@ -52,6 +52,16 @@ const TAB_LABELS: Record<TabId, string> = {
   harness: "Harness",
 };
 
+const CHUNK_RETRY_KEY = "chunk_retry_attempted";
+
+function isChunkLoadError(error: Error | null): boolean {
+  if (!error) return false;
+  const msg = error.message.toLowerCase();
+  return msg.includes("dynamically imported module") ||
+    msg.includes("loading chunk") ||
+    msg.includes("failed to fetch");
+}
+
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
@@ -62,14 +72,31 @@ class ErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error): void {
+    // AC1: on chunk load failure, try a controlled reload once
+    if (isChunkLoadError(error) && !sessionStorage.getItem(CHUNK_RETRY_KEY)) {
+      console.warn("[ErrorBoundary] Chunk load failed, attempting reload:", error.message);
+      sessionStorage.setItem(CHUNK_RETRY_KEY, "1");
+      window.location.reload();
+    }
+  }
+
   render(): React.ReactNode {
     if (this.state.hasError) {
+      const isChunk = isChunkLoadError(this.state.error);
       return (
         <div className="flex flex-col items-center justify-center h-full gap-4 text-muted">
-          <p className="text-sm">Something went wrong.</p>
+          <p className="text-sm">
+            {isChunk
+              ? "This tab failed to load. The app may have been updated."
+              : "Something went wrong."}
+          </p>
           <p className="text-xs text-danger">{this.state.error?.message}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              sessionStorage.removeItem(CHUNK_RETRY_KEY);
+              window.location.reload();
+            }}
             className="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:opacity-90 transition-opacity"
           >
             Reload
