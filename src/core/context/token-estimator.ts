@@ -43,9 +43,23 @@ export function estimateTokens(text: string): number {
     if (isAsciiLetter(code)) {
       const start = i;
       i++;
-      while (i < len && isAsciiLetter(text.charCodeAt(i))) i++;
+      // Count camelCase transitions as separate sub-words (BPE splits on case boundaries)
+      let subWords = 1;
+      while (i < len && isAsciiLetter(text.charCodeAt(i))) {
+        // Detect camelCase: lowercase followed by uppercase
+        if (i > start && text.charCodeAt(i) >= 65 && text.charCodeAt(i) <= 90 &&
+            text.charCodeAt(i - 1) >= 97 && text.charCodeAt(i - 1) <= 122) {
+          subWords++;
+        }
+        i++;
+      }
       const wordLen = i - start;
-      tokens += wordLen <= 6 ? 1 : Math.ceil(wordLen / 5);
+      if (subWords > 1) {
+        // camelCase: BPE splits on case boundaries, each sub-word is ~1 token
+        tokens += subWords;
+      } else {
+        tokens += wordLen <= 6 ? 1 : Math.ceil(wordLen / 5);
+      }
       continue;
     }
 
