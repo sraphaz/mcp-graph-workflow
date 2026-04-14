@@ -8,12 +8,12 @@ export const RelationTypeSchema = z.enum([
 ]);
 
 export const GraphEdgeSchema = z.object({
-  id: z.string(),
-  from: z.string(),
-  to: z.string(),
+  id: z.string().max(100),
+  from: z.string().max(100),
+  to: z.string().max(100),
   relationType: RelationTypeSchema,
   weight: z.number().min(0).max(1).optional(),
-  reason: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  reason: z.string().max(2000).optional(),
+  metadata: z.record(z.string().max(100), z.unknown()).optional(),
   createdAt: z.string(),
 });
