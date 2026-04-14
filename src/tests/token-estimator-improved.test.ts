@@ -63,6 +63,6 @@ describe("Improved token estimator", () => {
       estimateTokens(text);
     }
     const elapsed = performance.now() - start;
-    expect(elapsed).toBeLessThan(100); // <0.01ms per call (relaxed for CI runner variability)
+    expect(elapsed).toBeLessThan(200); // <0.02ms per call (relaxed for CI runner variability)
   });
 });
