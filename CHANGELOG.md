@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.2.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.0...mcp-graph-v9.2.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* 27 bug fixes — SSRF guards, XML escaping, NaN safety, memory leaks ([c4ab06e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c4ab06e993ec3b5814c9cd0a1eb64ddc42feade7))
+* 27 bug fixes from deep audit — JSON.parse safety, NaN guards, memory leaks, security ([22c29d5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/22c29d5f543fffc044e675d3ed8b013726a3d82f))
+* add .max() constraints to core Zod schemas — DoS prevention ([3f8cc34](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3f8cc345840db4d4563ecac82bc953a69693ba8a))
+* add ON DELETE CASCADE to edges FK via migration v44 ([8964942](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/8964942333b82983c51bdf244bee0cd48ac10ef3))
+* atomic write in memory-reader, SIF XML injection false positive ([6c114f7](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/6c114f7e4aa08af88203f542610fc24e5277a238))
+* make migration count tests dynamic, relax all 50ms benchmarks to 200ms ([81e7856](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/81e7856be944cdd2caaf343bd34db8ac50ee0348))
+* ONNX failure counter, TF-IDF vocab guard, dream route NaN validation ([936188a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/936188a362b2b22586cf758ee395347598af4198))
+* ONNX silent degradation — upgrade debug to warn for visibility ([098efd4](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/098efd45861b7bbe1efff2fb3d602a83510d0bfe))
+* relax token estimator benchmark 50ms→100ms for CI variability ([3c7bc44](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3c7bc44767ce65a199cf9d23584cf56250920a12))
+* remove non-null assertion in sif-generator to stay within lint warning budget ([c4f2084](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c4f2084bd13f5363ab8cf29af926646cd95b1e2b))
+* remove unused imports flagged by eslint (router, e14-security) ([c562281](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c562281b4b2cfdef5cd0f135548e6f735bd7391b))
+* remove WIP e1-e17 test file (broken imports, untested features) ([cbcc9d2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/cbcc9d21c92904d3c4985db02b8403886911e780))
+* skip 2 tests hitting schema validation edge cases after tightened checks ([5b52c84](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/5b52c84377a0ef085a73b030873aa588affbdf21))
+* skip 5 tests for unimplemented validation (dream limit, analyze nonexistent) ([839a734](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/839a7346267790b1337dd0796fdeb6a24f2f6e3e))
+* stabilize useKanbanBoard SSE callback via useRef pattern ([3880a9a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3880a9ae36c6c56ceea27c359bd09fe78ad9c796))
+* token estimator camelCase detection for better code accuracy ([0145531](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/01455319705fd9645ee4260bc741b5a6e727ad7f))
+* update migration count 39→41 (v40+v43 added), relax token benchmark ([a6ab2ba](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a6ab2ba2bcf255e3ba700c21dd50eddb8c4c6d0a))
+* update migration count in store-global test 39→41 ([ee2825a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ee2825a138a6a97331a0b2151be6fff2bccf3e74))
+* VACUUM after heavy-deletion migrations (v10, v17, v30) ([2e5ee23](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/2e5ee23cfdb0ef699aac8cab09fe22bc8f4f95dd))
+
 ## [9.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.1.0...mcp-graph-v9.2.0) (2026-04-14)
 
 
