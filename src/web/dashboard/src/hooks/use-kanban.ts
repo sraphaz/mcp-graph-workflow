@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
 import { useSSE } from "@/hooks/use-sse";
 import type { KanbanBoard, KanbanSuggestion, SwimlaneMode } from "@/lib/types";
@@ -26,16 +26,21 @@ export function useKanbanBoard(swimlane?: SwimlaneMode) {
     }
   }, [swimlane]);
 
+  // Stable ref for SSE callback — avoids re-registering listeners on each render
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
   // SSE: auto-refresh kanban when node status or structure changes
+  // Uses stable callback via ref to prevent duplicate SSE listener registration
   useSSE(useCallback((event: string) => {
     if (event.startsWith("node:") || event.startsWith("edge:") || event === "import:completed") {
-      void refresh();
+      void refreshRef.current();
     }
-  }, [refresh]));
+  }, []));
 
   const moveCard = useCallback(async (nodeId: string, newStatus: string) => {
     const result = await apiClient.moveKanbanCard(nodeId, newStatus);
