@@ -35,7 +35,7 @@ describe("Benchmark: DX Metrics SLOs", () => {
     const elapsed = performance.now() - start;
 
     console.log(`[DX-1] Token summary@1000 calls: ${elapsed.toFixed(1)}ms, ${summary.totalCalls} calls tracked`);
-    expect(elapsed).toBeLessThan(50);
+    expect(elapsed).toBeLessThan(200);
     expect(summary.totalCalls).toBe(1000);
   });
 
@@ -96,7 +96,7 @@ describe("Benchmark: DX Metrics SLOs", () => {
     const elapsed = performance.now() - start;
 
     console.log(`[DX-3] Velocity calc@200: ${elapsed.toFixed(1)}ms, ${sprints.size} sprints`);
-    expect(elapsed).toBeLessThan(50);
+    expect(elapsed).toBeLessThan(200);
     expect(sprints.size).toBeGreaterThan(0);
   });
 

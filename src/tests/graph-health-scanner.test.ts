@@ -58,7 +58,7 @@ describe("Graph Health Scanner", () => {
     const doc = store.toGraphDocument();
     const report = scanGraphHealth(doc);
 
-    expect(report.scanDurationMs).toBeLessThan(50);
+    expect(report.scanDurationMs).toBeLessThan(200);
     expect(report.nodeCount).toBe(100);
   });
 

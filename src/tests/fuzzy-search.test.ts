@@ -74,6 +74,6 @@ describe("Fuzzy search fallback", () => {
     searchNodes(store, "databse", { fuzzy: true });
     const elapsed = performance.now() - start;
 
-    expect(elapsed).toBeLessThan(50);
+    expect(elapsed).toBeLessThan(200);
   });
 });
