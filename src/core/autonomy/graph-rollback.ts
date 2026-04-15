@@ -1,0 +1,112 @@
+/**
+ * Graph Rollback — Transactional State Recovery (Graph Transaction Manager)
+ *
+ * Provides checkpoint creation and rollback for graph state,
+ * enabling "undo" for failed agent task execution.
+ *
+ * Based on:
+ * - Transactional File Systems (TFS) for Agents
+ * - Compensating Actions (Sagas pattern)
+ * - MTTR-A measurement (Mean Time to Recovery — Agent)
+ */
+
+import type { SqliteStore } from "../store/sqlite-store.js";
+import { logger } from "../utils/logger.js";
+
+// ── Types ───────────────────────────────────────────────
+
+export interface GraphCheckpoint {
+  nodeId: string;
+  snapshotId: number;
+  nodeCount: number;
+  edgeCount: number;
+  createdAt: string;
+}
+
+export interface RollbackResult {
+  success: boolean;
+  nodesRestored: number;
+  error?: string;
+  /** Mean Time to Recovery — Agent (milliseconds) */
+  mttrMs: number;
+}
+
+// ── Public API ──────────────────────────────────────────
+
+/**
+ * Create a checkpoint of the current graph state before task execution.
+ * Uses SQLite snapshot for atomic state capture.
+ */
+export function createCheckpoint(store: SqliteStore, nodeId: string): GraphCheckpoint {
+  if (!store) throw new Error("Store is required for checkpoint creation");
+  if (!nodeId) throw new Error("Node ID is required for checkpoint creation");
+  const doc = store.toGraphDocument();
+  const snapshotId = store.createSnapshot();
+
+  const checkpoint: GraphCheckpoint = {
+    nodeId,
+    snapshotId,
+    nodeCount: doc?.nodes?.length ?? 0,
+    edgeCount: doc?.edges?.length ?? 0,
+    createdAt: new Date().toISOString(),
+  };
+
+  logger.info("graph-rollback:checkpoint-created", {
+    nodeId,
+    snapshotId,
+    nodeCount: checkpoint.nodeCount,
+    edgeCount: checkpoint.edgeCount,
+  });
+
+  return checkpoint;
+}
+
+/**
+ * Rollback graph state to a previously created checkpoint.
+ * Restores all nodes, edges, and graph structure to the checkpoint state.
+ * Measures MTTR-A (Mean Time to Recovery — Agent).
+ */
+export function rollbackToCheckpoint(
+  store: SqliteStore,
+  checkpoint: GraphCheckpoint,
+): RollbackResult {
+  if (!store) return { success: false, nodesRestored: 0, error: "Store is required", mttrMs: 0 };
+  if (!checkpoint) return { success: false, nodesRestored: 0, error: "Checkpoint is required", mttrMs: 0 };
+  if (!checkpoint?.snapshotId) return { success: false, nodesRestored: 0, error: "Snapshot ID is required", mttrMs: 0 };
+  const start = performance.now();
+
+  try {
+    const result = store.restoreSnapshot(checkpoint?.snapshotId);
+    const mttrMs = Math.round(performance.now() - start);
+
+    logger.info("graph-rollback:restored", {
+      nodeId: checkpoint?.nodeId ?? "",
+      snapshotId: checkpoint?.snapshotId ?? 0,
+      nodesRestored: result?.nodesValid ?? 0,
+      edgesRestored: result?.edgesRestored ?? 0,
+      mttrMs,
+    });
+
+    return {
+      success: true,
+      nodesRestored: result?.nodesValid ?? 0,
+      mttrMs,
+    };
+  } catch (err) {
+    const mttrMs = Math.round(performance.now() - start);
+
+    logger.error("graph-rollback:failed", {
+      nodeId: checkpoint?.nodeId ?? "",
+      snapshotId: checkpoint?.snapshotId ?? 0,
+      error: String(err),
+      mttrMs,
+    });
+
+    return {
+      success: false,
+      nodesRestored: 0,
+      error: String(err),
+      mttrMs,
+    };
+  }
+}
