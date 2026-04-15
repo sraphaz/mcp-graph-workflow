@@ -25,6 +25,7 @@ import { runTestGate, type TestGateResult, type TestGateMode } from "../harness/
 import { checkInvariants, getBuiltInInvariants, type InvariantResult } from "../harness/property-invariants.js";
 import { discoverTestFiles } from "../harness/test-discovery.js";
 import { runSyntheticValidation, type SyntheticValidationResult } from "../harness/synthetic-validation-gate.js";
+import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branch.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -52,6 +53,8 @@ export interface FinishTaskOptions {
   leaseToken?: string;
   /** LockManager instance for teamTask mode */
   lockManager?: LockManager;
+  /** Shadow branch name from start_task (Phase D — Git Transactional Layer) */
+  shadowBranch?: string;
 }
 
 export interface FinishTaskResult {
@@ -97,7 +100,7 @@ export async function finishTask(
   nodeId: string,
   options?: FinishTaskOptions,
 ): Promise<FinishTaskResult> {
-  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager } = options ?? {};
+  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager, shadowBranch } = options ?? {};
   const doc = store.toGraphDocument();
 
   // 0. Update testFiles if provided
@@ -276,6 +279,21 @@ export async function finishTask(
   } else {
     status = "blocked";
     logger.info("pipeline:finish_task:blocked", { nodeId, blockers: blockers.length });
+  }
+
+  // 2.4. Shadow branch resolution (Phase D — Git Transactional Layer)
+  if (shadowBranch) {
+    try {
+      if (status === "done") {
+        const mergeResult = mergeShadowBranch(shadowBranch, "HEAD");
+        logger.info("pipeline:finish_task:shadow_merged", { shadowBranch, merged: mergeResult.merged });
+      } else {
+        const discardResult = discardShadowBranch(shadowBranch, "HEAD");
+        logger.info("pipeline:finish_task:shadow_discarded", { shadowBranch, discarded: discardResult.discarded });
+      }
+    } catch (err) {
+      logger.warn("pipeline:finish_task:shadow_branch_failed", { shadowBranch, error: String(err) });
+    }
   }
 
   // 2.5 — Harness steering loop: record failed DoD checks as issue patterns (non-blocking)
