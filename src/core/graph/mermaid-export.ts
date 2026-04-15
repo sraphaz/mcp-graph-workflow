@@ -103,12 +103,15 @@ function buildGantt(nodes: GraphNode[], edges: GraphEdge[]): string {
 
       let startClause: string;
       if (deps.length > 0) {
-        startClause = `after ${deps.join(" ")}`;
+        // E5-T06: sanitize IDs to prevent Gantt syntax errors from colons
+        startClause = `after ${deps.map((d) => d.replace(/[^a-zA-Z0-9_]/g, "_")).join(" ")}`;
       } else {
         startClause = extractDate(node.createdAt);
       }
 
-      lines.push(`    ${title} :${statusPrefix}${node.id}, ${startClause}, ${days}d`);
+      // E5-T06: sanitize node.id for Gantt syntax (colons break parsing)
+      const ganttId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${title} :${statusPrefix}${ganttId}, ${startClause}, ${days}d`);
     }
   }
 

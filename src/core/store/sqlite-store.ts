@@ -802,8 +802,8 @@ export class SqliteStore {
     params.push(timestamp);
     params.push(id, pid);
 
-    // ── Changelog: diff old vs new for each changed field ──
-    const changelogEntries: Array<{ field: string; oldValue: string | null; newValue: string | null }> = [];
+    // ── Transaction: re-read existing + changelog + optimistic lock + write ──
+    // Fix E1-T01: existing must be read INSIDE transaction to prevent race condition
     const serialize = (v: unknown): string | null => {
       if (v === undefined || v === null) return null;
       if (typeof v === "object") return JSON.stringify(v);
@@ -826,17 +826,21 @@ export class SqliteStore {
       metadata: (n) => n.metadata,
     };
 
-    for (const key of Object.keys(fields) as Array<keyof typeof fields>) {
-      const getter = fieldMap[key];
-      if (!getter) continue;
-      const oldVal = serialize(getter(existing));
-      const newVal = serialize(fields[key]);
-      if (oldVal !== newVal) {
-        changelogEntries.push({ field: key, oldValue: oldVal, newValue: newVal });
-      }
-    }
-
     this.db.transaction(() => {
+      // Re-read existing inside transaction for race-safe changelog diff
+      const txExisting = this.getNodeById(id);
+      const changelogEntries: Array<{ field: string; oldValue: string | null; newValue: string | null }> = [];
+      if (txExisting) {
+        for (const key of Object.keys(fields) as Array<keyof typeof fields>) {
+          const getter = fieldMap[key];
+          if (!getter) continue;
+          const oldVal = serialize(getter(txExisting));
+          const newVal = serialize(fields[key]);
+          if (oldVal !== newVal) {
+            changelogEntries.push({ field: key, oldValue: oldVal, newValue: newVal });
+          }
+        }
+      }
       // Optimistic locking (ADR-08): if expectedVersion provided, verify before write
       if (options?.expectedVersion !== undefined) {
         const current = this.db.prepare(

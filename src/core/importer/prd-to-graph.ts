@@ -330,8 +330,9 @@ export function convertToGraph(
       };
       const parentRank = TYPE_RANK[parent.type] ?? 2;
       const childRank = TYPE_RANK[node.type] ?? 2;
-      // Bug #101: only assign parent if not already set by Pass 1 (explicit extraction)
-      if (parentRank >= childRank && !node.parentId) {
+      // E5-T04: heading hierarchy takes priority — override Pass 1 parentId
+      // if heading-based parent has valid type rank relationship
+      if (parentRank >= childRank) {
         node.parentId = parent.id;
         edges.push(createEdge(parent.id, node.id, "parent_of", "Heading hierarchy", false, 1));
         edges.push(createEdge(node.id, parent.id, "child_of", "Heading hierarchy", false, 1));
