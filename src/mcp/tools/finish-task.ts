@@ -17,13 +17,20 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       testFiles: z.array(z.string()).optional().describe("Test file paths to associate with this task"),
       autoNext: z.boolean().optional().describe("Return next recommended task (default: true)"),
       qualityGates: z.array(z.string()).optional().describe("Optional quality gate modes to run: security_scan, code_quality, test_coverage, observability_check"),
+      citations: z.array(z.object({
+        docId: z.string(),
+        sourceType: z.string(),
+        snippet: z.string(),
+        confidence: z.number(),
+        chunkIndex: z.number(),
+      })).optional().describe("RAG citations that informed the decision (provenance tracking)"),
       agentId: z.string().optional().describe("Agent ID for teamTask mode — verifies task ownership"),
       leaseToken: z.string().optional().describe("Lease token from start_task — used to release the lock"),
     },
-    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, agentId, leaseToken }) => {
+    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken }) => {
       logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, agentId, leaseToken, lockManager });
+      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager });
 
       logger.info("tool:finish_task:ok", {
         nodeId,
@@ -75,6 +82,14 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
 
       if (result.testGate) {
         response.testGate = result.testGate;
+      }
+
+      if (result.invariantResult && !result.invariantResult.passed) {
+        response.invariantViolations = result.invariantResult.violations;
+      }
+
+      if (result.discoveredTestFiles && result.discoveredTestFiles.length > 0) {
+        response.discoveredTestFiles = result.discoveredTestFiles;
       }
 
       // Run optional quality gates (advisory mode — never blocks)

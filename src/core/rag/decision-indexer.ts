@@ -11,6 +11,10 @@ export interface DecisionInput {
   title: string;
   rationale: string;
   tags: string[];
+  /** RAG citations that informed this decision */
+  citations?: Array<{ docId: string; sourceType: string; snippet: string; confidence: number; chunkIndex: number }>;
+  /** RAG trace ID for full pipeline traceability */
+  ragTraceId?: string;
 }
 
 export interface IndexResult {
@@ -38,6 +42,10 @@ export function indexDecision(
       tags: decision.tags,
       phase: "IMPLEMENT",
       indexedAt: new Date().toISOString(),
+      ...(decision.citations && decision.citations.length > 0
+        ? { citations: decision.citations, citationCount: decision.citations.length }
+        : {}),
+      ...(decision.ragTraceId ? { ragTraceId: decision.ragTraceId } : {}),
     },
   });
 

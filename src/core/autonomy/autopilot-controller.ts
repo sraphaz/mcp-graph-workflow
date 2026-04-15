@@ -18,6 +18,15 @@
  */
 
 import { computeConfidence, type ConfidenceInput } from "./confidence-scorer.js";
+import { z } from "zod/v4";
+import { McpGraphError } from "../utils/errors.js";
+
+const EvaluateInputSchema = z.object({
+  nextNodeType: z.string().min(1),
+  harnessScore: z.number().min(0).max(100),
+  ragRelevance: z.number().min(0).max(1),
+  historicalSuccessRate: z.number().min(0).max(1),
+});
 import { logger } from "../utils/logger.js";
 
 // ── Types ───────────────────────────────────────────────
@@ -84,6 +93,7 @@ export class AutopilotController {
    * Start a new autopilot session for a sprint.
    */
   start(sprintId: string): AutopilotSession {
+    if (!sprintId?.trim()) throw new McpGraphError("Sprint ID is required to start autopilot");
     this.session = {
       id: `autopilot_${Date.now()}`,
       sprintId,
@@ -103,6 +113,9 @@ export class AutopilotController {
    * Applies guardrails in priority order (hard-coded, non-negotiable).
    */
   evaluateNext(input: EvaluateInput): AutopilotDecision {
+    if (!input) throw new McpGraphError("EvaluateInput is required");
+    const validated = EvaluateInputSchema.safeParse(input);
+    if (!validated.success) throw new McpGraphError(`Invalid evaluate input: ${validated.error?.message ?? "validation failed"}`);
     if (!this.session || this.session.status !== "running") {
       return { action: "stop", reason: "No active autopilot session", confidence: 0 };
     }

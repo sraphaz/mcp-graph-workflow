@@ -15,6 +15,16 @@
  */
 
 import { logger } from "../utils/logger.js";
+import { z } from "zod/v4";
+import { McpGraphError } from "../utils/errors.js";
+
+// ── Zod Schemas ────────────────────────────────────────
+
+export const ConfidenceInputSchema = z.object({
+  ragRelevance: z.number().min(0).max(1),
+  harnessScore: z.number().min(0).max(100),
+  historicalSuccessRate: z.number().min(0).max(1),
+});
 
 // ── Types ───────────────────────────────────────────────
 
@@ -62,6 +72,9 @@ const PAUSE_THRESHOLD = 50;
  * Formula: score = ragRelevance*100*0.40 + harnessScore*0.30 + historicalSuccess*100*0.30
  */
 export function computeConfidence(input: ConfidenceInput): ConfidenceDecision {
+  if (!input) throw new McpGraphError("ConfidenceInput is required");
+  const parsed = ConfidenceInputSchema.safeParse(input);
+  if (!parsed.success) throw new McpGraphError(`Invalid confidence input: ${parsed.error?.message ?? "validation failed"}`);
   const ragContribution = input.ragRelevance * 100 * RAG_WEIGHT;
   const harnessContribution = input.harnessScore * HARNESS_WEIGHT;
   const historicalContribution = input.historicalSuccessRate * 100 * HISTORICAL_WEIGHT;

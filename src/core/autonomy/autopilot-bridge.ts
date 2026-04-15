@@ -8,6 +8,14 @@
  */
 
 import { AutopilotController, type AutopilotConfig, type AutopilotSession } from "./autopilot-controller.js";
+import { z } from "zod/v4";
+import { McpGraphError } from "../utils/errors.js";
+
+const PhaseChangeInputSchema = z.object({
+  phase: z.string().min(1),
+  autopilot: z.boolean().optional(),
+  sprintId: z.string().optional(),
+});
 import { logger } from "../utils/logger.js";
 
 // ── Types ───────────────────────────────────────────────
@@ -46,6 +54,8 @@ export class AutopilotBridge {
     autopilot: boolean | undefined,
     sprintId?: string,
   ): PhaseChangeResult {
+    if (!phase?.trim()) throw new McpGraphError("Phase is required for autopilot phase change");
+    const _validated = PhaseChangeInputSchema.safeParse({ phase, autopilot, sprintId });
     // No autopilot param → backward compatible no-op
     if (autopilot === undefined) {
       return { autopilotActive: this.active, action: "unchanged" };

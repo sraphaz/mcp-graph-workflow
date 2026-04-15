@@ -50,3 +50,6 @@ export type { TestCoverageResult, TestFileInfo, TestCoverageOptions } from './te
 export { scanTypeCoverage } from './type-coverage-scanner.js';
 export type { TypeCoverageResult, TypeCoverageOptions } from './type-coverage-scanner.js';
 export type { HarnessDimension, RemediationCategory, ViolationDetail, RemediationSuggestion, ValidationResult } from './violation-detail.js';
+export { checkInvariants, getBuiltInInvariants } from './property-invariants.js';
+export type { PropertyInvariant, InvariantViolation, InvariantResult } from './property-invariants.js';
+export { discoverTestFiles } from './test-discovery.js';
