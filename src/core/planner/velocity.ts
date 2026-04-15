@@ -101,7 +101,8 @@ export function calculateVelocity(doc: GraphDocument): VelocitySummary {
 
   const totalTasksCompleted = doneTasks.length;
   const totalPoints = sprints.reduce((sum, s) => sum + s.totalPoints, 0);
-  const sprintCount = sprints.length > 0 ? sprints.length : 1;
+  // E3-T05: Use real sprint count, not fallback || 1
+  const sprintCount = sprints.length;
 
   const allHours = sprints
     .flatMap((s) => s.tasks)
@@ -140,7 +141,7 @@ export function calculateVelocity(doc: GraphDocument): VelocitySummary {
     overall: {
       totalTasksCompleted,
       totalPoints,
-      avgPointsPerSprint: Math.round((totalPoints / sprintCount) * 10) / 10,
+      avgPointsPerSprint: sprintCount > 0 ? Math.round((totalPoints / sprintCount) * 10) / 10 : 0,
       avgCompletionHours: allHours.length > 0
         ? Math.round((allHours.reduce((a, b) => a + b, 0) / allHours.length) * 10) / 10
         : null,
@@ -154,8 +155,8 @@ export function calculateVelocity(doc: GraphDocument): VelocitySummary {
  */
 function computeCompletionHours(node: GraphNode): number | null {
   try {
-    // Bug #094: guard null/undefined timestamps before Date parse
-    if (!node.createdAt || !node.updatedAt) return null;
+    // Bug #094 + E5-T02: guard null/undefined/empty timestamps before Date parse
+    if (!node.createdAt?.trim() || !node.updatedAt?.trim()) return null;
     const created = new Date(node.createdAt).getTime();
     const updated = new Date(node.updatedAt).getTime();
     if (isNaN(created) || isNaN(updated) || updated <= created) return null;
