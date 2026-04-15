@@ -22,6 +22,7 @@ import type { LockManager } from "../store/lock-manager.js";
 import { LockConflictError } from "../utils/errors.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
+import { createShadowBranch } from "../autonomy/shadow-branch.js";
 import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 
@@ -54,6 +55,8 @@ export interface StartTaskResult {
   prefetchHit?: boolean;
   /** Graph checkpoint for rollback on failure (Phase D — Autonomous Loop) */
   checkpoint?: GraphCheckpoint;
+  /** Shadow branch name for isolated execution (Phase D — Git Transactional Layer) */
+  shadowBranch?: string;
 }
 
 /**
@@ -191,12 +194,24 @@ export function startTask(
 
   // 6b. Create checkpoint for rollback on failure (Phase D — Autonomous Loop)
   let checkpoint: GraphCheckpoint | undefined;
+  let shadowBranch: string | undefined;
   if (startedAt) {
     try {
       checkpoint = createCheckpoint(store, taskNode.id);
       logger.info("pipeline:start_task:checkpoint", { nodeId: taskNode.id, snapshotId: checkpoint.snapshotId });
     } catch (err) {
       logger.warn("pipeline:start_task:checkpoint_failed", { error: String(err) });
+    }
+
+    // 6c. Create shadow branch for isolated execution (Phase D — Git Transactional Layer)
+    try {
+      const branchResult = createShadowBranch(taskNode.id);
+      if (branchResult.created) {
+        shadowBranch = branchResult.branchName;
+        logger.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: shadowBranch });
+      }
+    } catch (err) {
+      logger.warn("pipeline:start_task:shadow_branch_failed", { error: String(err) });
     }
   }
 
@@ -219,5 +234,6 @@ export function startTask(
     ...(leaseToken ? { leaseToken } : {}),
     ...(prefetchHit ? { prefetchHit } : {}),
     ...(checkpoint ? { checkpoint } : {}),
+    ...(shadowBranch ? { shadowBranch } : {}),
   };
 }

@@ -26,11 +26,12 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       })).optional().describe("RAG citations that informed the decision (provenance tracking)"),
       agentId: z.string().optional().describe("Agent ID for teamTask mode — verifies task ownership"),
       leaseToken: z.string().optional().describe("Lease token from start_task — used to release the lock"),
+      shadowBranch: z.string().optional().describe("Shadow branch name from start_task — merged on done, discarded on blocked"),
     },
-    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken }) => {
+    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch }) => {
       logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager });
+      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch });
 
       logger.info("tool:finish_task:ok", {
         nodeId,
