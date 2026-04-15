@@ -18,6 +18,7 @@ import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
+import type { CitationRef } from "../rag/citation-chain.js";
 
 // Module-level cache for assembleContext results (detail path)
 const assemblerCache = new ResponseCache({ ttlMs: 2 * 60 * 1000, maxSize: 50 });
@@ -63,6 +64,8 @@ export interface ContextSection {
   source: string;
   content: string;
   tokens: number;
+  /** RAG Provenance — citation references for this section (empty array if none) */
+  citations?: CitationRef[];
 }
 
 export interface AssemblerOptions {

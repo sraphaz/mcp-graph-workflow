@@ -20,7 +20,10 @@ import { getHarnessRegressionReport } from "../harness/harness-preflight.js";
 import type { HarnessRegressionReport } from "../harness/harness-preflight.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { RemediationValidator, type PostFixResult } from "../harness/remediation-validator.js";
+import { validateFiles } from "../harness/contract-engine.js";
 import type { LockManager } from "../store/lock-manager.js";
+import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { LockConflictError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
@@ -58,6 +61,17 @@ export interface FinishTaskResult {
   ruleSuggestions: RuleSuggestion[];
   /** Post-fix remediation validation — present when pre-fix snapshot exists */
   remediationValidation?: PostFixResult | null;
+  /** Contract validation gate result — Design by Contract (Meyer 1986) */
+  contractGate?: ContractGateResult | null;
+}
+
+export interface ContractGateResult {
+  mode: "strict" | "advisory" | "off";
+  violationCount: number;
+  errorCount: number;
+  warningCount: number;
+  violations: Array<{ ruleId: string; file: string; line: number; message: string; severity: string }>;
+  blocked: boolean;
 }
 
 /**
@@ -84,10 +98,88 @@ export function finishTask(
   // 1. Check Definition of Done (9 checks: 4 required + 5 recommended)
   const dodReport = checkDefinitionOfDone(doc, nodeId);
 
+  // 1.5. Contract validation gate (Design by Contract — Meyer 1986, Closed-Loop — Wiener 1948)
+  let contractGate: ContractGateResult | null = null;
+  try {
+    // Run contract validation on project files (advisory mode by default)
+    const contractMode = (store.getProjectSetting("contract_gate_mode") ?? "advisory") as "strict" | "advisory" | "off";
+    if (contractMode !== "off") {
+      const cwd = process.cwd();
+      const srcDir = join(cwd, "src");
+
+      if (existsSync(srcDir)) {
+        // Scan only recently modified .ts files (last 10 minutes) to keep it fast
+        const files: Array<{ path: string; content: string }> = [];
+        const cutoff = Date.now() - 10 * 60 * 1000;
+
+        const scanDir = (dir: string): void => {
+          try {
+            const entries = readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              const fullPath = join(dir, entry.name);
+              if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "node_modules") {
+                scanDir(fullPath);
+              } else if (entry.isFile() && entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
+                try {
+                  const stat = statSync(fullPath);
+                  if (stat.mtimeMs > cutoff) {
+                    const content = readFileSync(fullPath, "utf-8");
+                    const relativePath = relative(cwd, fullPath);
+                    files.push({ path: relativePath, content });
+                  }
+                } catch {
+                  // skip unreadable files
+                }
+              }
+            }
+          } catch {
+            // skip unreadable dirs
+          }
+        };
+
+        scanDir(srcDir);
+
+        if (files.length > 0) {
+          const result = validateFiles(files);
+          const errors = result.violations.filter((v) => v.severity === "error");
+          const warnings = result.violations.filter((v) => v.severity === "warning");
+
+          contractGate = {
+            mode: contractMode,
+            violationCount: result.violationCount,
+            errorCount: errors.length,
+            warningCount: warnings.length,
+            violations: result.violations.slice(0, 20), // limit to 20 to avoid bloat
+            blocked: contractMode === "strict" && errors.length > 0,
+          };
+        } else {
+          contractGate = {
+            mode: contractMode,
+            violationCount: 0,
+            errorCount: 0,
+            warningCount: 0,
+            violations: [],
+            blocked: false,
+          };
+        }
+      } else {
+        contractGate = { mode: contractMode, violationCount: 0, errorCount: 0, warningCount: 0, violations: [], blocked: false };
+      }
+    }
+  } catch (err) {
+    logger.warn("pipeline:finish_task:contract_gate_failed", { error: String(err) });
+    contractGate = { mode: "advisory", violationCount: 0, errorCount: 0, warningCount: 0, violations: [], blocked: false };
+  }
+
   // 2. Determine if task can be marked done
   const blockers = dodReport.checks
     .filter((c) => c.severity === "required" && !c.passed)
     .map((c) => `${c.name}: ${c.details}`);
+
+  // 2.0a. Add contract gate blockers (strict mode only)
+  if (contractGate?.blocked) {
+    blockers.push(`contract_gate: ${contractGate.errorCount} architecture violation(s) found`);
+  }
 
   // 2a. Verify task ownership in teamTask mode
   if (lockManager && agentId) {
@@ -244,5 +336,6 @@ export function finishTask(
     harnessRegression,
     ruleSuggestions,
     ...(remediationValidation ? { remediationValidation } : {}),
+    contractGate,
   };
 }

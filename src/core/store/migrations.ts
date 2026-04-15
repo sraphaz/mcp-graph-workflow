@@ -1263,6 +1263,25 @@ const migrations: Migration[] = [
         ON knowledge_documents(content_hash, source_id);
     `,
   },
+  {
+    version: 46,
+    description: "Contract violations table for architecture rule enforcement (Design by Contract — Meyer 1986)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS contract_violations (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        rule_id    TEXT NOT NULL,
+        file       TEXT NOT NULL,
+        line       INTEGER NOT NULL DEFAULT 0,
+        message    TEXT NOT NULL,
+        severity   TEXT NOT NULL DEFAULT 'error',
+        node_id    TEXT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_contract_violations_node_created
+        ON contract_violations(node_id, created_at);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

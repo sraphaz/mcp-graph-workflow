@@ -8,6 +8,8 @@ export { chunkText, smartChunk } from './chunk-text.js';
 export type { ChunkOptions, TextChunk } from './chunk-text.js';
 export { mapCitations, buildCitedContext } from './citation-mapper.js';
 export type { Citation, CitedContext } from './citation-mapper.js';
+export { extractCitationRefs } from './citation-chain.js';
+export type { CitationRef, KnowledgeSearchResult } from './citation-chain.js';
 export { indexCodeAnalysis } from './code-context-indexer.js';
 export type { CodeSymbolInput, ProcessFlowInput, CodeAnalysisInput, IndexResult } from './code-context-indexer.js';
 export { detectCommunities, generateCommunitySummary, rebuildCommunities } from './community-summarizer.js';

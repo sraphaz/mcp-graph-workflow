@@ -1,3 +1,9 @@
+export { getBuiltInRules, compileRulesFromMarkdown, validateImports, validateFiles } from './contract-engine.js';
+export type { ArchitectureRule, ContractViolation, RuleType, ValidateResult, ValidateOptions } from './contract-engine.js';
+export { runTests } from './test-runner.js';
+export type { TestRunResult, TestRunOptions, TestError } from './test-runner.js';
+export { runTestGate } from './test-gate.js';
+export type { TestGateResult, TestGateMode } from './test-gate.js';
 export { registerAgentRole, getAgentRole } from './agent-role.js';
 export type { AgentRole, AgentRoleRegistration, StoredAgentRole } from './agent-role.js';
 export { scanContextDensity } from './context-density-scanner.js';
