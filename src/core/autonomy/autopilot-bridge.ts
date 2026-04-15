@@ -8,6 +8,7 @@
  */
 
 import { AutopilotController, type AutopilotConfig, type AutopilotSession } from "./autopilot-controller.js";
+import { AutopilotRecoveryBridge } from "./autopilot-recovery-bridge.js";
 import { z } from "zod/v4";
 import { McpGraphError } from "../utils/errors.js";
 
@@ -40,6 +41,7 @@ const DEFAULT_CONFIG: AutopilotConfig = {
 
 export class AutopilotBridge {
   private controller: AutopilotController | null = null;
+  private recoveryBridge: AutopilotRecoveryBridge | null = null;
   private active = false;
 
   /**
@@ -111,6 +113,22 @@ export class AutopilotBridge {
    */
   getController(): AutopilotController | null {
     return this.active ? this.controller : null;
+  }
+
+  /**
+   * Get the recovery bridge (null if not running).
+   * Used by pipeline to access AutopilotRecoveryBridge for coordinated rollback.
+   */
+  getRecoveryBridge(): AutopilotRecoveryBridge | null {
+    return this.active ? this.recoveryBridge : null;
+  }
+
+  /**
+   * Set the recovery bridge (called by pipeline after creating RecoveryOrchestrator with store).
+   */
+  setRecoveryBridge(bridge: AutopilotRecoveryBridge): void {
+    this.recoveryBridge = bridge;
+    logger.info("autopilot-bridge:recovery-initialized");
   }
 
   /**

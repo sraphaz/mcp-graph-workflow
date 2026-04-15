@@ -100,6 +100,7 @@ export async function finishTask(
   nodeId: string,
   options?: FinishTaskOptions,
 ): Promise<FinishTaskResult> {
+  if (!nodeId) throw new Error("finishTask requires a nodeId");
   const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager, shadowBranch } = options ?? {};
   const doc = store.toGraphDocument();
 
@@ -221,9 +222,9 @@ export async function finishTask(
   }
 
   // 2. Determine if task can be marked done
-  const blockers = dodReport.checks
-    .filter((c) => c.severity === "required" && !c.passed)
-    .map((c) => `${c.name}: ${c.details}`);
+  const blockers = (dodReport?.checks ?? [])
+    .filter((c) => c?.severity === "required" && !c?.passed)
+    .map((c) => `${c?.name ?? "unknown"}: ${c?.details ?? "no details"}`);
 
   // 2.0a. Add contract gate blockers (strict mode only)
   if (contractGate?.blocked) {
@@ -279,6 +280,22 @@ export async function finishTask(
   } else {
     status = "blocked";
     logger.info("pipeline:finish_task:blocked", { nodeId, blockers: blockers.length });
+  }
+
+  // 2.3b. Recovery orchestrator: record failure for MTTR-A tracking (Phase C+D)
+  if (status === "blocked") {
+    try {
+      const { RecoveryOrchestrator } = await import("../autonomy/recovery-orchestrator.js");
+      const recovery = new RecoveryOrchestrator(store, { maxRetries: 3 });
+      recovery.beginTask(nodeId);
+      const recoveryResult = recovery.failTask(nodeId, blockers.join("; "));
+      logger.info("pipeline:finish_task:recovery_recorded", {
+        nodeId, attempt: recoveryResult.attempt, canRetry: recoveryResult.canRetry,
+        escalate: recoveryResult.escalate, mttrMs: recoveryResult.mttrMs,
+      });
+    } catch (err) {
+      logger.warn("pipeline:finish_task:recovery_failed", { error: String(err) });
+    }
   }
 
   // 2.4. Shadow branch resolution (Phase D — Git Transactional Layer)
