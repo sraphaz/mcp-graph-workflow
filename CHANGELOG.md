@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.3...mcp-graph-v9.3.0) (2026-04-15)
+
+
+### Features
+
+* **api:** Autonomy REST API + E2E pipeline integration test ([497e2a1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/497e2a13b32cfced2bde833f52d85235c4ea18ef))
+* **core:** Phase A Quality Sentinel — Contract Engine + TDD Gate + Citations ([ca6182f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ca6182f35e4f6ca9e705ad5de9963e4d28aa73e2))
+* **core:** Phase A Quality Sentinel — Invariants + Test Discovery + Provenance ([3b91758](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3b917587594e725b8d2379203f987fed3c40acb5))
+* **core:** Phase B Token Optimizer + Phase C Adaptive Intelligence ([c68017e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c68017e7966a60e52ba9d667960c3d826b1b5c9c))
+* **core:** Phase C complete — Self-Healing Planner (MAPE-K IBM 2003) ([b152cda](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b152cda16071cbe13a6c42667f5423effb621ca7))
+* **core:** Phase C Synthetic Data + Phase D Autonomy Foundation ([fb0c080](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/fb0c080ee8b1032bd0b79c65c76085495bc63b3f))
+* **core:** Phase C Synthetic Data + Phase D Autonomy Foundation ([7e81309](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/7e81309a3c48728c531b989db6fbc54e6866103b))
+* **core:** Phase D Autonomous Loop — Autopilot + Confidence + Bridge ([72b0620](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/72b0620dbada15d9cc2d7e4be7f085c906a8a37a))
+* **core:** Phase D Autonomous Loop — Graph Rollback + Shadow Branching ([99c229f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/99c229fe218f415b2f546f890d88b9687168f58a))
+* **core:** Wire last 2 islands — RecoveryOrchestrator + AutopilotRecoveryBridge ([abb4304](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/abb43049716b26578b4130c4e8ea57f2e27b9110))
+* **dashboard:** Autopilot tab + Contract violations + Autonomy API + E2E ([b0809a9](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b0809a9d242dd35e71da726a838761c6540489f2))
+* **pipeline:** Wire autopilot + adaptive budget + pruning + citations ([ab26968](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ab26968b7df82bb504e7921526c2f9b3f3ff25f5))
+* **pipeline:** Wire Phase C+D modules into live pipeline ([eb47803](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/eb47803e11749f94715aa7c6791c71585df4587b))
+* **pipeline:** Wire runTestGate into finish_task — DORA Shift-Left live ([c6a9dfb](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c6a9dfbc72452ef6c31d08df5f1edde11607539b))
+* **pipeline:** Wire shadow branching into start_task + finish_task ([a2e0758](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a2e07584cba2c8b5de59bcafbd80958a481ffe31))
+* **pipeline:** Wire TaskPrefetcher — CPU pipeline pattern for context ([c7180e9](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c7180e9def5da592bf9772259f69adb74e4dba23))
+
+
+### Bug Fixes
+
+* **core:** 3 bug fixes — error swallowing, AC false positives, blocked warning ([a76a754](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a76a7545177fc1a534c956ae0cce2dac65849144))
+* **core:** 5 bug fixes — race condition, timestamps, velocity, PRD parent, Gantt IDs ([5f8b5f8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/5f8b5f842673c987fda06250d891e104b81ca691))
+* **core:** 6 bug fixes — FK constraint, URI escaping, token estimation, cycles, LRU ([3dc4eaa](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3dc4eaa9c14815ad11a5811927a3561c281acb73))
+* **core:** Align hook-modified files with pipeline wiring ([87f305f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/87f305f1d72a15b7bb751dde9e59594044b01e3b))
+* **core:** Deep sprint — JSON safety, RAG logging, query limits, tokenizer cap ([d24261b](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d24261bba59ab51e2451790c68dc89fa25a32026))
+* **pipeline:** Add stub modules for hook-injected imports ([af81024](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/af81024153c3dab77e2780d44f23f9b4f1987455))
+
 ## [9.2.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.2...mcp-graph-v9.2.3) (2026-04-14)
 
 
