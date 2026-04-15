@@ -384,5 +384,28 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
     }
   });
 
+  /**
+   * GET /api/harness/contract-violations — recent architecture violations
+   */
+  router.get("/contract-violations", (_req, res, _next) => {
+    try {
+      const store = storeRef.current;
+      const db = store.getDb();
+
+      const rows = db.prepare(
+        `SELECT id, rule_id, file, line, message, severity, node_id, created_at
+         FROM contract_violations
+         ORDER BY created_at DESC
+         LIMIT 50`,
+      ).all() as Array<Record<string, unknown>>;
+
+      res.json({ violations: rows, total: rows.length });
+    } catch (err) {
+      // Table may not exist yet
+      res.json({ violations: [], total: 0 });
+      logger.debug("api:harness:contract-violations:empty", { error: String(err) });
+    }
+  });
+
   return router;
 }

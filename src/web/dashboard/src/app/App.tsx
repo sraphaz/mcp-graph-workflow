@@ -23,6 +23,7 @@ const InsightsTab = lazy(() => import("@/components/tabs/insights-tab").then((m)
 const SkillsTab = lazy(() => import("@/components/tabs/skills-tab").then((m) => ({ default: m.SkillsTab })));
 const ContextTab = lazy(() => import("@/components/tabs/context-tab").then((m) => ({ default: m.ContextTab })));
 const BenchmarkTab = lazy(() => import("@/components/tabs/benchmark-tab").then((m) => ({ default: m.BenchmarkTab })));
+const AutopilotTab = lazy(() => import("@/components/tabs/autopilot-tab").then((m) => ({ default: m.AutopilotTab })));
 const LogsTab = lazy(() => import("@/components/tabs/logs-tab").then((m) => ({ default: m.LogsTab })));
 const SiebelTab = lazy(() => import("@/components/siebel/siebel-tab").then((m) => ({ default: m.SiebelTab })));
 const LspTab = lazy(() => import("@/components/tabs/lsp-tab").then((m) => ({ default: m.LspTab })));
@@ -50,6 +51,7 @@ const TAB_LABELS: Record<TabId, string> = {
   docs: "Docs",
   logs: "Logs",
   harness: "Harness",
+  autopilot: "Autopilot",
 };
 
 const CHUNK_RETRY_KEY = "chunk_retry_attempted";
@@ -224,6 +226,7 @@ function AppContent(): React.JSX.Element {
                   {activeTab === "davinci" && <DavinciTab />}
                   {activeTab === "docs" && <DocsTab />}
                   {activeTab === "harness" && <HarnessTab />}
+                  {activeTab === "autopilot" && <AutopilotTab />}
                 </Suspense>
               </ErrorBoundary>
             )}

@@ -40,7 +40,8 @@ export type TabId =
   | "languages"
   | "davinci"
   | "docs"
-  | "harness";
+  | "harness"
+  | "autopilot";
 
 export type NavGroupId = "visualization" | "intelligence" | "tools" | "system";
 
@@ -81,6 +82,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: "insights", label: "Insights", icon: BarChart3 },
       { id: "skills", label: "Skills", icon: Zap },
       { id: "harness", label: "Harness", icon: Shield },
+      { id: "autopilot", label: "Autopilot", icon: Zap },
     ],
   },
   {
