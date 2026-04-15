@@ -133,7 +133,9 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.status(status).json({ error: err instanceof Error ? err.message : "Upload failed" });
     } finally {
       if (file) {
-        unlink(file.path).catch(() => {});
+        unlink(file.path).catch((unlinkErr) => {
+          logger.warn("translation:upload:cleanup_failed", { path: file.path, error: String(unlinkErr) });
+        });
       }
     }
   });

@@ -17,6 +17,8 @@ import { logger } from "../utils/logger.js";
 export interface NextTaskResult {
   node: GraphNode;
   reason: string;
+  /** E5-T01: Warning when all eligible tasks are blocked by dependencies */
+  warning?: "all_tasks_blocked";
 }
 
 export interface NextTaskOptions {
@@ -91,6 +93,7 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
     return {
       node: withDepCount[0].node,
       reason: `Todas as tasks têm dependências pendentes. Esta tem menos (${withDepCount[0].pendingDeps}).`,
+      warning: "all_tasks_blocked",
     };
   }
 
