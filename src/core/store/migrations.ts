@@ -1282,6 +1282,41 @@ const migrations: Migration[] = [
         ON contract_violations(node_id, created_at);
     `,
   },
+  {
+    version: 47,
+    description: "Token budget policy table for adaptive Q-Learning (Sutton & Barto RL)",
+    sql: (() => {
+      const phases = ["ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE", "REVIEW", "HANDOFF", "DEPLOY", "LISTENING"];
+      const grades = ["A", "B", "C", "D"];
+      const presets = ["graph_heavy", "knowledge_heavy", "balanced", "code_heavy", "minimal"];
+
+      let sql = `
+        CREATE TABLE IF NOT EXISTS token_budget_policy (
+          state_phase    TEXT NOT NULL,
+          state_grade    TEXT NOT NULL,
+          action_preset  TEXT NOT NULL,
+          q_value        REAL NOT NULL DEFAULT 0,
+          visits         INTEGER NOT NULL DEFAULT 0,
+          updated_at     TEXT NOT NULL,
+          PRIMARY KEY (state_phase, state_grade, action_preset)
+        );
+      `;
+
+      const now = new Date().toISOString();
+      const rows: string[] = [];
+      for (const phase of phases) {
+        for (const grade of grades) {
+          for (const preset of presets) {
+            rows.push(`('${phase}', '${grade}', '${preset}', 0, 0, '${now}')`);
+          }
+        }
+      }
+
+      sql += `INSERT OR IGNORE INTO token_budget_policy (state_phase, state_grade, action_preset, q_value, visits, updated_at) VALUES ${rows.join(",\n")};`;
+
+      return sql;
+    })(),
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
