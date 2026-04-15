@@ -24,6 +24,7 @@ import { validateFiles } from "../harness/contract-engine.js";
 import { runTestGate, type TestGateResult, type TestGateMode } from "../harness/test-gate.js";
 import { checkInvariants, getBuiltInInvariants, type InvariantResult } from "../harness/property-invariants.js";
 import { discoverTestFiles } from "../harness/test-discovery.js";
+import { runSyntheticValidation, type SyntheticValidationResult } from "../harness/synthetic-validation-gate.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -74,6 +75,8 @@ export interface FinishTaskResult {
   invariantResult?: InvariantResult | null;
   /** Test files auto-discovered by title keyword matching */
   discoveredTestFiles?: string[];
+  /** Synthetic mutation validation result (advisory) */
+  syntheticValidation?: SyntheticValidationResult | null;
 }
 
 export interface ContractGateResult {
@@ -372,6 +375,24 @@ export async function finishTask(
     }
   }
 
+  // 6b. Synthetic mutation validation (advisory — DeMillo 1978)
+  let syntheticValidation: SyntheticValidationResult | null = null;
+  if (status === "done") {
+    try {
+      syntheticValidation = runSyntheticValidation(store);
+      if (syntheticValidation && !syntheticValidation.passed) {
+        logger.warn("pipeline:finish_task:synthetic_validation_low", {
+          nodeId,
+          score: syntheticValidation.score,
+          caught: syntheticValidation.mutationsCaught,
+          applied: syntheticValidation.mutationsApplied,
+        });
+      }
+    } catch (err) {
+      logger.warn("pipeline:finish_task:synthetic_validation_failed", { error: String(err) });
+    }
+  }
+
   // 7. Remediation post-fix validation (non-blocking)
   let remediationValidation: PostFixResult | null = null;
   if (status === "done") {
@@ -428,5 +449,6 @@ export async function finishTask(
     testGate,
     invariantResult,
     ...(discoveredTestFiles.length > 0 ? { discoveredTestFiles } : {}),
+    syntheticValidation,
   };
 }

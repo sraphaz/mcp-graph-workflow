@@ -21,6 +21,7 @@ import type { RemediationSuggestion } from "../harness/violation-detail.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { LockConflictError } from "../utils/errors.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
+import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
 import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 
@@ -51,6 +52,8 @@ export interface StartTaskResult {
   leaseToken?: string;
   /** Whether context was served from prefetch cache */
   prefetchHit?: boolean;
+  /** Graph checkpoint for rollback on failure (Phase D — Autonomous Loop) */
+  checkpoint?: GraphCheckpoint;
 }
 
 /**
@@ -186,6 +189,17 @@ export function startTask(
     }
   }
 
+  // 6b. Create checkpoint for rollback on failure (Phase D — Autonomous Loop)
+  let checkpoint: GraphCheckpoint | undefined;
+  if (startedAt) {
+    try {
+      checkpoint = createCheckpoint(store, taskNode.id);
+      logger.info("pipeline:start_task:checkpoint", { nodeId: taskNode.id, snapshotId: checkpoint.snapshotId });
+    } catch (err) {
+      logger.warn("pipeline:start_task:checkpoint_failed", { error: String(err) });
+    }
+  }
+
   logger.info("pipeline:start_task:ok", {
     nodeId: taskNode.id,
     title: taskNode.title,
@@ -204,5 +218,6 @@ export function startTask(
     ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
     ...(leaseToken ? { leaseToken } : {}),
     ...(prefetchHit ? { prefetchHit } : {}),
+    ...(checkpoint ? { checkpoint } : {}),
   };
 }

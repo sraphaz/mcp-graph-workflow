@@ -6,6 +6,7 @@ import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/life
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { buildTaskContext } from "../../core/context/compact-context.js";
 import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
+import { RecoveryMetricsStore } from "../../core/autonomy/recovery-metrics-store.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
@@ -111,6 +112,21 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         if (harness) harnessScore = { score: harness.score, grade: harness.grade };
       } catch { /* non-blocking */ }
 
+      // Recovery metrics (MTTR-A — Phase D Autonomous Loop)
+      let recoveryMetrics: { totalRollbacks: number; totalEscalations: number; avgMttrMs: number; successRate: number } | null = null;
+      try {
+        const recoveryStore = new RecoveryMetricsStore(store.getDb());
+        const summary = recoveryStore.getSummary();
+        if (summary.totalRollbacks > 0 || summary.totalEscalations > 0) {
+          recoveryMetrics = {
+            totalRollbacks: summary.totalRollbacks,
+            totalEscalations: summary.totalEscalations,
+            avgMttrMs: summary.avgMttrMs,
+            successRate: summary.successRate,
+          };
+        }
+      } catch { /* recovery_metrics table may not exist */ }
+
       logger.info("tool:metrics:stats:ok", { totalNodes: stats.totalNodes, totalEdges: stats.totalEdges });
       return mcpText({
         ok: true,
@@ -123,6 +139,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         contextEnrichment,
         contextReduction,
         harnessScore,
+        ...(recoveryMetrics ? { recoveryMetrics } : {}),
       });
     },
   );

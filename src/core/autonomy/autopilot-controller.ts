@@ -36,6 +36,8 @@ export interface AutopilotConfig {
   checkpointEvery: number;
   minHarnessScore: number;
   minConfidence: number;
+  /** Optional callback emitted on pause/stop for HITL escalation (Phase D) */
+  onEscalation?: (nodeType: string, action: string, reason: string, metadata: Record<string, unknown>) => void;
 }
 
 export interface EvaluateInput {
@@ -138,37 +140,31 @@ export class AutopilotController {
     // Guardrail 2: Pause after consecutive failures (non-negotiable)
     if (this.session.consecutiveFailures >= this.config.maxConsecutiveFailures) {
       this.session.status = "paused";
+      const reason = `${this.session.consecutiveFailures} consecutive failure(s) — requires human review`;
       logger.warn("autopilot:pause:failures", {
         consecutiveFailures: this.session.consecutiveFailures,
       });
-      return {
-        action: "pause",
-        reason: `${this.session.consecutiveFailures} consecutive failure(s) — requires human review`,
-        confidence: 0,
-      };
+      this.config.onEscalation?.(input.nextNodeType, "pause", reason, { consecutiveFailures: this.session.consecutiveFailures });
+      return { action: "pause", reason, confidence: 0 };
     }
 
     // Guardrail 3: Pause on risk/decision nodes (non-negotiable)
     if (PAUSE_NODE_TYPES.has(input.nextNodeType)) {
+      const reason = `Node type '${input.nextNodeType}' requires human review (risk/decision)`;
       logger.info("autopilot:pause:risk-node", { nodeType: input.nextNodeType });
-      return {
-        action: "pause",
-        reason: `Node type '${input.nextNodeType}' requires human review (risk/decision)`,
-        confidence: 50,
-      };
+      this.config.onEscalation?.(input.nextNodeType, "pause", reason, { nodeType: input.nextNodeType });
+      return { action: "pause", reason, confidence: 50 };
     }
 
     // Guardrail 4: Pause if harness score too low (non-negotiable)
     if (input.harnessScore < this.config.minHarnessScore) {
+      const reason = `Harness score ${input.harnessScore} below minimum ${this.config.minHarnessScore} — quality gap risk`;
       logger.warn("autopilot:pause:harness", {
         harnessScore: input.harnessScore,
         minRequired: this.config.minHarnessScore,
       });
-      return {
-        action: "pause",
-        reason: `Harness score ${input.harnessScore} below minimum ${this.config.minHarnessScore} — quality gap risk`,
-        confidence: 30,
-      };
+      this.config.onEscalation?.(input.nextNodeType, "pause", reason, { harnessScore: input.harnessScore });
+      return { action: "pause", reason, confidence: 30 };
     }
 
     // All guardrails passed → use confidence scorer
