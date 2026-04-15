@@ -207,7 +207,7 @@ export async function finishTask(
       logger.warn("pipeline:finish_task:invariant_violations", {
         nodeId,
         violations: invariantResult.violations.length,
-        invariants: [...new Set(invariantResult.violations.map((v) => v.invariantId))],
+        invariants: [...new Set(invariantResult.violations.map((v: { invariantId?: string; rule?: string }) => v.invariantId ?? v.rule ?? "unknown"))],
       });
     }
   } catch (err) {
