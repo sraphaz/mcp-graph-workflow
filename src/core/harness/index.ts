@@ -1,5 +1,6 @@
 export { getBuiltInRules, compileRulesFromMarkdown, validateImports, validateFiles } from './contract-engine.js';
 export type { ArchitectureRule, ContractViolation, RuleType, ValidateResult, ValidateOptions } from './contract-engine.js';
+export { generateMinimal, generateEdgeCase } from './synthetic-data-gen.js';
 export { runTests } from './test-runner.js';
 export type { TestRunResult, TestRunOptions, TestError } from './test-runner.js';
 export { runTestGate } from './test-gate.js';

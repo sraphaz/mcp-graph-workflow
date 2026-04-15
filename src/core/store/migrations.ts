@@ -1317,6 +1317,26 @@ const migrations: Migration[] = [
       return sql;
     })(),
   },
+  {
+    version: 48,
+    description: "Autopilot sessions table for autonomous sprint execution (Hewitt Actor Model 1973)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS autopilot_sessions (
+        id               TEXT PRIMARY KEY,
+        sprint_id        TEXT NOT NULL,
+        started_at       TEXT NOT NULL,
+        status           TEXT NOT NULL DEFAULT 'running',
+        tasks_completed  INTEGER NOT NULL DEFAULT 0,
+        tasks_failed     INTEGER NOT NULL DEFAULT 0,
+        tokens_used      INTEGER NOT NULL DEFAULT 0,
+        config           TEXT NOT NULL DEFAULT '{}',
+        decisions        TEXT NOT NULL DEFAULT '[]'
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_autopilot_sessions_sprint_status
+        ON autopilot_sessions(sprint_id, status);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
