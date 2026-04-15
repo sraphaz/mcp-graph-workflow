@@ -106,7 +106,13 @@ function checkDependencyAudit(projectPath: string): { check: SecurityCheck; find
       encoding: "utf-8",
     });
 
-    const audit = JSON.parse(result);
+    let audit: Record<string, unknown>;
+    try {
+      audit = JSON.parse(result) as Record<string, unknown>;
+    } catch {
+      logger.warn("security-scanner:audit-parse-failed", { resultLen: result?.length });
+      audit = {};
+    }
     const vulns = audit.vulnerabilities ?? {};
     let criticalCount = 0;
     let highCount = 0;

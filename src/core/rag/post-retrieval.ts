@@ -152,8 +152,8 @@ export function postRetrievalPipeline(options: PostRetrievalOptions): PostRetrie
       const validations = validateRetrievedResults(deduped, db, store);
       correctedResults = correctResults(deduped, validations);
       corrected = deduped.length - correctedResults.length;
-    } catch {
-      logger.debug("Post-retrieval corrective validation skipped — error during validation");
+    } catch (err) {
+      logger.warn("Post-retrieval corrective validation failed", { error: err instanceof Error ? err.message : String(err) });
       correctedResults = deduped;
     }
   }

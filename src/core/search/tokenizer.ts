@@ -179,7 +179,9 @@ export function tokenize(text: string, options?: TokenizeOptions): string[] {
     language: options?.language ?? "all" as const,
   };
 
-  let normalized = text.toLowerCase();
+  // E12-T08: Cap input length to prevent excessive memory usage
+  const MAX_INPUT_LENGTH = 500_000;
+  let normalized = (text.length > MAX_INPUT_LENGTH ? text.slice(0, MAX_INPUT_LENGTH) : text).toLowerCase();
 
   if (opts.accentStrip) {
     normalized = normalized

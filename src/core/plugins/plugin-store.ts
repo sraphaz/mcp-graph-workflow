@@ -34,7 +34,7 @@ export interface InstallPluginParams {
 function parseRow(raw: PluginRowRaw): PluginRow {
   return {
     ...raw,
-    config: raw.config ? JSON.parse(raw.config) as Record<string, unknown> : null,
+    config: raw.config ? (() => { try { return JSON.parse(raw.config) as Record<string, unknown>; } catch { return null; } })() : null,
   };
 }
 

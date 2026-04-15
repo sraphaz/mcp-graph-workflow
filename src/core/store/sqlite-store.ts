@@ -567,8 +567,9 @@ export class SqliteStore {
     search?: string;
   }): { nodes: GraphNode[]; totalCount: number } {
     const pid = this.ensureProject();
-    const limit = opts.limit ?? 100;
-    const offset = opts.offset ?? 0;
+    // E10-T05: Validate limit/offset boundaries
+    const limit = Math.min(Math.max(opts.limit ?? 100, 1), 500);
+    const offset = Math.max(opts.offset ?? 0, 0);
 
     const conditions: string[] = ["project_id = ?"];
     const params: unknown[] = [pid];
