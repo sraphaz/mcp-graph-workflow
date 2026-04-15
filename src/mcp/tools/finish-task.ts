@@ -23,7 +23,7 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
     async ({ nodeId, rationale, testFiles, autoNext, qualityGates, agentId, leaseToken }) => {
       logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const result = finishTask(store, nodeId, { rationale, testFiles, autoNext, agentId, leaseToken, lockManager });
+      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, agentId, leaseToken, lockManager });
 
       logger.info("tool:finish_task:ok", {
         nodeId,
@@ -71,6 +71,10 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
 
       if (result.ruleSuggestions.length > 0) {
         response.ruleSuggestions = result.ruleSuggestions;
+      }
+
+      if (result.testGate) {
+        response.testGate = result.testGate;
       }
 
       // Run optional quality gates (advisory mode — never blocks)

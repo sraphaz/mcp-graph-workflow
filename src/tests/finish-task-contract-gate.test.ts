@@ -26,8 +26,8 @@ describe("finish_task contract validation gate (Wiener Closed-Loop)", () => {
     store.close();
   });
 
-  it("should complete normally and include contractGate in response (backward compat)", () => {
-    const result = finishTask(store, "task-1", {
+  it("should complete normally and include contractGate in response (backward compat)", async () => {
+    const result = await finishTask(store, "task-1", {
       rationale: "Test rationale for contract gate",
     });
 
@@ -40,16 +40,16 @@ describe("finish_task contract validation gate (Wiener Closed-Loop)", () => {
     expect(result.contractGate).toHaveProperty("violationCount");
   });
 
-  it("should return contractGate.mode as advisory by default", () => {
-    const result = finishTask(store, "task-1", {
+  it("should return contractGate.mode as advisory by default", async () => {
+    const result = await finishTask(store, "task-1", {
       rationale: "Test rationale",
     });
 
     expect(result.contractGate!.mode).toBe("advisory");
   });
 
-  it("should not block on advisory mode even if violations exist", () => {
-    const result = finishTask(store, "task-1", {
+  it("should not block on advisory mode even if violations exist", async () => {
+    const result = await finishTask(store, "task-1", {
       rationale: "Test rationale",
     });
 

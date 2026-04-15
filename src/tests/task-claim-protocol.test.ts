@@ -47,7 +47,7 @@ describe("Task Claim Protocol", () => {
   // ── start_task with teamTask mode ──────────────────────
 
   describe("start_task claim", () => {
-    it("should acquire lock and return leaseToken when teamTask mode is on", () => {
+    it("should acquire lock and return leaseToken when teamTask mode is on", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Implement feature A" }));
 
       const result = startTask(store, {
@@ -67,7 +67,7 @@ describe("Task Claim Protocol", () => {
       expect(locks[0].resourceId).toBe("task:task-1");
     });
 
-    it("should NOT return leaseToken when teamTask mode is off (no lockManager)", () => {
+    it("should NOT return leaseToken when teamTask mode is off (no lockManager)", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Implement feature A" }));
 
       const result = startTask(store, { nodeId: "task-1" });
@@ -77,7 +77,7 @@ describe("Task Claim Protocol", () => {
       expect(result!.startedAt).toBeTruthy();
     });
 
-    it("should throw LockConflictError when another agent already claimed the task", () => {
+    it("should throw LockConflictError when another agent already claimed the task", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Implement feature A" }));
 
       // Agent-1 claims the task
@@ -103,7 +103,7 @@ describe("Task Claim Protocol", () => {
   // ── finish_task ownership ──────────────────────────────
 
   describe("finish_task ownership", () => {
-    it("should release lock when task owner finishes", () => {
+    it("should release lock when task owner finishes", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Implement feature A" }));
 
       // Agent-1 claims the task
@@ -116,7 +116,7 @@ describe("Task Claim Protocol", () => {
       expect(startResult!.leaseToken).toBeTruthy();
 
       // Agent-1 finishes
-      const finishResult = finishTask(store, "task-1", {
+      const finishResult = await finishTask(store, "task-1", {
         agentId: "agent-1",
         leaseToken: startResult!.leaseToken,
         lockManager,
@@ -131,7 +131,7 @@ describe("Task Claim Protocol", () => {
       }
     });
 
-    it("should throw LockConflictError when non-owner tries to finish", () => {
+    it("should throw LockConflictError when non-owner tries to finish", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Implement feature A" }));
 
       // Agent-1 claims the task
@@ -142,19 +142,19 @@ describe("Task Claim Protocol", () => {
       });
 
       // Agent-2 tries to finish — should fail ownership check
-      expect(() => {
-        finishTask(store, "task-1", {
+      await expect(async () => {
+        await finishTask(store, "task-1", {
           agentId: "agent-2",
           lockManager,
         });
-      }).toThrow(LockConflictError);
+      }).rejects.toThrow(LockConflictError);
     });
   });
 
   // ── next with lock-aware filtering ─────────────────────
 
   describe("next lock-aware", () => {
-    it("should exclude tasks locked by other agents from next results", () => {
+    it("should exclude tasks locked by other agents from next results", async () => {
       const doc = makeDoc([
         makeTask({ id: "task-1", title: "Task A" }),
         makeTask({ id: "task-2", title: "Task B" }),
@@ -166,7 +166,7 @@ describe("Task Claim Protocol", () => {
       expect(result!.node.id).toBe("task-2");
     });
 
-    it("should return null when all tasks are locked by other agents", () => {
+    it("should return null when all tasks are locked by other agents", async () => {
       const doc = makeDoc([
         makeTask({ id: "task-1", title: "Task A" }),
       ]);
@@ -175,7 +175,7 @@ describe("Task Claim Protocol", () => {
       expect(result).toBeNull();
     });
 
-    it("should include tasks locked by the calling agent via enhanced-next", () => {
+    it("should include tasks locked by the calling agent via enhanced-next", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Task A" }));
 
       // Lock by agent-1
@@ -192,7 +192,7 @@ describe("Task Claim Protocol", () => {
       expect(result!.task.node.id).toBe("task-1");
     });
 
-    it("should exclude tasks locked by other agents via enhanced-next", () => {
+    it("should exclude tasks locked by other agents via enhanced-next", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Task A" }));
       store.insertNode(makeTask({ id: "task-2", title: "Task B" }));
 
@@ -210,7 +210,7 @@ describe("Task Claim Protocol", () => {
       expect(result!.task.node.id).toBe("task-2");
     });
 
-    it("should work without lockManager (backward compat)", () => {
+    it("should work without lockManager (backward compat)", async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Task A" }));
 
       const doc = store.toGraphDocument();

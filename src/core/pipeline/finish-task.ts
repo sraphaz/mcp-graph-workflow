@@ -21,6 +21,7 @@ import type { HarnessRegressionReport } from "../harness/harness-preflight.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { RemediationValidator, type PostFixResult } from "../harness/remediation-validator.js";
 import { validateFiles } from "../harness/contract-engine.js";
+import { runTestGate, type TestGateResult, type TestGateMode } from "../harness/test-gate.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -63,6 +64,8 @@ export interface FinishTaskResult {
   remediationValidation?: PostFixResult | null;
   /** Contract validation gate result — Design by Contract (Meyer 1986) */
   contractGate?: ContractGateResult | null;
+  /** Test gate result — Closed-Loop TDD (Wiener 1948) + DORA Shift-Left */
+  testGate?: TestGateResult | null;
 }
 
 export interface ContractGateResult {
@@ -78,11 +81,11 @@ export interface ContractGateResult {
  * Validate DoD, mark task done (or blocked), check epic promotion,
  * and return next task — all in one call.
  */
-export function finishTask(
+export async function finishTask(
   store: SqliteStore,
   nodeId: string,
   options?: FinishTaskOptions,
-): FinishTaskResult {
+): Promise<FinishTaskResult> {
   const { rationale, testFiles, autoNext = true, agentId, leaseToken, lockManager } = options ?? {};
   const doc = store.toGraphDocument();
 
@@ -179,6 +182,18 @@ export function finishTask(
   // 2.0a. Add contract gate blockers (strict mode only)
   if (contractGate?.blocked) {
     blockers.push(`contract_gate: ${contractGate.errorCount} architecture violation(s) found`);
+  }
+
+  // 2.0b. Test gate — Closed-Loop TDD (Wiener 1948) + DORA Shift-Left
+  let testGate: TestGateResult | null = null;
+  try {
+    const testGateMode = (store.getProjectSetting("test_gate_mode") ?? "advisory") as TestGateMode;
+    testGate = await runTestGate(store, nodeId, testGateMode);
+    if (testGate.blocked) {
+      blockers.push(`test_gate: ${testGate.failed} test(s) failed — fix before marking done`);
+    }
+  } catch (err) {
+    logger.warn("pipeline:finish_task:test_gate_failed", { error: String(err) });
   }
 
   // 2a. Verify task ownership in teamTask mode
@@ -337,5 +352,6 @@ export function finishTask(
     ruleSuggestions,
     ...(remediationValidation ? { remediationValidation } : {}),
     contractGate,
+    testGate,
   };
 }
