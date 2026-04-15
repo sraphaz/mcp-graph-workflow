@@ -1,3 +1,5 @@
+export { TaskPrefetcher } from './task-prefetcher.js';
+export type { PrefetchedContext, PrefetchStats, PrefetchOptions } from './task-prefetcher.js';
 export { analyzeAutoReady } from './auto-ready.js';
 export type { AutoReadyReport } from './auto-ready.js';
 export { detectLargeTasks } from './decompose.js';
