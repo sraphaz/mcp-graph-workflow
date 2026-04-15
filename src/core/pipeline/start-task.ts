@@ -20,8 +20,12 @@ import { evaluate as evaluateRemediations } from "../harness/remediation-engine.
 import type { RemediationSuggestion } from "../harness/violation-detail.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { LockConflictError } from "../utils/errors.js";
+import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
+
+// Module-level singleton for task context prefetching (CPU pipeline pattern)
+export const taskPrefetcher = new TaskPrefetcher({ ttlMs: 5 * 60 * 1000 });
 
 export interface StartTaskOptions {
   nodeId?: string;
@@ -45,6 +49,8 @@ export interface StartTaskResult {
   topRemediations?: RemediationSuggestion[];
   /** Lease token for task lock (teamTask mode only) */
   leaseToken?: string;
+  /** Whether context was served from prefetch cache */
+  prefetchHit?: boolean;
 }
 
 /**
@@ -93,15 +99,33 @@ export function startTask(
     logger.warn("pipeline:start_task:context_failed", { error: String(err) });
   }
 
-  // 3. Build RAG context
+  // 3. Build RAG context (check prefetcher cache first — CPU pipeline pattern)
   let ragContext: AssembledContext | null = null;
-  try {
-    ragContext = assembleContext(store, taskNode.title, {
-      tokenBudget: ragBudget ?? 4000,
-      tier: contextDetail ?? "standard",
-    });
-  } catch (err) {
-    logger.warn("pipeline:start_task:rag_failed", { error: String(err) });
+  let prefetchHit = false;
+  const prefetchedData = taskPrefetcher.get(taskNode.id);
+  if (prefetchedData) {
+    // Prefetch hit — skip RAG assembly
+    prefetchHit = true;
+    logger.info("pipeline:start_task:prefetch_hit", { nodeId: taskNode.id });
+    try {
+      ragContext = JSON.parse(prefetchedData.context) as AssembledContext;
+    } catch {
+      ragContext = null;
+      prefetchHit = false;
+    }
+  }
+
+  if (!ragContext) {
+    // Prefetch miss — build RAG context normally
+    taskPrefetcher.invalidateIfMismatch(taskNode.id);
+    try {
+      ragContext = assembleContext(store, taskNode.title, {
+        tokenBudget: ragBudget ?? 4000,
+        tier: contextDetail ?? "standard",
+      });
+    } catch (err) {
+      logger.warn("pipeline:start_task:rag_failed", { error: String(err) });
+    }
   }
 
   // 4. Generate TDD hints from AC
@@ -179,5 +203,6 @@ export function startTask(
     harnessWarning,
     ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
     ...(leaseToken ? { leaseToken } : {}),
+    ...(prefetchHit ? { prefetchHit } : {}),
   };
 }

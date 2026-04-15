@@ -22,6 +22,8 @@ import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { RemediationValidator, type PostFixResult } from "../harness/remediation-validator.js";
 import { validateFiles } from "../harness/contract-engine.js";
 import { runTestGate, type TestGateResult, type TestGateMode } from "../harness/test-gate.js";
+import { checkInvariants, getBuiltInInvariants, type InvariantResult } from "../harness/property-invariants.js";
+import { discoverTestFiles } from "../harness/test-discovery.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -41,6 +43,8 @@ export interface FinishTaskOptions {
   rationale?: string;
   testFiles?: string[];
   autoNext?: boolean;
+  /** RAG citations that informed the decision */
+  citations?: import("../rag/citation-chain.js").CitationRef[];
   /** Agent ID for teamTask mode — verifies task ownership */
   agentId?: string;
   /** Lease token for releasing the task lock (teamTask mode) */
@@ -66,6 +70,10 @@ export interface FinishTaskResult {
   contractGate?: ContractGateResult | null;
   /** Test gate result — Closed-Loop TDD (Wiener 1948) + DORA Shift-Left */
   testGate?: TestGateResult | null;
+  /** Property-based invariant check result */
+  invariantResult?: InvariantResult | null;
+  /** Test files auto-discovered by title keyword matching */
+  discoveredTestFiles?: string[];
 }
 
 export interface ContractGateResult {
@@ -86,7 +94,7 @@ export async function finishTask(
   nodeId: string,
   options?: FinishTaskOptions,
 ): Promise<FinishTaskResult> {
-  const { rationale, testFiles, autoNext = true, agentId, leaseToken, lockManager } = options ?? {};
+  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager } = options ?? {};
   const doc = store.toGraphDocument();
 
   // 0. Update testFiles if provided
@@ -95,6 +103,23 @@ export async function finishTask(
       store.updateNode(nodeId, { testFiles });
     } catch (err) {
       logger.warn("pipeline:finish_task:testfiles_update_failed", { error: String(err) });
+    }
+  }
+
+  // 0b. Auto-discover test files if node has none
+  let discoveredTestFiles: string[] = [];
+  {
+    const node = store.getNodeById(nodeId);
+    if (node && (!node.testFiles || node.testFiles.length === 0)) {
+      try {
+        discoveredTestFiles = discoverTestFiles(node.title, process.cwd());
+        if (discoveredTestFiles.length > 0) {
+          store.updateNode(nodeId, { testFiles: discoveredTestFiles });
+          logger.info("pipeline:finish_task:test_discovery", { nodeId, found: discoveredTestFiles.length });
+        }
+      } catch (err) {
+        logger.warn("pipeline:finish_task:test_discovery_failed", { error: String(err) });
+      }
     }
   }
 
@@ -172,6 +197,21 @@ export async function finishTask(
   } catch (err) {
     logger.warn("pipeline:finish_task:contract_gate_failed", { error: String(err) });
     contractGate = { mode: "advisory", violationCount: 0, errorCount: 0, warningCount: 0, violations: [], blocked: false };
+  }
+
+  // 1.6. Property-based invariant check (advisory — never blocks)
+  let invariantResult: InvariantResult | null = null;
+  try {
+    invariantResult = checkInvariants(doc, getBuiltInInvariants());
+    if (!invariantResult.passed) {
+      logger.warn("pipeline:finish_task:invariant_violations", {
+        nodeId,
+        violations: invariantResult.violations.length,
+        invariants: [...new Set(invariantResult.violations.map((v) => v.invariantId))],
+      });
+    }
+  } catch (err) {
+    logger.warn("pipeline:finish_task:invariant_check_failed", { error: String(err) });
   }
 
   // 2. Determine if task can be marked done
@@ -263,8 +303,25 @@ export async function finishTask(
         title: node?.title ?? nodeId,
         rationale,
         tags: node?.tags ?? [],
+        ...(citations && citations.length > 0 ? { citations } : {}),
       });
       indexEntitiesForSource(store.getDb(), "ai_decision");
+
+      // Create provenance record linking decision to citations
+      if (citations && citations.length > 0) {
+        try {
+          const { createProvenance } = await import("../rag/decision-provenance.js");
+          createProvenance(knowledgeStore, {
+            nodeId,
+            rationale,
+            citations,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (provErr) {
+          logger.warn("pipeline:finish_task:provenance_failed", { error: String(provErr) });
+        }
+      }
+
       decisionIndexed = true;
     } catch (err) {
       logger.warn("pipeline:finish_task:decision_index_failed", { error: String(err) });
@@ -286,6 +343,22 @@ export async function finishTask(
   if (autoNext && status === "done") {
     const freshDoc = store.toGraphDocument();
     nextTask = findEnhancedNextTask(freshDoc, store);
+
+    // 5.1 Feed prefetcher with predicted next task context (CPU pipeline pattern)
+    if (nextTask?.task?.node?.id) {
+      try {
+        const { taskPrefetcher } = await import("./start-task.js");
+        const { assembleContext } = await import("../context/context-assembler.js");
+        const nextRag = assembleContext(store, nextTask.task.node.title ?? "", { tokenBudget: 4000, tier: "standard" });
+        taskPrefetcher.prefetch(nextTask.task.node.id, {
+          query: nextTask.task.node.title ?? "",
+          context: JSON.stringify(nextRag),
+        });
+        logger.debug("pipeline:finish_task:prefetch_fed", { nextNodeId: nextTask.task.node.id });
+      } catch (err) {
+        logger.debug("pipeline:finish_task:prefetch_feed_failed", { error: String(err) });
+      }
+    }
   }
 
   // 6. Harness regression check (non-blocking, advisory)
@@ -353,5 +426,7 @@ export async function finishTask(
     ...(remediationValidation ? { remediationValidation } : {}),
     contractGate,
     testGate,
+    invariantResult,
+    ...(discoveredTestFiles.length > 0 ? { discoveredTestFiles } : {}),
   };
 }
