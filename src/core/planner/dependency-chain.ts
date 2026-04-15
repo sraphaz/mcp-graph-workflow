@@ -125,6 +125,13 @@ export function findCriticalPath(doc: GraphDocument): GraphNode[] {
     }
   }
 
+  // E5-T03: Pre-check for cycles before topological sort
+  const cycles = detectCycles(doc);
+  if (cycles.length > 0) {
+    logger.warn("critical-path:cycles-detected", { cycleCount: cycles.length });
+    return []; // Return empty path instead of invalid result
+  }
+
   // Topological sort (Kahn's algorithm) + longest path
   const dist = new Map<string, number>();
   const prev = new Map<string, string | null>();

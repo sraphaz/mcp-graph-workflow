@@ -64,7 +64,10 @@ export class ResponseCache {
       return undefined;
     }
 
+    // E5-T08: Move to end of Map for O(1) LRU eviction (delete + re-insert)
     entry.lastAccessedAt = Date.now();
+    this.entries.delete(normalized);
+    this.entries.set(normalized, entry);
     this.hits++;
     return entry.data;
   }
@@ -98,19 +101,13 @@ export class ResponseCache {
     };
   }
 
+  // E5-T08: O(1) LRU eviction via Map insertion order
+  // Map.keys().next() returns the first (oldest) key since we
+  // delete+re-insert on access to maintain LRU order.
   private evictLru(): void {
-    let oldestKey: string | undefined;
-    let oldestTime = Infinity;
-
-    for (const [key, entry] of this.entries) {
-      if (entry.lastAccessedAt < oldestTime) {
-        oldestTime = entry.lastAccessedAt;
-        oldestKey = key;
-      }
-    }
-
-    if (oldestKey) {
-      this.entries.delete(oldestKey);
+    const oldest = this.entries.keys().next();
+    if (!oldest.done) {
+      this.entries.delete(oldest.value);
       this.evictions++;
     }
   }

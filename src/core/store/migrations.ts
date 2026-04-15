@@ -1337,6 +1337,29 @@ const migrations: Migration[] = [
         ON autopilot_sessions(sprint_id, status);
     `,
   },
+  {
+    version: 49,
+    description: "Add FK constraint to plugins table (E1-T13)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS plugins_new (
+        name         TEXT NOT NULL,
+        project_id   TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        version      TEXT NOT NULL,
+        path         TEXT NOT NULL,
+        enabled      INTEGER NOT NULL DEFAULT 1,
+        config       TEXT,
+        installed_at TEXT NOT NULL,
+        updated_at   TEXT NOT NULL,
+        PRIMARY KEY (project_id, name)
+      );
+
+      INSERT OR IGNORE INTO plugins_new SELECT * FROM plugins;
+      DROP TABLE IF EXISTS plugins;
+      ALTER TABLE plugins_new RENAME TO plugins;
+
+      CREATE INDEX IF NOT EXISTS idx_plugins_project ON plugins(project_id);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
