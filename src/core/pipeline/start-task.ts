@@ -67,9 +67,11 @@ export function startTask(
   store: SqliteStore,
   options?: StartTaskOptions,
 ): StartTaskResult | null {
+  if (!store) return null;
   const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager } = options ?? {};
 
   const doc = store.toGraphDocument();
+  if (!doc?.nodes) return null;
 
   // 1. Find next task or lookup specific nodeId
   let enhanced: EnhancedNextResult | null;
@@ -135,13 +137,13 @@ export function startTask(
   }
 
   // 4. Generate TDD hints from AC
-  const acChildNodes = doc.nodes.filter(
-    (n) => n.type === "acceptance_criteria" && n.parentId === taskNode.id,
+  const acChildNodes = (doc.nodes ?? []).filter(
+    (n) => n?.type === "acceptance_criteria" && n?.parentId === taskNode.id,
   );
   const acTexts = [
-    ...(taskNode.acceptanceCriteria ?? []),
-    ...acChildNodes.map((n) => n.title),
-  ];
+    ...(taskNode?.acceptanceCriteria ?? []),
+    ...acChildNodes.map((n) => n?.title ?? ""),
+  ].filter(Boolean);
   const tddHints = acTexts.length > 0
     ? generateTddHintsFromTexts(acTexts)
     : generateTddHints(taskNode);
