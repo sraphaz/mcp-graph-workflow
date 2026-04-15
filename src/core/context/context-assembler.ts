@@ -19,6 +19,9 @@ import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { logger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
 import type { CitationRef } from "../rag/citation-chain.js";
+import { extractCitationRefs } from "../rag/citation-chain.js";
+import { getAdaptiveBudgetSplit } from "./adaptive-budget.js";
+import { pruneContextSection } from "./context-pruning.js";
 
 // Module-level cache for assembleContext results (detail path)
 const assemblerCache = new ResponseCache({ ttlMs: 2 * 60 * 1000, maxSize: 50 });
@@ -57,6 +60,10 @@ export interface AssembledContext {
   };
   /** Compression stats — only present when compress:true */
   _compression?: CompressionStats;
+  /** Budget source — "learned" (Q-Learning), "default" (cold start), "fallback" (no DB) */
+  _budgetSource?: string;
+  /** AST pruning stats — only present when tier=deep */
+  _pruning_stats?: { totalReduction: number; sectionsPruned: number };
 }
 
 export interface ContextSection {
@@ -113,9 +120,25 @@ export function assembleContext(
   const breakdown: Record<string, number> = {};
   let tokensUsed = 0;
 
-  // Budget allocation: 60% graph, 30% knowledge, 10% header
-  const graphBudget = Math.floor(tokenBudget * 0.6);
-  const knowledgeBudget = Math.floor(tokenBudget * 0.3);
+  // Adaptive budget allocation via Q-Learning (Sutton & Barto RL)
+  let budgetSource = "fallback";
+  let graphBudget: number;
+  let knowledgeBudget: number;
+  try {
+    const adaptiveSplit = getAdaptiveBudgetSplit(
+      tokenBudget,
+      store.getDb(),
+      (options?.phase as string) ?? "IMPLEMENT",
+      "B",
+    );
+    graphBudget = adaptiveSplit.graphBudget;
+    knowledgeBudget = adaptiveSplit.knowledgeBudget;
+    budgetSource = adaptiveSplit.source;
+  } catch {
+    // Fallback to fixed ratios if adaptive budget unavailable
+    graphBudget = Math.floor(tokenBudget * 0.6);
+    knowledgeBudget = Math.floor(tokenBudget * 0.3);
+  }
 
   // Section 1: Graph context for specified or searched nodes
   const nodeIds = options?.nodeIds ?? findRelevantNodeIds(store, query);
@@ -128,8 +151,18 @@ export function assembleContext(
 
     if (tokensUsed + ctx.estimatedTokens > graphBudget && sections.length > 0) break;
 
-    const content = JSON.stringify(ctx, null, 0);
-    const tokens = estimateTokens(content);
+    let content = JSON.stringify(ctx, null, 0);
+    let tokens = estimateTokens(content);
+
+    // AST pruning for deep tier — Shannon Information Theory (reduce entropy)
+    if (tier === "deep") {
+      const queryTerms = query.split(/\s+/).filter((w) => w.length > 2);
+      const pruneResult = pruneContextSection(content, queryTerms);
+      if (pruneResult.summary.reductionPercent > 0) {
+        content = pruneResult.prunedContent;
+        tokens = estimateTokens(content);
+      }
+    }
 
     sections.push({
       name: `node:${ctx.summary.title}`,
@@ -184,6 +217,18 @@ export function assembleContext(
       logger.debug("context-assembler: quality search fallback", { error: getErrorMessage(err) });
     }
 
+    // Build citation chain for RAG provenance (M.A.P.A.: M — Model Contracts)
+    const citationRefs = kResults.length > 0
+      ? extractCitationRefs(kResults.map((r) => ({
+          id: r.id,
+          title: r.title,
+          content: r.content,
+          sourceType: r.sourceType,
+          sourceId: r.sourceId ?? r.id,
+          score: r.score,
+        })))
+      : [];
+
     if (kResults.length > 0) {
       const chunks = kResults.map((r) => `[${r.sourceType}] ${r.title}: ${r.content}`);
       const compressed = compressWithBm25(chunks, query, knowledgeBudget);
@@ -191,11 +236,17 @@ export function assembleContext(
       for (const chunk of compressed) {
         if (tokensUsed + chunk.tokens > tokenBudget && sections.length > 0) break;
 
+        // Attach relevant citations to this section
+        const sectionCitations = citationRefs.filter((c) =>
+          chunk.content.includes(c.snippet.slice(0, 30)),
+        );
+
         sections.push({
           name: `knowledge:${chunk.content.slice(0, 40)}...`,
           source: "knowledge",
           content: chunk.content,
           tokens: chunk.tokens,
+          citations: sectionCitations.length > 0 ? sectionCitations : [],
         });
 
         tokensUsed += chunk.tokens;
@@ -329,6 +380,7 @@ export function assembleContext(
       breakdown,
     },
     ...(compressionStats ? { _compression: compressionStats } : {}),
+    _budgetSource: budgetSource,
   };
 
   // Cache result

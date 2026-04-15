@@ -5,8 +5,13 @@ import { detectCurrentPhase, getPhaseGuidance, validatePhaseTransition, type Lif
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { generateAndIndexPhaseSummary } from "../../core/rag/phase-summary.js";
 import { runAdrChallengeGate } from "../../core/designer/adr-challenge-gate.js";
+import { AutopilotBridge } from "../../core/autonomy/autopilot-bridge.js";
+import { invalidateAssemblerCache } from "../../core/context/context-assembler.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+// Module-level singleton for autopilot bridge (persists across calls)
+const autopilotBridge = new AutopilotBridge();
 
 const VALID_PHASES = ["ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE", "REVIEW", "HANDOFF", "DEPLOY", "LISTENING", "auto"] as const;
 
@@ -33,8 +38,14 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       teamTask: z.boolean().optional().describe(
         "Enable/disable multi-terminal teamTask mode — activates lock-based task claiming, agent registration, and ownership verification",
       ),
+      autopilot: z.boolean().optional().describe(
+        "Enable/disable autonomous sprint execution — activates confidence-gated autopilot with safety guardrails",
+      ),
+      sprintId: z.string().optional().describe(
+        "Sprint identifier for autopilot session tracking",
+      ),
     },
-    async ({ phase, force, mode, codeIntelligence, prerequisites, teamTask }) => {
+    async ({ phase, force, mode, codeIntelligence, prerequisites, teamTask, autopilot, sprintId }) => {
       logger.debug("tool:set_phase", { phase, force, mode, codeIntelligence, prerequisites, teamTask });
 
       // Persist strictness mode if provided
@@ -136,6 +147,31 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       store.setProjectSetting("lifecycle_phase_override", phase);
       const guidance = getPhaseGuidance(phase);
 
+      // Invalidate assembler cache on actual phase transitions
+      let cacheInvalidated = false;
+      if (currentPhase !== phase) {
+        try {
+          invalidateAssemblerCache();
+          cacheInvalidated = true;
+          logger.info("tool:set_phase:cache_invalidated", { from: currentPhase, to: phase });
+        } catch (err) {
+          logger.warn("tool:set_phase:cache_invalidation_failed", { error: String(err) });
+        }
+      }
+
+      // Handle autopilot bridge (M.A.P.A.: A — Anchor Flow with Gates)
+      let autopilotResult: Record<string, unknown> | undefined;
+      if (autopilot !== undefined) {
+        const bridgeResult = autopilotBridge.handlePhaseChange(phase, autopilot, sprintId);
+        autopilotResult = {
+          autopilotActive: bridgeResult.autopilotActive,
+          action: bridgeResult.action,
+          ...(bridgeResult.sessionId ? { sessionId: bridgeResult.sessionId } : {}),
+          ...(bridgeResult.summary ? { summary: bridgeResult.summary } : {}),
+        };
+        logger.info("tool:set_phase:autopilot", { action: bridgeResult.action, active: bridgeResult.autopilotActive });
+      }
+
       const currentCodeIntel = codeIntelligence ?? store.getProjectSetting("code_intelligence_mode") ?? "off";
       const currentPrereqs = prerequisites ?? store.getProjectSetting("tool_prerequisites_mode") ?? "advisory";
       logger.info("tool:set_phase:ok", { action: "override", phase, mode: currentMode, codeIntelligence: currentCodeIntel, prerequisites: currentPrereqs, phaseSummaryIndexed });
@@ -148,6 +184,8 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
         prerequisites: currentPrereqs,
         reminder: guidance.reminder,
         phaseSummaryIndexed,
+        ...(cacheInvalidated ? { cacheInvalidated } : {}),
+        ...(autopilotResult ? { autopilot: autopilotResult } : {}),
       });
     },
   );
