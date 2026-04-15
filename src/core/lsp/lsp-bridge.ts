@@ -667,12 +667,18 @@ export class LspBridge {
     }
   }
 
+  // E2-T04: Properly encode file URIs with special characters (spaces, #, ?, %)
   private toFileUri(file: string): string {
-    return "file://" + path.resolve(this.basePath, file).replaceAll("\\", "/");
+    const resolved = path.resolve(this.basePath, file).replaceAll("\\", "/");
+    // Encode each path segment but preserve / separators
+    const encoded = resolved.split("/").map((seg) => encodeURIComponent(seg)).join("/");
+    return "file://" + encoded;
   }
 
   private fromFileUri(uri: string): string {
-    const absPath = uri.replace(/^file:\/\//, "");
+    const raw = uri.replace(/^file:\/\//, "");
+    // Decode URI-encoded characters back to filesystem paths
+    const absPath = decodeURIComponent(raw);
     return path.relative(this.basePath, absPath).replaceAll("\\", "/");
   }
 
@@ -701,17 +707,19 @@ export class LspBridge {
   // -----------------------------------------------------------------------
 
   private normalizeLocation(raw: RawLspLocation): LspLocation {
+    if (!raw) return { file: "", startLine: 0, startCharacter: 0, endLine: 0, endCharacter: 0 };
     return {
-      file: this.fromFileUri(raw.uri),
-      startLine: raw.range.start.line + 1,
-      startCharacter: raw.range.start.character,
-      endLine: raw.range.end.line + 1,
-      endCharacter: raw.range.end.character,
+      file: this.fromFileUri(raw?.uri ?? ""),
+      startLine: (raw?.range?.start?.line ?? 0) + 1,
+      startCharacter: raw?.range?.start?.character ?? 0,
+      endLine: (raw?.range?.end?.line ?? 0) + 1,
+      endCharacter: raw?.range?.end?.character ?? 0,
     };
   }
 
   private normalizeHover(raw: RawLspHoverResult): LspHoverResult {
-    const contents = raw.contents;
+    if (!raw) return { signature: "" };
+    const contents = raw?.contents;
 
     if (typeof contents === "string") {
       return { signature: contents };
@@ -736,37 +744,42 @@ export class LspBridge {
   }
 
   private normalizeWorkspaceEdit(raw: RawLspWorkspaceEdit): LspWorkspaceEdit {
+    if (!raw) return { changes: [] };
     const changes: LspTextEdit[] = [];
 
     // Handle `changes` format
-    if (raw.changes) {
-      for (const [uri, edits] of Object.entries(raw.changes)) {
+    if (raw?.changes) {
+      for (const [uri, edits] of Object.entries(raw?.changes ?? {})) {
+        if (!uri) continue;
         const file = this.fromFileUri(uri);
-        for (const edit of edits) {
+        for (const edit of edits ?? []) {
+          if (!edit?.range) continue;
           changes.push({
             file,
-            startLine: edit.range.start.line + 1,
-            startCharacter: edit.range.start.character,
-            endLine: edit.range.end.line + 1,
-            endCharacter: edit.range.end.character,
-            newText: edit.newText,
+            startLine: (edit?.range?.start?.line ?? 0) + 1,
+            startCharacter: edit?.range?.start?.character ?? 0,
+            endLine: (edit?.range?.end?.line ?? 0) + 1,
+            endCharacter: edit?.range?.end?.character ?? 0,
+            newText: edit?.newText ?? "",
           });
         }
       }
     }
 
     // Handle `documentChanges` format
-    if (raw.documentChanges) {
-      for (const docChange of raw.documentChanges) {
-        const file = this.fromFileUri(docChange.textDocument.uri);
-        for (const edit of docChange.edits) {
+    if (raw?.documentChanges) {
+      for (const docChange of raw?.documentChanges ?? []) {
+        if (!docChange?.textDocument?.uri) continue;
+        const file = this.fromFileUri(docChange?.textDocument?.uri ?? "");
+        for (const edit of docChange?.edits ?? []) {
+          if (!edit?.range) continue;
           changes.push({
             file,
-            startLine: edit.range.start.line + 1,
-            startCharacter: edit.range.start.character,
-            endLine: edit.range.end.line + 1,
-            endCharacter: edit.range.end.character,
-            newText: edit.newText,
+            startLine: (edit?.range?.start?.line ?? 0) + 1,
+            startCharacter: edit?.range?.start?.character ?? 0,
+            endLine: (edit?.range?.end?.line ?? 0) + 1,
+            endCharacter: edit?.range?.end?.character ?? 0,
+            newText: edit?.newText ?? "",
           });
         }
       }
@@ -776,28 +789,30 @@ export class LspBridge {
   }
 
   private normalizeCallHierarchyItem(raw: RawCallHierarchyItem): LspCallHierarchyItem {
+    if (!raw) return { name: "", kind: "Unknown", file: "", startLine: 0, endLine: 0 };
     return {
-      name: raw.name,
-      kind: SYMBOL_KIND_MAP[raw.kind] ?? `Unknown(${raw.kind})`,
-      file: this.fromFileUri(raw.uri),
-      startLine: raw.range.start.line + 1,
-      endLine: raw.range.end.line + 1,
+      name: raw?.name ?? "",
+      kind: SYMBOL_KIND_MAP[raw?.kind] ?? `Unknown(${raw?.kind ?? 0})`,
+      file: this.fromFileUri(raw?.uri ?? ""),
+      startLine: (raw?.range?.start?.line ?? 0) + 1,
+      endLine: (raw?.range?.end?.line ?? 0) + 1,
     };
   }
 
   private normalizeDocumentSymbol(file: string, raw: RawDocumentSymbol): LspDocumentSymbol {
+    if (!raw) return { name: "", kind: "Unknown", file: file ?? "", startLine: 0, endLine: 0 };
     const result: LspDocumentSymbol = {
-      name: raw.name,
-      kind: SYMBOL_KIND_MAP[raw.kind] ?? `Unknown(${raw.kind})`,
-      file,
-      startLine: raw.range.start.line + 1,
-      endLine: raw.range.end.line + 1,
+      name: raw?.name ?? "",
+      kind: SYMBOL_KIND_MAP[raw?.kind] ?? `Unknown(${raw?.kind ?? 0})`,
+      file: file ?? "",
+      startLine: (raw?.range?.start?.line ?? 0) + 1,
+      endLine: (raw?.range?.end?.line ?? 0) + 1,
     };
 
-    if (raw.children && raw.children.length > 0) {
-      result.children = raw.children.map((child) =>
+    if (raw?.children && (raw?.children?.length ?? 0) > 0) {
+      result.children = raw?.children?.map((child) =>
         this.normalizeDocumentSymbol(file, child),
-      );
+      ) ?? [];
     }
 
     return result;

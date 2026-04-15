@@ -58,7 +58,8 @@ export function estimateTokens(text: string): number {
         // camelCase: BPE splits on case boundaries, each sub-word is ~1 token
         tokens += subWords;
       } else {
-        tokens += wordLen <= 6 ? 1 : Math.ceil(wordLen / 5);
+        // E3-T07: words >20 chars use /4 ratio (BPE splits more aggressively on long terms)
+        tokens += wordLen <= 6 ? 1 : wordLen > 20 ? Math.ceil(wordLen / 4) : Math.ceil(wordLen / 5);
       }
       continue;
     }
