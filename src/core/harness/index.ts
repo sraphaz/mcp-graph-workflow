@@ -53,3 +53,5 @@ export type { HarnessDimension, RemediationCategory, ViolationDetail, Remediatio
 export { checkInvariants, getBuiltInInvariants } from './property-invariants.js';
 export type { PropertyInvariant, InvariantViolation, InvariantResult } from './property-invariants.js';
 export { discoverTestFiles } from './test-discovery.js';
+export { runSyntheticValidation } from './synthetic-validation-gate.js';
+export type { SyntheticValidationResult, MutationRecord } from './synthetic-validation-gate.js';
