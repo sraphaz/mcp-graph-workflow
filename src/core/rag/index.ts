@@ -22,6 +22,8 @@ export { validateRetrievedResults, correctResults, verifyCrossReferences } from 
 export type { ValidationIssue, ValidationResult, CrossRefCheck } from './corrective-rag.js';
 export { indexDecision } from './decision-indexer.js';
 export type { DecisionInput } from './decision-indexer.js';
+export { createProvenance, queryProvenance, getProvenanceChain } from './decision-provenance.js';
+export type { DecisionProvenance, CreateProvenanceInput } from './decision-provenance.js';
 export { indexCachedDocs } from './docs-indexer.js';
 export type { DocsIndexResult } from './docs-indexer.js';
 export { EMBEDDING_DIM, generateEmbedding, generateEmbeddingBatch } from './embedding-generator.js';
