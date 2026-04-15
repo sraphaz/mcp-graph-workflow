@@ -56,7 +56,11 @@ export type GraphEventType =
   // Multi-terminal orchestrator events (teamTask mode)
   | "task:claimed"
   | "task:released"
-  | "agent:heartbeat";
+  | "agent:heartbeat"
+  // Autopilot recovery events (Phase D — Autonomous Loop)
+  | "autopilot:paused"
+  | "autopilot:escalation"
+  | "autopilot:rollback";
 
 export interface GraphEvent {
   type: GraphEventType;
