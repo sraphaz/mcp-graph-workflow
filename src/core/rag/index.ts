@@ -10,6 +10,8 @@ export { mapCitations, buildCitedContext } from './citation-mapper.js';
 export type { Citation, CitedContext } from './citation-mapper.js';
 export { extractCitationRefs } from './citation-chain.js';
 export type { CitationRef, KnowledgeSearchResult } from './citation-chain.js';
+export { getPhaseTtlMs, invalidateDependentCaches, getCacheTokenStats } from './cache-invalidator.js';
+export type { CacheTokenStats } from './cache-invalidator.js';
 export { indexCodeAnalysis } from './code-context-indexer.js';
 export type { CodeSymbolInput, ProcessFlowInput, CodeAnalysisInput, IndexResult } from './code-context-indexer.js';
 export { detectCommunities, generateCommunitySummary, rebuildCommunities } from './community-summarizer.js';
