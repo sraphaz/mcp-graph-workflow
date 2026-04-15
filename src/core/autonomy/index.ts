@@ -4,3 +4,7 @@ export { AutopilotController } from './autopilot-controller.js';
 export type { AutopilotConfig, AutopilotDecision, AutopilotSession, EvaluateInput } from './autopilot-controller.js';
 export { AutopilotBridge } from './autopilot-bridge.js';
 export type { PhaseChangeResult } from './autopilot-bridge.js';
+export { createCheckpoint, rollbackToCheckpoint } from './graph-rollback.js';
+export type { GraphCheckpoint, RollbackResult } from './graph-rollback.js';
+export { createShadowBranch, mergeShadowBranch, discardShadowBranch, getShadowBranchName } from './shadow-branch.js';
+export type { ShadowBranchResult, MergeResult, DiscardResult } from './shadow-branch.js';
