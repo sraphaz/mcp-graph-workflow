@@ -31,7 +31,7 @@ describe("harness surfacing — start_task harnessWarning", () => {
     store.close();
   });
 
-  it("should include harnessWarning field in StartTaskResult", () => {
+  it("should include harnessWarning field in StartTaskResult", async () => {
     const result = startTask(store, { autoStart: false });
 
     expect(result).not.toBeNull();
@@ -39,7 +39,7 @@ describe("harness surfacing — start_task harnessWarning", () => {
     expect("harnessWarning" in result!).toBe(true);
   });
 
-  it("harnessWarning should be null when no harness history exists", () => {
+  it("harnessWarning should be null when no harness history exists", async () => {
     const result = startTask(store, { autoStart: false });
 
     expect(result).not.toBeNull();
@@ -75,23 +75,23 @@ describe("harness surfacing — finish_task harnessRegression", () => {
     store.close();
   });
 
-  it("should include harnessRegression field in FinishTaskResult", () => {
-    const result = finishTask(store, taskId, { autoNext: false });
+  it("should include harnessRegression field in FinishTaskResult", async () => {
+    const result = await finishTask(store, taskId, { autoNext: false });
 
     expect(result).toBeDefined();
     expect("harnessRegression" in result).toBe(true);
   });
 
-  it("should include ruleSuggestions field in FinishTaskResult", () => {
-    const result = finishTask(store, taskId, { autoNext: false });
+  it("should include ruleSuggestions field in FinishTaskResult", async () => {
+    const result = await finishTask(store, taskId, { autoNext: false });
 
     expect(result).toBeDefined();
     expect("ruleSuggestions" in result).toBe(true);
     expect(Array.isArray(result.ruleSuggestions)).toBe(true);
   });
 
-  it("ruleSuggestions should be empty when no patterns exceed threshold", () => {
-    const result = finishTask(store, taskId, { autoNext: false });
+  it("ruleSuggestions should be empty when no patterns exceed threshold", async () => {
+    const result = await finishTask(store, taskId, { autoNext: false });
 
     expect(result.ruleSuggestions).toHaveLength(0);
   });

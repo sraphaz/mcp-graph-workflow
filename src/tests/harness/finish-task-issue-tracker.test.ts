@@ -21,13 +21,13 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     store.close();
   });
 
-  it("records missing_ac pattern when has_acceptance_criteria check fails", () => {
+  it("records missing_ac pattern when has_acceptance_criteria check fails", async () => {
     // Bare task: no AC (triggers has_acceptance_criteria failure)
     const task = makeNode({ title: "Bare task", description: "some desc" });
     store.insertNode(task);
     store.updateNodeStatus(task.id, "in_progress");
 
-    finishTask(store, task.id, { autoNext: false });
+    await finishTask(store, task.id, { autoNext: false });
 
     const tracker = new IssuePatternTracker(store.getDb());
     const pattern = tracker.getPattern("missing_ac");
@@ -35,7 +35,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     expect(pattern!.count).toBeGreaterThanOrEqual(1);
   });
 
-  it("suggests a rule after the same pattern occurs 3 times", () => {
+  it("suggests a rule after the same pattern occurs 3 times", async () => {
     const tracker = new IssuePatternTracker(store.getDb());
 
     // Execute 3 bare tasks (no AC) — each triggers missing_ac
@@ -43,7 +43,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
       const task = makeNode({ title: `Bare task ${i}`, description: "some desc" });
       store.insertNode(task);
       store.updateNodeStatus(task.id, "in_progress");
-      finishTask(store, task.id, { autoNext: false });
+      await finishTask(store, task.id, { autoNext: false });
     }
 
     const rules = tracker.getSuggestedRules();
@@ -53,7 +53,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     expect(acRule!.count).toBeGreaterThanOrEqual(3);
   });
 
-  it("does NOT affect finish-task result when tracker throws (fail-safe)", () => {
+  it("does NOT affect finish-task result when tracker throws (fail-safe)", async () => {
     // Task with all required fields — should pass DoD even if tracker fails internally
     const task = makeNode({
       title: "Good task",
@@ -66,13 +66,13 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     store.updateNodeStatus(task.id, "in_progress");
 
     // Verify the result is unaffected even if tracker has issues
-    const result = finishTask(store, task.id, { autoNext: false });
+    const result = await finishTask(store, task.id, { autoNext: false });
 
     expect(result.status).toBe("done");
     expect(result.blockers).toHaveLength(0);
   });
 
-  it("does NOT record any pattern when all DoD checks pass", () => {
+  it("does NOT record any pattern when all DoD checks pass", async () => {
     const task = makeNode({
       title: "Passing task",
       parentId: epicId,
@@ -83,7 +83,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     store.insertNode(task);
     store.updateNodeStatus(task.id, "in_progress");
 
-    finishTask(store, task.id, { autoNext: false });
+    await finishTask(store, task.id, { autoNext: false });
 
     const tracker = new IssuePatternTracker(store.getDb());
     // missing_ac should NOT be recorded since AC was provided
@@ -91,7 +91,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     expect(pattern).toBeNull();
   });
 
-  it("existing finish-task tests still pass (no regression)", () => {
+  it("existing finish-task tests still pass (no regression)", async () => {
     // Regression guard: re-verify core behavior unchanged
     const task = makeNode({
       title: "Regression task",
@@ -103,7 +103,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     store.insertNode(task);
     store.updateNodeStatus(task.id, "in_progress");
 
-    const result = finishTask(store, task.id, {
+    const result = await finishTask(store, task.id, {
       rationale: "Used pattern X",
       testFiles: ["src/tests/something.test.ts"],
       autoNext: false,
