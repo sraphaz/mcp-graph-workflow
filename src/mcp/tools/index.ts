@@ -50,6 +50,8 @@ import { registerPreset } from "./preset.js";
 import { registerSpec } from "./spec.js";
 import { registerSpecSync } from "./spec-sync.js";
 import { registerAgentFormat } from "./agent-format.js";
+import { registerDelegate } from "./delegate.js";
+import { registerPipeline } from "./pipeline.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
@@ -110,5 +112,7 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerSpec(server, store);
   registerSpecSync(server, store);
   registerAgentFormat(server, store);
+  registerDelegate(server, store);
+  registerPipeline(server, store);
   wrapToolsWithGates(server, store);
 }

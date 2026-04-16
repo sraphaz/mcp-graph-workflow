@@ -35,6 +35,9 @@ import type { CodeSymbol } from "../core/code/code-types.js";
 import { READ_ONLY_TOOLS } from "./tool-classification.js";
 import { runHarnessScanCached } from "../core/harness/harness-cache.js";
 import { execSync } from "child_process";
+import { sanitizeToolArgs, detectExfiltration } from "../core/security/input-sanitizer.js";
+import { ToolResultStore } from "../core/store/tool-result-store.js";
+import { createHash } from "node:crypto";
 
 // ── Re-exported types (backward compat for tests importing from old files) ──
 
@@ -573,6 +576,25 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         }
       }
 
+      // ══ PRE-EXECUTION: Input sanitization (detection-only) ══
+      if (eventBus) {
+        try {
+          const toolArgs = (args[0] as Record<string, unknown>) ?? {};
+          const sanitizationResult = sanitizeToolArgs(toolArgs);
+          if (sanitizationResult.injectionDetected) {
+            const inputHash = createHash("sha256").update(JSON.stringify(toolArgs)).digest("hex").slice(0, 16);
+            eventBus.emitTyped("security:injection_detected", {
+              toolName: name,
+              inputHash,
+              invisibleCharsRemoved: sanitizationResult.invisibleCharsRemoved,
+            });
+            logger.warn("security:injection_detected", { tool: name, inputHash });
+          }
+        } catch {
+          logger.debug("unified-gate: input sanitization skipped", { tool: name });
+        }
+      }
+
       // ══ EXECUTE original handler ══
       const result = await originalHandler(...args) as ToolCallResult;
 
@@ -593,6 +615,23 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         logger.debug("unified-gate: token tracking skipped", { tool: name });
       }
 
+      // ── Tool result persistence ──
+      if (!result?.isError) {
+        try {
+          const project = store.getProject();
+          if (project) {
+            const toolResultStore = new ToolResultStore(store.getDb());
+            const toolArgs = (args[0] as Record<string, unknown>) ?? {};
+            toolResultStore.record(project.id, null, name, toolArgs, result);
+            if (eventBus) {
+              eventBus.emitTyped("tool:result_persisted", { toolName: name, projectId: project.id });
+            }
+          }
+        } catch {
+          logger.debug("unified-gate: tool result persistence skipped", { tool: name });
+        }
+      }
+
       // ── Tool call recording ──
       if (!result?.isError) {
         try {
@@ -605,6 +644,29 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
           }
         } catch {
           logger.debug("unified-gate: tool call recording skipped", { tool: name });
+        }
+      }
+
+      // ── POST-EXECUTION: Exfiltration detection (detection-only) ──
+      if (eventBus && result && !result.isError) {
+        try {
+          const outputText = result.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
+          if (outputText.length > 0) {
+            const exfilReport = detectExfiltration(outputText);
+            if (exfilReport.detected) {
+              const outputHash = createHash("sha256").update(outputText.slice(0, 1000)).digest("hex").slice(0, 16);
+              eventBus.emitTyped("security:exfiltration_detected", {
+                toolName: name,
+                outputHash,
+                suspiciousUrls: exfilReport.suspiciousUrls.length,
+                base64Blocks: exfilReport.base64Blocks.length,
+                suspiciousCommands: exfilReport.suspiciousCommands.length,
+              });
+              logger.warn("security:exfiltration_detected", { tool: name, outputHash });
+            }
+          }
+        } catch {
+          logger.debug("unified-gate: exfiltration detection skipped", { tool: name });
         }
       }
 

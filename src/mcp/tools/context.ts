@@ -14,6 +14,7 @@ import { applySessionDelta, applyRagSessionDelta } from "../../core/context/cont
 import { ragBuildContext } from "../../core/context/rag-context.js";
 import { assembleContext } from "../../core/context/context-assembler.js";
 import { compressText } from "../../core/context/compress-text.js";
+import { compressWithFocus } from "../../core/context/focus-compressor.js";
 import { RagSemanticCacheLayer } from "../../core/rag/rag-semantic-cache-layer.js";
 import { multiStrategySearch } from "../../core/rag/multi-strategy-retrieval.js";
 import { recordUsage } from "../../core/rag/knowledge-quality.js";
@@ -64,7 +65,7 @@ export function invalidateRagCache(): void {
 /* ------------------------------------------------------------------ */
 
 interface ContextParams {
-  action: "compact" | "rag" | "compress" | "batch_compress";
+  action: "compact" | "rag" | "compress" | "batch_compress" | "focus_compress";
   id?: string;
   sessionId?: string;
   query?: string;
@@ -75,6 +76,7 @@ interface ContextParams {
   format?: "bullets" | "summary" | "steps" | "json";
   max_tokens?: number;
   texts?: Array<{ text: string; format: "bullets" | "summary" | "steps" | "json"; max_tokens?: number }>;
+  focus?: string;
 }
 
 function handleCompact(
@@ -432,6 +434,39 @@ function handleBatchCompress(params: ContextParams): ReturnType<typeof mcpText> 
   });
 }
 
+function handleFocusCompress(params: ContextParams): ReturnType<typeof mcpText> {
+  const { text, focus, max_tokens } = params;
+
+  if (!text) {
+    return mcpError("action=focus_compress requires 'text' param");
+  }
+  if (!focus) {
+    return mcpError("action=focus_compress requires 'focus' param (topic to prioritize)");
+  }
+
+  const normalizedText = normalizeNewlines(text) ?? text;
+  const maxTokens = max_tokens ?? 2000;
+
+  logger.debug("tool:context:focus_compress", { focus, maxTokens, inputLength: text.length });
+
+  const result = compressWithFocus(normalizedText, focus, maxTokens);
+
+  logger.info("tool:context:focus_compress:ok", {
+    focus,
+    inputTokens: result.stats.inputTokens,
+    outputTokens: result.stats.outputTokens,
+    reduction: result.stats.reductionPercent,
+    pressure: result.pressureLevel,
+  });
+
+  return mcpText({
+    compressed: result.compressed,
+    stats: result.stats,
+    focusRelevanceScore: result.focusRelevanceScore,
+    pressureLevel: result.pressureLevel,
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Tool registration                                                  */
 /* ------------------------------------------------------------------ */
@@ -439,10 +474,10 @@ function handleBatchCompress(params: ContextParams): ReturnType<typeof mcpText> 
 export function registerContext(server: McpServer, store: SqliteStore): void {
   server.tool(
     "context",
-    "Context hub: compact task context (action=compact, default), RAG search with multi-strategy + caching (action=rag), text compression (action=compress), batch compression (action=batch_compress)",
+    "Context hub: compact task context (action=compact, default), RAG search with multi-strategy + caching (action=rag), text compression (action=compress), batch compression (action=batch_compress), focus-guided compression (action=focus_compress)",
     {
-      action: z.enum(["compact", "rag", "compress", "batch_compress"]).default("compact")
-        .describe("Action: compact (task context by ID, default), rag (RAG search by query), compress (text compression), batch_compress (compress multiple texts)"),
+      action: z.enum(["compact", "rag", "compress", "batch_compress", "focus_compress"]).default("compact")
+        .describe("Action: compact (task context by ID, default), rag (RAG search by query), compress (text compression), batch_compress (compress multiple texts), focus_compress (topic-guided compression)"),
 
       // --- compact params ---
       id: z.string().min(1).optional()
@@ -470,6 +505,10 @@ export function registerContext(server: McpServer, store: SqliteStore): void {
       max_tokens: z.number().int().min(50).max(32000).optional()
         .describe("Maximum tokens for compressed output (default: 2000) (action=compress)"),
 
+      // --- focus_compress params ---
+      focus: z.string().min(1).optional()
+        .describe("Topic to prioritize during compression — high-relevance sections preserved, low-relevance compressed (action=focus_compress)"),
+
       // --- batch_compress params ---
       texts: z.array(z.object({
         text: z.string().min(1).describe("Text to compress"),
@@ -492,6 +531,8 @@ export function registerContext(server: McpServer, store: SqliteStore): void {
             return handleCompress(params);
           case "batch_compress":
             return handleBatchCompress(params);
+          case "focus_compress":
+            return handleFocusCompress(params);
           default:
             return mcpError(`Unknown context action: ${resolvedAction}`);
         }

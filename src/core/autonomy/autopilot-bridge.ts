@@ -9,6 +9,10 @@
 
 import { AutopilotController, type AutopilotConfig, type AutopilotSession } from "./autopilot-controller.js";
 import { AutopilotRecoveryBridge } from "./autopilot-recovery-bridge.js";
+import { SessionChainManager } from "../context/session-chain.js";
+import { SessionRecallStore } from "../context/session-recall.js";
+import type { GraphEventBus } from "../events/event-bus.js";
+import type Database from "better-sqlite3";
 import { z } from "zod/v4";
 import { McpGraphError } from "../utils/errors.js";
 
@@ -136,5 +140,39 @@ export class AutopilotBridge {
    */
   isActive(): boolean {
     return this.active;
+  }
+
+  /**
+   * Subscribe to context:pressure_warning events from the event bus.
+   * When autopilot is active and context pressure fires, creates a child session
+   * to allow continuation in a fresh context window.
+   * Returns an unsubscribe function.
+   */
+  subscribeToEventBus(db: Database.Database, eventBus: GraphEventBus): () => void {
+    const handler = (): void => {
+      if (!this.active || !this.controller) return;
+      const session = this.controller.getSession();
+      if (!session) return;
+
+      try {
+        const recallStore = new SessionRecallStore(db);
+        const chainManager = new SessionChainManager(recallStore);
+        const childId = chainManager.createChildSession(session.id, "context_pressure");
+        eventBus.emitTyped("session:chained", {
+          parentSessionId: session.id,
+          childSessionId: childId,
+          reason: "context_pressure",
+        });
+        logger.info("autopilot-bridge:session-chained", {
+          parentSessionId: session.id,
+          childSessionId: childId,
+        });
+      } catch (err) {
+        logger.warn("autopilot-bridge:session-chain-failed", { error: String(err) });
+      }
+    };
+
+    eventBus.on("context:pressure_warning", handler);
+    return () => eventBus.off("context:pressure_warning", handler);
   }
 }

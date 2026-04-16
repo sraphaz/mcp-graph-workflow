@@ -67,7 +67,29 @@ export type GraphEventType =
   | "span:created"
   | "guardrail:executed"
   | "decision:logged"
-  | "experiment:completed";
+  | "experiment:completed"
+  // Security events (Hermes-agent integration)
+  | "security:injection_detected"
+  | "security:exfiltration_detected"
+  // Cost tracking events (Hermes-agent integration)
+  | "cost:budget_exceeded"
+  // Error classification events (Hermes-agent integration)
+  | "error:retry_attempted"
+  | "error:retry_exhausted"
+  // Context pressure events (Hermes-agent integration)
+  | "context:pressure_warning"
+  // Tool result persistence events (Hermes-agent integration)
+  | "tool:result_persisted"
+  // Session events (Hermes-agent integration)
+  | "session:chained"
+  // Delegation events (Hermes-agent integration)
+  | "agent:delegated"
+  | "agent:delegation_completed"
+  | "agent:delegation_failed"
+  // Pipeline events (Hermes-agent integration)
+  | "pipeline:started"
+  | "pipeline:step_completed"
+  | "pipeline:completed";
 
 export interface GraphEvent {
   type: GraphEventType;

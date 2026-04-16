@@ -10,22 +10,41 @@ import path from "node:path";
 import type { GraphEventBus } from "../events/event-bus.js";
 import type { GraphEvent } from "../events/event-types.js";
 import { logger } from "../utils/logger.js";
+import { classifyError } from "../utils/error-classifier.js";
 
 export interface SelfHealingOptions {
   memoriesDir: string;
   eventBus: GraphEventBus;
 }
 
-/** Categorize an error message into a healing category. */
+/** Map error-classifier categories to healing category slugs. */
+const CATEGORY_MAP: Record<string, string> = {
+  rate_limit: "general-error",
+  auth_expired: "general-error",
+  context_overflow: "general-error",
+  timeout: "general-error",
+  network: "general-error",
+  empty_response: "general-error",
+  validation: "validation-error",
+  database: "database-error",
+  build: "build-error",
+  test: "test-failure",
+  module: "module-error",
+  general: "general-error",
+};
+
+/**
+ * Categorize an error message into a healing category.
+ * Delegates to classifyError() from error-classifier for consistent taxonomy.
+ */
 export function categorizeError(message: string): string {
+  const classification = classifyError(message);
+  // Map type-related errors before falling through to classifier
   const lower = message.toLowerCase();
-  if (lower.includes("type") && (lower.includes("error") || lower.includes("mismatch"))) return "type-error";
-  if (lower.includes("validation") || lower.includes("invalid") || lower.includes("zod")) return "validation-error";
-  if (lower.includes("build") || lower.includes("compile") || lower.includes("tsc")) return "build-error";
-  if (lower.includes("test") && (lower.includes("fail") || lower.includes("assert"))) return "test-failure";
-  if (lower.includes("sqlite") || lower.includes("database") || lower.includes("migration")) return "database-error";
-  if (lower.includes("import") || lower.includes("module") || lower.includes("require")) return "module-error";
-  return "general-error";
+  if (lower.includes("type") && (lower.includes("error") || lower.includes("mismatch"))) {
+    return "type-error";
+  }
+  return CATEGORY_MAP[classification.category] ?? "general-error";
 }
 
 /** Generate a short hash for deduplication of error patterns. */

@@ -23,9 +23,11 @@ import { getBuiltInSkills, getSkillsByPhase, getSkillByName } from "../../core/s
 import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
 import { recommendBuiltInSkills } from "../../core/insights/skill-recommender.js";
 import { CustomSkillInputSchema, TaskTemplateInputSchema } from "../../schemas/skill.schema.js";
+import { parseSkillMarkdown } from "../../core/skills/skill-loader.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
+import { readFileSync } from "node:fs";
 
 export function registerManageSkill(server: McpServer, store: SqliteStore): void {
   server.tool(
@@ -33,7 +35,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
     "Manage skills: list built-in skills, enable/disable, CRUD custom skills.",
     {
       action: z
-        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates", "recommend"])
+        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates", "recommend", "import"])
         .describe("Action to perform"),
       skillName: z
         .string()
@@ -57,6 +59,10 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
         })
         .optional()
         .describe("Skill data (for create/update)"),
+      filePath: z
+        .string()
+        .optional()
+        .describe("Path to SKILL.md file to import (action=import)"),
       template: z
         .object({
           name: z.string(),
@@ -72,7 +78,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
         .optional()
         .describe("Template data (for create_template)"),
     },
-    async ({ action, skillName, skillId, phase, data, template }) => {
+    async ({ action, skillName, skillId, phase, data, template, filePath }) => {
       logger.debug("tool:manage_skill", { action, skillName, skillId });
 
       const project = store.getProject();
@@ -205,6 +211,26 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             const templates = listTaskTemplates(db, projectId);
             logger.info("tool:manage_skill:list_templates", { count: templates.length });
             return mcpText({ ok: true, total: templates.length, templates });
+          }
+
+          case "import": {
+            if (!filePath) {
+              return mcpError("filePath required for import action");
+            }
+            let content: string;
+            try {
+              content = readFileSync(filePath, "utf-8");
+            } catch (err) {
+              return mcpError(`Failed to read file: ${err instanceof Error ? err.message : String(err)}`);
+            }
+            const parseResult = parseSkillMarkdown(content);
+            if (!parseResult.ok || !parseResult.skill) {
+              return mcpError(`SKILL.md parse failed: ${parseResult.error ?? "unknown error"}`);
+            }
+            const imported = createCustomSkill(db, projectId, parseResult.skill);
+            indexEntitiesForSource(db, "skill");
+            logger.info("tool:manage_skill:imported", { id: imported.id, name: imported.name, filePath });
+            return mcpText({ ok: true, action: "import", skill: imported });
           }
 
           case "recommend": {

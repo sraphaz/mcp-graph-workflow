@@ -17,12 +17,21 @@ export const SkillPreferenceSchema = z.object({
 });
 export type SkillPreference = z.infer<typeof SkillPreferenceSchema>;
 
+export const SkillTriggerSchema = z.object({
+  event: z.string().min(1).max(ID_MAX).describe("Event type that activates this skill"),
+  condition: z.string().max(SHORT_TEXT_MAX).optional().describe("Optional condition expression"),
+});
+export type SkillTrigger = z.infer<typeof SkillTriggerSchema>;
+
 export const CustomSkillInputSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(LONG_TEXT_MAX),
   category: z.string().max(ID_MAX).default("know-me"),
   phases: z.array(LifecyclePhaseEnum).max(ARRAY_MAX),
   instructions: z.string().min(1).max(LONG_TEXT_MAX),
+  toolchain: z.array(z.string().max(ID_MAX)).max(ARRAY_MAX).optional().describe("Ordered list of tool names this skill uses"),
+  triggers: z.array(SkillTriggerSchema).max(ARRAY_MAX).optional().describe("Events that auto-activate this skill"),
+  contextTemplate: z.string().max(LONG_TEXT_MAX).optional().describe("Template for context injection"),
 });
 export type CustomSkillInput = z.infer<typeof CustomSkillInputSchema>;
 

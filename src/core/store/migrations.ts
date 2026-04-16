@@ -1514,6 +1514,96 @@ const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 55,
+    description: "Security events audit log (Hermes-agent integration — input sanitization)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS security_events (
+        id          TEXT PRIMARY KEY,
+        event_type  TEXT NOT NULL,
+        severity    TEXT NOT NULL DEFAULT 'medium',
+        input_hash  TEXT NOT NULL,
+        details     TEXT NOT NULL,
+        tool_name   TEXT,
+        created_at  TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type);
+      CREATE INDEX IF NOT EXISTS idx_security_events_created ON security_events(created_at);
+    `,
+  },
+  {
+    version: 56,
+    description: "Tool result persistence store (Hermes-agent integration — audit/replay)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS tool_results (
+        id           TEXT PRIMARY KEY,
+        project_id   TEXT NOT NULL,
+        trace_id     TEXT,
+        tool_name    TEXT NOT NULL,
+        tool_args    TEXT,
+        result       TEXT NOT NULL,
+        result_hash  TEXT NOT NULL,
+        size_bytes   INTEGER NOT NULL DEFAULT 0,
+        truncated    INTEGER NOT NULL DEFAULT 0,
+        created_at   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_tool_results_trace ON tool_results(trace_id);
+      CREATE INDEX IF NOT EXISTS idx_tool_results_tool ON tool_results(tool_name);
+      CREATE INDEX IF NOT EXISTS idx_tool_results_project ON tool_results(project_id);
+    `,
+  },
+  {
+    version: 57,
+    description: "Session recall store with FTS5 (Hermes-agent integration — cross-session search)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS session_summaries (
+        id                 TEXT PRIMARY KEY,
+        session_id         TEXT NOT NULL UNIQUE,
+        parent_session_id  TEXT,
+        summary            TEXT NOT NULL,
+        topics             TEXT NOT NULL DEFAULT '[]',
+        node_ids           TEXT DEFAULT '[]',
+        tokens_used        INTEGER DEFAULT 0,
+        cost_usd           REAL DEFAULT 0,
+        created_at         TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_session_summaries_parent ON session_summaries(parent_session_id);
+      CREATE INDEX IF NOT EXISTS idx_session_summaries_created ON session_summaries(created_at);
+      CREATE VIRTUAL TABLE IF NOT EXISTS session_summaries_fts USING fts5(
+        summary, topics, content='session_summaries', content_rowid='rowid'
+      );
+    `,
+  },
+  {
+    version: 58,
+    description: "Sub-agent delegation tracking (Hermes-agent integration — orchestration)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS delegations (
+        id                TEXT PRIMARY KEY,
+        parent_agent_id   TEXT NOT NULL,
+        child_agent_id    TEXT NOT NULL,
+        objective         TEXT NOT NULL,
+        allowed_tools     TEXT NOT NULL DEFAULT '[]',
+        status            TEXT NOT NULL DEFAULT 'running',
+        result_summary    TEXT,
+        tokens_used       INTEGER NOT NULL DEFAULT 0,
+        depth             INTEGER NOT NULL DEFAULT 1,
+        created_at        TEXT NOT NULL,
+        completed_at      TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_delegations_parent ON delegations(parent_agent_id);
+      CREATE INDEX IF NOT EXISTS idx_delegations_status ON delegations(status);
+    `,
+  },
+  {
+    version: 59,
+    description: "Skill system enhancement — toolchain, triggers, context template (Hermes-agent integration)",
+    sql: `
+      ALTER TABLE custom_skills ADD COLUMN toolchain TEXT DEFAULT '[]';
+      ALTER TABLE custom_skills ADD COLUMN triggers TEXT DEFAULT '[]';
+      ALTER TABLE custom_skills ADD COLUMN context_template TEXT;
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

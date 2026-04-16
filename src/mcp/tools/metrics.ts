@@ -7,19 +7,57 @@ import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { buildTaskContext } from "../../core/context/compact-context.js";
 import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
 import { RecoveryMetricsStore } from "../../core/autonomy/recovery-metrics-store.js";
+import { ToolTokenStore } from "../../core/store/tool-token-store.js";
+import { calculateCost } from "../../core/observability/cost-tracker.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
 export function registerMetrics(server: McpServer, store: SqliteStore): void {
   server.tool(
     "metrics",
-    "Show project metrics. Mode 'stats' returns aggregate graph statistics; mode 'velocity' returns sprint velocity metrics.",
+    "Show project metrics. Mode 'stats' returns aggregate graph statistics; mode 'velocity' returns sprint velocity metrics; mode 'cost' returns per-tool token cost breakdown with budget alerts.",
     {
-      mode: z.enum(["stats", "velocity"]).describe("Metrics mode: 'stats' for graph statistics, 'velocity' for sprint velocity"),
+      mode: z.enum(["stats", "velocity", "cost"]).describe("Metrics mode: 'stats' for graph statistics, 'velocity' for sprint velocity, 'cost' for token cost breakdown"),
       sprint: z.string().optional().describe("Filter velocity results to a specific sprint (only used in velocity mode)"),
     },
     async ({ mode, sprint }) => {
       logger.debug("tool:metrics", { mode, sprint });
+
+      if (mode === "cost") {
+        const project = store.getProject();
+        if (!project) {
+          return mcpText({ ok: false, error: "No project initialized" });
+        }
+        const tokenStore = new ToolTokenStore(store.getDb());
+        const summary = tokenStore.getSummary(project.id);
+
+        // Calculate costs per tool using default model (configurable via project_settings)
+        const defaultModel = store.getProjectSetting("cost_model_default") ?? "claude-sonnet-4";
+        const perToolCosts = summary.perTool.map((t) => {
+          const cost = calculateCost(defaultModel, t.totalInputTokens, t.totalOutputTokens);
+          return { ...t, estimatedCostUsd: cost.totalUsd, model: defaultModel };
+        });
+        const totalCost = calculateCost(defaultModel, summary.totalInputTokens, summary.totalOutputTokens);
+
+        // Check budget
+        const budgetStr = store.getProjectSetting("cost_budget_usd");
+        const budget = budgetStr ? parseFloat(budgetStr) : null;
+        const budgetExceeded = budget !== null && totalCost.totalUsd > budget;
+
+        logger.info("tool:metrics:cost:ok", { totalCost: totalCost.totalUsd, budget });
+        return mcpText({
+          ok: true,
+          mode: "cost",
+          model: defaultModel,
+          totalCalls: summary.totalCalls,
+          totalInputTokens: summary.totalInputTokens,
+          totalOutputTokens: summary.totalOutputTokens,
+          estimatedTotalCostUsd: totalCost.totalUsd,
+          budget: budget ?? "not set",
+          budgetExceeded,
+          perTool: perToolCosts,
+        });
+      }
 
       if (mode === "velocity") {
         const doc = store.toGraphDocument();

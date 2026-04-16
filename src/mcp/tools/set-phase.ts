@@ -169,6 +169,11 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
           ...(bridgeResult.sessionId ? { sessionId: bridgeResult.sessionId } : {}),
           ...(bridgeResult.summary ? { summary: bridgeResult.summary } : {}),
         };
+        // Wire session chaining when autopilot starts: subscribe to context:pressure_warning
+        if (autopilot && bridgeResult.action === "started" && store.eventBus) {
+          autopilotBridge.subscribeToEventBus(store.getDb(), store.eventBus);
+          logger.info("tool:set_phase:autopilot:session-chain-subscribed");
+        }
         logger.info("tool:set_phase:autopilot", { action: bridgeResult.action, active: bridgeResult.autopilotActive });
       }
 
