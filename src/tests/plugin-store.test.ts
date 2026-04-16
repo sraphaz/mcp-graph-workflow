@@ -12,6 +12,19 @@ describe("Plugin persistence (migration v32 + PluginStore)", () => {
     db = new Database(":memory:");
     db.pragma("journal_mode = WAL");
     runMigrations(db);
+    // Migration v49 adds FK constraint on plugins.project_id → projects.id
+    db.prepare(
+      `INSERT OR IGNORE INTO projects (id, name, created_at, updated_at)
+       VALUES (?, ?, datetime('now'), datetime('now'))`
+    ).run(projectId, "Test Project");
+    db.prepare(
+      `INSERT OR IGNORE INTO projects (id, name, created_at, updated_at)
+       VALUES (?, ?, datetime('now'), datetime('now'))`
+    ).run("project-a", "Project A");
+    db.prepare(
+      `INSERT OR IGNORE INTO projects (id, name, created_at, updated_at)
+       VALUES (?, ?, datetime('now'), datetime('now'))`
+    ).run("project-b", "Project B");
     store = new PluginStore(db);
   });
 

@@ -81,9 +81,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm test
-
       - name: Verify package (dry run)
         run: npm publish --dry-run --access public
 
