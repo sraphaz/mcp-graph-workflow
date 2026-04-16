@@ -1360,6 +1360,160 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_plugins_project ON plugins(project_id);
     `,
   },
+  {
+    version: 50,
+    description: "Execution traces and spans for agent observability (Kalman Observability Theorem 1960)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS execution_traces (
+        id                 TEXT PRIMARY KEY,
+        thread_id          TEXT NOT NULL,
+        node_id            TEXT,
+        tool_name          TEXT NOT NULL,
+        started_at         TEXT NOT NULL,
+        ended_at           TEXT,
+        latency_ms         INTEGER,
+        status             TEXT NOT NULL DEFAULT 'running',
+        tokens_in          INTEGER DEFAULT 0,
+        tokens_out         INTEGER DEFAULT 0,
+        estimated_cost_usd REAL DEFAULT 0,
+        metadata           TEXT DEFAULT '{}'
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_traces_thread ON execution_traces(thread_id);
+      CREATE INDEX IF NOT EXISTS idx_traces_node ON execution_traces(node_id);
+      CREATE INDEX IF NOT EXISTS idx_traces_status ON execution_traces(status);
+
+      CREATE TABLE IF NOT EXISTS execution_spans (
+        id              TEXT PRIMARY KEY,
+        trace_id        TEXT NOT NULL REFERENCES execution_traces(id),
+        parent_span_id  TEXT,
+        name            TEXT NOT NULL,
+        started_at      TEXT NOT NULL,
+        ended_at        TEXT,
+        latency_ms      INTEGER,
+        input_summary   TEXT,
+        output_summary  TEXT,
+        metadata        TEXT DEFAULT '{}'
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_spans_trace ON execution_spans(trace_id);
+    `,
+  },
+  {
+    version: 51,
+    description: "Guardrail executions for unified quality gate tracking (Meyer Design by Contract 1986)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS guardrail_executions (
+        id          TEXT PRIMARY KEY,
+        trace_id    TEXT REFERENCES execution_traces(id),
+        name        TEXT NOT NULL,
+        position    TEXT NOT NULL,
+        passed      INTEGER NOT NULL,
+        score       REAL,
+        latency_ms  INTEGER,
+        strategy    TEXT NOT NULL DEFAULT 'fail_closed',
+        details     TEXT DEFAULT '{}',
+        created_at  TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_guardrail_trace ON guardrail_executions(trace_id);
+      CREATE INDEX IF NOT EXISTS idx_guardrail_name ON guardrail_executions(name);
+    `,
+  },
+  {
+    version: 52,
+    description: "Decision log for confidence scorer replay and counterfactual analysis (von Neumann-Morgenstern 1944, Pearl 2000)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS decision_log (
+        id                  TEXT PRIMARY KEY,
+        trace_id            TEXT REFERENCES execution_traces(id),
+        node_id             TEXT NOT NULL,
+        decision            TEXT NOT NULL,
+        confidence_score    REAL NOT NULL,
+        evidence            TEXT NOT NULL,
+        weights_used        TEXT NOT NULL,
+        policy_name         TEXT DEFAULT 'default',
+        guardrail_pass_rate REAL,
+        outcome             TEXT,
+        created_at          TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_decision_node ON decision_log(node_id);
+      CREATE INDEX IF NOT EXISTS idx_decision_trace ON decision_log(trace_id);
+      CREATE INDEX IF NOT EXISTS idx_decision_outcome ON decision_log(outcome);
+    `,
+  },
+  {
+    version: 53,
+    description: "Experiment tracking — datasets, experiments, results (Fisher Hypothesis Testing 1925)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS eval_datasets (
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        source      TEXT NOT NULL,
+        entry_count INTEGER DEFAULT 0,
+        created_at  TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS eval_dataset_entries (
+        id              TEXT PRIMARY KEY,
+        dataset_id      TEXT NOT NULL REFERENCES eval_datasets(id),
+        input           TEXT NOT NULL,
+        expected_output TEXT,
+        metadata        TEXT DEFAULT '{}',
+        created_at      TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_entries_dataset ON eval_dataset_entries(dataset_id);
+
+      CREATE TABLE IF NOT EXISTS eval_experiments (
+        id               TEXT PRIMARY KEY,
+        name             TEXT NOT NULL,
+        dataset_id       TEXT NOT NULL REFERENCES eval_datasets(id),
+        evaluator_config TEXT NOT NULL,
+        status           TEXT NOT NULL DEFAULT 'pending',
+        summary          TEXT,
+        created_at       TEXT NOT NULL,
+        completed_at     TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS eval_experiment_results (
+        id            TEXT PRIMARY KEY,
+        experiment_id TEXT NOT NULL REFERENCES eval_experiments(id),
+        entry_id      TEXT NOT NULL REFERENCES eval_dataset_entries(id),
+        actual_output TEXT,
+        scores        TEXT NOT NULL,
+        trace_id      TEXT,
+        created_at    TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_results_experiment ON eval_experiment_results(experiment_id);
+    `,
+  },
+  {
+    version: 54,
+    description: "Quality policies with default seed (Lamport Safety/Liveness Properties 1977)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS quality_policies (
+        id         TEXT PRIMARY KEY,
+        name       TEXT NOT NULL UNIQUE,
+        gates      TEXT NOT NULL,
+        active     INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      INSERT OR IGNORE INTO quality_policies (id, name, gates, active, created_at, updated_at)
+      VALUES (
+        'policy_default',
+        'default',
+        '[{"metric":"harness_score","operator":">=","threshold":70,"severity":"block"},{"metric":"security_score","operator":">=","threshold":80,"severity":"block"},{"metric":"test_pass_rate","operator":">=","threshold":80,"severity":"warn"},{"metric":"trend_direction","operator":"!=","threshold":-1,"severity":"warn"}]',
+        1,
+        datetime('now'),
+        datetime('now')
+      );
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

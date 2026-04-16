@@ -60,7 +60,14 @@ export type GraphEventType =
   // Autopilot recovery events (Phase D — Autonomous Loop)
   | "autopilot:paused"
   | "autopilot:escalation"
-  | "autopilot:rollback";
+  | "autopilot:rollback"
+  // Observability events (LangWatch-inspired — Kalman Observability Theorem)
+  | "trace:created"
+  | "trace:completed"
+  | "span:created"
+  | "guardrail:executed"
+  | "decision:logged"
+  | "experiment:completed";
 
 export interface GraphEvent {
   type: GraphEventType;
