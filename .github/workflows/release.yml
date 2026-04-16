@@ -49,15 +49,6 @@ jobs:
     environment: npm
 
     steps:
-      - name: Wait for CI to pass
-        uses: lewagon/wait-on-check-action@v1.6.0
-        with:
-          ref: ${{ github.sha }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          check-name: 'build-and-test (ubuntu-latest, 22)'
-          wait-interval: 15
-          allowed-conclusions: success
-
       - uses: actions/checkout@v6
 
       - name: Setup Node.js
@@ -81,8 +72,17 @@ jobs:
         if: steps.dashboard-cache.outputs.cache-hit != 'true'
         run: cd src/web/dashboard && npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm test
 
       - name: Verify package (dry run)
         run: npm publish --dry-run --access public
