@@ -132,6 +132,11 @@
       "optional": true
     }
   },
+  "overrides": {
+    "basic-ftp": ">=5.2.3",
+    "protobufjs": ">=7.5.5",
+    "hono": ">=4.12.14"
+  },
   "lint-staged": {
     "src/**/*.ts": [
       "eslint --no-warn-ignored --max-warnings 9"
