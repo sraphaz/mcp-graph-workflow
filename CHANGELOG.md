@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.4.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.3.0...mcp-graph-v9.4.0) (2026-04-18)
+
+
+### Features
+
+* **hermes:** integrate 10 hermes-agent features — security, cost, context, sessions, orchestration ([c954bd0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c954bd05979dc972711834222e0222bc162d4d08))
+* **observability:** LangWatch-inspired deterministic agent foundation ([7e54bfb](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/7e54bfbbc14cf1cdbeb7b3364252913c0a429e2c))
+
+
+### Bug Fixes
+
+* **ci:** Remove CI wait from release publish — inline build+test ([a3e29f6](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a3e29f610315755c48c699e184d4156e9539eac6))
+* **ci:** remove npm test from release publish job + fix stale sidebar and plugin-store tests ([042acf2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/042acf201496adbfce1aed056d3eb7d3cd6c882a))
+* resolve 17 pre-existing CI test failures ([#181](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/181)) ([7ab5d89](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/7ab5d89d439427f8b5043133a86aa4da7837e940))
+
 ## [9.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.2.3...mcp-graph-v9.3.0) (2026-04-15)
 
 
