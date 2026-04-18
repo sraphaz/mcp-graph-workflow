@@ -4,6 +4,12 @@ import { finishTask } from "../../core/pipeline/finish-task.js";
 import { IssuePatternTracker } from "../../core/harness/issue-pattern-tracker.js";
 import { makeNode, makeEpic } from "../helpers/factories.js";
 
+// finish-task runs the full DoD pipeline (harness scan, remediation engine,
+// knowledge reindex) each call. The "3 times" test invokes finish-task three
+// times in sequence. CI macOS runners are 3-5× slower than local — observed
+// at ~40s local, >60s on cold CI. 180s covers the worst case.
+const TEST_TIMEOUT_MS = 180_000;
+
 describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)", () => {
   let store: SqliteStore;
   let epicId: string;
@@ -33,7 +39,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     const pattern = tracker.getPattern("missing_ac");
     expect(pattern).not.toBeNull();
     expect(pattern!.count).toBeGreaterThanOrEqual(1);
-  });
+  }, TEST_TIMEOUT_MS);
 
   it("suggests a rule after the same pattern occurs 3 times", async () => {
     const tracker = new IssuePatternTracker(store.getDb());
@@ -51,7 +57,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     expect(acRule).toBeDefined();
     expect(acRule!.suggestedRule).toBeTruthy();
     expect(acRule!.count).toBeGreaterThanOrEqual(3);
-  });
+  }, TEST_TIMEOUT_MS);
 
   it("does NOT affect finish-task result when tracker throws (fail-safe)", async () => {
     // Task with all required fields — should pass DoD even if tracker fails internally
@@ -70,7 +76,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
 
     expect(result.status).toBe("done");
     expect(result.blockers).toHaveLength(0);
-  });
+  }, TEST_TIMEOUT_MS);
 
   it("does NOT record any pattern when all DoD checks pass", async () => {
     const task = makeNode({
@@ -89,7 +95,7 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     // missing_ac should NOT be recorded since AC was provided
     const pattern = tracker.getPattern("missing_ac");
     expect(pattern).toBeNull();
-  });
+  }, TEST_TIMEOUT_MS);
 
   it("existing finish-task tests still pass (no regression)", async () => {
     // Regression guard: re-verify core behavior unchanged
@@ -114,5 +120,5 @@ describe("finishTask — IssuePatternTracker integration (Harness Steering Loop)
     expect(result.blockers).toHaveLength(0);
     const node = store.getNodeById(task.id);
     expect(node!.testFiles).toContain("src/tests/something.test.ts");
-  });
+  }, TEST_TIMEOUT_MS);
 });

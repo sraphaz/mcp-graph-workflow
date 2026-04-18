@@ -7,10 +7,17 @@
  * - Estimated completion time (based on created→done timestamps)
  */
 
+import { z } from "zod/v4";
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
 import { logger } from "../utils/logger.js";
 
+const VelocityFilterSchema = z.object({
+  sprintId: z.string().optional(),
+  limit: z.number().optional(),
+});
+
+/** Velocity metrics for a single sprint — tasks completed, points, and timing. */
 export interface SprintVelocity {
   sprint: string;
   tasksCompleted: number;
@@ -20,6 +27,7 @@ export interface SprintVelocity {
   tasks: VelocityTask[];
 }
 
+/** Velocity entry for a single completed task with XP points and timing. */
 export interface VelocityTask {
   id: string;
   title: string;
@@ -28,6 +36,7 @@ export interface VelocityTask {
   completionHours: number | null;
 }
 
+/** Velocity breakdown by first tag category across all done tasks. */
 export interface CategoryVelocity {
   category: string;
   tasksCompleted: number;
@@ -35,6 +44,7 @@ export interface CategoryVelocity {
   avgCompletionHours: number | null;
 }
 
+/** Aggregated velocity across all sprints with per-sprint and overall metrics. */
 export interface VelocitySummary {
   sprints: SprintVelocity[];
   byCategory: CategoryVelocity[];
@@ -49,7 +59,8 @@ export interface VelocitySummary {
 /**
  * Calculate velocity metrics for all sprints in the graph.
  */
-export function calculateVelocity(doc: GraphDocument): VelocitySummary {
+export function calculateVelocity(doc: GraphDocument, filter?: { sprintId?: string; limit?: number }): VelocitySummary {
+  const validatedFilter = VelocityFilterSchema.parse(filter ?? {});
   // Group done tasks by sprint
   const doneTasks = doc.nodes.filter(
     (n) => n.status === "done" && (n.type === "task" || n.type === "subtask"),
@@ -96,8 +107,15 @@ export function calculateVelocity(doc: GraphDocument): VelocitySummary {
     });
   }
 
-  // Sort sprints by name
-  sprints.sort((a, b) => a.sprint.localeCompare(b.sprint));
+  // Sort sprints by name, optionally filter by sprintId. Clone to avoid the
+  // subtle aliasing bug where `filteredSprints === sprints` and the later
+  // `sprints.length = 0` would blank both sides before the push.
+  const filteredSprints = validatedFilter.sprintId
+    ? sprints.filter((s) => s.sprint === validatedFilter.sprintId)
+    : [...sprints];
+  filteredSprints.sort((a, b) => a.sprint.localeCompare(b.sprint));
+  sprints.length = 0;
+  sprints.push(...filteredSprints);
 
   const totalTasksCompleted = doneTasks.length;
   const totalPoints = sprints.reduce((sum, s) => sum + s.totalPoints, 0);

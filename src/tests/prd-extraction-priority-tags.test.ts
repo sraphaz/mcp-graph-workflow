@@ -12,17 +12,29 @@ function makeExtraction(blocks: Array<{
   endLine?: number;
   confidence?: number;
 }>): ExtractionResult {
+  const mapped = blocks.map((b) => ({
+    type: b.type,
+    title: b.title,
+    description: b.description ?? "",
+    items: b.items ?? [],
+    level: b.level ?? 2,
+    startLine: b.startLine ?? 1,
+    endLine: b.endLine ?? 10,
+    confidence: b.confidence ?? 0.9,
+  }));
   return {
-    blocks: blocks.map((b) => ({
-      type: b.type,
-      title: b.title,
-      description: b.description ?? "",
-      items: b.items ?? [],
-      level: b.level ?? 2,
-      startLine: b.startLine ?? 1,
-      endLine: b.endLine ?? 10,
-      confidence: b.confidence ?? 0.9,
-    })),
+    blocks: mapped as ExtractionResult["blocks"],
+    summary: {
+      totalSections: mapped.length,
+      epics: mapped.filter((b) => b.type === "epic").length,
+      tasks: mapped.filter((b) => b.type === "task").length,
+      subtasks: mapped.filter((b) => b.type === "subtask").length,
+      requirements: mapped.filter((b) => b.type === "requirement").length,
+      constraints: mapped.filter((b) => b.type === "constraint").length,
+      acceptanceCriteria: mapped.filter((b) => b.type === "acceptance_criteria").length,
+      risks: mapped.filter((b) => b.type === "risk").length,
+      unknown: mapped.filter((b) => b.type === "unknown").length,
+    },
   };
 }
 
