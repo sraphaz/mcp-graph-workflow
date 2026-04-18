@@ -30,6 +30,17 @@
 
 ---
 
+> **Research project — in development since 2025.**
+> mcp-graph is an active Master's research project in Computer Engineering at
+> **UNOPAR — Universidade Norte do Paraná**, authored by **Diego Lima Nogueira
+> de Paula**. The public repository was opened in March 2026, after roughly a
+> year of private research. Original methodologies embedded in this system
+> (Harnessability Score, Anti-Vibe-Coding lifecycle, Task Readiness Score)
+> are documented in [`NOTICE.md`](NOTICE.md). Academic citation is **required**
+> when the system is referenced or reimplemented — see
+> [How to Cite](#how-to-cite) below. The MIT license grants code reuse;
+> academic and derivative work must credit the author.
+
 ## What is mcp-graph?
 
 A **local-first MCP server** that transforms product requirement documents (PRD) into persistent execution graphs (SQLite), with an integrated knowledge store, RAG pipeline, and multi-agent orchestration mesh.

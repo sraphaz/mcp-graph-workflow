@@ -9,6 +9,12 @@ part of ongoing Master's research in Computer Engineering at **UNOPAR —
 Universidade Norte do Paraná** (Postgraduate Program in Computer Engineering,
 in progress as of 2026).
 
+**Research timeline.** Private research and prototyping began in **2025**; the
+public repository was opened on **2026-03-09** after roughly a year of
+methodological work. The extended private timeline is documented in the
+author's Master's program records and is verifiable through the program
+coordinators at UNOPAR.
+
 The source code is released under the MIT License (see [`LICENSE`](LICENSE)),
 which grants broad permissions for use, modification, and redistribution. This
 notice documents the authorship chain and does **not** reduce or alter the
@@ -65,6 +71,68 @@ are associated with this project and its author. Reimplementations or forks
 should adopt a distinct name to avoid ecosystem confusion. Trademark
 registration status is maintained separately and may be updated as the
 project evolves.
+
+## Verifying Commits (Cryptographic Attribution)
+
+To anchor authorship against the public git history, releases and release-
+adjacent commits on this repository are signed — either with a **GPG** key
+or with an **SSH signing key** tied to the author's verified GitHub identity
+(`DiegoNogueiraDev`). GitHub surfaces verified commits with a green
+"Verified" badge on the commit page.
+
+### What "Verified" on GitHub proves
+
+- The commit was authored by someone holding the private signing key
+  registered against `DiegoNogueiraDev`.
+- The commit contents (tree, parents, author, message) have not been
+  altered after signing.
+- The signing key was valid at the time of signing.
+
+It does **not** prove the semantic correctness of the code, only the
+identity chain.
+
+### Verifying locally
+
+```bash
+# Clone and verify a specific commit:
+git clone https://github.com/DiegoNogueiraDev/mcp-graph-workflow.git
+cd mcp-graph-workflow
+git log --show-signature -1 <commit-sha>
+
+# Or list recent commits with verification status:
+git log --format='%h %G? %s' -20
+```
+
+`%G?` prints `G` for good signature, `U` for untrusted (key not imported
+locally), `N` for no signature, `B` for bad signature.
+
+### Setting up signing (for contributors)
+
+**SSH signing (recommended — simpler, uses the same key you already push with):**
+
+```bash
+git config --global commit.gpgsign true
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+```
+
+Then add the SSH public key to your GitHub account's
+[**Signing keys**](https://github.com/settings/ssh/new) list (distinct
+from "Authentication keys").
+
+**GPG signing:**
+
+```bash
+gpg --full-generate-key                       # pick ed25519 or RSA 4096
+git config --global user.signingkey <key-id>
+git config --global commit.gpgsign true
+gpg --armor --export <key-id>                 # paste into GitHub GPG keys
+```
+
+The historical commits preceding this setup remain unsigned; signing
+applies forward-only. The authorship chain prior to signing rollout is
+anchored instead by (a) npm registry timestamps on published versions,
+(b) GitHub commit dates, and (c) the author's Master's program records.
 
 ## Contact
 
