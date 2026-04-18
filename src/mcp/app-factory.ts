@@ -26,13 +26,17 @@ export function createApp(options: AppFactoryOptions): Express {
   const app = express();
   app.use(express.json({ limit: "50mb" }));
 
-  // MCP HTTP transport (optional — only when MCP server is provided)
+  // MCP HTTP transport (optional — only when MCP server is provided).
+  // Transport is created ONCE and reused across requests (stateless JSON mode);
+  // creating a new transport per request allocates Express middleware + reconnects
+  // the MCP server, which accumulates listeners and inflates RAM under concurrent load.
   if (mcp) {
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+    const transportReady = mcp.connect(transport);
     app.post("/mcp", async (req, res) => {
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-      await mcp.connect(transport);
+      await transportReady;
       await transport.handleRequest(req, res, req.body);
     });
   }

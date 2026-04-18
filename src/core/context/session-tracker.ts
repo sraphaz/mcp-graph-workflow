@@ -1,6 +1,10 @@
 /**
  * Session Context Tracker — tracks chunks already sent to avoid re-sending.
  * Uses in-memory Map as L1 cache + SQLite (session_chunks table) for persistence.
+ *
+ * L1 cache is bounded (LRU + TTL) to prevent unbounded memory growth when many
+ * concurrent agents create distinct sessionIds. SQLite is the source of truth —
+ * evicting an L1 entry only forces a reload on the next access.
  */
 
 import { createHash } from "node:crypto";
@@ -19,17 +23,36 @@ export interface SessionStats {
   totalTokens: number;
 }
 
+export interface SessionTrackerOptions {
+  /** Max sessions kept in L1 cache before LRU eviction. Default: 50. */
+  maxSessions?: number;
+  /** Time-to-live in ms for L1 cache entries. Default: 30min. */
+  ttlMs?: number;
+}
+
+interface CacheEntry {
+  hashes: Set<string>;
+  lastAccess: number;
+}
+
+const DEFAULT_MAX_SESSIONS = 50;
+const DEFAULT_TTL_MS = 30 * 60 * 1000;
+
 function md5(text: string): string {
   return createHash("md5").update(text).digest("hex");
 }
 
 export class SessionTracker {
   private readonly db: Database.Database;
-  /** L1 cache: sessionId → Set<contentHash> */
-  private readonly cache: Map<string, Set<string>> = new Map();
+  private readonly maxSessions: number;
+  private readonly ttlMs: number;
+  /** L1 cache: sessionId → { hashes, lastAccess }. Iteration order = insertion order. */
+  private readonly cache: Map<string, CacheEntry> = new Map();
 
-  constructor(db: Database.Database) {
+  constructor(db: Database.Database, options: SessionTrackerOptions = {}) {
     this.db = db;
+    this.maxSessions = options.maxSessions ?? DEFAULT_MAX_SESSIONS;
+    this.ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
   }
 
   /**
@@ -107,23 +130,84 @@ export class SessionTracker {
     logger.debug("session-tracker:clearSession", { sessionId });
   }
 
+  /** Current L1 cache size (for observability / tests). */
+  cacheSize(): number {
+    return this.cache.size;
+  }
+
+  /**
+   * Evict L1 entries whose lastAccess is older than ttlMs. Returns evicted count.
+   * Safe to call on a timer; does not touch SQLite.
+   */
+  cleanupStale(): number {
+    const cutoff = Date.now() - this.ttlMs;
+    let evicted = 0;
+    for (const [sessionId, entry] of this.cache) {
+      if (entry.lastAccess < cutoff) {
+        this.cache.delete(sessionId);
+        evicted++;
+      }
+    }
+    if (evicted > 0) {
+      logger.debug("session-tracker:cleanupStale", { evicted, remaining: this.cache.size });
+    }
+    return evicted;
+  }
+
+  /**
+   * Delete session_chunks rows whose `tracked_at` is older than the given age.
+   * Defaults to the tracker's configured ttlMs. Returns the number of rows
+   * removed. Pair with `cleanupStale()` in a periodic timer to keep both the
+   * L1 cache and SQLite footprint bounded.
+   */
+  cleanupStaleDb(maxAgeMs?: number): number {
+    const ttl = maxAgeMs ?? this.ttlMs;
+    const cutoffIso = new Date(Date.now() - ttl).toISOString();
+    const result = this.db
+      .prepare("DELETE FROM session_chunks WHERE tracked_at < ?")
+      .run(cutoffIso);
+    if (result.changes > 0) {
+      logger.debug("session-tracker:cleanupStaleDb", {
+        cutoffIso,
+        rowsDeleted: result.changes,
+      });
+    }
+    return result.changes;
+  }
+
   /**
    * Get or load the in-memory cache for a session.
-   * On first access, loads existing hashes from SQLite.
+   * On first access, loads existing hashes from SQLite. Touches LRU order on every access
+   * and evicts the least-recently-used entry if size exceeds maxSessions.
    */
   private getOrLoadCache(sessionId: string): Set<string> {
-    let cached = this.cache.get(sessionId);
-    if (cached) {
-      return cached;
+    const existing = this.cache.get(sessionId);
+    if (existing) {
+      existing.lastAccess = Date.now();
+      // Re-insert to move to end of iteration order (Map preserves insertion order).
+      this.cache.delete(sessionId);
+      this.cache.set(sessionId, existing);
+      return existing.hashes;
     }
 
-    // Load from SQLite
     const rows = this.db
       .prepare("SELECT content_hash FROM session_chunks WHERE session_id = ?")
       .all(sessionId) as Array<{ content_hash: string }>;
 
-    cached = new Set(rows.map((r) => r.content_hash));
-    this.cache.set(sessionId, cached);
-    return cached;
+    const entry: CacheEntry = {
+      hashes: new Set(rows.map((r) => r.content_hash)),
+      lastAccess: Date.now(),
+    };
+    this.cache.set(sessionId, entry);
+
+    if (this.cache.size > this.maxSessions) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined && oldestKey !== sessionId) {
+        this.cache.delete(oldestKey);
+        logger.debug("session-tracker:evict", { sessionId: oldestKey });
+      }
+    }
+
+    return entry.hashes;
   }
 }

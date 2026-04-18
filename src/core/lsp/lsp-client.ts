@@ -253,7 +253,7 @@ export class LspClient extends EventEmitter {
    * Handles chunked delivery: data is accumulated in an internal buffer
    * and complete messages are extracted as they become available.
    */
-  private static readonly MAX_BUFFER_SIZE = 100 * 1024 * 1024; // 100MB
+  private static readonly MAX_BUFFER_SIZE = 8 * 1024 * 1024; // 8MB — JSON-RPC LSP messages rarely exceed 1MB in practice
 
   private handleData(data: Buffer): void {
     this.buffer = Buffer.concat([this.buffer, data]);

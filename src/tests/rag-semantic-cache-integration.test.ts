@@ -76,4 +76,36 @@ describe("RagSemanticCacheLayer", () => {
       expect(stats.size).toBe(1);
     });
   });
+
+  describe("corpus cap (FIFO eviction)", () => {
+    it("should cap corpus at maxCorpusSize", () => {
+      const capped = new RagSemanticCacheLayer({}, { maxCorpusSize: 3, refitInterval: 1 });
+      capped.store("q1", { a: 1 });
+      capped.store("q2", { a: 2 });
+      capped.store("q3", { a: 3 });
+      capped.store("q4", { a: 4 });
+      capped.store("q5", { a: 5 });
+
+      expect(capped.corpusSize()).toBeLessThanOrEqual(3);
+    });
+  });
+
+  describe("refit throttle", () => {
+    it("should re-fit vectorizer only every refitInterval inserts", () => {
+      const throttled = new RagSemanticCacheLayer({}, { maxCorpusSize: 100, refitInterval: 3 });
+      throttled.store("q1", { a: 1 });
+      throttled.store("q2", { a: 2 });
+      expect(throttled.fitCount()).toBe(0);
+
+      throttled.store("q3", { a: 3 });
+      expect(throttled.fitCount()).toBe(1);
+
+      throttled.store("q4", { a: 4 });
+      throttled.store("q5", { a: 5 });
+      expect(throttled.fitCount()).toBe(1);
+
+      throttled.store("q6", { a: 6 });
+      expect(throttled.fitCount()).toBe(2);
+    });
+  });
 });

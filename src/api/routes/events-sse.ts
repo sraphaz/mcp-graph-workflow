@@ -12,6 +12,14 @@ import { logger } from "../../core/utils/logger.js";
 /** Active SSE connections for cleanup tracking */
 const clients = new Set<Response>();
 
+/**
+ * Upper bound on concurrent SSE clients. When exceeded, the oldest connection
+ * is closed to make room — `Set` preserves insertion order so the first
+ * iterator value is the least recently added. Prevents unbounded growth if a
+ * misbehaving client keeps opening new streams without closing old ones.
+ */
+const MAX_SSE_CLIENTS = 20;
+
 function handleSSE(
   req: Request,
   res: Response,
@@ -29,6 +37,20 @@ function handleSSE(
   res.write(`event: connected\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
 
   clients.add(res);
+
+  // Drop the oldest client when the cap is exceeded.
+  while (clients.size > MAX_SSE_CLIENTS) {
+    const oldest = clients.values().next().value;
+    if (!oldest || oldest === res) break;
+    clients.delete(oldest);
+    try {
+      oldest.end();
+    } catch {
+      // Connection already closed — ignore.
+    }
+    logger.warn("SSE client capacity exceeded — dropped oldest", { cap: MAX_SSE_CLIENTS });
+  }
+
   logger.debug("SSE client connected", { totalClients: clients.size });
 
   // Forward all graph events to this client, using event.type as SSE event name

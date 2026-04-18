@@ -1,6 +1,10 @@
 /**
  * RAG Semantic Cache Layer — wraps SemanticCache + TfIdfVectorizer
  * for use in the context(rag) pipeline.
+ *
+ * The corpus is bounded (FIFO) and the TF-IDF vectorizer re-fit is throttled
+ * (every N inserts) to prevent O(N²) CPU cost and unbounded RAM growth as the
+ * layer is used across many queries and concurrent agents.
  */
 
 import { SemanticCache, type SemanticCacheOptions } from "./semantic-cache.js";
@@ -13,25 +17,53 @@ export interface CacheHitResult {
   _cache_hit: true;
 }
 
+export interface RagSemanticCacheLayerOptions {
+  /** Max tokenized queries retained in the TF-IDF corpus. Default: 500. */
+  maxCorpusSize?: number;
+  /** Re-fit vectorizer every N inserts. Default: 50. */
+  refitInterval?: number;
+}
+
+const DEFAULT_MAX_CORPUS_SIZE = 500;
+const DEFAULT_REFIT_INTERVAL = 50;
+
 export class RagSemanticCacheLayer {
   private readonly cache: SemanticCache;
   private readonly vectorizer: TfIdfVectorizer;
   private readonly corpus: string[][] = [];
+  private readonly maxCorpusSize: number;
+  private readonly refitInterval: number;
+  private insertsSinceRefit = 0;
+  private totalFits = 0;
 
-  constructor(options?: SemanticCacheOptions) {
-    this.cache = new SemanticCache(options);
+  constructor(
+    semanticOptions?: SemanticCacheOptions,
+    layerOptions: RagSemanticCacheLayerOptions = {},
+  ) {
+    this.cache = new SemanticCache(semanticOptions);
     this.vectorizer = new TfIdfVectorizer();
+    this.maxCorpusSize = layerOptions.maxCorpusSize ?? DEFAULT_MAX_CORPUS_SIZE;
+    this.refitInterval = Math.max(1, layerOptions.refitInterval ?? DEFAULT_REFIT_INTERVAL);
   }
 
   /**
    * Store a query result in the semantic cache.
-   * Builds TF-IDF embedding for the query and stores it.
+   * Appends query tokens to corpus (with FIFO cap) and re-fits the vectorizer
+   * every `refitInterval` inserts rather than on every call.
    */
   store(query: string, result: unknown): void {
-    // Add query tokens to corpus and re-fit vectorizer
     const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
     this.corpus.push(tokens);
-    this.vectorizer.fit(this.corpus);
+    if (this.corpus.length > this.maxCorpusSize) {
+      this.corpus.splice(0, this.corpus.length - this.maxCorpusSize);
+    }
+
+    this.insertsSinceRefit++;
+    if (this.insertsSinceRefit >= this.refitInterval) {
+      this.vectorizer.fit(this.corpus);
+      this.insertsSinceRefit = 0;
+      this.totalFits++;
+    }
 
     const embedding = this.vectorizer.embed(query);
     this.cache.set(query, embedding, result);
@@ -45,14 +77,12 @@ export class RagSemanticCacheLayer {
    * Returns null on cache miss.
    */
   lookup(query: string): CacheHitResult | null {
-    // Try exact match first
     const exact = this.cache.getExact(query);
     if (exact !== undefined) {
       logger.debug("rag-semantic-cache:exact_hit", { query: query.slice(0, 50) });
       return { result: exact, type: "exact", _cache_hit: true };
     }
 
-    // Try similar match via cosine similarity
     const embedding = this.vectorizer.embed(query);
     const similar = this.cache.getSimilar(embedding);
     if (similar !== undefined) {
@@ -68,5 +98,15 @@ export class RagSemanticCacheLayer {
    */
   stats(): { hits: number; misses: number; size: number } {
     return this.cache.stats();
+  }
+
+  /** Current corpus size (tokenized queries retained). For observability/tests. */
+  corpusSize(): number {
+    return this.corpus.length;
+  }
+
+  /** Total number of TF-IDF re-fits performed. For observability/tests. */
+  fitCount(): number {
+    return this.totalFits;
   }
 }

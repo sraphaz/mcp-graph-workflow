@@ -7,7 +7,9 @@
   "bin": {
     "mcp-graph": "dist/cli/index.js",
     "mcp-graph-stdio": "dist/mcp/stdio.js",
-    "mcp-graph-server": "dist/mcp/server.js"
+    "mcp-graph-server": "dist/mcp/server.js",
+    "mcp-graph-daemon": "dist/mcp/daemon-entry.js",
+    "mcp-graph-proxy": "dist/mcp/stdio-proxy.js"
   },
   "scripts": {
     "prepublishOnly": "npm run build",

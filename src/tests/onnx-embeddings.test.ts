@@ -53,4 +53,15 @@ describe("ONNX module contract", () => {
     const result = await isOnnxAvailable();
     expect(typeof result).toBe("boolean");
   });
+
+  it("getOnnxProvider caches provider by modelsDir (same reference on repeated calls)", async () => {
+    // Both should resolve to the same value — either null (ONNX unavailable)
+    // or the same provider instance (cached). Creating two providers with the
+    // same modelsDir would each load a ~23MB ONNX session — dedup is critical.
+    const [p1, p2] = await Promise.all([
+      getOnnxProvider("/tmp/mcp-graph-onnx-cache-test"),
+      getOnnxProvider("/tmp/mcp-graph-onnx-cache-test"),
+    ]);
+    expect(p1).toBe(p2);
+  });
 });

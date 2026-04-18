@@ -89,6 +89,33 @@ npm run dev        # HTTP + dashboard at localhost:3000
 
 > For detailed setup, see [Getting Started](docs/guides/GETTING-STARTED.md).
 
+### Daemon mode (opt-in, multi-agent RAM savings)
+
+If you run several Claude Code agents against the **same workspace** in parallel,
+each agent otherwise spawns its own mcp-graph process — duplicating the SQLite
+handle, ONNX embeddings (~23MB), and LSP child processes per agent.
+
+Switch the bin to `mcp-graph-proxy` to share a single long-lived daemon
+per workspace instead:
+
+```json
+{
+  "mcpServers": {
+    "mcp-graph": {
+      "command": "npx",
+      "args": ["-y", "--package=@mcp-graph-workflow/mcp-graph", "mcp-graph-proxy"]
+    }
+  }
+}
+```
+
+- The first agent cold-starts the daemon; subsequent agents in the same
+  workspace reuse it via a Unix socket (named pipe on Windows).
+- Set `MCP_DAEMON_IDLE_MS=600000` to have the daemon auto-shutdown after
+  10 minutes of no connected clients. Omit to keep it alive until kill.
+- State lives under `~/.mcp-graph/<workspace-hash>/` (socket + pidfile +
+  `daemon.log`). Delete that directory to force a clean restart.
+
 ---
 
 ## Core Concepts

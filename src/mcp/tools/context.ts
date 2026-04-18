@@ -37,9 +37,26 @@ import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
 /** Lazily instantiated SessionTracker (shared across calls). */
 let sessionTracker: SessionTracker | null = null;
 
+/** Interval between periodic session cleanups (L1 eviction + SQLite pruning). */
+const SESSION_CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+
 function getSessionTracker(store: SqliteStore): SessionTracker {
   if (!sessionTracker) {
     sessionTracker = new SessionTracker(store.getDb());
+
+    // Schedule periodic cleanup of stale sessions (both L1 map and SQLite rows).
+    // `unref()` so this timer does not keep the process alive during shutdown.
+    const timer = setInterval(() => {
+      try {
+        sessionTracker?.cleanupStale();
+        sessionTracker?.cleanupStaleDb();
+      } catch (err) {
+        logger.warn("session-tracker:periodic-cleanup-failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }, SESSION_CLEANUP_INTERVAL_MS);
+    timer.unref();
   }
   return sessionTracker;
 }

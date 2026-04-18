@@ -9,6 +9,7 @@ import { loadConfig } from "../core/config/config-loader.js";
 import { logger } from "../core/utils/logger.js";
 import { createApp } from "./app-factory.js";
 import { startDashboard } from "./dashboard-launcher.js";
+import { shouldSkipDashboard } from "./stdio-mode.js";
 
 const args = process.argv.slice(2);
 
@@ -34,12 +35,19 @@ const mcp = new McpServer(
 registerAllTools(mcp, store);
 
 // ── Background dashboard (HTTP + auto-open browser) ──────
-if (config.dashboard.autoOpen) {
+// Skipped when invoked by an agent host (stdin piped) or MCP_STDIO_ONLY=1 —
+// the Express app + static assets + SSE would otherwise multiply RAM per agent.
+const skipDashboard = shouldSkipDashboard(process.env, Boolean(process.stdin.isTTY));
+if (config.dashboard.autoOpen && !skipDashboard) {
   const app = createApp({ store, basePath: process.cwd(), eventBus });
   startDashboard(app, config.port).catch((err) => {
     logger.warn("Dashboard auto-start failed (non-blocking)", {
       error: err instanceof Error ? err.message : String(err),
     });
+  });
+} else if (skipDashboard) {
+  logger.debug("stdio:dashboard-skipped", {
+    reason: process.env.MCP_STDIO_ONLY ? "MCP_STDIO_ONLY" : "stdin-not-tty",
   });
 }
 

@@ -278,6 +278,17 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
 
 // ── Public API ──
 
+/**
+ * Module-level cache of in-flight / resolved providers keyed by `modelsDir`.
+ * A fresh ONNX session + tokenizer vocab costs ~23MB — without this cache, any
+ * code that calls `getOnnxProvider` more than once (across agents, routers,
+ * background indexers) would load duplicate models into the same process.
+ *
+ * Promise-based so concurrent callers share a single initialization; on
+ * rejection the entry is evicted to allow a retry on the next call.
+ */
+const providerCache = new Map<string, Promise<EmbeddingProvider>>();
+
 export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvider | null> {
   const available = await isOnnxAvailable();
   if (!available) {
@@ -285,10 +296,26 @@ export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvi
     return null;
   }
 
-  try {
+  const existing = providerCache.get(modelsDir);
+  if (existing) {
+    try {
+      return await existing;
+    } catch {
+      providerCache.delete(modelsDir);
+    }
+  }
+
+  const creation = (async () => {
     const { modelPath, tokenizerPath } = await ensureModelFiles(modelsDir);
     return new OnnxEmbeddingProvider(modelPath, tokenizerPath);
+  })();
+
+  providerCache.set(modelsDir, creation);
+
+  try {
+    return await creation;
   } catch (err) {
+    providerCache.delete(modelsDir);
     logger.error('onnx:provider-init-failed', { error: err instanceof Error ? err.message : String(err) });
     logger.warn('onnx:fallback', {
       reason: err instanceof Error ? err.message : String(err),
