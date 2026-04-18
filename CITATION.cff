@@ -1,0 +1,65 @@
+# Citation File Format 1.2.0
+# https://citation-file-format.github.io/
+# GitHub automatically surfaces this as the "Cite this repository" button.
+
+cff-version: 1.2.0
+message: >-
+  If you use this software in academic work, derivative implementations, or
+  public technical writing, please cite it using the metadata below.
+title: "MCP Graph Workflow: Execution Graph for PRD-Driven Development"
+abstract: >-
+  MCP Graph Workflow is a local-first execution graph built on the Model
+  Context Protocol (MCP). It converts product requirement documents (PRDs)
+  into persistent task graphs stored in SQLite, integrates a retrieval-
+  augmented generation (RAG) pipeline, and orchestrates multi-agent
+  development workflows with deterministic phase gates, a composite
+  Harnessability Score, and a task-level Model Router. The system is the
+  subject of ongoing Master's research in Computer Engineering.
+type: software
+authors:
+  - family-names: "Lima Nogueira de Paula"
+    given-names: "Diego"
+    affiliation: >-
+      UNOPAR — Universidade Norte do Paraná,
+      Programa de Pós-Graduação em Engenharia da Computação
+    # orcid: "https://orcid.org/0000-0000-0000-0000"  # add when available
+repository-code: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
+url: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
+license: MIT
+# Update `version` and `date-released` on every Zenodo-archived release.
+version: "9.4.0"
+date-released: "2026-04-15"
+# Replace the DOI placeholder after the first Zenodo-archived release.
+# See https://zenodo.org/account/settings/github/ to enable GitHub → Zenodo.
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "Zenodo archive for version 9.4.0"
+keywords:
+  - mcp
+  - model-context-protocol
+  - task-graph
+  - prd
+  - agent-tooling
+  - local-first
+  - sqlite
+  - retrieval-augmented-generation
+  - multi-agent-orchestration
+  - harnessability
+  - anti-vibe-coding
+preferred-citation:
+  type: software
+  title: "MCP Graph Workflow: Execution Graph for PRD-Driven Development"
+  authors:
+    - family-names: "Lima Nogueira de Paula"
+      given-names: "Diego"
+      affiliation: >-
+        UNOPAR — Universidade Norte do Paraná,
+        Programa de Pós-Graduação em Engenharia da Computação
+  year: 2026
+  url: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
+  # doi: "10.5281/zenodo.XXXXXXX"  # fill after Zenodo release
+  notes: >-
+    Master's research project in Computer Engineering, UNOPAR. Please cite
+    whenever the system, its architecture, or its methodology (Harnessability
+    Score, Task Readiness Score, Anti-Vibe-Coding lifecycle) is referenced.

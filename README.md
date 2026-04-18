@@ -478,6 +478,43 @@ If this tool is useful to you, consider supporting its development:
 
 [![Star History Chart](https://api.star-history.com/svg?repos=DiegoNogueiraDev/mcp-graph-workflow&type=Date)](https://star-history.com/#DiegoNogueiraDev/mcp-graph-workflow&Date)
 
+## How to Cite
+
+This project is the subject of ongoing Master's research in Computer Engineering
+at **UNOPAR — Universidade Norte do Paraná**. If you use the system, adopt its
+architecture, or build derivative work inspired by its methodology
+(Harnessability Score, Task Readiness Score, Anti-Vibe-Coding lifecycle),
+please cite it.
+
+GitHub surfaces the canonical citation through the **"Cite this repository"**
+button on the project page (backed by [`CITATION.cff`](CITATION.cff)).
+
+### BibTeX
+
+```bibtex
+@software{depaula_mcp_graph_2026,
+  author    = {Lima Nogueira de Paula, Diego},
+  title     = {{MCP Graph Workflow: Execution Graph for PRD-Driven Development}},
+  year      = {2026},
+  url       = {https://github.com/DiegoNogueiraDev/mcp-graph-workflow},
+  version   = {9.4.0},
+  note      = {Master's research, Programa de Pós-Graduação em Engenharia da
+               Computação, UNOPAR — Universidade Norte do Paraná}
+  % doi    = {10.5281/zenodo.XXXXXXX}  % fill after the first Zenodo release
+}
+```
+
+### APA
+
+Lima Nogueira de Paula, D. (2026). *MCP Graph Workflow: Execution Graph for
+PRD-Driven Development* (Version 9.4.0) [Computer software]. GitHub.
+https://github.com/DiegoNogueiraDev/mcp-graph-workflow
+
+See [`NOTICE.md`](NOTICE.md) for the full authorship statement and provenance
+of the original ideas embedded in this system.
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — see [`NOTICE.md`](NOTICE.md) for authorship and a request for
+academic citation when the system is referenced in research or derivative
+implementations.
