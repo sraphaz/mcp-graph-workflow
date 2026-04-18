@@ -54,6 +54,7 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
         ...(result.leaseToken ? { leaseToken: result.leaseToken } : {}),
         ...(result.checkpoint ? { checkpoint: { snapshotId: result.checkpoint.snapshotId } } : {}),
         ...(result.shadowBranch ? { shadowBranch: result.shadowBranch } : {}),
+        ...(result.modelHint ? { modelHint: result.modelHint } : {}),
       });
     },
   );

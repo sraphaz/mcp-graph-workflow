@@ -92,6 +92,16 @@ describe("startTask", () => {
     expect(result).toBeNull();
   });
 
+  it("populates modelHint with a score and recommendation for the task", () => {
+    const result = startTask(store, { autoStart: false });
+
+    expect(result).not.toBeNull();
+    expect(result!.modelHint).toBeDefined();
+    expect(typeof result!.modelHint!.score).toBe("number");
+    expect(["haiku", "sonnet", "opus"]).toContain(result!.modelHint!.recommendation);
+    expect(result!.modelHint!.rationale.length).toBeGreaterThan(0);
+  });
+
   it("should default autoStart to true", () => {
     const result = startTask(store);
 

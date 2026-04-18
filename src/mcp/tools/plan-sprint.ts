@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { generatePlanningReport } from "../../core/planner/planning-report.js";
 import { findEnhancedNextTask } from "../../core/planner/enhanced-next.js";
+import { autoDecomposeLarge } from "../../core/planner/auto-decompose.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexEntitiesForDoc } from "../../core/rag/entity-index-hook.js";
 import { logger } from "../../core/utils/logger.js";
@@ -21,9 +22,30 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
         .number()
         .optional()
         .describe("Max points per sprint — tasks exceeding this go to overflow"),
+      autoDecompose: z
+        .boolean()
+        .optional()
+        .describe("When true, L/XL tasks with 2-8 ACs and no children are split into subtasks before the report is generated. Opt-in (default: false)."),
     },
-    async ({ mode, capacityPoints }) => {
-      logger.debug("tool:plan_sprint", { mode: mode ?? "report" });
+    async ({ mode, capacityPoints, autoDecompose }) => {
+      logger.debug("tool:plan_sprint", { mode: mode ?? "report", autoDecompose });
+
+      // Pre-process: auto-decompose large tasks so the report reflects the
+      // post-split graph. Opt-in to avoid surprising users who hand-manage
+      // their subtasks.
+      let decomposition: ReturnType<typeof autoDecomposeLarge> | null = null;
+      if (autoDecompose) {
+        try {
+          decomposition = autoDecomposeLarge(store);
+          logger.info("tool:plan_sprint:auto_decompose", {
+            decomposed: decomposition.decomposed.length,
+            skipped: decomposition.skipped.length,
+          });
+        } catch (err) {
+          logger.warn("tool:plan_sprint:auto_decompose_failed", { error: String(err) });
+        }
+      }
+
       const doc = store.toGraphDocument();
 
       if (mode === "next") {
@@ -79,7 +101,10 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
       }
 
       logger.info("tool:plan_sprint:ok", { mode: "report" });
-      return mcpText(report);
+      return mcpText({
+        ...report,
+        ...(decomposition ? { autoDecomposition: decomposition } : {}),
+      });
     },
   );
 }

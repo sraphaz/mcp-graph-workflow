@@ -9,6 +9,7 @@ import type { EnhancedNextResult } from "../planner/enhanced-next.js";
 import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
+import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/task-readiness-score.js";
 import { buildTaskContext } from "../context/compact-context.js";
 import { assembleContext } from "../context/context-assembler.js";
 import { generateTddHints, generateTddHintsFromTexts } from "../implementer/tdd-checker.js";
@@ -57,6 +58,13 @@ export interface StartTaskResult {
   checkpoint?: GraphCheckpoint;
   /** Shadow branch name for isolated execution (Phase D — Git Transactional Layer) */
   shadowBranch?: string;
+  /**
+   * Model routing hint — combines xpSize, AC quality, harness, dependency depth
+   * and issue-pattern history into a preferred Claude model (haiku/sonnet/opus).
+   * Agent hosts that honor this field can route cheap atomic work to Haiku
+   * without a task-readiness regression.
+   */
+  modelHint?: TaskReadinessScore;
 }
 
 /**
@@ -169,6 +177,17 @@ export function startTask(
     logger.warn("pipeline:start_task:remediation_preflight_failed", { error: String(err) });
   }
 
+  // 5c. Compute a model-routing hint from the same signals the graph already owns.
+  // Pure computation — never throws, cheap (< 1ms for typical graphs).
+  let modelHint: TaskReadinessScore | undefined;
+  try {
+    modelHint = computeTaskReadinessScore(taskNode, doc, {
+      harnessScore: harnessWarning ? harnessWarning.score : null,
+    });
+  } catch (err) {
+    logger.warn("pipeline:start_task:model_hint_failed", { error: String(err) });
+  }
+
   // 6. Auto-start if requested
   let startedAt: string | null = null;
   let leaseToken: string | undefined;
@@ -237,5 +256,6 @@ export function startTask(
     ...(prefetchHit ? { prefetchHit } : {}),
     ...(checkpoint ? { checkpoint } : {}),
     ...(shadowBranch ? { shadowBranch } : {}),
+    ...(modelHint ? { modelHint } : {}),
   };
 }
