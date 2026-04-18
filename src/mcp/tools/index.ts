@@ -52,6 +52,7 @@ import { registerSpecSync } from "./spec-sync.js";
 import { registerAgentFormat } from "./agent-format.js";
 import { registerDelegate } from "./delegate.js";
 import { registerPipeline } from "./pipeline.js";
+import { registerDaemonStatus } from "./daemon-status.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
@@ -114,5 +115,6 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerAgentFormat(server, store);
   registerDelegate(server, store);
   registerPipeline(server, store);
+  registerDaemonStatus(server);
   wrapToolsWithGates(server, store);
 }

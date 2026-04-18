@@ -20,6 +20,7 @@ import { logger } from "../core/utils/logger.js";
 import { resolveDaemonPaths, ensureStateDir } from "../core/daemon/daemon-paths.js";
 import { acquireLock, releaseLock } from "../core/daemon/daemon-lockfile.js";
 import { startDaemonRunner } from "./daemon/runner.js";
+import { registerDaemon, unregisterDaemon } from "./daemon/daemon-registry.js";
 
 const workspace = process.argv[2] ?? process.cwd();
 const paths = resolveDaemonPaths(workspace);
@@ -44,11 +45,18 @@ store.eventBus = eventBus;
 // `0` or unset → stay alive forever (safest default for interactive use).
 const idleShutdownMs = parseInt(process.env.MCP_DAEMON_IDLE_MS ?? "0", 10);
 
+const resolvedIdleMs = Number.isFinite(idleShutdownMs) && idleShutdownMs > 0 ? idleShutdownMs : undefined;
 const handle = await startDaemonRunner({
   socketPath: paths.socketPath,
   store,
-  idleShutdownMs: Number.isFinite(idleShutdownMs) && idleShutdownMs > 0 ? idleShutdownMs : undefined,
+  idleShutdownMs: resolvedIdleMs,
   onIdleShutdown: () => void shutdown("idle-timeout"),
+});
+registerDaemon({
+  handle,
+  socketPath: paths.socketPath,
+  workspacePath: workspace,
+  idleShutdownMs: resolvedIdleMs ?? 0,
 });
 logger.info("daemon:ready", {
   socket: paths.socketPath,
@@ -62,6 +70,7 @@ async function shutdown(signal: string): Promise<void> {
   shuttingDown = true;
   logger.info("daemon:shutdown", { signal });
   try {
+    unregisterDaemon();
     await handle.close();
     store.close();
   } catch (err) {
