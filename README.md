@@ -592,8 +592,9 @@ to request one. Evaluation and non-profit rates are offered case by case.
 ### Authorship and provenance
 
 See [`NOTICE.md`](NOTICE.md) for the authorship chain, citation guidance,
-and a description of the three cryptographic provenance layers (GPG
-signatures, OpenTimestamps, INPI registration) documented in
+and a description of the three provenance layers (GPG/SSH signatures,
+OpenTimestamps, Brazilian Lei 9.609/1998 statutory protection — INPI
+registration in preparation) documented in
 [`docs/PROVENANCE.md`](docs/PROVENANCE.md).
 
 ### Contributing

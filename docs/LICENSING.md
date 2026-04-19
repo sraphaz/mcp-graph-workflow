@@ -155,9 +155,11 @@ the three layers documented in [`PROVENANCE.md`](./PROVENANCE.md):
    history carries a cryptographic signature of the copyright holder.
 2. **OpenTimestamps** — critical commits are anchored to the Bitcoin
    blockchain, providing a publicly verifiable creation date.
-3. **INPI registration** — mcp-graph is registered with the Brazilian
-   National Institute of Industrial Property under Law 9.609/1998, giving
-   50 years of statutory software protection.
+3. **Brazilian statutory protection (Lei 9.609/1998)** — mcp-graph is
+   protected automatically by Brazilian software-copyright law for 50
+   years from January 1 of the year after first publication. INPI
+   registration (additional evidentiary reinforcement, optional) is in
+   preparation; see [`PROVENANCE.md`](./PROVENANCE.md#layer-3--brazilian-statutory-protection-lei-96091998).
 
 In a licensing dispute, these layers establish authorship and date with
 cryptographic proof. They apply to both AGPL compliance audits and

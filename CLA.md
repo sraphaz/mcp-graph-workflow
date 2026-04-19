@@ -154,9 +154,12 @@ this Agreement shall be submitted to the courts of the city of São Paulo,
 Brazil, unless the Project Owner consents to an alternative forum in
 writing.
 
-The Project is also registered with the Brazilian National Institute of
-Industrial Property (INPI) under Law 9.609/1998 ("Software Law"); see
-[`docs/PROVENANCE.md`](docs/PROVENANCE.md) for details.
+The Project is protected under Brazilian Lei 9.609/1998 (software
+copyright, automatic from creation, 50-year term) and Lei 9.610/1998
+(general copyright). INPI registration under Lei 9.609 is in
+preparation as of 2026-04-19; see
+[`docs/PROVENANCE.md`](docs/PROVENANCE.md) for the full provenance
+framework and current INPI status.
 
 ---
 

@@ -117,9 +117,10 @@ documented in [`NOTICE.md`](NOTICE.md) and anchored cryptographically via
 three independent layers described in
 [`docs/PROVENANCE.md`](docs/PROVENANCE.md):
 
-1. GPG-signed commits and tags.
+1. GPG/SSH-signed commits and tags.
 2. OpenTimestamps anchoring to the Bitcoin blockchain.
-3. Registration with the Brazilian INPI under Law 9.609/1998.
+3. Brazilian statutory protection under Lei 9.609/1998 (automatic, 50
+   years); INPI registration in preparation.
 
 These layers also underpin commercial license audits — they establish the
 authorship and date of each code artifact with cryptographic proof.

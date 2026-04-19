@@ -102,35 +102,62 @@ the attestation into a block-confirmed proof.
 
 OTS is applied forward-only from the AGPL transition (v10.0.0 onward). Old
 MIT releases are not OTS-anchored; Layer 1 (forward-only signing) and
-Layer 3 (INPI registration) provide their coverage.
+the Brazilian statutory protection described in Layer 3 provide their
+coverage.
 
 ---
 
-## Layer 3 — INPI software registration (Brazil)
+## Layer 3 — Brazilian statutory protection (Lei 9.609/1998)
 
-The mcp-graph source tree is registered with the
+Brazilian copyright law protects software automatically, from the moment
+of creation, independent of any registration formality. Two statutes apply:
+
+- **Lei 9.610/1998** ("Lei dos Direitos Autorais") establishes copyright
+  protection as automatic upon creation.
+- **Lei 9.609/1998** ("Lei do Software") Art. 2º §2º places software under
+  the copyright regime with a **50-year protection term**, counted from
+  January 1 of the year following first publication (or, absent
+  publication, of creation).
+
+mcp-graph is therefore protected by Brazilian law from its creation date
+in 2025, 50 years forward, regardless of INPI registration status. The
+authorship chain is established by:
+
+- The author's Master's research records at UNOPAR (private work from
+  2025 onward).
+- The first public commit on GitHub (2026-03-09) and every subsequent
+  signed commit.
+- npm registry publish timestamps.
+- OpenTimestamps proofs in `docs/provenance/ots/` (Layer 2).
+
+### INPI registration — optional evidentiary reinforcement
+
+Registering the source code with the
 [Brazilian National Institute of Industrial Property (INPI)](https://www.gov.br/inpi/en)
-as a software work under
-**Lei 9.609/1998** ("Lei do Software"). This statutory registration:
+under Lei 9.609/1998 is **optional**. It does not create or extend the
+50-year protection — that protection already exists automatically. What
+INPI registration adds is a government-issued certificate with a fixed
+date and a sealed copy of the code, which carries evidentiary weight in
+Brazilian court proceedings.
 
-- Establishes legal authorship of Diego Lima Nogueira de Paula over the
-  code base at the registered version.
-- Provides **50 years of protection** under Brazilian copyright law, in
-  addition to any open-source or commercial license terms.
-- Functions as a jurisdiction-grounded supplement to Layers 1 and 2 — a
-  Brazilian court of law can directly consult INPI records.
+**Current status:** INPI registration is being prepared. The GRU (federal
+fee receipt) is paid; documentation is assembled; formal submission to
+INPI is pending. Once the protocol number is issued and (later) the
+certificate granted, this section will be updated with the respective
+identifiers and dates.
 
-The INPI process number is held by the maintainer and available to any
-counterparty under a non-disclosure arrangement (it is not printed here to
-avoid casual scraping).
+Until then, readers and counterparties should treat Layer 3 as resting on
+the automatic statutory protection, not on INPI registration.
 
 ### Important limits
 
-- INPI does **not** grant a patent. It is a copyright-style registration
-  of the source code as it existed on the registration date.
-- INPI registration is a supplement to, not a replacement for, the
+- Neither Lei 9.609 nor Lei 9.610 grants a **patent**. Brazilian software
+  patents are governed by Lei 9.279/1996 and have separate (narrow)
+  requirements.
+- Statutory protection is a supplement to, not a replacement for, the
   AGPL-3.0-or-later license published on GitHub and npm. Users and
-  licensees derive their rights from the license terms, not from INPI.
+  licensees derive their rights from the license terms, not from the
+  underlying copyright framework.
 
 ---
 
