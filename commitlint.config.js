@@ -1,5 +1,15 @@
 export default {
   extends: ["@commitlint/config-conventional"],
+  // Ignore release automation commits that are created through the GitHub API
+  // and therefore cannot carry a Signed-off-by trailer. release-please-bot
+  // and dependabot both fit this pattern.
+  ignores: [
+    (message) =>
+      /^chore\(master\): release /.test(message) ||
+      /^chore\(deps(-dev)?\): bump /.test(message) ||
+      /Signed-off-by:\s+dependabot\[bot\]/.test(message) ||
+      /Signed-off-by:\s+renovate\[bot\]/.test(message),
+  ],
   rules: {
     "type-enum": [
       2,
