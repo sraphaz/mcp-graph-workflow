@@ -1,0 +1,88 @@
+name: npm — deprecate version
+
+# Manual-only workflow. Uses the existing NPM_TOKEN repo secret, so the
+# maintainer never needs to run `npm login` on their machine to publish
+# a deprecation notice on a published version.
+#
+# Typical use: right after a licensing or API transition, mark the
+# last release of the previous tier as deprecated so users pulling
+# `latest` get a migration pointer.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version to deprecate (e.g. 9.4.0). Must already be published to npm.'
+        required: true
+        type: string
+      message:
+        description: 'Deprecation message shown to anyone who installs this version.'
+        required: true
+        type: string
+      dry-run:
+        description: 'If true, prints the intended command but does not publish the deprecation.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-deprecate-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  deprecate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: npm
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Validate version exists on npm
+        run: |
+          set -euo pipefail
+          if ! npm view "@mcp-graph-workflow/mcp-graph@${{ inputs.version }}" version >/dev/null 2>&1; then
+            echo "Version ${{ inputs.version }} was not found on the npm registry." >&2
+            exit 1
+          fi
+          echo "Found @mcp-graph-workflow/mcp-graph@${{ inputs.version }} on npm."
+
+      - name: Show current deprecation (if any)
+        run: |
+          CURRENT=$(npm view "@mcp-graph-workflow/mcp-graph@${{ inputs.version }}" deprecated || echo "")
+          if [ -n "$CURRENT" ]; then
+            echo "::notice::Current deprecation message: $CURRENT"
+          else
+            echo "::notice::No current deprecation on this version."
+          fi
+
+      - name: Apply deprecation
+        if: ${{ !inputs.dry-run }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          npm deprecate "@mcp-graph-workflow/mcp-graph@${{ inputs.version }}" "${{ inputs.message }}"
+          echo "::notice::Deprecation applied."
+
+      - name: Dry-run summary
+        if: ${{ inputs.dry-run }}
+        run: |
+          echo "::notice::DRY RUN — would run:"
+          echo "  npm deprecate \"@mcp-graph-workflow/mcp-graph@${{ inputs.version }}\" \"${{ inputs.message }}\""
+
+      - name: Verify
+        if: ${{ !inputs.dry-run }}
+        run: |
+          sleep 5
+          APPLIED=$(npm view "@mcp-graph-workflow/mcp-graph@${{ inputs.version }}" deprecated || echo "")
+          if [ "$APPLIED" != "${{ inputs.message }}" ]; then
+            echo "::warning::Deprecation did not propagate cleanly. Check manually with: npm view @mcp-graph-workflow/mcp-graph@${{ inputs.version }} deprecated"
+          else
+            echo "::notice::Verified deprecation on registry: $APPLIED"
+          fi
