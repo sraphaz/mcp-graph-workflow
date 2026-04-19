@@ -21,6 +21,21 @@
 export { FallbackResolver } from "./fallback-resolver.js";
 export type { ToolAvailability, FallbackResult } from "./fallback-resolver.js";
 
+export { updateGraphFromReport } from "./reporter.js";
+export type { ReporterOutcome, GraphUpdateResult } from "./reporter.js";
+
+export { detectStack } from "./stack-detector.js";
+export type { SandboxStack, StackDetectionResult } from "./stack-detector.js";
+
+export { executeBuild } from "./builder-executor.js";
+export type {
+  BuilderExecutorOptions,
+  BuilderResult,
+  BuilderStatus,
+  BuilderProfile,
+  BuilderIsolation,
+} from "./builder-executor.js";
+
 // Wave-12: Functional Architecture Schemas (RAG-indexed)
 export {
   SandboxBuilderConfigSchema,
