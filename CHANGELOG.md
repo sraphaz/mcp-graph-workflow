@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.0.0...mcp-graph-v10.0.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **test:** stop nested vitest in finish-task-contract-gate flaky suite ([#197](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/197)) ([1a78eea](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/1a78eea2a3ca5e6977da6d96393acab87e91365c))
+
 ## [10.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.4.0...mcp-graph-v10.0.0) (2026-04-19)
 
 
