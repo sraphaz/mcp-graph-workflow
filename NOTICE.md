@@ -137,6 +137,7 @@ anchored instead by (a) npm registry timestamps on published versions,
 ## Contact
 
 - GitHub: https://github.com/DiegoNogueiraDev
+- ORCID: [0009-0002-1117-9571](https://orcid.org/0009-0002-1117-9571)
 - Repository: https://github.com/DiegoNogueiraDev/mcp-graph-workflow
 - Academic affiliation: UNOPAR — Programa de Pós-Graduação em Engenharia
   da Computação

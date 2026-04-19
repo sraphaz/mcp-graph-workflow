@@ -33,13 +33,14 @@
 > **Research project — in development since 2025.**
 > mcp-graph is an active Master's research project in Computer Engineering at
 > **UNOPAR — Universidade Norte do Paraná**, authored by **Diego Lima Nogueira
-> de Paula**. The public repository was opened in March 2026, after roughly a
-> year of private research. Original methodologies embedded in this system
-> (Harnessability Score, Anti-Vibe-Coding lifecycle, Task Readiness Score)
-> are documented in [`NOTICE.md`](NOTICE.md). Academic citation is **required**
-> when the system is referenced or reimplemented — see
-> [How to Cite](#how-to-cite) below. The MIT license grants code reuse;
-> academic and derivative work must credit the author.
+> de Paula** ([ORCID 0009-0002-1117-9571](https://orcid.org/0009-0002-1117-9571)).
+> The public repository was opened in March 2026, after roughly a year of private
+> research. Original methodologies embedded in this system (Harnessability Score,
+> Anti-Vibe-Coding lifecycle, Task Readiness Score) are documented in
+> [`NOTICE.md`](NOTICE.md). Academic citation is **required** when the system is
+> referenced or reimplemented — see [How to Cite](#how-to-cite) below.
+> The MIT license grants code reuse; academic and derivative work must credit
+> the author.
 
 ## What is mcp-graph?
 
@@ -532,12 +533,14 @@ button on the project page (backed by [`CITATION.cff`](CITATION.cff)).
 ```bibtex
 @software{depaula_mcp_graph_2026,
   author    = {Lima Nogueira de Paula, Diego},
+  orcid     = {0009-0002-1117-9571},
   title     = {{MCP Graph Workflow: Execution Graph for PRD-Driven Development}},
   year      = {2026},
   url       = {https://github.com/DiegoNogueiraDev/mcp-graph-workflow},
   version   = {9.4.0},
   note      = {Master's research, Programa de Pós-Graduação em Engenharia da
-               Computação, UNOPAR — Universidade Norte do Paraná}
+               Computação, UNOPAR — Universidade Norte do Paraná.
+               ORCID: https://orcid.org/0009-0002-1117-9571}
   % doi    = {10.5281/zenodo.XXXXXXX}  % fill after the first Zenodo release
 }
 ```

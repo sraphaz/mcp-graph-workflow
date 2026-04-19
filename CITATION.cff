@@ -22,7 +22,7 @@ authors:
     affiliation: >-
       UNOPAR — Universidade Norte do Paraná,
       Programa de Pós-Graduação em Engenharia da Computação
-    # orcid: "https://orcid.org/0000-0000-0000-0000"  # add when available
+    orcid: "https://orcid.org/0009-0002-1117-9571"
 repository-code: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
 url: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
 license: MIT
@@ -53,6 +53,7 @@ preferred-citation:
   authors:
     - family-names: "Lima Nogueira de Paula"
       given-names: "Diego"
+      orcid: "https://orcid.org/0009-0002-1117-9571"
       affiliation: >-
         UNOPAR — Universidade Norte do Paraná,
         Programa de Pós-Graduação em Engenharia da Computação
