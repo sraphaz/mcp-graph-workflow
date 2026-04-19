@@ -27,6 +27,16 @@ describe("finish_task contract validation gate (Wiener Closed-Loop)", () => {
     store = SqliteStore.open(":memory:");
     store.initProject("Contract Gate Test");
 
+    // This suite tests the *contract* gate specifically. Leaving the test
+    // gate at its default ("advisory") causes finishTask's auto test-file
+    // discovery to populate node.testFiles, and runTestGate then spawns
+    // `npx vitest run <files>` as a child process. A nested vitest inside
+    // the outer vitest run contends for worker pool slots and times out at
+    // 15 s under Ubuntu/Windows GitHub runners (pre-10.0.0 finding). macOS
+    // runners happen to have enough headroom to absorb it. Turning the
+    // test gate off isolates this suite from that side-effect.
+    store.setProjectSetting("test_gate_mode", "off");
+
     // Create a task in in_progress status with AC
     const node = makeNode({
       id: "task-1",
