@@ -13,10 +13,14 @@
 #         brew install opentimestamps           # macOS
 #         pipx install opentimestamps-client    # cross-platform
 #   3. Deprecate @mcp-graph-workflow/mcp-graph@9.4.0 on npm so users pulling
-#      `latest` see the license-change notice. Requires `npm login` on this
-#      machine; the publish itself is handled by release.yml using the repo
-#      NPM_TOKEN secret, so this is strictly a downgrade-of-old-version note,
-#      not a republish.
+#      `latest` see the license-change notice. Two paths:
+#        (a) Trigger .github/workflows/npm-deprecate.yml via
+#            `gh workflow run npm-deprecate.yml -f version=9.4.0 -f message=...`
+#            This uses the repo NPM_TOKEN secret — no local npm login needed.
+#            Recommended path.
+#        (b) Run this script with `npm login` already set up locally.
+#      The script itself implements path (b); the workflow is preferred for
+#      hands-off deprecations.
 #
 # Usage:
 #   scripts/license/post-release.sh            # runs all steps, prompting on
@@ -30,7 +34,7 @@
 
 set -euo pipefail
 
-VERSION="v10.0.0"
+VERSION="mcp-graph-v10.0.0"
 OLD_VERSION_TO_DEPRECATE="9.4.0"
 NPM_PACKAGE="@mcp-graph-workflow/mcp-graph"
 DEPRECATE_MSG="Last MIT-licensed release. v10+ is AGPL-3.0-or-later with a commercial licensing channel; see https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/COMMERCIAL.md"
