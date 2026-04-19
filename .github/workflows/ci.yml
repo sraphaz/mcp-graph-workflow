@@ -1,52 +1,77 @@
 name: CI
 
+# Triggered on every push to master and every PR against master. No
+# paths-ignore at the workflow level — that caused required status checks to
+# silently skip on docs-only PRs, deadlocking branch protection. Instead,
+# every job registers a check, and expensive steps are conditionally skipped
+# based on what actually changed (see the `changes` job below).
+
 on:
   push:
     branches: [master]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'presentation/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/pull_request_template.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'SECURITY.md'
-      - 'CITATION.cff'
   pull_request:
     branches: [master]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'presentation/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/pull_request_template.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'SECURITY.md'
-      - 'CITATION.cff'
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Classifies the PR: does it touch code/config that warrants a full CI run,
+  # or is it docs/site-only? All downstream jobs consume `needs.changes.outputs.code`
+  # and either do full work (when code changed) or a ~5-second trivial pass
+  # (when only docs/site/markdown changed). Either way the required check
+  # reports back to branch protection.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - 'vitest.config.ts'
+              - 'eslint.config.js'
+              - 'commitlint.config.js'
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - 'scripts/**'
+              - '.license-header.tpl'
+
   preflight:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
+      - if: needs.changes.outputs.code == 'true'
+        uses: ./.github/actions/setup
         with:
           ignore-scripts: 'true'
       - name: Lint
+        if: needs.changes.outputs.code == 'true'
         run: npm run lint
       - name: Typecheck
+        if: needs.changes.outputs.code == 'true'
         run: npm run typecheck
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true'
+        run: echo "::notice::Docs/site-only change; preflight steps skipped but check reports passed."
 
   test:
-    needs: preflight
+    needs: [changes, preflight]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -55,7 +80,8 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
+      - if: needs.changes.outputs.code == 'true'
+        uses: ./.github/actions/setup
         # Dashboard deps needed because some tests import from
         # src/web/dashboard/src/** which in turn resolves `react`,
         # `lucide-react`, etc. from the dashboard's own node_modules.
@@ -63,31 +89,39 @@ jobs:
           install-dashboard: 'true'
       - name: Build CLI + dashboard (required by tests that spawn the CLI
           or import compiled dashboard output)
+        if: needs.changes.outputs.code == 'true'
         run: npm run build
       - name: Vitest (shard ${{ matrix.shard }}/4)
+        if: needs.changes.outputs.code == 'true'
         run: npx vitest run --shard=${{ matrix.shard }}/4 --reporter=default --reporter=junit --outputFile=junit-shard-${{ matrix.shard }}.xml
       - name: Upload junit report
-        if: always()
+        if: needs.changes.outputs.code == 'true' && always()
         uses: actions/upload-artifact@v7
         with:
           name: junit-shard-${{ matrix.shard }}
           path: junit-shard-${{ matrix.shard }}.xml
           retention-days: 7
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true'
+        run: echo "::notice::Docs/site-only change; shard ${{ matrix.shard }}/4 trivially passed."
 
   build:
-    needs: preflight
+    needs: [changes, preflight]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
+      - if: needs.changes.outputs.code == 'true'
+        uses: ./.github/actions/setup
         with:
           install-dashboard: 'true'
 
       - name: Security audit (production deps)
+        if: needs.changes.outputs.code == 'true'
         run: npm audit --audit-level=high --omit=dev
 
       - name: Cache TS build output
+        if: needs.changes.outputs.code == 'true'
         id: tsbuild-cache
         uses: actions/cache@v5
         with:
@@ -100,9 +134,11 @@ jobs:
             tsbuild-${{ runner.os }}-node22-
 
       - name: Build
+        if: needs.changes.outputs.code == 'true'
         run: npm run build
 
       - name: Check build size
+        if: needs.changes.outputs.code == 'true'
         run: |
           SIZE=$(du -sh dist/ | cut -f1)
           echo "## Build Size: $SIZE" >> $GITHUB_STEP_SUMMARY
@@ -112,10 +148,15 @@ jobs:
           fi
 
       - name: Package dry-run
+        if: needs.changes.outputs.code == 'true'
         run: |
           npm pack --dry-run 2>&1 | tail -20
           echo "## Package Contents" >> $GITHUB_STEP_SUMMARY
           npm pack --dry-run 2>&1 | grep -E "^npm notice" >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true'
+        run: echo "::notice::Docs/site-only change; build trivially passed."
 
   commitlint:
     if: github.event_name == 'pull_request'
