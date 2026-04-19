@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.4.0...mcp-graph-v10.0.0) (2026-04-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* mcp-graph v10.0.0 is licensed under AGPL-3.0-or-later. Running a modified mcp-graph as a network service (MCP server, REST API, integration orchestrator) for third parties now obliges you to make the corresponding source available to those users under AGPL, per section 13 of the license. Organizations that cannot adopt AGPL can obtain a commercial license — see COMMERCIAL.md.
+
+### Features
+
+* **mcp:** daemon_status tool for runtime observability ([#187](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/187)) ([c0b86fc](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c0b86fcc3016590208eac6318c5b3afb03d39d1a))
+* model router — task readiness score + auto-decompose + skill hints ([#183](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/183)) ([756d6bd](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/756d6bd77f8d2be8cbece701df5a8220a0efcf6f))
+* relicense from MIT to AGPL-3.0-or-later + dual commercial (v10.0.0) ([#194](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/194)) ([518b688](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/518b6885eecf5a3ffb6d4820aad8039b760f5075))
+* **sandbox:** Wave-12 sandbox build foundation (schemas + architecture + fallback) ([#191](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/191)) ([15a3382](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/15a3382a73b98eab2eb7de4de9a07eefe846ee58))
+* **wave-12:** PRD consolidation + 5W2H analysis schemas and generator ([#192](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/192)) ([3305c3a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3305c3ab04a17874f2caabe7fcfcf889ac439d6e))
+
+
+### Bug Fixes
+
+* **deps:** override vulnerable transitives — basic-ftp, protobufjs, hono ([#188](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/188)) ([0a4d115](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/0a4d1157bde95c868962855b25ab6cccf781d7b5))
+
+
+### Performance
+
+* memory optimizations + daemon mode (3 waves) ([#182](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/182)) ([7cc4ee2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/7cc4ee2072f7e07bdc028b9fbb6c621ec7f6dfc4))
+
 ## [9.4.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v9.3.0...mcp-graph-v9.4.0) (2026-04-18)
 
 
