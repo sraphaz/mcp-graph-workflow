@@ -8,7 +8,11 @@ on:
       - 'package-lock.json'
       - 'src/web/dashboard/package.json'
       - 'src/web/dashboard/package-lock.json'
-      - '.github/workflows/license-deps-scan.yml'
+      # Meta-CI PRs (only workflow files changed) still need to satisfy the
+      # required `scan` gate. Triggering on any workflow change keeps branch
+      # protection happy without adding noise — the scan runs in ~30s and
+      # reuses the cached dep install.
+      - '.github/workflows/**'
   pull_request:
     branches: [master]
     paths:
@@ -16,7 +20,11 @@ on:
       - 'package-lock.json'
       - 'src/web/dashboard/package.json'
       - 'src/web/dashboard/package-lock.json'
-      - '.github/workflows/license-deps-scan.yml'
+      # Meta-CI PRs (only workflow files changed) still need to satisfy the
+      # required `scan` gate. Triggering on any workflow change keeps branch
+      # protection happy without adding noise — the scan runs in ~30s and
+      # reuses the cached dep install.
+      - '.github/workflows/**'
 
 permissions:
   contents: read

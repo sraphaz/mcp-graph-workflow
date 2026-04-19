@@ -8,7 +8,16 @@ on:
       - 'src/**/*.tsx'
       - '.license-header.tpl'
       - 'scripts/license/headers.mjs'
-      - '.github/workflows/license-headers.yml'
+      # release-please PRs only modify package.json + CHANGELOG and would
+      # otherwise skip this required check, deadlocking auto-merge. Trigger
+      # on package.json so the check runs trivially (no SPDX changes) and
+      # release PRs can satisfy branch protection.
+      - 'package.json'
+      - '.release-please-manifest.json'
+      # Meta-CI PRs (those that only touch workflow files) also need the
+      # check to fire so branch protection does not block them. All workflow
+      # changes trigger a trivial run of the SPDX check — stable and fast.
+      - '.github/workflows/**'
   pull_request:
     branches: [master]
     paths:
@@ -16,7 +25,16 @@ on:
       - 'src/**/*.tsx'
       - '.license-header.tpl'
       - 'scripts/license/headers.mjs'
-      - '.github/workflows/license-headers.yml'
+      # release-please PRs only modify package.json + CHANGELOG and would
+      # otherwise skip this required check, deadlocking auto-merge. Trigger
+      # on package.json so the check runs trivially (no SPDX changes) and
+      # release PRs can satisfy branch protection.
+      - 'package.json'
+      - '.release-please-manifest.json'
+      # Meta-CI PRs (those that only touch workflow files) also need the
+      # check to fire so branch protection does not block them. All workflow
+      # changes trigger a trivial run of the SPDX check — stable and fast.
+      - '.github/workflows/**'
 
 permissions:
   contents: read
