@@ -1,0 +1,53 @@
+name: Setup Node + install deps
+description: |
+  Shared setup for mcp-graph CI jobs. Assumes checkout@v6 has already run
+  in the parent workflow (composite actions cannot run checkout themselves).
+  Installs Node 22 with npm cache, installs root dependencies via npm ci,
+  and optionally restores/installs dashboard dependencies.
+
+inputs:
+  ignore-scripts:
+    description: |
+      When 'true', runs `npm ci --ignore-scripts` so the husky `prepare`
+      hook does not execute. Use for jobs that only need to lint, typecheck,
+      or run commitlint — no build artifacts required.
+    required: false
+    default: 'false'
+  install-dashboard:
+    description: |
+      When 'true', also installs src/web/dashboard/ dependencies, with a
+      dedicated cache keyed on the dashboard lockfile.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js 22
+      uses: actions/setup-node@v6
+      with:
+        node-version: 22
+        cache: npm
+
+    - name: Install dependencies (ignore scripts)
+      if: inputs.ignore-scripts == 'true'
+      shell: bash
+      run: npm ci --ignore-scripts
+
+    - name: Install dependencies
+      if: inputs.ignore-scripts != 'true'
+      shell: bash
+      run: npm ci
+
+    - name: Cache dashboard dependencies
+      if: inputs.install-dashboard == 'true'
+      id: dashboard-cache
+      uses: actions/cache@v5
+      with:
+        path: src/web/dashboard/node_modules
+        key: dashboard-${{ runner.os }}-node22-${{ hashFiles('src/web/dashboard/package-lock.json') }}
+
+    - name: Install dashboard dependencies
+      if: inputs.install-dashboard == 'true' && steps.dashboard-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: cd src/web/dashboard && npm ci

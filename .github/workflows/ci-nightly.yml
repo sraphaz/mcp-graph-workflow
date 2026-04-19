@@ -1,0 +1,94 @@
+name: CI — Nightly (full matrix)
+
+# Full cross-platform, multi-Node matrix that used to live in ci.yml. The PR
+# hot path only exercises ubuntu-latest / Node 22; this workflow is the safety
+# net that catches platform-specific regressions. Triggered on:
+#
+#   - nightly cron (06:00 UTC = 03:00 BRT, quiet traffic hours in Brazil)
+#   - on-demand via workflow_dispatch (for sensitive PRs before merge)
+#
+# If this workflow starts failing consistently on a specific OS/Node while the
+# PR hot path stays green, that is the signal to investigate platform-specific
+# code — likely path.join / EOL / FS case sensitivity.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or SHA to test (defaults to master)'
+        required: false
+        default: 'master'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-nightly-${{ github.event.inputs.ref || 'master' }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [20, 22]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Security audit (production deps)
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 22
+        run: npm audit --audit-level=high --omit=dev
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache dashboard dependencies
+        id: dashboard-cache
+        uses: actions/cache@v5
+        with:
+          path: src/web/dashboard/node_modules
+          key: dashboard-${{ runner.os }}-node${{ matrix.node-version }}-${{ hashFiles('src/web/dashboard/package-lock.json') }}
+
+      - name: Install dashboard dependencies
+        if: steps.dashboard-cache.outputs.cache-hit != 'true'
+        run: cd src/web/dashboard && npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        if: "!(matrix.os == 'ubuntu-latest' && matrix.node-version == 22)"
+        run: npm test
+
+      - name: Test with coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 22
+        run: npm run test:coverage
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 22
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report-nightly
+          path: coverage/
+          retention-days: 14

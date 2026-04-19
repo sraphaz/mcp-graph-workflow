@@ -1,0 +1,13 @@
+# act defaults — tune local-runner behaviour for scripts/ci/validate-locally.sh
+#
+# Image: catthehacker/ubuntu:act-22.04 is act's medium image (~1.5GB). It
+# matches the GitHub ubuntu-22.04 runner closely enough for preflight +
+# shard smoke tests without pulling the full 18GB full image.
+-P ubuntu-latest=catthehacker/ubuntu:act-22.04
+
+# Keep pull cached by default — act normally pulls on every run otherwise.
+--pull=false
+
+# Secrets live in a gitignored file if/when a job needs them (GITHUB_TOKEN,
+# CLA_SIGNATURES_TOKEN, NPM_TOKEN). See docs/guides/CI-LOCAL-VALIDATION.md.
+--secret-file=.secrets

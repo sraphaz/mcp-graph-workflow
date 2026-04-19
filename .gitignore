@@ -60,3 +60,7 @@ coverage/
 .nyc_output/
 .gitnexus
 presentation/public/video/*.mov
+
+# act local CI runner — secrets file is gitignored; the runner itself is
+# configured via .actrc (tracked).
+.secrets
