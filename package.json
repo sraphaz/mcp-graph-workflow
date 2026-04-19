@@ -1,6 +1,6 @@
 {
   "name": "@mcp-graph-workflow/mcp-graph",
-  "version": "9.4.0",
+  "version": "10.0.0",
   "description": "MCP local-first PRD to task graph — transforms text into executable structure",
   "type": "module",
   "main": "dist/index.js",
@@ -47,10 +47,15 @@
   "files": [
     "dist/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "LICENSE.MIT",
+    "COPYING.AGPL-3.0",
+    "NOTICE.md",
+    "COMMERCIAL.md",
+    "CLA.md"
   ],
   "author": "Diego Nogueira (https://github.com/DiegoNogueiraDev)",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DiegoNogueiraDev/mcp-graph-workflow.git"

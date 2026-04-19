@@ -1,3 +1,20 @@
+/*!
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright © 2026 Diego Lima Nogueira de Paula
+ *
+ * This file is part of mcp-graph.
+ *
+ * mcp-graph is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License v3.0 or later, as published by
+ * the Free Software Foundation. See LICENSE for the full terms.
+ *
+ * mcp-graph is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.
+ *
+ * Commercial licenses are available — see COMMERCIAL.md.
+ */
+
 export { getNodeAcTexts, getNodeAcFromStore, nodeHasAc } from './ac-helpers.js';
 export { checkCircularity } from './circularity.js';
 export { STORE_DIR, DB_FILE, GLOBAL_STORE_DIR, GLOBAL_DB_DIR, GLOBAL_DB_PATH, GLOBAL_MEMORIES_DIR, GLOBAL_CONFIG_FILE, BOOTSTRAP_TOOLS, ALWAYS_ALLOWED_TOOLS, READ_ONLY_TOOLS, DEFAULT_NODE_STATUS, DEFAULT_NODE_PRIORITY, DEFAULT_TOKEN_BUDGET, DEFAULT_CHUNK_MAX_TOKENS, DEFAULT_CHUNK_OVERLAP, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGE_PAIRS, MVP_LANGUAGE_PAIRS, UCR_CONFIDENCE_THRESHOLD, isLanguageSupported, isLanguagePairSupported } from './constants.js';

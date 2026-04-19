@@ -25,7 +25,7 @@ authors:
     orcid: "https://orcid.org/0009-0002-1117-9571"
 repository-code: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
 url: "https://github.com/DiegoNogueiraDev/mcp-graph-workflow"
-license: MIT
+license: AGPL-3.0-or-later
 # Update `version` and `date-released` on every Zenodo-archived release.
 version: "9.4.0"
 date-released: "2026-04-15"

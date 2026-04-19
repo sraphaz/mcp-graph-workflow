@@ -13,7 +13,8 @@
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/actions/workflows/ci.yml"><img src="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/v/%40mcp-graph-workflow%2Fmcp-graph" alt="npm version"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/%40mcp-graph-workflow%2Fmcp-graph" alt="Node.js"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
+  <a href="COMMERCIAL.md"><img src="https://img.shields.io/badge/Commercial-available-informational" alt="Commercial license available"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
 </p>
@@ -556,6 +557,49 @@ of the original ideas embedded in this system.
 
 ## License
 
-[MIT](LICENSE) — see [`NOTICE.md`](NOTICE.md) for authorship and a request for
-academic citation when the system is referenced in research or derivative
-implementations.
+**mcp-graph v10.0.0+ is licensed under the GNU Affero General Public License
+v3.0 or later** ([`LICENSE`](LICENSE)). The AGPL is a strong copyleft
+license with the added requirement that **modifications exposed to users
+over a network must be made available to those users as source code**
+(AGPL §13). This matters because mcp-graph is designed to run as a network
+service (MCP server, REST API, integration orchestrator).
+
+- Versions **≤ v9.4.0** remain under the permissive [MIT](LICENSE.MIT)
+  license; those grants are irrevocable for the versions they were published
+  with.
+- [`docs/LICENSING.md`](docs/LICENSING.md) is the plain-language guide —
+  a decision matrix that tells you, for your specific deployment, whether
+  §13 applies and what you must do to comply.
+
+### Network use — when does §13 kick in?
+
+- **Triggers §13:** running a modified mcp-graph as a shared MCP server for
+  a team, exposing a modified REST API to external users, hosting
+  mcp-graph-as-a-service for paying customers, embedding it in a
+  network-accessible product.
+- **Does not trigger §13:** using the CLI locally, running `mcp-graph serve`
+  only for your own agent, `mcp-graph` inside internal CI with no external
+  users, or using unmodified mcp-graph (the §13 source-disclosure obligation
+  is about *your modifications*).
+
+### Commercial licensing
+
+If your organization cannot adopt AGPL — for legal, operational, or
+product-strategy reasons — a **commercial license** is available. See
+[`COMMERCIAL.md`](COMMERCIAL.md) for who qualifies, what is granted, and how
+to request one. Evaluation and non-profit rates are offered case by case.
+
+### Authorship and provenance
+
+See [`NOTICE.md`](NOTICE.md) for the authorship chain, citation guidance,
+and a description of the three cryptographic provenance layers (GPG
+signatures, OpenTimestamps, INPI registration) documented in
+[`docs/PROVENANCE.md`](docs/PROVENANCE.md).
+
+### Contributing
+
+mcp-graph uses a **Contributor License Agreement** ([`CLA.md`](CLA.md)) plus
+DCO `Signed-off-by` trailers on every commit. The CLA allows the copyright
+holder to sustain the dual-licensing model — open-source AGPL for the
+community, commercial licenses for the organizations that need them. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the full contributor workflow.

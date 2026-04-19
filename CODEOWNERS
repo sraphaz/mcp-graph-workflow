@@ -22,3 +22,17 @@
 # Package and build config
 /package.json       @DiegoNogueiraDev
 /tsconfig.json      @DiegoNogueiraDev
+
+# Licensing — changes to any of these files affect the legal terms under
+# which mcp-graph is distributed and MUST be approved by the copyright holder.
+/LICENSE            @DiegoNogueiraDev
+/LICENSE.MIT        @DiegoNogueiraDev
+/COPYING.AGPL-3.0   @DiegoNogueiraDev
+/COMMERCIAL.md      @DiegoNogueiraDev
+/CLA.md             @DiegoNogueiraDev
+/NOTICE.md          @DiegoNogueiraDev
+/CITATION.cff       @DiegoNogueiraDev
+/docs/LICENSING.md  @DiegoNogueiraDev
+/docs/PROVENANCE.md @DiegoNogueiraDev
+/.license-header.tpl @DiegoNogueiraDev
+/scripts/license/   @DiegoNogueiraDev

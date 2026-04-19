@@ -1,0 +1,41 @@
+name: License headers
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - '.license-header.tpl'
+      - 'scripts/license/headers.mjs'
+      - '.github/workflows/license-headers.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - '.license-header.tpl'
+      - 'scripts/license/headers.mjs'
+      - '.github/workflows/license-headers.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: license-headers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-spdx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Check SPDX headers
+        run: node scripts/license/headers.mjs --check

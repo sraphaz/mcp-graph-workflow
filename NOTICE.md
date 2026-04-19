@@ -15,10 +15,25 @@ methodological work. The extended private timeline is documented in the
 author's Master's program records and is verifiable through the program
 coordinators at UNOPAR.
 
-The source code is released under the MIT License (see [`LICENSE`](LICENSE)),
-which grants broad permissions for use, modification, and redistribution. This
-notice documents the authorship chain and does **not** reduce or alter the
-rights granted by the MIT License.
+**Licensing.** Starting with **v10.0.0**, the source code is released under
+the **GNU Affero General Public License v3.0 or later** (AGPL-3.0-or-later —
+see [`LICENSE`](LICENSE) and the plain-language guide in
+[`docs/LICENSING.md`](docs/LICENSING.md)). The AGPL grants broad permissions
+for use, modification, and redistribution under copyleft terms — in
+particular, **§13** requires that modifications exposed over a network be
+made available in source form to those network users.
+
+Versions **≤ v9.4.0** were released under the MIT License; the preserved
+MIT text (see [`LICENSE.MIT`](LICENSE.MIT)) remains in force for those
+versions, and the grants given to users of those versions are irrevocable.
+
+**Commercial licensing.** Organizations that cannot or do not wish to comply
+with the AGPL may obtain a commercial license that removes the copyleft
+obligations. See [`COMMERCIAL.md`](COMMERCIAL.md) for who qualifies, what
+is granted, and how to request one.
+
+This notice documents the authorship chain and does **not** reduce or alter
+the rights granted by AGPL-3.0-or-later or by the historical MIT License.
 
 ## Request for Academic Citation
 
@@ -38,10 +53,10 @@ please cite this work using the canonical reference in
 [`CITATION.cff`](CITATION.cff) file, which GitHub surfaces as the
 **"Cite this repository"** button on the project page.
 
-The MIT License permits reuse without citation in purely commercial or
-operational contexts. Citation is requested as a matter of academic honesty
-and scientific integrity whenever the system is discussed, evaluated, or
-extended in research or public-facing technical work.
+The AGPL does not require academic citation, and neither does the commercial
+license. Citation is requested as a matter of academic honesty and scientific
+integrity whenever the system is discussed, evaluated, or extended in
+research or public-facing technical work.
 
 ## Provenance of Ideas
 

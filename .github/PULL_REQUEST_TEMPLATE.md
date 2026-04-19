@@ -26,6 +26,16 @@
 - [ ] Public APIs have explicit return types
 - [ ] Error handling uses typed errors from `utils/errors.ts`
 
+## Licensing
+
+- [ ] I have read [`CLA.md`](../CLA.md) and I have signed (or will sign via
+      the CLA bot comment) the Contributor License Agreement — **or** I am
+      the copyright holder.
+- [ ] Every commit in this PR includes a `Signed-off-by:` trailer (`git commit -s`)
+      attesting to the [Developer Certificate of Origin v1.1](https://developercertificate.org/).
+- [ ] New source files under `src/**/*.{ts,tsx}` carry the SPDX header
+      (the `license-headers` CI check passes).
+
 ## Related Issues
 
 <!-- Link related issues: Fixes #123, Closes #456 -->

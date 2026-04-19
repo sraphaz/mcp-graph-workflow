@@ -2,6 +2,34 @@
 
 Thank you for your interest in contributing! This guide will help you get started.
 
+## Licensing (read this first)
+
+mcp-graph v10.0.0+ is licensed under **AGPL-3.0-or-later** (see [`LICENSE`](LICENSE))
+with a **dual-commercial-licensing** channel for organizations that cannot
+adopt AGPL (see [`COMMERCIAL.md`](COMMERCIAL.md)).
+
+To sustain that dual model, **every contribution must satisfy two requirements**:
+
+1. **Contributor License Agreement** — sign [`CLA.md`](CLA.md) before your
+   first pull request is merged. The CLA grants the copyright holder the
+   right to re-license your contribution under the commercial tier. A GitHub
+   Action (cla-assistant) will comment on your PR with a signing link; just
+   comment the exact phrase it asks for and you are signed.
+2. **Developer Certificate of Origin sign-off** — every commit must include
+   a `Signed-off-by:` trailer. The simplest way is `git commit -s`. The
+   commit-msg hook + CI will reject commits lacking the trailer. The DCO is
+   enforced as a proxy until the CLA is signed, and as a belt-and-braces
+   check afterwards.
+
+If you are contributing on behalf of an employer, ensure you have authority
+to sign the CLA on their behalf, or have an authorized representative co-sign
+(see [`CLA.md`](CLA.md) §4.3).
+
+By submitting a pull request, you confirm that your contribution is your
+original work (or that you have the right to submit it) and that it is
+licensed under AGPL-3.0-or-later with the re-licensing grant described in
+`CLA.md`.
+
 ## Getting Started
 
 ```bash
@@ -42,7 +70,18 @@ All new code follows Test-Driven Development: **Red -> Green -> Refactor**.
 
 ### Commit Messages
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow [Conventional Commits](https://www.conventionalcommits.org/) **and**
+include a DCO `Signed-off-by:` trailer on every commit (enforced by
+commitlint + CI). Use `git commit -s` to append the trailer automatically
+from your `user.name` and `user.email`.
+
+```
+feat: add velocity calculation for sprint metrics
+
+Signed-off-by: Jane Contributor <jane@example.com>
+```
+
+Examples of valid subjects:
 
 ```
 feat: add velocity calculation for sprint metrics
@@ -91,9 +130,20 @@ npm run test:all       # Unit + E2E combined
    ```bash
    npm run build && npm run lint && npm test
    ```
-2. Push your branch and open a PR against `master`
-3. Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md)
-4. Wait for CI to pass and a maintainer review
+2. If you added new `.ts`/`.tsx` files under `src/`, run the SPDX header
+   stamper so the `license-headers` CI check stays green:
+   ```bash
+   node scripts/license/headers.mjs --apply
+   ```
+3. Make sure every commit is signed off (`git commit -s`). If you forgot,
+   `git rebase -i --signoff <base>` will add the trailer to past commits.
+4. Push your branch and open a PR against `master`.
+5. Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md), including
+   the Licensing checklist.
+6. Sign the CLA via the bot comment on your PR (first-time contributors
+   only).
+7. Wait for CI (build, tests, license-headers, CLA, dep scan) to pass and a
+   maintainer review.
 
 ## Adding Skills & Instructions
 
