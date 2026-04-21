@@ -8,6 +8,7 @@ node_modules/
 # Build
 dist/
 build/
+skills-graph/
 workflow-graph/
 CLAUDE.md
 # IDE
@@ -28,7 +29,12 @@ sdk/
 .env.*
 raw-*
 raw.md
+notas.md
 docs/raw/
+docs/prd/
+docs/architecture/
+docs/reference/
+knowledge-export.json
 
 # MCP / Local Tools
 workflow-graph/

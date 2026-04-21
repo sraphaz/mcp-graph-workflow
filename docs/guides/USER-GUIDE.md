@@ -1,536 +1,357 @@
 # User Guide — mcp-graph
 
-> Complete guide for day-to-day usage. Prerequisite: complete the [Getting Started](./GETTING-STARTED.md) tutorial first.
+> Complete reference for installing, configuring, and using mcp-graph.
+> For a quick overview, see the [README](../../README.md).
 
 ---
 
-## 1. Sprint Planning & Velocity
+## Table of Contents
 
-### Planning a Sprint
-
-Use `plan_sprint` to generate a structured sprint report with task recommendations:
-
-```
-plan_sprint { sprintName: "Sprint 1", capacityMinutes: 2400 }
-```
-
-The report includes:
-- **Recommended tasks** — sorted by priority and dependency readiness
-- **Capacity analysis** — estimated hours vs available capacity
-- **Risk assessment** — blocked tasks, missing AC, oversized items
-- **Velocity context** — historical completion rate if available
-
-**Example output:**
-```
-📋 Sprint Planning: Sprint 1
-   Capacity: 2400 min (40h)
-   Recommended: 6 tasks (est. 1800 min)
-   Risks: 1 task missing AC, 1 blocked
-   Velocity: 2.3h avg/task (from previous sprints)
-```
-
-### Tracking Velocity
-
-```
-velocity
-```
-
-Returns sprint metrics:
-- **Completed tasks** — count and total points
-- **Average completion time** — per task
-- **Burn rate** — tasks per day/week
-- **Trend** — improving, stable, or declining
-
-Use `analyze { mode: "progress" }` during a sprint for a live burndown view with ETA.
-
-### Assigning Tasks to Sprints
-
-When creating or updating tasks, set the sprint field:
-
-```
-node { action: "update", id: "<ID>", sprint: "Sprint 1" }
-```
-
-Then filter by sprint:
-
-```
-list { sprint: "Sprint 1" }
-```
+1. [What mcp-graph Does](#what-mcp-graph-does)
+2. [Installation & Setup](#installation--setup)
+3. [Core Concepts](#core-concepts)
+4. [Typical Workflow](#typical-workflow)
+5. [CLI Reference](#cli-reference)
+6. [Dashboard](#dashboard)
+7. [Multi-Agent Setup](#multi-agent-setup)
+8. [FAQ](#faq)
 
 ---
 
-## 2. Knowledge Pipeline
+## What mcp-graph Does
 
-The knowledge pipeline automatically indexes content from multiple sources into a unified, searchable store.
+mcp-graph is a local-first development orchestration tool. It sits between your requirement documents and your AI coding assistant, providing structure that keeps the agent grounded, consistent, and productive across sessions.
 
-### 2.1 Project Memories
+**Without mcp-graph:** your AI agent reconstructs context from scratch every session, improvises a development path, and has no persistent memory of decisions made.
 
-Memories are persistent project knowledge stored in `workflow-graph/memories/`.
+**With mcp-graph:** requirements become a navigable task graph. The agent asks the graph what to do next, retrieves exactly the context needed for the current task, and records completion evidence — producing a traceable, reproducible development process.
 
-**Write a memory:**
-```
-write_memory { name: "auth-patterns", content: "We use JWT with httpOnly refresh tokens..." }
-```
-
-**Read a memory:**
-```
-read_memory { name: "auth-patterns" }
-```
-
-**List all memories:**
-```
-list_memories
-```
-
-**Delete a memory:**
-```
-delete_memory { name: "auth-patterns" }
-```
-
-**Naming conventions:**
-- Use descriptive kebab-case names: `auth-patterns`, `db-migration-notes`, `api-design-decisions`
-- Group by topic with directory prefixes: `architecture/layer-boundaries`, `decisions/jwt-vs-session`, `patterns/error-handling`
-- Memories are auto-indexed into the knowledge store immediately after writing
-
-**Recommended organization:**
-```
-workflow-graph/memories/
-  architecture/       # System design decisions
-  decisions/          # ADRs and tradeoffs
-  patterns/           # Recurring patterns and conventions
-  bugs/               # Known issues and workarounds
-  onboarding/         # Team knowledge transfer
-```
-
-### 2.2 Stack Documentation (Context7)
-
-`sync_stack_docs` automatically detects your project stack and fetches documentation:
-
-```
-sync_stack_docs
-```
-
-**How it works:**
-1. **Detect stack** — scans `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`
-2. **Resolve libraries** — maps each dependency to Context7's library registry
-3. **Fetch docs** — downloads relevant documentation pages
-4. **Cache** — stores locally to avoid redundant fetches
-5. **Index** — adds to knowledge store for RAG queries
-
-This runs automatically during `import_prd`, but you can trigger it manually anytime.
-
-### 2.3 Reindexing
-
-```
-reindex_knowledge
-```
-
-Rebuilds the entire knowledge index from scratch:
-- **FTS5** — full-text search indexes for BM25 ranking
-- **TF-IDF embeddings** — vector representations for semantic similarity
-- **Deduplication** — SHA-256 ensures no duplicate entries
-
-**When to reindex:**
-- After manually editing files in `workflow-graph/memories/`
-- If search results seem stale or incomplete
-- After upgrading mcp-graph to a new version
-- After restoring a snapshot
+The system works entirely offline. No external services, no cloud dependencies, no AI at runtime — only your AI coding assistant interacting with the local graph.
 
 ---
 
-## 3. Search & RAG
+## Installation & Setup
 
-mcp-graph provides three complementary ways to find information.
+### Prerequisites
 
-### 3.1 Full-Text Search (search)
+- Node.js ≥ 18
+- An MCP-compatible AI assistant (Claude Code, GitHub Copilot Agent Mode, Cursor, Zed, IntelliJ, Windsurf, etc.)
 
-```
-search { query: "authentication JWT" }
-```
+### Global Install (recommended)
 
-Uses FTS5 with BM25 ranking. Fast keyword-based search across all graph nodes.
-
-- Matches against titles, descriptions, and acceptance criteria
-- Results ranked by relevance (BM25 scoring)
-- Supports standard search operators
-
-### 3.2 Semantic Search (rag_context)
-
-```
-rag_context { query: "how to implement JWT authentication", maxTokens: 2000 }
-```
-
-Uses TF-IDF + cosine similarity for semantic matching across the knowledge store.
-
-**Parameters:**
-- `query` — natural language question
-- `maxTokens` — token budget for the response (default varies by tier)
-
-**Tiers:**
-| Tier | Tokens/node | When used |
-|------|-------------|-----------|
-| Summary | ~20 | Quick overview, many nodes |
-| Standard | ~150 | Normal usage, balanced detail |
-| Deep | ~500+ | Detailed analysis, few nodes |
-
-### 3.3 Compact Context (context)
-
-```
-context { nodeId: "<ID>" }
-```
-
-Generates a token-budgeted context payload specifically for a task:
-- **60%** — graph context (task details, dependencies, status tree)
-- **30%** — knowledge store (BM25-ranked relevant chunks)
-- **10%** — header and metadata (phase, sprint, lifecycle)
-
-Achieves 70-85% token reduction compared to raw data.
-
-**When to use which:**
-
-| Tool | Best for | Token cost |
-|------|----------|------------|
-| `search` | Finding specific nodes by keyword | Low (IDs + titles) |
-| `rag_context` | Getting knowledge-enriched answers | Medium (controlled by maxTokens) |
-| `context` | Full implementation context for a task | Medium (auto-budgeted) |
-
----
-
-## 4. Dashboard Deep Dive
-
-Start the dashboard with `mcp-graph serve` and open `http://localhost:3000`. For the complete visual guide, see [DASHBOARD-GUIDE.md](./DASHBOARD-GUIDE.md).
-
-### 4.1 Graph Tab
-
-The main visualization — an interactive React Flow diagram of your execution graph.
-
-- **Filters** — narrow by status (backlog/ready/in_progress/blocked/done), type (epic/task/subtask), layout direction
-- **Node table** — searchable list below the graph, click any row to select
-- **Detail panel** — shows full node info: description, AC, metadata, dependencies, edges
-- **Layout toggle** — switch between top-down and left-right views
-- **Show all nodes** — expand to see child nodes (tasks within epics)
-
-### 4.2 PRD & Backlog
-
-Organized view of imported PRDs with hierarchy tracking.
-
-- **Simplified graph** showing the PRD structure
-- **Progress bars** per epic (X/Y done, percentage)
-- **Next task** recommendation highlighted
-- **Hierarchical list** with color-coded status indicators
-
-### 4.3 Code Graph
-
-Visualizes your codebase's symbol relationships (native Code Intelligence).
-
-- **Status indicator** — shows if the code index is current
-- **Reindex button** — triggers `reindex_knowledge` for code symbols
-- **Symbol search** — FTS5 search across functions, classes, methods, interfaces
-- **Impact analysis** — click a symbol to see upstream (who calls it) and downstream (what it calls)
-
-### 4.4 Memories Tab
-
-File-tree explorer for project knowledge.
-
-- **Tree view** — memories organized by directory structure
-- **Content viewer** — markdown rendering of selected memory
-- **CRUD operations** — create, read, and delete via the interface
-- Reflects `workflow-graph/memories/` contents in real-time
-
-### 4.5 Insights
-
-Analytics and actionable recommendations.
-
-- **Health score** — overall project health metric
-- **Status distribution** — bar chart of backlog/ready/in_progress/blocked/done
-- **Bottlenecks** — blocked tasks, missing AC, oversized items
-- **Velocity trend** — chart showing completion rate over time
-- **Recommendations** — suggested skills and actions per lifecycle phase
-
-### 4.6 Benchmark
-
-Context compression performance metrics.
-
-- **Token economy** — average compression ratio, tokens saved per task
-- **Cost savings** — estimated dollar savings per task (Opus vs Sonnet pricing)
-- **Per-task breakdown** — individual compression metrics
-- **Dependency intelligence** — edges inferred, cycles detected
-
-### 4.7 Logs
-
-Real-time server log viewer.
-
-- **Level filters** — info, warn, error, debug
-- **Text search** — filter by log content
-- **Auto-scroll** — new entries stream in via SSE
-- **Clear** — reset the log view
-
-### 4.8 Import PRD & Capture Modals
-
-**Import PRD** (header button):
-1. Drag-and-drop or click to select a file (.md, .txt, .pdf, .html)
-2. Optional: check "Force re-import" to reimport an already-imported file
-3. Click Import — the graph updates automatically
-
-**Capture** (header button):
-1. Enter a URL to capture
-2. Optional: CSS selector for targeted extraction, wait-for selector
-3. Click Capture — content is extracted and indexed into the knowledge store
-
----
-
-## 5. Code Graph & Impact Analysis
-
-Code Intelligence is a native engine (no external MCP dependencies) that provides symbol-level understanding of your codebase.
-
-### What It Does
-
-- **Symbol extraction** — functions, classes, methods, interfaces from TypeScript AST
-- **Relationship mapping** — calls, imports, exports, implements relationships
-- **Impact analysis** — find all upstream/downstream dependents of a symbol
-- **FTS5 search** — full-text search across all indexed symbols
-
-### Workflow
-
-1. **Index the codebase:**
-   ```
-   reindex_knowledge
-   ```
-   Or click "Reindex" in the Code Graph dashboard tab.
-
-2. **Search for symbols:**
-   Use the Code Graph tab's search bar or:
-   ```
-   search { query: "AuthService" }
-   ```
-
-3. **Analyze impact:**
-   Click a symbol in the Code Graph tab to see:
-   - **Upstream** — who depends on this symbol (callers, importers)
-   - **Downstream** — what this symbol depends on (callees, imports)
-
-### When to Use
-
-- **Before refactoring** — check blast radius of a change
-- **During code review** — verify no unintended dependents are affected
-- **Architecture exploration** — understand module boundaries and coupling
-- **Onboarding** — visualize how the codebase is structured
-
----
-
-## 6. Multi-Project
-
-mcp-graph supports managing multiple projects at two levels.
-
-### 6.1 Projects in the Same DB
-
-A single `workflow-graph/graph.db` can contain multiple projects. Switch between them using the **project selector dropdown** in the dashboard header.
-
-**Via API:**
-```
-GET  /api/v1/project/list           # List all projects
-POST /api/v1/project/:id/activate   # Switch active project
-```
-
-### 6.2 Projects in Different Directories
-
-Each directory with `workflow-graph/graph.db` is an independent project.
-
-**Initialize multiple projects:**
 ```bash
-cd ~/project-a && npx mcp-graph init
-cd ~/project-b && npx mcp-graph init
+npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-**Switch via dashboard:**
-1. Click **Open Folder** in the header
-2. Browse to or type the path of another project directory
-3. Click Open — the dashboard refreshes with that project's data
-
-**Switch via serve command:**
+Verify:
 ```bash
-mcp-graph serve --port 3000    # serves current directory's graph
+mcp-graph --version
 ```
+
+### Using npx (no install)
+
+```bash
+npx -y @mcp-graph-workflow/mcp-graph
+```
+
+### Configure Your AI Assistant
+
+**Claude Code** — add to `.mcp.json` in your project root:
+```json
+{
+  "mcpServers": {
+    "mcp-graph": {
+      "command": "npx",
+      "args": ["-y", "@mcp-graph-workflow/mcp-graph"]
+    }
+  }
+}
+```
+
+**GitHub Copilot (VS Code)** — add to `.vscode/mcp.json`:
+```json
+{
+  "servers": {
+    "mcp-graph": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@mcp-graph-workflow/mcp-graph"]
+    }
+  }
+}
+```
+
+**Cursor / Windsurf / Zed / IntelliJ** — use the standard MCP server configuration for your client, pointing to `npx -y @mcp-graph-workflow/mcp-graph`.
+
+### Initialize a Project
+
+Once configured, ask your AI assistant:
+
+```
+init
+```
+
+This creates the graph database for your project in `workflow-graph/` (gitignored automatically). You only do this once per project.
+
+### Start the Dashboard (optional)
+
+```bash
+npm run dashboard:dev    # from source, or:
+mcp-graph-server         # if installed globally
+```
+
+Dashboard runs at `http://localhost:3000`.
 
 ---
 
-## 7. Exports & Snapshots
+## Core Concepts
 
-### 7.1 Export Mermaid
+### PRD (Product Requirement Document)
 
-Generate a Mermaid diagram for documentation, GitHub READMEs, or Notion pages:
+A plain text document (Markdown, PDF, HTML, or TXT) that describes what you want to build. mcp-graph parses it automatically into structured tasks. You write requirements naturally — the tool handles the decomposition.
+
+### Execution Graph
+
+The central data structure. Tasks (nodes) and their dependencies (edges) form a directed graph stored locally. Every piece of work has a node; every dependency has an edge. The graph persists across sessions, so your AI agent always has a complete picture of the project state.
+
+### Tasks and Epics
+
+- **Task** — atomic unit of work with a title, acceptance criteria, and status
+- **Epic** — a group of related tasks; automatically marked done when all children complete
+- **Subtask** — a task that belongs to a parent task; cascades completion upward
+
+### Status Lifecycle
 
 ```
-export { format: "mermaid" }
+backlog → in_progress → done
+              ↕
+           blocked
 ```
 
-Paste the output into any Mermaid renderer. The diagram shows nodes with status colors and dependency edges.
+Tasks move through states as work progresses. The graph enforces that blocked tasks aren't started until dependencies are resolved.
 
-### 7.2 Export JSON
+### Lifecycle Phases
 
-Full graph backup in JSON format:
+mcp-graph structures development into 9 phases:
 
-```
-export { format: "json" }
-```
+| Phase | What happens |
+|-------|-------------|
+| **ANALYZE** | Import PRD, define requirements, build graph structure |
+| **DESIGN** | Architecture decisions, technical planning |
+| **PLAN** | Sprint allocation, dependency mapping |
+| **IMPLEMENT** | Write code — test-driven, one task at a time |
+| **VALIDATE** | Run tests, verify acceptance criteria |
+| **REVIEW** | Code review, impact analysis |
+| **HANDOFF** | Documentation, PR creation |
+| **DEPLOY** | Release, post-deploy checks |
+| **LISTENING** | Collect feedback, start next cycle |
 
-Contains all nodes, edges, metadata, and knowledge entries. Useful for:
-- Backup before major changes
-- Sharing graph state with teammates
-- Programmatic analysis
+Each phase has gate checks. The graph tells your agent when it's ready to transition.
 
-### 7.3 Snapshots
+### Knowledge Base
 
-Snapshots create timestamped copies of the entire graph database.
-
-**Create a snapshot:**
-```
-snapshot { action: "create", name: "before-refactor" }
-```
-
-**List available snapshots:**
-```
-snapshot { action: "list" }
-```
-
-**Restore a snapshot:**
-```
-snapshot { action: "restore", name: "before-refactor" }
-```
-
-**When to snapshot:**
-- Before a major refactor or re-import
-- Before starting a new sprint (preserve the baseline)
-- Before experimenting with `decompose` on multiple tasks
-- Anytime you want a safe rollback point
+As you work, mcp-graph builds a local knowledge store — decisions, context, patterns, and references from your project. This is indexed for semantic retrieval: when a task starts, the agent gets the most relevant knowledge automatically, not a full dump.
 
 ---
 
-## 8. Task Decomposition
+## Typical Workflow
 
-Large tasks slow down sprints and make progress hard to track. The `decompose` tool helps break them down.
+### 1. Import Your Requirements
 
-### Detecting Large Tasks
+Create a `requirements.md` (or any name) describing what you want to build. Then ask your agent:
 
 ```
-decompose { nodeId: "<ID>" }
+import_prd requirements.md
 ```
 
-Analyzes the task and reports:
-- Whether it's too large (L/XL size without subtasks)
-- Suggested breakdown into smaller subtasks
-- Recommended dependency edges between subtasks
+The tool parses the document and creates the task graph. Review it:
 
-### Workflow
+```
+list
+```
 
-1. **Detect** — run `decompose` or `analyze { mode: "decompose" }` to find oversized tasks
-2. **Review** — evaluate the suggested subtask breakdown
-3. **Create subtasks** — use `node` for each subtask:
-   ```
-   node { action: "add", title: "Setup auth middleware", type: "subtask", parentId: "<PARENT_ID>" }
-   ```
-4. **Add dependencies** — link subtasks:
-   ```
-   edge { from: "<SUBTASK_2>", to: "<SUBTASK_1>", relationType: "depends_on" }
-   ```
-5. **Re-check** — run `stats` to verify the updated structure
+### 2. Plan a Sprint
+
+```
+plan_sprint
+```
+
+The tool suggests which tasks to tackle based on priority, dependencies, and estimated capacity.
+
+### 3. Work on Tasks
+
+The work cycle for each task:
+
+```
+start_task         — loads task context + relevant knowledge + TDD hints
+[write failing test, then implementation]
+finish_task        — validates completion, marks done, returns next task
+```
+
+Your agent drives this cycle. You interact with the agent; the agent queries the graph.
+
+### 4. Monitor Progress
+
+```
+kanban             — visual board with task states
+metrics            — delivery health metrics
+```
+
+Or open the dashboard at `http://localhost:3000`.
+
+### 5. Complete the Cycle
+
+When all sprint tasks are done, move to validation:
+
+```
+validate           — check acceptance criteria
+```
+
+Then review, handoff, and deploy as appropriate for your project.
 
 ---
 
-## 9. Browser Validation (Playwright)
+## CLI Reference
 
-The `validate` tool (action: `task`) uses Playwright for browser-based validation.
+These are the primary commands available via your AI assistant.
 
-### Single URL Validation
+### Initialization
 
-```
-validate { nodeId: "<ID>", url: "http://localhost:3000/login" }
-```
+| Command | What it does |
+|---------|-------------|
+| `init` | Initialize graph database for the current project |
+| `set_phase` | Set the current lifecycle phase and enforcement mode |
 
-Captures the page (HTML, screenshot, accessibility tree) and auto-indexes the content into the knowledge store.
+### Task Management
 
-### A/B Comparison
+| Command | What it does |
+|---------|-------------|
+| `import_prd <file>` | Parse a requirement document into tasks |
+| `list` | List tasks (filterable by status, phase, epic) |
+| `next` | Get the recommended next task to work on |
+| `start_task` | Begin a task — loads context, acquires work lock |
+| `finish_task` | Complete a task — validates DoD, returns next |
+| `update_status` | Manually update a task's status |
+| `node` | View or edit a specific task node |
 
-```
-validate { nodeId: "<ID>", url: "http://localhost:3000/login-v2", compareUrl: "http://localhost:3000/login-v1" }
-```
+### Planning
 
-Generates a diff report between two URLs — useful for comparing before/after states.
+| Command | What it does |
+|---------|-------------|
+| `plan_sprint` | Generate a sprint plan based on capacity |
+| `forecast` | Delivery forecast and velocity trends |
+| `metrics` | DORA metrics and delivery health |
 
-### CSS Selector Scoping
+### Context & Knowledge
 
-```
-validate { nodeId: "<ID>", url: "http://localhost:3000", selector: ".main-content" }
-```
+| Command | What it does |
+|---------|-------------|
+| `context` | Retrieve compressed context for the current task |
+| `search` | Search the task graph and knowledge base |
+| `knowledge` | Manage the project knowledge store |
 
-Extracts only the targeted portion of the page.
+### Graph Operations
 
-### Knowledge Auto-Indexing
-
-Every validation capture is automatically:
-1. Stored in the knowledge store (source type: `web_capture`)
-2. Indexed with FTS5 + TF-IDF embeddings
-3. Available via `rag_context` and `search` queries
-
----
-
-## 10. Productivity Tips
-
-### The Optimal Workflow Loop
-
-```
-next → context → implement (TDD: Red → Green → Refactor) → update_status → next
-```
-
-This loop maximizes token efficiency and keeps the graph in sync with real work.
-
-### Tagging for Organization
-
-Use tags to categorize tasks across sprints and domains:
-
-```
-node { action: "update", id: "<ID>", tags: ["frontend", "auth", "high-priority"] }
-```
-
-Then filter: `list { tags: "frontend" }`.
-
-### Batch Operations
-
-Update multiple tasks at once:
-
-```
-bulk_update_status { nodeIds: ["ID1", "ID2", "ID3"], status: "done" }
-```
-
-### Maximizing Context
-
-Combine search tools for comprehensive context:
-1. `context { nodeId: "ID" }` — structured task context
-2. `rag_context { query: "related topic" }` — semantic knowledge
-3. `search { query: "keyword" }` — quick lookups
-
-### Dashboard + MCP in Parallel
-
-Keep the dashboard open (`mcp-graph serve`) while using MCP tools in your editor. Changes made via MCP tools are reflected in the dashboard in real-time via SSE.
-
-### Useful Analyze Modes for Daily Work
-
-| Mode | When to use |
-|------|-------------|
-| `progress` | Check sprint burndown and ETA |
-| `tdd_check` | Verify test coverage before marking done |
-| `implement_done` | Run Definition of Done checklist |
-| `blockers` | Find what's blocking a specific task |
-| `ready` | Check if tasks meet Definition of Ready |
-
-For the complete list of 25 analyze modes, see the [Advanced Guide](./ADVANCED-GUIDE.md).
+| Command | What it does |
+|---------|-------------|
+| `analyze` | Run analysis on the graph (health, progress, readiness) |
+| `validate` | Check acceptance criteria for tasks or epics |
+| `export` | Export the graph (Mermaid, JSON, snapshot) |
+| `kanban` | View tasks as a kanban board |
+| `show` | Show graph summary and statistics |
 
 ---
 
-## Next Steps
+## Dashboard
 
-- **[Advanced Guide](./ADVANCED-GUIDE.md)** — Lifecycle methodology, all 25 analyze modes, RAG tuning, architecture, and extensibility
-- **[Getting Started](./GETTING-STARTED.md)** — Quick-start tutorial and cheat sheet
-- **[Dashboard Guide](./DASHBOARD-GUIDE.md)** — Complete visual walkthrough of all dashboard features
-- **[MCP Tools Reference](../reference/MCP-TOOLS-REFERENCE.md)** — Full reference for all 45 MCP tools
-- **[Knowledge Pipeline](../architecture/KNOWLEDGE-PIPELINE.md)** — Deep dive into RAG architecture
+The web dashboard provides a visual interface to your task graph.
+
+**Start it:**
+```bash
+# From source:
+npm run dashboard:dev
+
+# If installed globally:
+mcp-graph-server
+```
+
+**Access:** `http://localhost:3000`
+
+**Key panels:**
+- **Graph View** — interactive node graph with task relationships and status colors
+- **Kanban** — drag-and-drop task board by status
+- **Backlog** — full task list with filtering and sorting
+- **Metrics** — sprint progress, velocity, delivery forecasts
+- **Insights** — bottleneck detection, dependency analysis
+
+The dashboard is read-mostly; task state changes happen through your AI assistant.
+
+---
+
+## Multi-Agent Setup
+
+Multiple AI agent terminals can work on the same project graph simultaneously.
+
+**Enable teamTask mode:**
+
+```
+set_phase({ teamTask: true })
+```
+
+With teamTask mode active:
+- `start_task` acquires an exclusive work lock for the task
+- `next` excludes tasks already locked by other agents
+- Events propagate across terminals automatically
+- Abandoned tasks are detected and returned to the backlog
+
+**Shared daemon (memory optimization):**
+
+If running several agents against the same project, use the proxy to share a single server process:
+
+```json
+{
+  "mcpServers": {
+    "mcp-graph": {
+      "command": "npx",
+      "args": ["-y", "--package=@mcp-graph-workflow/mcp-graph", "mcp-graph-proxy"]
+    }
+  }
+}
+```
+
+The first agent starts the daemon; subsequent agents reuse it.
+
+---
+
+## FAQ
+
+**Q: Does mcp-graph send data anywhere?**
+No. Everything runs locally. The graph database, knowledge store, and all indexes live in `workflow-graph/` inside your project. Nothing is sent to external services.
+
+**Q: Do I need an internet connection?**
+Only for the initial `npm install`. After that, all operations are offline.
+
+**Q: Can I use mcp-graph with any AI assistant?**
+Any assistant that supports MCP (Model Context Protocol). This includes Claude Code, GitHub Copilot Agent Mode, Cursor, Windsurf, Zed, and IntelliJ AI.
+
+**Q: What format should my PRD be in?**
+Markdown is recommended, but `.txt`, `.pdf`, and `.html` are also supported. The document should describe features as requirements, not implementation details. See [Writing Effective PRDs](#) for guidelines.
+
+**Q: My agent says "no tasks in backlog" — what's wrong?**
+The graph is empty. Run `import_prd <your-requirements-file>` first.
+
+**Q: Can I edit tasks manually?**
+Yes, through your AI assistant: `node <task-id>` to view and edit a specific task.
+
+**Q: How do I reset the graph?**
+Delete the `workflow-graph/` directory and run `init` again. This cannot be undone.
+
+**Q: Where is the data stored?**
+In `workflow-graph/` at your project root. This directory is gitignored by default.
+
+**Q: Something is broken. How do I get help?**
+Open an issue at [github.com/DiegoNogueiraDev/mcp-graph-workflow/issues](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues).
+
+---
+
+*This guide covers the stable public interface. Internal implementation details are intentionally omitted.*

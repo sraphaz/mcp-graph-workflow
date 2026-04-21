@@ -66,12 +66,12 @@ work and are documented in the author's research:
 - PRD-to-graph conversion as the primary authoring surface for agentic
   software engineering.
 - The **Harnessability Score** composite metric (seven-dimension evaluation
-  of agent readiness) — see `docs/guides/HARNESS-ENGINEERING.md`.
+  of agent readiness), as implemented in `src/core/harness/`.
 - The **Task Readiness Score** + Model Router pattern for routing atomic
   work to smaller, cheaper language models — see
   `src/core/planner/task-readiness-score.ts`.
 - The nine-phase lifecycle with deterministic phase gates, as encoded in
-  `src/core/pipeline/` and `docs/reference/LIFECYCLE.md`.
+  `src/core/pipeline/`.
 - The **Anti-Vibe-Coding** methodology combining XP discipline with
   graph-backed agentic execution — see project `CLAUDE.md`.
 

@@ -59,22 +59,22 @@ src/
 
 ## Capabilities
 
-| Capability | Key Modules | Docs |
-|------------|-------------|------|
-| PRD Import | parser/, importer/ | — |
-| 45 MCP Tools | mcp/tools/ | [MCP Tools Reference](docs/reference/MCP-TOOLS-REFERENCE.md) |
-| 19 REST API Routers | api/routes/ | [REST API Reference](docs/reference/REST-API-REFERENCE.md) |
-| Knowledge Store + RAG | store/knowledge-store, rag/ | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) |
-| Tiered Context Compression | context/ | [Knowledge Pipeline](docs/architecture/KNOWLEDGE-PIPELINE.md) |
-| Sprint Planning + Velocity | planner/ | — |
-| Integration Mesh | integrations/, docs/, capture/ | [Integrations Guide](docs/reference/INTEGRATIONS-GUIDE.md) |
+| Capability | Key Modules |
+|------------|-------------|
+| PRD Import | parser/, importer/ |
+| 45 MCP Tools | mcp/tools/ |
+| 19 REST API Routers | api/routes/ |
+| Knowledge Store + RAG | store/knowledge-store, rag/ |
+| Tiered Context Compression | context/ |
+| Sprint Planning + Velocity | planner/ |
+| Integration Mesh | integrations/, docs/, capture/ |
 
 ## Integration Agents
 
 3 MCP agents coordinated by `IntegrationOrchestrator` via `GraphEventBus`:
 **mcp-graph** (execution graph), **Context7** (library docs), **Playwright** (browser validation).
 Native systems: **Code Intelligence** (code analysis), **Native Memories** (project knowledge).
-See [docs/reference/INTEGRATIONS-GUIDE.md](docs/reference/INTEGRATIONS-GUIDE.md).
+See `src/core/integrations/` for implementation details.
 
 ## Non-Regression Rule
 
@@ -135,7 +135,7 @@ The project tracks **harnessability** as a composite agent-readiness metric acro
 
 **Run:** `npm run harness:scan` or `analyze(mode: "harness_scan")` — score (0–100) and grade (A ≥85 / B ≥70 / C ≥55 / D <55).
 **Help:** `help(topic: "harness")` — full reference with daily workflow per phase.
-**Full guide:** [docs/guides/HARNESS-ENGINEERING.md](docs/guides/HARNESS-ENGINEERING.md)
+**Full guide:** `npm run harness:scan` — implementation in `src/core/harness/`
 **Daily workflow:** Run `analyze(mode: "harness_scan")` at the start of each phase. `start_task` shows warnings if score < 70, `finish_task` detects regressions > 5pts.
 
 ## Critical Conventions
@@ -171,7 +171,7 @@ This project follows an anti-vibe-coding methodology based on XP (Extreme Progra
 - **Project setup**: Use `/project-scaffold` to auto-generate `.mcp.json`, `CLAUDE.md` template, and `.claude/rules/`
 - **Continuous cycle**: Use `/dev-flow-orchestrator` for ongoing iterations (ANALYZE → DESIGN → PLAN → IMPLEMENT → VALIDATE → REVIEW → HANDOFF → LISTENING)
 - **Graph sync**: Use `/track-with-mcp-graph` to keep the execution graph in sync with real work
-- **Dev lifecycle**: See [docs/reference/LIFECYCLE.md](docs/reference/LIFECYCLE.md) for the 8-phase cycle (ANALYZE → DESIGN → PLAN → IMPLEMENT → VALIDATE → REVIEW → HANDOFF → LISTENING)
+- **Dev lifecycle**: See `src/core/pipeline/` for lifecycle implementation for the 8-phase cycle (ANALYZE → DESIGN → PLAN → IMPLEMENT → VALIDATE → REVIEW → HANDOFF → LISTENING)
 
 Key principles:
 1. **Build to Earning vs Learning** — Production code (Build to Earning) = full discipline, no shortcuts. Side projects (Build to Learning) = experimentation allowed. Know which mode you're in.
@@ -182,7 +182,7 @@ Key principles:
 6. **CLAUDE.md as evolving spec** — Every error, pattern, or architectural decision must be documented to cumulatively train the agent.
 7. **Graph visualization** — Use `export_mermaid` to visualize the execution graph in reviews, handoffs, and debugging.
 
-See [docs/reference/LIFECYCLE.md](docs/reference/LIFECYCLE.md) for the full methodology guide.
+See `src/core/pipeline/` for lifecycle implementation for the full methodology guide.
 
 ## Code Intelligence
 

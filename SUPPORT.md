@@ -18,5 +18,3 @@ This is an open-source project maintained by volunteers. We do our best to respo
 ## Contact
 
 For matters that don't fit GitHub, reach out at **diegonogueiradev@gmail.com**.
-
-**set_phase (MCP)(phase: "VALIDATE", mode: "strict", codeIntelligence: "strict", prerequisites: "advisory", force: true)**
