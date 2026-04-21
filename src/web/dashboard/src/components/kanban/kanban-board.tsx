@@ -16,7 +16,7 @@
  */
 
 import { memo, useCallback } from "react";
-import type { KanbanBoard as KanbanBoardType, KanbanSuggestion } from "@/lib/types";
+import type { KanbanBoard as KanbanBoardType } from "@/lib/types";
 import { KanbanColumn } from "./kanban-column";
 
 interface KanbanBoardProps {
@@ -43,7 +43,11 @@ export const KanbanBoard = memo(function KanbanBoard({
   );
 
   return (
-    <div className="flex gap-3 p-4 overflow-x-auto h-full">
+    <div
+      className="flex gap-3 p-4 overflow-x-auto h-full"
+      role="region"
+      aria-label="Kanban board"
+    >
       {board.columns.map((column) => (
         <KanbanColumn
           key={column.status}

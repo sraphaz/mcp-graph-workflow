@@ -51,7 +51,7 @@ const MAX_SEQUENCE_LENGTH = 128;
 const MODEL_BASE_URL = 'https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/onnx';
 const MODEL_URL = `${MODEL_BASE_URL}/model_quantized.onnx`;
 const TOKENIZER_URL = 'https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json';
-const DOWNLOAD_TIMEOUT_MS = 20_000;
+export const DOWNLOAD_TIMEOUT_MS = 20_000;
 
 /**
  * Mean-pool the token embeddings and L2-normalize the result.
@@ -104,6 +104,38 @@ export async function isOnnxAvailable(): Promise<boolean> {
   }
 
   return onnxAvailableCache;
+}
+
+type LogFn = (event: string, fields: Record<string, unknown>) => void;
+
+/**
+ * Emit a visible log on daemon boot announcing the active embedding mode.
+ * Testable — accepts injected checker and logger functions.
+ * Never throws.
+ */
+export async function logEmbeddingModeOnBoot(
+  isAvailable: () => Promise<boolean> = isOnnxAvailable,
+  logFn: LogFn = (event, fields) => {
+    if (fields.mode === 'neural') {
+      logger.info(event, fields);
+    } else {
+      logger.warn(event, fields);
+    }
+  },
+): Promise<void> {
+  try {
+    const available = await isAvailable();
+    if (available) {
+      logFn('rag.embeddings.mode', { mode: 'neural', provider: 'onnxruntime-node/all-MiniLM-L6-v2' });
+    } else {
+      logFn('rag.embeddings.mode', {
+        mode: 'hash',
+        hint: 'Opt-in to neural: add onnxruntime-node to optionalDependencies or run `mcp-graph install-neural`',
+      });
+    }
+  } catch {
+    logFn('rag.embeddings.mode', { mode: 'hash', hint: 'ONNX check failed — using hash embeddings' });
+  }
 }
 
 // ── Model download ──

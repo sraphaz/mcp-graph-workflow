@@ -28,6 +28,7 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { ToolPipeline, type ToolHandler } from "../../core/pipeline/tool-pipeline.js";
 import { PipelineStepSchema } from "../../schemas/pipeline.schema.js";
 import { logger } from "../../core/utils/logger.js";
+import { McpGraphError, NodeNotFoundError } from "../../core/utils/errors.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
 /**
@@ -56,10 +57,10 @@ function buildPipelineHandlers(store: SqliteStore): Map<string, ToolHandler> {
   handlers.set("show", async (args) => {
     const a = args as Record<string, unknown>;
     const id = a.id as string | undefined;
-    if (!id) throw new Error("show requires id");
+    if (!id) throw new McpGraphError("show requires id");
     const doc = store.toGraphDocument();
     const node = doc.nodes.find((n) => n.id === id);
-    if (!node) throw new Error(`Node ${id} not found`);
+    if (!node) throw new NodeNotFoundError(`Node ${id} not found`);
     return node;
   });
 
@@ -75,7 +76,7 @@ function buildPipelineHandlers(store: SqliteStore): Map<string, ToolHandler> {
   handlers.set("search", async (args) => {
     const a = args as Record<string, unknown>;
     const query = a.query as string | undefined;
-    if (!query) throw new Error("search requires query");
+    if (!query) throw new McpGraphError("search requires query");
     const { searchNodes } = await import("../../core/search/fts-search.js");
     const results = searchNodes(store, query, { limit: 20, rerank: false });
     return {
@@ -116,7 +117,7 @@ export function registerPipeline(server: McpServer, store: SqliteStore): void {
       const parsedSteps = steps.map((s, i) => {
         const result = PipelineStepSchema.safeParse({ tool: s.tool, args: s.args ?? {}, extractField: s.extractField });
         if (!result.success) {
-          throw new Error(`Step ${i} validation failed: ${JSON.stringify(result.error.issues)}`);
+          throw new McpGraphError(`Step ${i} validation failed: ${JSON.stringify(result.error.issues)}`);
         }
         return result.data;
       });

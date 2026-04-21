@@ -29,6 +29,7 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 
 // ── Types ───────────────────────────────────────────────
 
@@ -55,8 +56,8 @@ export interface RollbackResult {
  * Uses SQLite snapshot for atomic state capture.
  */
 export function createCheckpoint(store: SqliteStore, nodeId: string): GraphCheckpoint {
-  if (!store) throw new Error("Store is required for checkpoint creation");
-  if (!nodeId) throw new Error("Node ID is required for checkpoint creation");
+  if (!store) throw new McpGraphError("Store is required for checkpoint creation");
+  if (!nodeId) throw new McpGraphError("Node ID is required for checkpoint creation");
   const doc = store.toGraphDocument();
   const snapshotId = store.createSnapshot();
 

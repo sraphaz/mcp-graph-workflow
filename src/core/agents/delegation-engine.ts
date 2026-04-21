@@ -26,6 +26,7 @@ import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
+import { McpGraphError } from "../utils/errors.js";
 import type { DelegationTask } from "../../schemas/delegation.schema.js";
 
 export const MAX_DEPTH = 2;
@@ -89,13 +90,13 @@ export class DelegationEngine {
   create(parentAgentId: string, task: DelegationTask, depth: number = 1): string {
     // Enforce depth limit
     if (depth > MAX_DEPTH) {
-      throw new Error(`Max delegation depth exceeded: ${depth} > ${MAX_DEPTH}`);
+      throw new McpGraphError(`Max delegation depth exceeded: ${depth} > ${MAX_DEPTH}`);
     }
 
     // Enforce concurrent limit
     const activeCount = this.getActiveCount();
     if (activeCount >= MAX_CONCURRENT) {
-      throw new Error(`Max concurrent delegations exceeded: ${activeCount} >= ${MAX_CONCURRENT}`);
+      throw new McpGraphError(`Max concurrent delegations exceeded: ${activeCount} >= ${MAX_CONCURRENT}`);
     }
 
     const id = generateId("deleg");

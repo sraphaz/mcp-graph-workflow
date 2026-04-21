@@ -31,6 +31,7 @@ import { PYTHON_TO_TS_RULES } from "../rules/python-to-ts-rules.js";
 import { validateTypescript, validatePython, type ValidationResult } from "../validators/code-validator.js";
 import { RepairLoop } from "../repair/repair-loop.js";
 import type { ValidationError } from "../validators/code-validator.js";
+import { McpGraphError } from "../../utils/errors.js";
 
 // ── Types ──────────────────────────────────────────
 
@@ -110,7 +111,7 @@ export class TranslationPipeline {
         maxIterations: this.maxRepairIterations,
         repairFn: async (code: string, errors: ValidationError[]) => {
           const repairPrompt = this.buildRepairPrompt(code, errors);
-          if (!this.translateFn) throw new Error("translateFn not set");
+          if (!this.translateFn) throw new McpGraphError("translateFn not set");
           return this.translateFn(repairPrompt);
         },
         validator,

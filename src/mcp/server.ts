@@ -26,6 +26,7 @@ import { StoreManager } from "../core/store/store-manager.js";
 import { CodeStore } from "../core/code/code-store.js";
 import { CodeIndexer } from "../core/code/code-indexer.js";
 import { createAnalyzers } from "../core/code/analyzer-factory.js";
+import { logEmbeddingModeOnBoot } from "../core/rag/onnx-embeddings.js";
 
 const config = loadConfig();
 const PORT = config.port;
@@ -131,4 +132,5 @@ process.on("SIGHUP", () => cleanup("SIGHUP"));
 
 httpServer = app.listen(PORT, () => {
   logger.info(`mcp-graph server listening on http://localhost:${PORT}/mcp`);
+  void logEmbeddingModeOnBoot();
 });

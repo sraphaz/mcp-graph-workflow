@@ -24,7 +24,7 @@ import { KanbanToolbar } from "@/components/kanban/kanban-toolbar";
 import { KanbanMetrics } from "@/components/kanban/kanban-metrics";
 import { KanbanSuggestions } from "@/components/kanban/kanban-suggestions";
 import { STATUS_COLORS } from "@/lib/constants";
-import type { SwimlaneMode, KanbanSuggestion, KanbanCard } from "@/lib/types";
+import type { SwimlaneMode, KanbanSuggestion, KanbanCard, KanbanMoveResult } from "@/lib/types";
 import type { TabId } from "@/components/layout/nav-config";
 import { GitBranch, Eye, Clock, Tag, ChevronRight } from "lucide-react";
 
@@ -37,6 +37,8 @@ export function KanbanTab({ onNavigate }: KanbanTabProps): React.JSX.Element {
   const [swimlaneMode, setSwimlaneMode] = useState<SwimlaneMode>("none");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [moveResult, setMoveResult] = useState<KanbanMoveResult | null>(null);
+  const [pipelineResult, setPipelineResult] = useState<{ action: string; success: boolean; warnings: string[] } | null>(null);
   const { board, suggestions, loading, error, refresh, moveCard } = useKanbanBoard(swimlaneMode);
 
   // Find the selected card across all columns
@@ -65,10 +67,35 @@ export function KanbanTab({ onNavigate }: KanbanTabProps): React.JSX.Element {
 
   const handleMoveCard = useCallback(
     async (nodeId: string, newStatus: string) => {
-      await moveCard(nodeId, newStatus);
+      const result = await moveCard(nodeId, newStatus);
+      setMoveResult(result);
     },
     [moveCard],
   );
+
+  const handleStartTask = useCallback(
+    async (nodeId: string) => {
+      setPipelineResult(null);
+      const result = await moveCard(nodeId, "in_progress");
+      setPipelineResult({ action: "start_task", success: result.success, warnings: result.warnings });
+    },
+    [moveCard],
+  );
+
+  const handleFinishTask = useCallback(
+    async (nodeId: string) => {
+      setPipelineResult(null);
+      const result = await moveCard(nodeId, "done");
+      setPipelineResult({ action: "finish_task", success: result.success, warnings: result.warnings });
+    },
+    [moveCard],
+  );
+
+  const handleKanbanSync = useCallback(async () => {
+    setPipelineResult(null);
+    await refresh();
+    setPipelineResult({ action: "kanban_sync", success: true, warnings: [] });
+  }, [refresh]);
 
   const handleApplySuggestion = useCallback(
     async (suggestion: KanbanSuggestion) => {
@@ -115,6 +142,29 @@ export function KanbanTab({ onNavigate }: KanbanTabProps): React.JSX.Element {
         onToggleSuggestions={() => setShowSuggestions((prev) => !prev)}
         onRefresh={refresh}
       />
+      {moveResult && (!moveResult.success || moveResult.warnings.length > 0) && (
+        <div
+          role="alert"
+          className={`mx-4 mt-2 px-3 py-2 rounded text-xs flex items-start justify-between gap-2 ${
+            !moveResult.success
+              ? "bg-red-500/10 border border-red-500/30 text-red-400"
+              : "bg-amber-500/10 border border-amber-500/30 text-amber-400"
+          }`}
+        >
+          <span>
+            {!moveResult.success
+              ? moveResult.warnings[0] ?? "Move blocked"
+              : moveResult.warnings.join(" · ")}
+          </span>
+          <button
+            onClick={() => setMoveResult(null)}
+            className="shrink-0 hover:opacity-70"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <KanbanMetrics metrics={board.metrics} />
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <div className="flex-1 overflow-auto">
@@ -163,6 +213,54 @@ export function KanbanTab({ onNavigate }: KanbanTabProps): React.JSX.Element {
                   View in PRD
                   <ChevronRight className="w-2.5 h-2.5 opacity-50" />
                 </button>
+              </div>
+
+              {/* Pipeline Actions */}
+              <div className="mb-3">
+                <h4 className="text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
+                  Pipeline Actions
+                </h4>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <button
+                    onClick={() => void handleStartTask(selectedCard.node.id)}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border border-edge hover:bg-accent/10 hover:border-accent/40 hover:text-accent transition-colors"
+                  >
+                    ▶ start_task
+                  </button>
+                  <button
+                    onClick={() => void handleFinishTask(selectedCard.node.id)}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border border-edge hover:bg-green-500/10 hover:border-green-500/40 hover:text-green-400 transition-colors"
+                  >
+                    ✓ finish_task
+                  </button>
+                  <button
+                    onClick={() => void handleKanbanSync()}
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border border-edge hover:bg-surface-elevated transition-colors"
+                  >
+                    ↻ Sync
+                  </button>
+                </div>
+                {pipelineResult && (
+                  <div
+                    role="log"
+                    aria-label="Pipeline action output"
+                    className={`text-[10px] rounded px-2 py-1.5 border ${
+                      pipelineResult.success
+                        ? "bg-green-500/10 border-green-500/30 text-green-400"
+                        : "bg-red-500/10 border-red-500/30 text-red-400"
+                    }`}
+                  >
+                    <span className="font-semibold">{pipelineResult.action}:</span>{" "}
+                    {pipelineResult.success ? "success" : "blocked"}
+                    {pipelineResult.warnings.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {pipelineResult.warnings.map((w, i) => (
+                          <li key={i} className="text-[9px] opacity-80">· {w}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Title */}

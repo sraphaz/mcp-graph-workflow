@@ -69,6 +69,52 @@ export interface HarnessRegressionReport {
   delta: number;
 }
 
+export interface HarnessGateResult {
+  /** Whether finish_task should be blocked by this gate. */
+  blocked: boolean;
+  mode: "strict" | "advisory" | "off";
+  startScore: number;
+  endScore: number;
+  /** Signed delta (negative = regression). Rounded to 1 decimal. */
+  delta: number;
+  /** Reason provided to override the block in strict mode. */
+  overrideReason?: string;
+}
+
+/**
+ * Deterministic gate: blocks finish_task (strict) or warns (advisory) when
+ * harness score dropped more than `threshold` points since start_task.
+ *
+ * Returns {blocked: false} when drop ≤ threshold, mode is "off", or an
+ * override reason is supplied (override is always recorded in the result).
+ */
+export function checkHarnessRegressionGate(
+  startScore: number,
+  endScore: number,
+  mode: "strict" | "advisory" | "off",
+  threshold: number = 5,
+  overrideReason?: string,
+): HarnessGateResult {
+  const delta = Math.round((endScore - startScore) * 10) / 10;
+  const base: HarnessGateResult = { blocked: false, mode, startScore, endScore, delta };
+
+  if (mode === "off") return base;
+  // Only block when drop strictly exceeds threshold (drop > threshold, not ≥)
+  if (delta >= -threshold) return base;
+
+  // Drop exceeds threshold
+  if (overrideReason) {
+    return { ...base, overrideReason };
+  }
+
+  if (mode === "strict") {
+    return { ...base, blocked: true };
+  }
+
+  // advisory: not blocked, delta surfaced for caller to emit warning
+  return base;
+}
+
 /**
  * Compare current harness score with the previous snapshot.
  * Returns regression report if score dropped > 5 points, null otherwise.

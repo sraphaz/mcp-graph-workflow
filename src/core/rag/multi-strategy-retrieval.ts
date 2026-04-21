@@ -106,6 +106,21 @@ export function getRrfWeightsForPhase(phase: string | undefined): Record<string,
 }
 
 /**
+ * Compute the final per-document score combining RRF rank, quality, and recency.
+ *
+ * Formula: rrfScore × (0.4 + 0.3 × qualityScore + 0.3 × recencyScore)
+ * - Base multiplier 0.4 ensures rrfScore is never zeroed by poor quality/recency
+ * - qualityScore and recencyScore each contribute up to 0.3, totalling 1.0 at max
+ */
+export function computeFinalScore(
+  rrfScore: number,
+  qualityScore: number,
+  recencyScore: number,
+): number {
+  return rrfScore * (0.4 + 0.3 * qualityScore + 0.3 * recencyScore);
+}
+
+/**
  * Reciprocal Rank Fusion — merge multiple ranked lists into one (unweighted).
  * score = Σ(1 / (k + rank_i))
  */
@@ -338,24 +353,29 @@ export async function multiStrategySearch(
     return [];
   }
 
-  // Merge via RRF — 8 strategy lists
-  const rankedLists = [ftsResults, graphResults, recencyResults];
+  // Merge via phase-aware weighted RRF — 8 strategy lists
+  const phaseWeights = getRrfWeightsForPhase(options?.phase);
+  const namedStrategies: Array<{ name: string; results: Array<{ id: string; score: number }> }> = [
+    { name: "fts", results: ftsResults },
+    { name: "graph", results: graphResults },
+    { name: "recency", results: recencyResults },
+  ];
   if (entityGraphResults.length > 0) {
-    rankedLists.push(entityGraphResults);
+    namedStrategies.push({ name: "entity_graph", results: entityGraphResults });
   }
   if (lspResults.length > 0) {
-    rankedLists.push(lspResults);
+    namedStrategies.push({ name: "lsp", results: lspResults });
   }
   if (execGraphResults.length > 0) {
-    rankedLists.push(execGraphResults);
+    namedStrategies.push({ name: "exec_graph", results: execGraphResults });
   }
   if (semanticResults.length > 0) {
-    rankedLists.push(semanticResults);
+    namedStrategies.push({ name: "semantic", results: semanticResults });
   }
   if (onnxSemanticResults.length > 0) {
-    rankedLists.push(onnxSemanticResults);
+    namedStrategies.push({ name: "onnx_semantic", results: onnxSemanticResults });
   }
-  const merged = reciprocalRankFusion(rankedLists);
+  const merged = weightedReciprocalRankFusion(namedStrategies, phaseWeights);
 
   // Fetch full docs and apply quality multiplier
   const results: RankedResult[] = [];
@@ -401,11 +421,13 @@ export async function multiStrategySearch(
     const doc = knowledgeStore.getById(item.id);
     if (!doc) continue;
 
-    const qualityScore = (db
-      .prepare("SELECT quality_score FROM knowledge_documents WHERE id = ?")
-      .get(item.id) as { quality_score: number } | undefined)?.quality_score ?? 0.5;
+    const row = db
+      .prepare("SELECT quality_score, recency_score FROM knowledge_documents WHERE id = ?")
+      .get(item.id) as { quality_score: number; recency_score: number | null } | undefined;
+    const qualityScore = row?.quality_score ?? 0.5;
+    const recencyScore = row?.recency_score ?? 1.0;
 
-    const finalScore = item.rrfScore * (0.5 + 0.5 * qualityScore);
+    const finalScore = computeFinalScore(item.rrfScore, qualityScore, recencyScore);
 
     results.push({
       id: doc.id,

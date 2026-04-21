@@ -32,6 +32,7 @@ import {
   checkDashboardBuild,
   checkMcpJson,
   checkIntegrations,
+  checkOnnxStatus,
 } from "./doctor-checks.js";
 
 function buildSummary(checks: CheckResult[]): DoctorReport["summary"] {
@@ -63,13 +64,14 @@ export async function runDoctor(basePath: string): Promise<DoctorReport> {
   checks.push(checkMcpJson(basePath));
 
   // 2. Async checks (parallel where possible)
-  const [writeResult, sqliteResult, dbIntegrityResult, dashboardResult, integrationResults] =
+  const [writeResult, sqliteResult, dbIntegrityResult, dashboardResult, integrationResults, onnxResult] =
     await Promise.all([
       checkWritePermissions(basePath),
       checkSqliteDatabase(basePath),
       checkDbIntegrity(basePath),
       checkDashboardBuild(basePath),
       checkIntegrations(basePath),
+      checkOnnxStatus(),
     ]);
 
   checks.push(writeResult);
@@ -77,6 +79,7 @@ export async function runDoctor(basePath: string): Promise<DoctorReport> {
   checks.push(dbIntegrityResult);
   checks.push(dashboardResult);
   checks.push(...integrationResults);
+  checks.push(onnxResult);
 
   // 3. Store-dependent checks (only if DB exists)
   const dbPath = path.join(basePath, STORE_DIR, DB_FILE);

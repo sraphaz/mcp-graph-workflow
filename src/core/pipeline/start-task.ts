@@ -38,6 +38,7 @@ import { evaluate as evaluateRemediations } from "../harness/remediation-engine.
 import type { RemediationSuggestion } from "../harness/violation-detail.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { LockConflictError } from "../utils/errors.js";
+import { enforceWipAndFileGates } from "./wip-gate.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
 import { createShadowBranch } from "../autonomy/shadow-branch.js";
@@ -56,6 +57,12 @@ export interface StartTaskOptions {
   agentId?: string;
   /** LockManager instance for teamTask mode */
   lockManager?: LockManager;
+  /** Max concurrent in_progress tasks (teamTask mode; default: 3) */
+  wipLimit?: number;
+  /** Throw on WIP limit exceeded; false = advisory warning only (default: false) */
+  wipStrict?: boolean;
+  /** Files this task will touch — used for file-overlap conflict detection */
+  touchedFiles?: readonly string[];
 }
 
 export interface StartTaskResult {
@@ -93,7 +100,7 @@ export function startTask(
   options?: StartTaskOptions,
 ): StartTaskResult | null {
   if (!store) return null;
-  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager } = options ?? {};
+  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles } = options ?? {};
 
   const doc = store.toGraphDocument();
   if (!doc?.nodes) return null;
@@ -209,6 +216,16 @@ export function startTask(
   let startedAt: string | null = null;
   let leaseToken: string | undefined;
   if (autoStart) {
+    // WIP gate — must run before lock acquisition so status is never mutated on limit breach
+    enforceWipAndFileGates(store, {
+      teamTask: !!(lockManager && agentId),
+      wipLimit: wipLimit ?? 3,
+      wipStrict: wipStrict ?? false,
+      nodeId: taskNode.id,
+      agentId,
+      touchedFiles,
+      lockManager,
+    });
     try {
       if (lockManager && agentId) {
         // teamTask mode: atomic claim with lock
@@ -227,6 +244,22 @@ export function startTask(
         throw err; // Propagate lock conflicts to caller
       }
       logger.warn("pipeline:start_task:auto_start_failed", { error: String(err) });
+    }
+  }
+
+  // 6a.1 Store harness baseline score for regression gate in finish_task
+  if (startedAt) {
+    try {
+      const baselineRow = store.getDb()
+        .prepare("SELECT score FROM harness_history ORDER BY timestamp DESC LIMIT 1")
+        .get() as { score: number } | undefined;
+      if (baselineRow) {
+        const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
+        store.updateNode(taskNode.id, { metadata: { ...existingMeta, _harnessBaseline: baselineRow.score } });
+        logger.debug("pipeline:start_task:harness_baseline_stored", { nodeId: taskNode.id, score: baselineRow.score });
+      }
+    } catch (err) {
+      logger.warn("pipeline:start_task:harness_baseline_failed", { error: String(err) });
     }
   }
 

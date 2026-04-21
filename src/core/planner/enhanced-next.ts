@@ -81,6 +81,7 @@ export function findEnhancedNextTask(
   }
   // Build locked task IDs set for teamTask mode
   let lockedTaskIds: Set<string> | undefined;
+  let inFlightTouchedFiles: Set<string> | undefined;
   if (options?.lockManager && options?.agentId) {
     const activeLocks = options.lockManager.listActive();
     lockedTaskIds = new Set(
@@ -88,9 +89,16 @@ export function findEnhancedNextTask(
         .filter((l) => l.agentId !== options.agentId && l.resourceType === "task")
         .map((l) => l.resourceId.replace("task:", "")),
     );
+    // Collect files locked by other agents for file-overlap exclusion
+    const fileLocks = activeLocks.filter(
+      (l) => l.agentId !== options.agentId && l.resourceType === "file",
+    );
+    if (fileLocks.length > 0) {
+      inFlightTouchedFiles = new Set(fileLocks.map((l) => l.resourceId.replace(/^file:/, "")));
+    }
   }
 
-  const baseResult = findNextTask(doc, { lockedTaskIds });
+  const baseResult = findNextTask(doc, { lockedTaskIds, inFlightTouchedFiles });
   if (!baseResult) return null;
 
   const knowledgeCoverage = assessKnowledgeCoverage(store, baseResult.node);

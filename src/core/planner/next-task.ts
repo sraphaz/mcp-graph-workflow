@@ -41,6 +41,8 @@ export interface NextTaskResult {
 export interface NextTaskOptions {
   /** Task IDs locked by other agents — excluded from results (teamTask mode) */
   lockedTaskIds?: Set<string>;
+  /** File paths being touched by other in-flight tasks — candidates overlapping these are excluded */
+  inFlightTouchedFiles?: Set<string>;
 }
 
 /** Find the highest-priority unblocked task to work on next. */
@@ -48,7 +50,7 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
   if (!doc || !doc.nodes) {
     throw new PlannerError("Invalid graph document: missing nodes");
   }
-  const { lockedTaskIds } = options ?? {};
+  const { lockedTaskIds, inFlightTouchedFiles } = options ?? {};
 
   // Step 1: Filter eligible nodes
   let eligible = doc.nodes.filter(
@@ -62,6 +64,17 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
   if (lockedTaskIds && lockedTaskIds.size > 0) {
     eligible = eligible.filter((n) => !lockedTaskIds.has(n.id));
     logger.debug("next:lock-filter", { excluded: lockedTaskIds.size, remaining: eligible.length });
+  }
+
+  // Step 1.6: Exclude candidates whose touchedFiles overlap with in-flight files
+  if (inFlightTouchedFiles && inFlightTouchedFiles.size > 0) {
+    const before = eligible.length;
+    eligible = eligible.filter((n) => {
+      const touchedFiles = (n.metadata as Record<string, unknown> | undefined)?.touchedFiles;
+      if (!Array.isArray(touchedFiles)) return true;
+      return !touchedFiles.some((f) => inFlightTouchedFiles.has(String(f)));
+    });
+    logger.debug("next:file-overlap-filter", { excluded: before - eligible.length, remaining: eligible.length });
   }
 
   logger.debug("Next task candidates", {

@@ -257,6 +257,120 @@ function getDocTimestamp(db: Database.Database, docId: string): string | null {
   }
 }
 
+// ── Retry Policy ──────────────────────────────────────────
+
+// ── Batch Confidence Formula ───────────────────────────────
+
+/** Canonical confidence signal for a retrieval batch. */
+export interface BatchConfidenceSignal {
+  /** Arithmetic mean of confidenceScore across all validations. */
+  mean: number;
+  /** Minimum confidenceScore in the batch (worst-case). */
+  min: number;
+  /**
+   * Composite score: weighted mean using confidenceScore² as weight,
+   * rewarding batches with uniformly high confidence over mixed ones.
+   * Range: [0, 1].
+   */
+  composite: number;
+  /** Number of validations included. */
+  count: number;
+}
+
+/**
+ * Compute a structured confidence signal for a batch of validation results.
+ *
+ * Formula for composite: Σ(c_i² ) / Σ(c_i) when Σ(c_i) > 0, else 0.
+ * This is a self-weighted mean that favours uniformly high-confidence batches.
+ * Empty batches return all-zero signal.
+ */
+export function computeBatchConfidence(validations: ValidationResult[]): BatchConfidenceSignal {
+  if (validations.length === 0) {
+    return { mean: 0, min: 0, composite: 0, count: 0 };
+  }
+
+  const count = validations.length;
+  let sum = 0;
+  let sumSq = 0;
+  let min = 1;
+
+  for (const v of validations) {
+    const c = v.confidenceScore;
+    sum += c;
+    sumSq += c * c;
+    if (c < min) min = c;
+  }
+
+  const mean = sum / count;
+  const composite = sum > 0 ? sumSq / sum : 0;
+
+  return {
+    mean: Math.round(mean * 10000) / 10000,
+    min: Math.round(min * 10000) / 10000,
+    composite: Math.min(Math.round(composite * 10000) / 10000, 1),
+    count,
+  };
+}
+
+/** Default confidence threshold below which a second retrieval pass is triggered. */
+export const RETRY_CONFIDENCE_THRESHOLD = 0.5;
+
+/**
+ * Determine whether a second retrieval pass is needed based on mean confidence.
+ *
+ * Returns true only when the mean confidence across all validations is strictly
+ * below the given threshold. Empty validation arrays never trigger a retry.
+ */
+export function needsRetry(
+  validations: ValidationResult[],
+  threshold: number = RETRY_CONFIDENCE_THRESHOLD,
+): boolean {
+  if (validations.length === 0) return false;
+  const mean = validations.reduce((sum, v) => sum + v.confidenceScore, 0) / validations.length;
+  return mean < threshold;
+}
+
+// ── Deterministic Retry Policy ──────────────────────────────
+
+/** Encapsulates the configurable retry rule for a retrieval pass. */
+export interface RetryPolicy {
+  /** Composite confidence must be strictly below this to trigger a retry. */
+  confidenceThreshold: number;
+  /** Maximum number of retry passes per query (1 = one retry, 0 = never retry). */
+  maxRetries: number;
+}
+
+/** Default retry policy: threshold 0.5, at most 1 retry per query. */
+export const DEFAULT_RETRY_POLICY: RetryPolicy = {
+  confidenceThreshold: RETRY_CONFIDENCE_THRESHOLD,
+  maxRetries: 1,
+};
+
+/** Create a RetryPolicy with optional overrides. */
+export function createRetryPolicy(
+  options?: Partial<RetryPolicy>,
+): RetryPolicy {
+  return {
+    confidenceThreshold: options?.confidenceThreshold ?? DEFAULT_RETRY_POLICY.confidenceThreshold,
+    maxRetries: options?.maxRetries ?? DEFAULT_RETRY_POLICY.maxRetries,
+  };
+}
+
+/**
+ * Deterministic retry decision: true iff the batch confidence is below threshold
+ * AND the current retryCount has not yet reached maxRetries.
+ *
+ * Same inputs always produce the same output (no randomness, no side effects).
+ */
+export function shouldRetry(
+  signal: Pick<BatchConfidenceSignal, "composite">,
+  retryCount: number,
+  policy: RetryPolicy = DEFAULT_RETRY_POLICY,
+): boolean {
+  if (retryCount >= policy.maxRetries) return false;
+  return signal.composite < policy.confidenceThreshold;
+}
+
 // ── Cross-Reference Verification ────────────────────
 
 export interface CrossRefCheck {

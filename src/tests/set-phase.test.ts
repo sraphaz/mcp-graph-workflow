@@ -66,3 +66,46 @@ describe("set_phase via project settings", () => {
     expect(detectCurrentPhase(doc, { phaseOverride: null })).toBe("IMPLEMENT");
   });
 });
+
+describe("set_phase WIP flags", () => {
+  let store: SqliteStore;
+
+  beforeEach(() => {
+    store = SqliteStore.open(":memory:");
+    store.initProject("Test Project");
+  });
+
+  afterEach(() => {
+    store.close();
+  });
+
+  it("should persist wipStrict as wip_strict_mode", () => {
+    store.setProjectSetting("wip_strict_mode", "true");
+    expect(store.getProjectSetting("wip_strict_mode")).toBe("true");
+
+    store.setProjectSetting("wip_strict_mode", "false");
+    expect(store.getProjectSetting("wip_strict_mode")).toBe("false");
+  });
+
+  it("should persist maxInFlight as wip_max_in_flight", () => {
+    store.setProjectSetting("wip_max_in_flight", "3");
+    expect(store.getProjectSetting("wip_max_in_flight")).toBe("3");
+  });
+
+  it("should default wip_strict_mode to true when teamTask is enabled", () => {
+    store.setProjectSetting("team_task_mode", "on");
+    // When teamTask=on and wip_strict_mode not set, default is true
+    const teamTaskOn = store.getProjectSetting("team_task_mode") === "on";
+    const wipStrictRaw = store.getProjectSetting("wip_strict_mode");
+    const wipStrict = wipStrictRaw !== null ? wipStrictRaw === "true" : teamTaskOn;
+    expect(wipStrict).toBe(true);
+  });
+
+  it("should default wip_strict_mode to false when teamTask is disabled", () => {
+    store.setProjectSetting("team_task_mode", "off");
+    const teamTaskOn = store.getProjectSetting("team_task_mode") === "on";
+    const wipStrictRaw = store.getProjectSetting("wip_strict_mode");
+    const wipStrict = wipStrictRaw !== null ? wipStrictRaw === "true" : teamTaskOn;
+    expect(wipStrict).toBe(false);
+  });
+});

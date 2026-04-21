@@ -130,6 +130,37 @@ export class LockConflictError extends McpGraphError {
   }
 }
 
+export interface WIPLimitDetails {
+  current: number;
+  limit: number;
+  inFlightNodeIds: string[];
+}
+
+export class WIPLimitError extends McpGraphError {
+  constructor(public readonly details: WIPLimitDetails) {
+    super(`WIP limit reached: ${details.current}/${details.limit} tasks in flight (${details.inFlightNodeIds.join(", ")})`);
+    this.name = "WIPLimitError";
+  }
+}
+
+export interface FileConflictHolder {
+  nodeId: string;
+  agentId: string;
+}
+
+export interface FileConflictDetails {
+  nodeId: string;
+  conflictingFiles: string[];
+  heldBy: FileConflictHolder[];
+}
+
+export class FileConflictError extends McpGraphError {
+  constructor(public readonly details: FileConflictDetails) {
+    super(`File conflict for "${details.nodeId}": ${details.conflictingFiles.length} file(s) already claimed`);
+    this.name = "FileConflictError";
+  }
+}
+
 // ── Planner errors ──
 
 export class PlannerError extends McpGraphError {

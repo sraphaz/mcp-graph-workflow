@@ -47,6 +47,7 @@ export const KanbanToolbar = memo(function KanbanToolbar({
               <button
                 key={mode}
                 onClick={() => onSwimlaneChange(mode)}
+                aria-pressed={swimlaneMode === mode}
                 className={`
                   px-2.5 py-1 text-[10px] font-medium transition-colors
                   ${swimlaneMode === mode
@@ -66,6 +67,7 @@ export const KanbanToolbar = memo(function KanbanToolbar({
         {/* Suggestions toggle */}
         <button
           onClick={onToggleSuggestions}
+          aria-pressed={showSuggestions}
           className={`
             inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium rounded-lg
             transition-colors border
@@ -88,6 +90,7 @@ export const KanbanToolbar = memo(function KanbanToolbar({
         <button
           onClick={onRefresh}
           className="p-1.5 rounded-lg text-muted hover:bg-surface-elevated hover:text-foreground transition-colors"
+          aria-label="Refresh board"
           title="Refresh board"
         >
           <RefreshCw className="w-3.5 h-3.5" />

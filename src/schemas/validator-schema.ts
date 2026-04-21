@@ -69,6 +69,32 @@ export const ValidationReadinessReportSchema = z.object({
   summary: z.string(),
 });
 
+// ── Edge Consistency ──
+
+export const EdgeConsistencyIssueTypeSchema = z.enum([
+  "self_loop",
+  "redundant_inverse",
+  "orphan_parent_of",
+  "orphan_child_of",
+  "parent_child_mismatch",
+]);
+
+export const EdgeConsistencyIssueSchema = z.object({
+  edgeId: z.string(),
+  issueType: EdgeConsistencyIssueTypeSchema,
+  details: z.string(),
+  involvedNodes: z.array(z.string()),
+});
+
+export const EdgeConsistencyReportSchema = z.object({
+  issues: z.array(EdgeConsistencyIssueSchema),
+  passed: z.boolean(),
+});
+
+export type EdgeConsistencyIssueType = z.infer<typeof EdgeConsistencyIssueTypeSchema>;
+export type EdgeConsistencyIssue = z.infer<typeof EdgeConsistencyIssueSchema>;
+export type EdgeConsistencyReport = z.infer<typeof EdgeConsistencyReportSchema>;
+
 export type DoneIntegrityIssueType = z.infer<typeof DoneIntegrityIssueTypeSchema>;
 export type DoneIntegrityIssue = z.infer<typeof DoneIntegrityIssueSchema>;
 export type DoneIntegrityReport = z.infer<typeof DoneIntegrityReportSchema>;

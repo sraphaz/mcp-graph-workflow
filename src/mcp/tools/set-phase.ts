@@ -55,6 +55,12 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       teamTask: z.boolean().optional().describe(
         "Enable/disable multi-terminal teamTask mode — activates lock-based task claiming, agent registration, and ownership verification",
       ),
+      wipStrict: z.boolean().optional().describe(
+        "WIP gate strictness: true blocks start_task when WIP limit exceeded, false warns only. Defaults to true when teamTask is on.",
+      ),
+      maxInFlight: z.number().int().min(1).optional().describe(
+        "Maximum number of concurrent in-flight tasks across all agents (wip_max_in_flight). Default: 3.",
+      ),
       autopilot: z.boolean().optional().describe(
         "Enable/disable autonomous sprint execution — activates confidence-gated autopilot with safety guardrails",
       ),
@@ -62,8 +68,8 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
         "Sprint identifier for autopilot session tracking",
       ),
     },
-    async ({ phase, force, mode, codeIntelligence, prerequisites, teamTask, autopilot, sprintId }) => {
-      logger.debug("tool:set_phase", { phase, force, mode, codeIntelligence, prerequisites, teamTask });
+    async ({ phase, force, mode, codeIntelligence, prerequisites, teamTask, wipStrict, maxInFlight, autopilot, sprintId }) => {
+      logger.debug("tool:set_phase", { phase, force, mode, codeIntelligence, prerequisites, teamTask, wipStrict, maxInFlight });
 
       // Persist strictness mode if provided
       if (mode) {
@@ -87,6 +93,19 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       if (teamTask !== undefined) {
         store.setProjectSetting("team_task_mode", teamTask ? "on" : "off");
         logger.info("tool:set_phase:team_task_changed", { teamTask });
+      }
+
+      // Persist WIP flags — wipStrict defaults to true when teamTask on
+      if (wipStrict !== undefined) {
+        store.setProjectSetting("wip_strict_mode", wipStrict ? "true" : "false");
+        logger.info("tool:set_phase:wip_strict_changed", { wipStrict });
+      } else if (teamTask !== undefined) {
+        // Auto-default: strict=true when enabling teamTask, false when disabling
+        store.setProjectSetting("wip_strict_mode", teamTask ? "true" : "false");
+      }
+      if (maxInFlight !== undefined) {
+        store.setProjectSetting("wip_max_in_flight", String(maxInFlight));
+        logger.info("tool:set_phase:wip_max_in_flight_changed", { maxInFlight });
       }
 
       if (phase === "auto") {

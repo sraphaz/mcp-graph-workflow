@@ -336,3 +336,43 @@ export async function checkIntegrations(basePath: string): Promise<CheckResult[]
     ];
   }
 }
+
+/**
+ * Check ONNX neural embedding availability (testable — accepts injected checker).
+ */
+export async function checkOnnxStatusWith(
+  isAvailable: () => Promise<boolean>,
+): Promise<CheckResult> {
+  try {
+    const available = await isAvailable();
+    if (available) {
+      return {
+        name: "onnx_status",
+        level: "ok",
+        message: "onnxruntime-node installed — RAG neural embeddings active",
+      };
+    }
+    return {
+      name: "onnx_status",
+      level: "warning",
+      message: "onnxruntime-node unavailable — RAG using hash embeddings (degraded mode)",
+      suggestion:
+        "Opt-in to neural embeddings: add onnxruntime-node to optionalDependencies, or run `mcp-graph install-neural`",
+    };
+  } catch {
+    return {
+      name: "onnx_status",
+      level: "warning",
+      message: "Could not determine ONNX status",
+      suggestion: "Run `mcp-graph install-neural` to enable neural embeddings",
+    };
+  }
+}
+
+/**
+ * Check ONNX status using the real isOnnxAvailable (production path).
+ */
+export async function checkOnnxStatus(): Promise<CheckResult> {
+  const { isOnnxAvailable } = await import("../rag/onnx-embeddings.js");
+  return checkOnnxStatusWith(isOnnxAvailable);
+}

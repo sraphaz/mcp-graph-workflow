@@ -55,10 +55,10 @@ export interface HarnessScanOptions {
 
 /** Run a full 7-dimension harnessability scan on the project. */
 export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus?: import("../events/event-bus.js").GraphEventBus, options?: HarnessScanOptions): HarnessScanResult {
-  // 1. Type Coverage
+  // 1. Type Coverage — exclude node_modules (e.g. src/web/dashboard/node_modules)
   const tsFiles = globSync("src/**/*.ts", {
     cwd: rootDir,
-    ignore: ["src/**/*.test.ts", "src/**/*.bench.ts", "src/types/**"],
+    ignore: ["src/**/*.test.ts", "src/**/*.bench.ts", "src/types/**", "**/node_modules/**"],
   });
   const typeFiles = tsFiles.map((p) => ({
     path: p,
@@ -69,10 +69,10 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
 
   const typeResult = scanTypeCoverage(typeFiles, scannerOpts);
 
-  // 2. Test Coverage
+  // 2. Test Coverage — exclude node_modules to avoid counting third-party TS files
   const modules = globSync("src/**/*.ts", {
     cwd: rootDir,
-    ignore: ["src/**/*.test.ts", "src/**/*.bench.ts", "src/index.ts"],
+    ignore: ["src/**/*.test.ts", "src/**/*.bench.ts", "src/index.ts", "**/node_modules/**"],
   }).map((p) => path.basename(p, ".ts"));
   const testFiles = globSync("src/tests/**/*.test.ts", { cwd: rootDir }).map((p) => ({
     name: path.basename(p),
@@ -92,8 +92,8 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
   };
   const docsResult = scanDocsCoverage(docsInput);
 
-  // 4. Architecture Fitness
-  const allSrcFiles = globSync("src/**/*.ts", { cwd: rootDir }).map((p) => ({
+  // 4. Architecture Fitness — exclude node_modules
+  const allSrcFiles = globSync("src/**/*.ts", { cwd: rootDir, ignore: ["**/node_modules/**"] }).map((p) => ({
     path: p,
     content: fs.readFileSync(path.join(rootDir, p), "utf-8"),
   }));

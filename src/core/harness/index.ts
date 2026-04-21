@@ -39,8 +39,8 @@ export type { Violation, FitnessCheckResult, FileContent, DirectoryInfo } from '
 export { runHarnessScanCached, resetHarnessCache } from './harness-cache.js';
 export { getEvolutionReport } from './harness-evolution.js';
 export type { EvolutionReport } from './harness-evolution.js';
-export { getHarnessPreflightWarning, getHarnessRegressionReport } from './harness-preflight.js';
-export type { HarnessPreflightWarning, HarnessRegressionReport } from './harness-preflight.js';
+export { getHarnessPreflightWarning, getHarnessRegressionReport, checkHarnessRegressionGate } from './harness-preflight.js';
+export type { HarnessPreflightWarning, HarnessRegressionReport, HarnessGateResult } from './harness-preflight.js';
 export { runHarnessScan } from './harness-scan-runner.js';
 export type { HarnessScanResult, HarnessScanOptions } from './harness-scan-runner.js';
 export { getTrends, predictGradeTarget } from './harness-trends.js';

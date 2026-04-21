@@ -33,8 +33,8 @@ import { indexDecision } from "../rag/decision-indexer.js";
 import { indexEntitiesForSource } from "../rag/entity-index-hook.js";
 import { IssuePatternTracker } from "../harness/issue-pattern-tracker.js";
 import type { RuleSuggestion } from "../harness/issue-pattern-tracker.js";
-import { getHarnessRegressionReport } from "../harness/harness-preflight.js";
-import type { HarnessRegressionReport } from "../harness/harness-preflight.js";
+import { getHarnessRegressionReport, checkHarnessRegressionGate } from "../harness/harness-preflight.js";
+import type { HarnessRegressionReport, HarnessGateResult } from "../harness/harness-preflight.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { RemediationValidator, type PostFixResult } from "../harness/remediation-validator.js";
 import { validateFiles } from "../harness/contract-engine.js";
@@ -46,6 +46,7 @@ import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branc
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import { execSync } from "node:child_process";
 import { LockConflictError } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
@@ -84,6 +85,8 @@ export interface FinishTaskResult {
   nextTask: EnhancedNextResult | null;
   decisionIndexed: boolean;
   harnessRegression: HarnessRegressionReport | null;
+  /** Regression gate result — present when a baseline was stored at start_task */
+  harnessGate?: HarnessGateResult | null;
   ruleSuggestions: RuleSuggestion[];
   /** Post-fix remediation validation — present when pre-fix snapshot exists */
   remediationValidation?: PostFixResult | null;
@@ -289,6 +292,55 @@ export async function finishTask(
           logger.warn("pipeline:finish_task:lock_release_failed", { nodeId, error: String(err) });
         }
       }
+
+      // Release file locks stored in metadata._fileLeases (Commit G)
+      if (lockManager) {
+        try {
+          const node = store.getNodeById(nodeId);
+          const fileLeases = (node?.metadata as Record<string, unknown> | undefined)?._fileLeases;
+          if (Array.isArray(fileLeases)) {
+            for (const token of fileLeases) {
+              try {
+                lockManager.release(String(token));
+              } catch {
+                // Stale or already-released token — ignore
+              }
+            }
+            logger.info("pipeline:finish_task:file_leases_released", { nodeId, count: fileLeases.length });
+          }
+        } catch (err) {
+          logger.warn("pipeline:finish_task:file_leases_release_failed", { nodeId, error: String(err) });
+        }
+      }
+
+      // Harvest touched files from git diff (Commit G)
+      try {
+        const raw = execSync("git diff --name-only HEAD~1 HEAD", {
+          cwd: process.cwd(),
+          timeout: 5000,
+          encoding: "utf-8",
+          stdio: ["ignore", "pipe", "ignore"],
+        });
+        const touchedFilesObserved = raw
+          .split("\n")
+          .map((f) => f.trim())
+          .filter(Boolean);
+        const existing = store.getNodeById(nodeId);
+        store.updateNode(nodeId, {
+          metadata: { ...(existing?.metadata as Record<string, unknown> ?? {}), touchedFilesObserved },
+        });
+        logger.info("pipeline:finish_task:touched_files_harvested", { nodeId, count: touchedFilesObserved.length });
+      } catch {
+        // git not available or no commits yet — store empty array
+        try {
+          const existing = store.getNodeById(nodeId);
+          store.updateNode(nodeId, {
+            metadata: { ...(existing?.metadata as Record<string, unknown> ?? {}), touchedFilesObserved: [] },
+          });
+        } catch {
+          // non-fatal
+        }
+      }
     } catch (err) {
       logger.warn("pipeline:finish_task:status_update_failed", { error: String(err) });
       status = "blocked";
@@ -416,12 +468,39 @@ export async function finishTask(
     }
   }
 
-  // 6. Harness regression check (non-blocking, advisory)
+  // 6. Harness regression check + regression gate
   let harnessRegression: HarnessRegressionReport | null = null;
+  let harnessGate: HarnessGateResult | null = null;
   if (status === "done") {
     try {
       const scanResult = runHarnessScan(process.cwd(), store.getDb());
       harnessRegression = getHarnessRegressionReport(store.getDb(), scanResult.score);
+
+      // Regression gate: compare against baseline captured at start_task
+      const taskNode = store.getNodeById(nodeId);
+      const meta = taskNode?.metadata as Record<string, unknown> | undefined;
+      const baselineScore = typeof meta?._harnessBaseline === "number" ? meta._harnessBaseline : null;
+      if (baselineScore !== null) {
+        const gateMode = (store.getProjectSetting("harness_gate_mode") ?? "advisory") as "strict" | "advisory" | "off";
+        const overrideReason = typeof meta?._harnessOverrideReason === "string" ? meta._harnessOverrideReason : undefined;
+        harnessGate = checkHarnessRegressionGate(baselineScore, scanResult.score, gateMode, 5, overrideReason);
+        if (harnessGate.blocked) {
+          logger.warn("pipeline:finish_task:harness_gate_blocked", {
+            nodeId,
+            startScore: baselineScore,
+            endScore: scanResult.score,
+            delta: harnessGate.delta,
+            mode: gateMode,
+          });
+        } else if (harnessGate.delta < -5) {
+          logger.warn("pipeline:finish_task:harness_gate_advisory", {
+            nodeId,
+            startScore: baselineScore,
+            endScore: scanResult.score,
+            delta: harnessGate.delta,
+          });
+        }
+      }
     } catch (err) {
       logger.warn("pipeline:finish_task:harness_regression_failed", { error: String(err) });
     }
@@ -495,6 +574,7 @@ export async function finishTask(
     nextTask,
     decisionIndexed,
     harnessRegression,
+    ...(harnessGate ? { harnessGate } : {}),
     ruleSuggestions,
     ...(remediationValidation ? { remediationValidation } : {}),
     contractGate,

@@ -26,12 +26,13 @@ import { analyzeScope } from "../analyzer/scope-analyzer.js";
 import { analyzeBacklogHealth } from "../listener/backlog-health.js";
 import { checkDoneIntegrity } from "../validator/done-integrity-checker.js";
 import { checkStatusFlow } from "../validator/status-flow-checker.js";
+import { checkEdgeConsistency } from "../validator/edge-consistency-checker.js";
 import { GraphIntegrityError, getErrorMessage } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 
 export interface HealthIssue {
   severity: "critical" | "warning" | "info";
-  category: "cycle" | "orphan" | "stuck" | "oversized" | "broken_dep" | "status_violation" | "done_violation";
+  category: "cycle" | "orphan" | "stuck" | "oversized" | "broken_dep" | "status_violation" | "done_violation" | "edge_consistency";
   nodeId?: string;
   message: string;
 }
@@ -130,7 +131,22 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
     logger.debug("graph-health: status flow skipped", { error: getErrorMessage(err) });
   }
 
-  // 6. Oversized tasks — tasks with too many children and no decomposition
+  // 6. Edge consistency — relation name vs. direction
+  try {
+    const consistency = checkEdgeConsistency(doc);
+    for (const issue of consistency.issues) {
+      issues.push({
+        severity: issue.issueType === "self_loop" || issue.issueType === "parent_child_mismatch" ? "critical" : "warning",
+        category: "edge_consistency",
+        nodeId: issue.involvedNodes[0],
+        message: `Edge consistency: ${issue.details}`,
+      });
+    }
+  } catch (err) {
+    logger.debug("graph-health: edge consistency skipped", { error: getErrorMessage(err) });
+  }
+
+  // 7. Oversized tasks — tasks with too many children and no decomposition
   try {
     for (const node of doc.nodes) {
       if (node.type === "task" || node.type === "epic") {

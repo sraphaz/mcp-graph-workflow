@@ -55,11 +55,15 @@ export const KanbanColumn = memo(function KanbanColumn({
     }
   };
 
+  const columnAriaLabel = `${column.title} column, ${column.cards.length} task${column.cards.length !== 1 ? "s" : ""}${column.wipLimit > 0 ? `, WIP limit ${column.wipLimit}` : ""}${isOverWip ? ", over WIP limit" : ""}`;
+
   return (
     <div
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      role="region"
+      aria-label={columnAriaLabel}
       className={`
         flex flex-col min-w-[220px] w-[260px] flex-shrink-0 rounded-lg
         ${dragOver ? "bg-accent/5 ring-2 ring-accent/30" : "bg-surface"}

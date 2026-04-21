@@ -38,6 +38,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { resolveDaemonPaths, ensureStateDir } from "../core/daemon/daemon-paths.js";
+import { McpGraphError } from "../core/utils/errors.js";
 
 const CONNECT_ATTEMPTS = 10;
 const CONNECT_TIMEOUT_MS = 500;
@@ -92,7 +93,7 @@ async function connectWithAutoStart(): Promise<net.Socket> {
     }
     await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
   }
-  throw new Error(`Could not connect to daemon at ${paths.socketPath}`);
+  throw new McpGraphError(`Could not connect to daemon at ${paths.socketPath}`);
 }
 
 try {

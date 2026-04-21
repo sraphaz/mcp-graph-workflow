@@ -18,6 +18,7 @@
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphNode } from "../graph/graph-types.js";
 import { logger } from "../utils/logger.js";
+import { deterministicRank } from "./deterministic-ranker.js";
 import { rerankWithTfIdf } from "./tfidf.js";
 
 export interface SearchResult {
@@ -138,8 +139,8 @@ function fuzzyFallback(
     }
   }
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit);
+  const rankable = scored.map(r => ({ ...r, id: r.node.id }));
+  return deterministicRank(rankable).map(({ id: _id, ...rest }) => rest as SearchResult).slice(0, limit);
 }
 
 /** Search nodes via FTS5 with optional TF-IDF reranking. */

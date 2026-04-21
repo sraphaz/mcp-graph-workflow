@@ -28,7 +28,8 @@
 import type Database from "better-sqlite3";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { RankedResult } from "./multi-strategy-retrieval.js";
-import { validateRetrievedResults, correctResults } from "./corrective-rag.js";
+import { validateRetrievedResults, correctResults, computeBatchConfidence } from "./corrective-rag.js";
+import type { BatchConfidenceSignal } from "./corrective-rag.js";
 import { tokenize } from "../search/tokenizer.js";
 import { logger } from "../utils/logger.js";
 
@@ -48,6 +49,8 @@ export interface PostRetrievalResult {
   deduplicated: number;
   stitchedChunks: number;
   corrected: number;
+  /** Aggregate confidence signal for the final result set. */
+  confidenceSignal: BatchConfidenceSignal;
 }
 
 /**
@@ -187,13 +190,24 @@ export function postRetrievalPipeline(options: PostRetrievalOptions): PostRetrie
   // Stage 5: Limit
   const limited = stitched.slice(0, maxResults);
 
+  // Stage 6: Aggregate confidence signal — use result scores as proxy confidence
+  const syntheticValidations = limited.map((r) => ({
+    docId: r.id,
+    isValid: r.score > 0,
+    confidenceScore: Math.min(r.qualityScore, 1),
+    staleness: "fresh" as const,
+    issues: [] as string[],
+  }));
+  const confidenceSignal = computeBatchConfidence(syntheticValidations);
+
   logger.debug("Post-retrieval pipeline complete", {
     input: results.length,
     deduplicated,
     corrected,
     stitchedChunks,
     output: limited.length,
+    confidence: confidenceSignal.composite,
   });
 
-  return { results: limited, deduplicated, stitchedChunks, corrected };
+  return { results: limited, deduplicated, stitchedChunks, corrected, confidenceSignal };
 }

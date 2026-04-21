@@ -35,6 +35,18 @@ import { logger } from "../utils/logger.js";
 
 export type QueryIntent = "search" | "how_to" | "status" | "debug" | "compare" | "history";
 
+/** Signals captured from a previous retrieval attempt, used to guide retry rewrites. */
+export interface PriorAttemptSignals {
+  /** Mean batch confidence score from the previous pass. */
+  confidence: number;
+  /** Terms that yielded low-quality results in the previous pass. */
+  lowYieldTerms: string[];
+  /** Entity names extracted from the previous pass results. */
+  retrievedEntities: string[];
+  /** Number of retries performed so far (1 = first retry). */
+  retryCount: number;
+}
+
 export interface UnderstandingResult {
   originalQuery: string;
   rewrittenQuery: string;
@@ -42,6 +54,10 @@ export interface UnderstandingResult {
   intent: QueryIntent;
   expandedTerms: string[];
   sourceTypeFilter: string[];
+  /** Whether this understanding was produced for a retry pass. */
+  isRetry: boolean;
+  /** Prior attempt signals forwarded for downstream tracing. */
+  priorSignals?: PriorAttemptSignals;
 }
 
 // ── Intent detection patterns ────────────────────────────
@@ -136,21 +152,30 @@ function rewriteQuery(query: string): string {
 
 /**
  * Full query understanding pipeline.
- * Analyzes a natural language query and returns structured understanding.
+ * Accepts optional prior attempt signals to guide retry rewrites.
  */
-export function understandQuery(query: string): UnderstandingResult {
+export function understandQuery(query: string, prior?: PriorAttemptSignals): UnderstandingResult {
   const originalQuery = query;
   const intent = detectIntent(query);
   const entities = extractEntities(query);
   const sourceTypeFilter = detectSourceFilter(query);
-  const expandedTerms = expandQuery(query);
+  let expandedTerms = expandQuery(query);
   const rewrittenQuery = rewriteQuery(query);
+
+  const isRetry = prior !== undefined;
+
+  // On retry: remove low-yield terms from the expansion to avoid repeating a failed path
+  if (isRetry && prior.lowYieldTerms.length > 0) {
+    const lowYieldSet = new Set(prior.lowYieldTerms.map((t) => t.toLowerCase()));
+    expandedTerms = expandedTerms.filter((t) => !lowYieldSet.has(t.toLowerCase()));
+  }
 
   logger.debug("Query understood", {
     intent,
     entityCount: entities.length,
     sourceFilters: sourceTypeFilter.length,
     expandedTermCount: expandedTerms.length,
+    isRetry,
   });
 
   return {
@@ -160,6 +185,8 @@ export function understandQuery(query: string): UnderstandingResult {
     intent,
     expandedTerms,
     sourceTypeFilter,
+    isRetry,
+    priorSignals: prior,
   };
 }
 

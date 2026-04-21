@@ -38,3 +38,5 @@ export { analyzeSprintHealth } from './sprint-health.js';
 export type { SprintHealthReport } from './sprint-health.js';
 export { calculateVelocity } from './velocity.js';
 export type { SprintVelocity, VelocityTask, CategoryVelocity, VelocitySummary } from './velocity.js';
+export { checkTddEnforcement, DEFAULT_DECLARATIVE_WHITELIST } from './tdd-enforcement.js';
+export type { TddEnforcementContext, TddEnforcementResult, CommitInfo } from './tdd-enforcement.js';
