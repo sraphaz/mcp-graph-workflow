@@ -2,6 +2,13 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [11.1.1-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.1.0-beta.0...cli-v11.1.1-beta.0) (2026-04-25)
+
+
+### Bug Fixes
+
+* **cli:** hide parent-package import paths from TS resolution ([#237](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/237)) ([5de1e87](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/5de1e875b9f499563f6396b2762d18beb93042df))
+
 ## [11.1.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.0.0-beta.0...cli-v11.1.0-beta.0) (2026-04-25)
 
 
