@@ -148,8 +148,11 @@ describe("capability-gate / ADR-0054", () => {
 
   describe("convenience helpers", () => {
     it("isFeatureEnabled mirrors decideFeatureGate.enabled", () => {
+      // sonnet (T2) and haiku (T3) both ON by default in ADR-0054 v2 — only the
+      // warning differs (haiku has advisory). Use unknown model for the false case.
       expect(isFeatureEnabled("claude-sonnet-4-6", "assembleSiblingContext")).toBe(true);
-      expect(isFeatureEnabled("claude-haiku-4-5", "assembleSiblingContext")).toBe(false);
+      expect(isFeatureEnabled("claude-haiku-4-5", "assembleSiblingContext")).toBe(true);
+      expect(isFeatureEnabled("nonexistent-model", "assembleSiblingContext")).toBe(false);
     });
 
     it("getTier reflects classification", () => {
