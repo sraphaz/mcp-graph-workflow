@@ -2,6 +2,18 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [11.1.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.0.0-beta.0...cli-v11.1.0-beta.0) (2026-04-25)
+
+
+### Features
+
+* **cli:** v11 beta — Ink REPL, hooks-collapse, set-phase, tools/cli [@beta](https://github.com/beta) ([#234](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/234)) ([94d215a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/94d215a7d680637b8bbe907348f7e4c5a4520912))
+
+
+### Bug Fixes
+
+* **cli:** sync VERSION constant in meta.ts with package.json (11.0.0-beta.0) ([#236](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/236)) ([0fd472e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/0fd472e1d406eb9c97ec4fad255185b4eb7a6ad6))
+
 ## [11.0.0-beta.0] — 2026-04-25
 
 Beta promotion. Same surface as `11.0.0-alpha.1` — cut as `beta` so a wider N can install via `npm i -g @mcp-graph-workflow/cli@beta` and feedback flows back before the GA cut.
