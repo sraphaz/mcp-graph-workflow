@@ -3,7 +3,7 @@
 // Test suite anchors AC of node_2471d7b4d664 (eva-agent graph) and ADR-0054 verification list.
 
 import { describe, expect, it } from "vitest";
-import { decideFeatureGate, getTier, isFeatureEnabled } from "./capability-gate";
+import { decideFeatureGate, getTier, isFeatureEnabled, classifyTaskType } from "./capability-gate";
 
 describe("capability-gate / ADR-0054", () => {
   describe("T1 high reasoning — feature ON", () => {
@@ -66,7 +66,7 @@ describe("capability-gate / ADR-0054", () => {
       const decision = decideFeatureGate(
         modelId,
         "assembleSiblingContext",
-        { MCP_GRAPH_GATE_STRICT: "1" },
+        { env: { MCP_GRAPH_GATE_STRICT: "1" } },
       );
       expect(decision.tier).toBe("T3");
       expect(decision.enabled).toBe(false);
@@ -95,7 +95,7 @@ describe("capability-gate / ADR-0054", () => {
       const decision = decideFeatureGate(
         "claude-haiku-4-5",
         "assembleSiblingContext",
-        { MCP_GRAPH_FORCE_FEATURE: "1" },
+        { env: { MCP_GRAPH_FORCE_FEATURE: "1" } },
       );
       expect(decision.enabled).toBe(true);
       expect(decision.reason).toBe("forced_by_env");
@@ -107,7 +107,7 @@ describe("capability-gate / ADR-0054", () => {
       const decision = decideFeatureGate(
         "claude-haiku-4-5",
         "assembleSiblingContext",
-        { MCP_GRAPH_FORCE_FEATURE: "0" },
+        { env: { MCP_GRAPH_FORCE_FEATURE: "0" } },
       );
       expect(decision.enabled).toBe(true);
       expect(decision.reason).toContain("advisory_default");
@@ -117,7 +117,7 @@ describe("capability-gate / ADR-0054", () => {
       const decision = decideFeatureGate(
         "claude-haiku-4-5",
         "assembleSiblingContext",
-        { MCP_GRAPH_FORCE_FEATURE: "1", MCP_GRAPH_GATE_STRICT: "1" },
+        { env: { MCP_GRAPH_FORCE_FEATURE: "1", MCP_GRAPH_GATE_STRICT: "1" } },
       );
       expect(decision.enabled).toBe(true);
       expect(decision.reason).toBe("forced_by_env");
@@ -127,7 +127,7 @@ describe("capability-gate / ADR-0054", () => {
       const decision = decideFeatureGate(
         "bogus-model",
         "assembleSiblingContext",
-        { MCP_GRAPH_FORCE_FEATURE: "1" },
+        { env: { MCP_GRAPH_FORCE_FEATURE: "1" } },
       );
       expect(decision.tier).toBe("T4");
       expect(decision.enabled).toBe(true);
@@ -175,7 +175,7 @@ describe("capability-gate / ADR-0054", () => {
       const d = decideFeatureGate(
         "claude-haiku-4-5",
         "assembleSiblingContext",
-        { MCP_GRAPH_GATE_STRICT: "1" },
+        { env: { MCP_GRAPH_GATE_STRICT: "1" } },
       );
       expect(d.enabled).toBe(false);
       expect(d.warning).toBeDefined();
@@ -191,6 +191,113 @@ describe("capability-gate / ADR-0054", () => {
       const d = decideFeatureGate("unknown-model", "assembleSiblingContext", {});
       expect(d.enabled).toBe(false);
       expect(d.reason).toContain("capability_lookup_miss");
+    });
+  });
+
+  // ── Per-task-type gate (H12-tests CONFIRMED 2026-04-25, +80pt swing) ──
+  // Test-spec-bound carrier: T4/T5 numerical convergence (Newton-Raphson).
+  // T3 + numerical-convergence → blocked at decision time (real capability gap).
+  // Other tiers + any task type → unaffected by task-type signal.
+  describe("per-task-type gate (H12-tests v4 confirmed)", () => {
+    it("T3 + numerical-convergence → blocked even without strict env", () => {
+      const d = decideFeatureGate(
+        "claude-haiku-4-5",
+        "assembleSiblingContext",
+        { taskType: "numerical-convergence" },
+      );
+      expect(d.tier).toBe("T3");
+      expect(d.taskType).toBe("numerical-convergence");
+      expect(d.enabled).toBe(false);
+      expect(d.reason).toBe("tier_T3_blocked_for_numerical_convergence");
+      expect(d.warning).toMatch(/H12-tests/);
+      expect(d.warning).toMatch(/Newton-Raphson/);
+    });
+
+    it("T3 + unknown task type → advisory ON (preserves ADR-0054 v2 default)", () => {
+      const d = decideFeatureGate(
+        "claude-haiku-4-5",
+        "assembleSiblingContext",
+        { taskType: "unknown" },
+      );
+      expect(d.taskType).toBe("unknown");
+      expect(d.enabled).toBe(true);
+      expect(d.reason).toContain("advisory_default");
+    });
+
+    it("T2 + numerical-convergence → unaffected (still ON)", () => {
+      const d = decideFeatureGate(
+        "claude-sonnet-4-5",
+        "assembleSiblingContext",
+        { taskType: "numerical-convergence" },
+      );
+      expect(d.tier).toBe("T2");
+      expect(d.enabled).toBe(true);
+      expect(d.reason).toContain("tier_T2");
+    });
+
+    it("T1 + numerical-convergence → unaffected (still ON)", () => {
+      const d = decideFeatureGate(
+        "claude-opus-4-7",
+        "assembleSiblingContext",
+        { taskType: "numerical-convergence" },
+      );
+      expect(d.tier).toBe("T1");
+      expect(d.enabled).toBe(true);
+      expect(d.reason).toContain("tier_T1");
+    });
+
+    it("FORCE env beats task-type block on T3", () => {
+      const d = decideFeatureGate(
+        "claude-haiku-4-5",
+        "assembleSiblingContext",
+        { taskType: "numerical-convergence", env: { MCP_GRAPH_FORCE_FEATURE: "1" } },
+      );
+      expect(d.enabled).toBe(true);
+      expect(d.reason).toBe("forced_by_env");
+    });
+
+    it("decision.taskType is always populated (telemetry contract)", () => {
+      const d1 = decideFeatureGate("claude-opus-4-7", "assembleSiblingContext", {});
+      expect(d1.taskType).toBe("unknown");
+      const d2 = decideFeatureGate("claude-haiku-4-5", "assembleSiblingContext", { taskType: "numerical-convergence" });
+      expect(d2.taskType).toBe("numerical-convergence");
+    });
+  });
+
+  describe("classifyTaskType (heuristic detector)", () => {
+    it("detects Newton-Raphson in description", () => {
+      expect(classifyTaskType({ description: "Implement Newton-Raphson solver" })).toBe("numerical-convergence");
+    });
+
+    it("detects gradient-descent variants", () => {
+      expect(classifyTaskType({ description: "gradient descent optimizer" })).toBe("numerical-convergence");
+      expect(classifyTaskType({ description: "GRADIENT-DESCENT step" })).toBe("numerical-convergence");
+    });
+
+    it("detects sigmoid / Platt scaling identifiers", () => {
+      expect(classifyTaskType({ acceptanceCriteria: ["plattSigmoid returns 1/(1+exp(-x))"] })).toBe("numerical-convergence");
+      expect(classifyTaskType({ testCode: "expect(plattCalibrate(5, params)).toBeGreaterThan(0.9)" })).toBe("numerical-convergence");
+      expect(classifyTaskType({ acceptanceCriteria: ["fitPlattParameters converges in <100 iters"] })).toBe("numerical-convergence");
+    });
+
+    it("detects optimizer / nonlinear-solver / root-finding terms", () => {
+      expect(classifyTaskType({ description: "build a nonlinear solver" })).toBe("numerical-convergence");
+      expect(classifyTaskType({ description: "secant-method root finder" })).toBe("numerical-convergence");
+      expect(classifyTaskType({ description: "Adam optimizer" })).toBe("numerical-convergence");
+    });
+
+    it("returns 'unknown' for unrelated tasks", () => {
+      expect(classifyTaskType({ description: "Add a CSS class to the button" })).toBe("unknown");
+      expect(classifyTaskType({ acceptanceCriteria: ["List items show in alphabetical order"] })).toBe("unknown");
+      expect(classifyTaskType({})).toBe("unknown");
+    });
+
+    it("scans across description + AC + testCode", () => {
+      expect(classifyTaskType({
+        description: "Generic feature implementation",
+        acceptanceCriteria: ["AC1: returns sorted list"],
+        testCode: "expect(plattSigmoid(0)).toBe(0.5)",
+      })).toBe("numerical-convergence");
     });
   });
 });
