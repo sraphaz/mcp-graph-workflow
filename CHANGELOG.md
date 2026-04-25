@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.1.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.2...mcp-graph-v10.1.3) (2026-04-25)
+
+
+### Bug Fixes
+
+* **cli:** correct repository URL casing for npm provenance attestation ([#241](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/241)) ([0eed1f8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/0eed1f87aa92c64493170439b71b93d86af60ed2))
+
 ## [10.1.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.1...mcp-graph-v10.1.2) (2026-04-25)
 
 
