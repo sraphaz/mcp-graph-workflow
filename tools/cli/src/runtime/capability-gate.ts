@@ -173,14 +173,18 @@ export function decideFeatureGate(
       };
     case "T3":
       // Per-task-type block: T3 + numerical-convergence is a real capability gap
-      // (H12-tests confirmed +80pt swing). Block regardless of strict flag.
+      // (H12 v6, 9 experiments confirmed). Block regardless of strict flag.
+      // Plain-language framing: World 1 (structural — CRUD, parsers, REST, AST,
+      // schema) → Haiku 100%, ship without gate. World 2 (numerical — ML,
+      // optimization, calibration) → Haiku 0–20%, route to Sonnet+. The test
+      // spec decides which world applies, not the task itself.
       if (taskType === "numerical-convergence") {
         return {
           tier,
           taskType,
           enabled: false,
           reason: "tier_T3_blocked_for_numerical_convergence",
-          warning: `Feature ${feature} blocked for model_id=${modelId} (T3) + task_type=numerical-convergence. H12-tests (eva-agent, 2026-04-25, 7 experiments) confirmed real capability gap on Newton-Raphson convergence; replacing T4/T5 with simple tests recovered Haiku to 100%. Route this task to T2/T1 model. See ADR-0054 + memory project_h12_ablation_raw_output_refuted.md.`,
+          warning: `Feature ${feature} routed away from ${modelId}: this task requires numerical-convergence (Newton-Raphson, gradient descent, optimization, statistical calibration) — Haiku-class models pass these at 0–20% (4 experiments consistent). Structural tasks (CRUD, parsers, REST, AST, schemas) are unaffected; Haiku handles those at 100%. Route this specific subtask to T2/T1 (Sonnet+). The capability gap is in numerical optimization, not decomposed tasks in general. See docs/guides/v11-cli-surface-map.md or ADR-0054.`,
         };
       }
       if (strict) {

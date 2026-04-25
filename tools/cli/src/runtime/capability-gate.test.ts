@@ -209,8 +209,13 @@ describe("capability-gate / ADR-0054", () => {
       expect(d.taskType).toBe("numerical-convergence");
       expect(d.enabled).toBe(false);
       expect(d.reason).toBe("tier_T3_blocked_for_numerical_convergence");
-      expect(d.warning).toMatch(/H12-tests/);
+      // Warning should communicate the user-facing story: numerical-convergence
+      // is the carrier (Newton-Raphson + variants), structural tasks unaffected.
       expect(d.warning).toMatch(/Newton-Raphson/);
+      expect(d.warning).toMatch(/numerical-convergence|numerical optimization/i);
+      expect(d.warning).toMatch(/Sonnet|T2|T1/);
+      // Plain-language reassurance: structural tasks aren't gated.
+      expect(d.warning).toMatch(/structural|CRUD|parsers/i);
     });
 
     it("T3 + unknown task type → advisory ON (preserves ADR-0054 v2 default)", () => {
