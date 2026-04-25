@@ -2,6 +2,14 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [11.2.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.1.3-beta.0...cli-v11.2.0-beta.0) (2026-04-25)
+
+
+### Features
+
+* **capability-gate:** per-task-type granularity (H12-tests v4 confirmed) ([#245](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/245)) ([e963a06](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/e963a06f4cd131e5236c4efaea555dd275858f4a))
+* **skills:** v11 surface migration banner — Phase 2 (13 more skills) ([#246](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/246)) ([2d7cd97](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/2d7cd9749dc5995ad2d1e00672f738e13950b5c5))
+
 ## [11.1.3-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.1.2-beta.0...cli-v11.1.3-beta.0) (2026-04-25)
 
 

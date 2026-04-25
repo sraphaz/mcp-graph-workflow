@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.3...mcp-graph-v10.2.0) (2026-04-25)
+
+
+### Features
+
+* **capability-gate:** per-task-type granularity (H12-tests v4 confirmed) ([#245](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/245)) ([e963a06](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/e963a06f4cd131e5236c4efaea555dd275858f4a))
+* **skills:** v11 CLI surface migration banner — 10 lifecycle skills ([#243](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/243)) ([cff1a79](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/cff1a79634fd9532809ff2eb99a0fcebc945fcae))
+* **skills:** v11 surface migration banner — Phase 2 (13 more skills) ([#246](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/246)) ([2d7cd97](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/2d7cd9749dc5995ad2d1e00672f738e13950b5c5))
+
 ## [10.1.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.2...mcp-graph-v10.1.3) (2026-04-25)
 
 
