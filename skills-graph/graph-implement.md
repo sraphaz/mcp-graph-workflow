@@ -39,12 +39,19 @@ next → context → rag_context → update_status(in_progress) → [TDD] → an
 
 ### Step 1: Start Task (v6.0 Pipeline)
 
+**v11 surface (preferred — installs `@mcp-graph-workflow/cli@beta`):**
+```
+/start                  # Claude skill — picks up next task or pass <id>
+mg start [<id>]         # shell — same handler, also works in CI/scripts
+```
+
+**Legacy surface (still works, slower round-trip via MCP):**
 ```
 Tool: mcp__mcp-graph__start_task
 Params: contextDetail: "standard", ragBudget: 4000, autoStart: true
 ```
 
-This single call executes: `next` + `context` + `rag_context` + `update_status(in_progress)`.
+Either form executes: `next` + `context` + `rag_context` + `update_status(in_progress)`.
 
 Returns: task (id, title, AC, xpSize) + context + ragContext + **tddHints** + startedAt.
 
@@ -93,6 +100,14 @@ npx vitest run
 ```
 
 Then finish via pipeline:
+
+**v11 surface (preferred):**
+```
+/finish                 # Claude skill — auto-detects in_progress task
+mg finish [<id>]        # shell — same handler
+```
+
+**Legacy surface (still works, slower round-trip via MCP):**
 ```
 Tool: mcp__mcp-graph__finish_task
 Params:
@@ -102,7 +117,7 @@ Params:
   autoNext: true
 ```
 
-`finish_task` automatically executes:
+Either form automatically executes:
 - **DoD 9 checks** (see table below)
 - AC validation
 - `update_status(done)`

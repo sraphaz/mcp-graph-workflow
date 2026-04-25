@@ -11,6 +11,8 @@ model:
   fallback: sonnet
   rationale: "Architectural decisions have durable, project-wide impact"
 ---
+> 💡 **v11 CLI surface available** (`@mcp-graph-workflow/cli@beta`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[v11-cli-surface-map.md](../../../docs/guides/v11-cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
+
 
 # graph-architecture
 
