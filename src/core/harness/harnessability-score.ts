@@ -18,14 +18,15 @@
 /**
  * Harnessability Score -- Composite metric for agent-readiness
  *
- * Combines 7 dimensions (v2):
- * - Type Coverage   (25%): files without `any` usage
- * - Test Coverage   (25%): modules with test files
- * - Fitness Score   (15%): architecture fitness functions passing
- * - Docs Coverage   (15%): CLAUDE.md, README, rules, docs/
- * - Naming Clarity  (10%): descriptive variable/function names
- * - Error Handling  ( 5%): typed errors, no swallowed catches
- * - Context Density ( 5%): JSDoc coverage on exported functions
+ * Combines 8 dimensions (v3):
+ * - Type Coverage        (25%): files without `any` usage
+ * - Test Coverage        (25%): modules with test files
+ * - Fitness Score        (15%): architecture fitness functions passing
+ * - Docs Coverage        (10%): CLAUDE.md, README, rules, docs/
+ * - Naming Clarity       (10%): descriptive variable/function names
+ * - Error Handling       ( 5%): typed errors, no swallowed catches
+ * - Context Density      ( 5%): JSDoc coverage on exported functions
+ * - Provenance Coverage  ( 5%): proportion of nodes with source_file receipt
  *
  * Based on: "Harness Engineering for Coding Agent Users" (Böckeler, Thoughtworks 2026)
  * Concept: Harnessability -- structural properties that enable effective harnesses.
@@ -42,6 +43,8 @@ export interface HarnessabilityInput {
   errorHandlingScore?: number;
   /** Optional (v2) -- defaults to 100 when omitted */
   contextDensityScore?: number;
+  /** Optional (v3) -- defaults to 100 when omitted (no DB available) */
+  provenanceScore?: number;
 }
 
 export interface DimensionBreakdown {
@@ -60,6 +63,7 @@ export interface HarnessabilityResult {
     naming: DimensionBreakdown;
     errors: DimensionBreakdown;
     context: DimensionBreakdown;
+    provenance: DimensionBreakdown;
   };
 }
 
@@ -67,10 +71,11 @@ const WEIGHTS = {
   types: 0.25,
   tests: 0.25,
   fitness: 0.15,
-  docs: 0.15,
+  docs: 0.10,
   naming: 0.10,
   errors: 0.05,
   context: 0.05,
+  provenance: 0.05,
 } as const;
 
 function gradeFromScore(score: number): "A" | "B" | "C" | "D" {
@@ -81,14 +86,15 @@ function gradeFromScore(score: number): "A" | "B" | "C" | "D" {
 }
 
 /**
- * Compute the composite harnessability score from 7 dimensions.
- * New dimensions (naming, errors, context) are optional and default to 100
- * for backward compatibility with 4-field callers.
+ * Compute the composite harnessability score from 8 dimensions.
+ * New dimensions (naming, errors, context, provenance) are optional and default to 100
+ * for backward compatibility with callers that do not provide a DB connection.
  */
 export function computeHarnessabilityScore(input: HarnessabilityInput): HarnessabilityResult {
   const naming = input.namingScore ?? 100;
   const errors = input.errorHandlingScore ?? 100;
   const context = input.contextDensityScore ?? 100;
+  const provenance = input.provenanceScore ?? 100;
 
   const score =
     input.typeScore * WEIGHTS.types +
@@ -97,7 +103,8 @@ export function computeHarnessabilityScore(input: HarnessabilityInput): Harnessa
     input.docsScore * WEIGHTS.docs +
     naming * WEIGHTS.naming +
     errors * WEIGHTS.errors +
-    context * WEIGHTS.context;
+    context * WEIGHTS.context +
+    provenance * WEIGHTS.provenance;
 
   const rounded = Math.round(score * 10) / 10;
 
@@ -105,13 +112,14 @@ export function computeHarnessabilityScore(input: HarnessabilityInput): Harnessa
     score: rounded,
     grade: gradeFromScore(rounded),
     breakdown: {
-      types:   { score: input.typeScore,   weight: WEIGHTS.types },
-      tests:   { score: input.testScore,   weight: WEIGHTS.tests },
-      fitness: { score: input.fitnessScore, weight: WEIGHTS.fitness },
-      docs:    { score: input.docsScore,   weight: WEIGHTS.docs },
-      naming:  { score: naming,            weight: WEIGHTS.naming },
-      errors:  { score: errors,            weight: WEIGHTS.errors },
-      context: { score: context,           weight: WEIGHTS.context },
+      types:      { score: input.typeScore,    weight: WEIGHTS.types },
+      tests:      { score: input.testScore,    weight: WEIGHTS.tests },
+      fitness:    { score: input.fitnessScore, weight: WEIGHTS.fitness },
+      docs:       { score: input.docsScore,    weight: WEIGHTS.docs },
+      naming:     { score: naming,             weight: WEIGHTS.naming },
+      errors:     { score: errors,             weight: WEIGHTS.errors },
+      context:    { score: context,            weight: WEIGHTS.context },
+      provenance: { score: provenance,         weight: WEIGHTS.provenance },
     },
   };
 }

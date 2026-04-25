@@ -37,7 +37,9 @@ export type NodeType =
   | "metric"
   | "config_schema"
   // Spec-driven development types
-  | "constitution";
+  | "constitution"
+  // Journey execution
+  | "journey_run";
 
 export type NodeStatus =
   | "backlog"

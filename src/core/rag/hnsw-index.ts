@@ -302,10 +302,11 @@ export class HNSWIndex {
 
   /** Insert a node into the HNSW graph structure. */
   private insertIntoGraph(node: HNSWNode): void {
-    const ep = this.nodes.get(this.entryPointId!);
+    if (this.entryPointId === null) return;
+    const ep = this.nodes.get(this.entryPointId);
     if (!ep) return;
 
-    let currentBest = this.entryPointId!;
+    let currentBest = this.entryPointId;
 
     // Phase 1: Greedy traverse from top to node.level + 1
     for (let l = this.maxLevel; l > node.level; l--) {
@@ -355,7 +356,9 @@ export class HNSWIndex {
   /** Greedy search for the closest node to query at a given level. */
   private greedyClosest(query: number[], startId: string, level: number): string {
     let bestId = startId;
-    let bestSim = cosineSimilarity(query, this.nodes.get(startId)!.vector);
+    const startNode = this.nodes.get(startId);
+    if (!startNode) return startId;
+    let bestSim = cosineSimilarity(query, startNode.vector);
 
     let improved = true;
     while (improved) {
@@ -387,7 +390,9 @@ export class HNSWIndex {
     level: number,
   ): SearchResult[] {
     const visited = new Set<string>([startId]);
-    const startSim = cosineSimilarity(query, this.nodes.get(startId)!.vector);
+    const startNode = this.nodes.get(startId);
+    if (!startNode) return [];
+    const startSim = cosineSimilarity(query, startNode.vector);
 
     // Candidates sorted by similarity (descending)
     const candidates: SearchResult[] = [{ id: startId, score: startSim }];
@@ -397,7 +402,8 @@ export class HNSWIndex {
     while (working.length > 0) {
       // Get closest unprocessed candidate
       working.sort((a, b) => b.score - a.score);
-      const current = working.shift()!;
+      const current = working.shift();
+      if (!current) break;
 
       // If current is worse than the worst in candidates and we have enough, stop
       if (candidates.length >= ef) {

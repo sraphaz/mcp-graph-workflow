@@ -51,6 +51,26 @@ export interface ToolTokenSummary {
   recentCalls: ToolTokenEntry[];
 }
 
+/** Options for recordCall — V11 Maestro telemetry payload. */
+export interface RecordCallOptions {
+  inputTokens: number;
+  outputTokens: number;
+  success: boolean;
+  durationMs: number;
+  errorKind?: string;
+}
+
+/** Per-tool usage stats over a window — V11 Maestro deprecation gate evidence. */
+export interface UsageStats {
+  toolName: string;
+  callCount: number;
+  lastUsedAt: string;
+  /** 0..1 — fraction of calls with success=true (NULL legacy rows count as success). */
+  successRate: number;
+  avgDurationMs: number;
+  p95DurationMs: number;
+}
+
 interface TokenRow {
   id: number;
   project_id: string;
@@ -164,5 +184,91 @@ export class ToolTokenStore {
   clearProject(projectId: string): void {
     this.db.prepare("DELETE FROM tool_token_usage WHERE project_id = ?").run(projectId);
     logger.debug("tool-token-store: cleared project", { projectId });
+  }
+
+  /**
+   * Record a tool call with full telemetry (V11 Maestro Phase 1).
+   * Captures success, durationMs, and optional errorKind alongside token usage.
+   * Legacy callers should keep using `record()` — both write to the same table.
+   */
+  recordCall(projectId: string, toolName: string, opts: RecordCallOptions): void {
+    this.db.prepare(
+      `INSERT INTO tool_token_usage
+         (project_id, tool_name, input_tokens, output_tokens, called_at,
+          success, duration_ms, error_kind)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      projectId,
+      toolName,
+      opts.inputTokens,
+      opts.outputTokens,
+      now(),
+      opts.success ? 1 : 0,
+      opts.durationMs,
+      opts.errorKind ?? null,
+    );
+    logger.debug("tool-token-store: recordCall", {
+      toolName,
+      success: opts.success,
+      durationMs: opts.durationMs,
+    });
+  }
+
+  /**
+   * Per-tool usage stats over a window (V11 Maestro Phase 1).
+   * Backs the deprecation gate: a tool with callCount=0 over 30d is a candidate for removal.
+   *
+   * @param projectId — scope to a single project
+   * @param sinceDays — optional window (only count calls in the last N days). Default: all time.
+   */
+  getUsageStats(projectId: string, sinceDays?: number): UsageStats[] {
+    const sinceClause = sinceDays !== undefined
+      ? `AND called_at >= datetime('now', '-${Math.max(0, Math.floor(sinceDays))} days')`
+      : "";
+
+    const aggRows = this.db.prepare(
+      `SELECT
+         tool_name                                                    AS tool_name,
+         COUNT(*)                                                     AS call_count,
+         MAX(called_at)                                               AS last_used_at,
+         AVG(CASE WHEN success IS NULL OR success = 1 THEN 1.0 ELSE 0.0 END) AS success_rate,
+         AVG(duration_ms)                                             AS avg_duration_ms
+       FROM tool_token_usage
+       WHERE project_id = ? ${sinceClause}
+       GROUP BY tool_name
+       ORDER BY call_count DESC`,
+    ).all(projectId) as Array<{
+      tool_name: string;
+      call_count: number;
+      last_used_at: string;
+      success_rate: number;
+      avg_duration_ms: number | null;
+    }>;
+
+    return aggRows.map((row) => ({
+      toolName: row.tool_name,
+      callCount: row.call_count,
+      lastUsedAt: row.last_used_at,
+      successRate: row.success_rate,
+      avgDurationMs: row.avg_duration_ms === null ? 0 : Math.round(row.avg_duration_ms),
+      p95DurationMs: this.computeP95(projectId, row.tool_name, sinceDays),
+    }));
+  }
+
+  /** P95 over duration_ms for a single tool (sort + index). */
+  private computeP95(projectId: string, toolName: string, sinceDays?: number): number {
+    const sinceClause = sinceDays !== undefined
+      ? `AND called_at >= datetime('now', '-${Math.max(0, Math.floor(sinceDays))} days')`
+      : "";
+
+    const rows = this.db.prepare(
+      `SELECT duration_ms FROM tool_token_usage
+       WHERE project_id = ? AND tool_name = ? AND duration_ms IS NOT NULL ${sinceClause}
+       ORDER BY duration_ms ASC`,
+    ).all(projectId, toolName) as Array<{ duration_ms: number }>;
+
+    if (rows.length === 0) return 0;
+    const idx = Math.min(rows.length - 1, Math.ceil(0.95 * rows.length) - 1);
+    return rows[Math.max(0, idx)].duration_ms;
   }
 }

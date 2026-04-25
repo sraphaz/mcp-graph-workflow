@@ -20,10 +20,10 @@ import { detectMrdCandidates } from "../../core/analyzer/merge-review-deprecate-
 import type { ReviewCandidate, DeprecateCandidate } from "../../core/analyzer/merge-review-deprecate-detector.js";
 import type { GraphDocument, GraphNode, GraphEdge } from "../../core/graph/graph-types.js";
 
-const NOW = new Date("2026-04-20T00:00:00Z").toISOString();
-const STALE_DATE = new Date("2026-03-01T00:00:00Z").toISOString(); // >30 days ago
-const RECENT_DATE = new Date("2026-04-18T00:00:00Z").toISOString(); // <7 days ago
-const OLD_INPROGRESS = new Date("2026-04-10T00:00:00Z").toISOString(); // >7 days ago
+const NOW = new Date().toISOString();
+const STALE_DATE = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days ago
+const RECENT_DATE = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(); // 2 days ago
+const OLD_INPROGRESS = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(); // 14 days ago
 
 function makeDoc(
   nodes: Partial<GraphNode>[] = [],

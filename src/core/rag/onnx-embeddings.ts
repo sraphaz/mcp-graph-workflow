@@ -138,6 +138,13 @@ export async function logEmbeddingModeOnBoot(
   }
 }
 
+// ── Directory bootstrap ──
+
+/** Ensure the models root directory exists (creates it recursively if absent). */
+export function ensureOnnxModelDir(modelsDir: string): void {
+  mkdirSync(modelsDir, { recursive: true });
+}
+
 // ── Model download ──
 
 async function downloadFile(url: string, destPath: string): Promise<void> {

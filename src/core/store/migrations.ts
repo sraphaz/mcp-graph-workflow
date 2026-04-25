@@ -1621,6 +1621,132 @@ const migrations: Migration[] = [
       ALTER TABLE custom_skills ADD COLUMN context_template TEXT;
     `,
   },
+  {
+    version: 60,
+    description: "Browser-harness — CDP sessions, agent-editable helpers registry, audit log, runs",
+    sql: `
+      CREATE TABLE IF NOT EXISTS bh_sessions (
+        id            TEXT PRIMARY KEY,
+        cdp_endpoint  TEXT NOT NULL,
+        pid           INTEGER,
+        status        TEXT NOT NULL,
+        started_at    INTEGER NOT NULL,
+        closed_at     INTEGER
+      );
+      CREATE INDEX IF NOT EXISTS idx_bh_sessions_status ON bh_sessions(status);
+
+      CREATE TABLE IF NOT EXISTS bh_helpers (
+        name         TEXT NOT NULL,
+        version      INTEGER NOT NULL,
+        source       TEXT NOT NULL,
+        signature    TEXT NOT NULL,
+        origin       TEXT NOT NULL,
+        created_at   INTEGER NOT NULL,
+        created_by   TEXT,
+        PRIMARY KEY (name, version)
+      );
+      CREATE INDEX IF NOT EXISTS idx_bh_helpers_origin ON bh_helpers(origin);
+
+      CREATE TABLE IF NOT EXISTS bh_audit (
+        id           TEXT PRIMARY KEY,
+        session_id   TEXT NOT NULL,
+        action       TEXT NOT NULL,
+        payload      TEXT NOT NULL,
+        result       TEXT,
+        at           INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_bh_audit_session ON bh_audit(session_id);
+      CREATE INDEX IF NOT EXISTS idx_bh_audit_action ON bh_audit(action);
+
+      CREATE TABLE IF NOT EXISTS bh_runs (
+        id            TEXT PRIMARY KEY,
+        session_id    TEXT NOT NULL,
+        node_id       TEXT,
+        prompt        TEXT NOT NULL,
+        plan          TEXT NOT NULL,
+        results       TEXT NOT NULL DEFAULT '[]',
+        verdict       TEXT NOT NULL,
+        duration_ms   INTEGER NOT NULL,
+        created_at    INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_bh_runs_session ON bh_runs(session_id);
+      CREATE INDEX IF NOT EXISTS idx_bh_runs_verdict ON bh_runs(verdict);
+    `,
+  },
+  {
+    version: 61,
+    description: "Journey runs — per-variant execution history with step screenshots + OCR",
+    sql: `
+      CREATE TABLE IF NOT EXISTS journey_runs (
+        id            TEXT PRIMARY KEY,
+        map_id        TEXT NOT NULL,
+        variant_id    TEXT,
+        node_id       TEXT,
+        prompt        TEXT,
+        plan          TEXT NOT NULL,
+        results       TEXT NOT NULL DEFAULT '[]',
+        verdict       TEXT NOT NULL,
+        duration_ms   INTEGER NOT NULL,
+        created_at    INTEGER NOT NULL,
+        finished_at   INTEGER
+      );
+      CREATE INDEX IF NOT EXISTS idx_journey_runs_map ON journey_runs(map_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_journey_runs_node ON journey_runs(node_id);
+      CREATE INDEX IF NOT EXISTS idx_journey_runs_verdict ON journey_runs(verdict);
+    `,
+  },
+  {
+    version: 62,
+    description: "Lifecycle violation log — records gate bypass attempts with reason, decision node, severity",
+    sql: `
+      CREATE TABLE IF NOT EXISTS lifecycle_violations (
+        id               TEXT PRIMARY KEY,
+        gate_id          TEXT NOT NULL,
+        node_id          TEXT NOT NULL,
+        sprint           TEXT NOT NULL,
+        reason           TEXT NOT NULL,
+        decision_node_id TEXT,
+        severity         TEXT NOT NULL CHECK(severity IN ('low', 'medium', 'high')),
+        mode             TEXT NOT NULL CHECK(mode IN ('strict', 'advisory')),
+        created_at       TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_violations_sprint   ON lifecycle_violations(sprint);
+      CREATE INDEX IF NOT EXISTS idx_violations_severity ON lifecycle_violations(severity);
+      CREATE INDEX IF NOT EXISTS idx_violations_gate     ON lifecycle_violations(gate_id);
+    `,
+  },
+  {
+    version: 63,
+    description: "Subtask artifacts store (v11 Context-Pollination) — structured outputs per subtask for sibling-context assembly",
+    sql: `
+      CREATE TABLE IF NOT EXISTS subtask_artifacts (
+        id           TEXT PRIMARY KEY,
+        project_id   TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        node_id      TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+        epic_id      TEXT NOT NULL,
+        kind         TEXT NOT NULL CHECK(kind IN ('diff','file','interface','decision','note')),
+        path         TEXT,
+        content      TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        created_at   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_artifacts_epic   ON subtask_artifacts(epic_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_artifacts_node   ON subtask_artifacts(node_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_artifacts_dedup
+        ON subtask_artifacts(project_id, epic_id, kind, content_hash);
+    `,
+  },
+  {
+    version: 64,
+    description: "Tool telemetry columns (v11 Maestro Phase 1) — adds success, duration_ms, error_kind to tool_token_usage for deprecation gate evidence",
+    sql: `
+      ALTER TABLE tool_token_usage ADD COLUMN success     INTEGER;
+      ALTER TABLE tool_token_usage ADD COLUMN duration_ms INTEGER;
+      ALTER TABLE tool_token_usage ADD COLUMN error_kind  TEXT;
+      CREATE INDEX IF NOT EXISTS idx_ttu_success  ON tool_token_usage(success);
+      CREATE INDEX IF NOT EXISTS idx_ttu_err_kind ON tool_token_usage(error_kind);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

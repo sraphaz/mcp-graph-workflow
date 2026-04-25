@@ -66,7 +66,7 @@ export const SkeletonChart = memo(function SkeletonChart({ className = "" }: Ske
 /** Full-page loading skeleton (replaces "Loading..." text) */
 export const SkeletonPage = memo(function SkeletonPage() {
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto" role="status" aria-label="Loading page">
+    <div className="h-full w-full overflow-auto p-6 space-y-6 max-w-6xl mx-auto" role="status" aria-label="Loading page">
       {/* Header skeleton */}
       <div className="flex items-center justify-between">
         <div className="h-5 w-40 rounded-md bg-surface-elevated animate-pulse motion-reduce:animate-none" />

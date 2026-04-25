@@ -23,6 +23,7 @@ import type { TargetSdkMode } from "./plugin-type-detector.js";
 import { getTemplate, renderTemplate } from "./template-registry.js";
 import { generatePom } from "./pom-generator.js";
 import type { TargetSdk } from "./pom-generator.js";
+import { translateDaVinciToJavaBody } from "./js-to-java-translator.js";
 import { ValidationError } from "../utils/errors.js";
 
 // ── Identifier validation ──────────────────────────────────────────────
@@ -154,18 +155,25 @@ export function generatePlugin(options: GeneratePluginOptions): GeneratePluginRe
     .map((v) => `        ${v.configureCode}`)
     .join("\n");
 
-  // 7. Render Java class
+  // 7. Translate the DaVinci JS body → Java method body (MVP, partial).
+  //    The translator strips the module.exports wrapper, substitutes
+  //    {{global.variables.X}} with configuration.getFieldValue(...), and
+  //    preserves the remaining JS as a Java block comment for manual
+  //    review. partial=true is expected for any non-trivial input.
+  const translation = translateDaVinciToJavaBody(code);
+
+  // 8. Render Java class
   const javaCode = renderTemplate(template, {
     className,
     packageName,
     pluginName,
     guiFields: guiFieldLines,
     configureBody: configureLines,
-    mainMethodBody: `        // TODO: Translate DaVinci logic to Java\n        // Source had ${analysis.apiCalls.length} API calls, ${analysis.variables.length} variables`,
+    mainMethodBody: translation.javaBody,
     attributeContract,
   });
 
-  // 8. Generate POM
+  // 9. Generate POM
   const pomXml = generatePom({
     pluginName,
     packageName,
@@ -176,7 +184,7 @@ export function generatePlugin(options: GeneratePluginOptions): GeneratePluginRe
     sdkPath,
   }, targetSdk);
 
-  // 9. PF-INF descriptor
+  // 10. PF-INF descriptor
   const pfInfContent = `${packageName}.${className}`;
   const pfInfType = template.pfInfType;
 
@@ -187,7 +195,11 @@ export function generatePlugin(options: GeneratePluginOptions): GeneratePluginRe
     pfInfType,
     pluginType: detection.pluginType,
     confidence: detection.confidence,
-    warnings: [...analysis.warnings, ...detection.warnings],
+    warnings: [
+      ...analysis.warnings,
+      ...detection.warnings,
+      ...translation.warnings.map((w) => `js-to-java: ${w}`),
+    ],
     analysis: {
       variableCount: analysis.variables.length,
       apiCallCount: analysis.apiCalls.length,

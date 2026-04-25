@@ -48,6 +48,7 @@ const LanguagesTab = lazy(() => import("@/components/tabs/languages-tab").then((
 const DocsTab = lazy(() => import("@/components/tabs/docs-tab").then((m) => ({ default: m.DocsTab })));
 const DavinciTab = lazy(() => import("@/components/davinci/davinci-tab").then((m) => ({ default: m.DavinciTab })));
 const HarnessTab = lazy(() => import("@/components/tabs/harness-tab").then((m) => ({ default: m.HarnessTab })));
+const BrowserPilotTab = lazy(() => import("@/components/tabs/browser-pilot-tab").then((m) => ({ default: m.BrowserPilotTab })));
 
 const TAB_LABELS: Record<TabId, string> = {
   overview: "Overview",
@@ -69,6 +70,7 @@ const TAB_LABELS: Record<TabId, string> = {
   logs: "Logs",
   harness: "Harness",
   autopilot: "Autopilot",
+  "browser-pilot": "Browser Pilot",
 };
 
 const CHUNK_RETRY_KEY = "chunk_retry_attempted";
@@ -244,6 +246,7 @@ function AppContent(): React.JSX.Element {
                   {activeTab === "docs" && <DocsTab />}
                   {activeTab === "harness" && <HarnessTab />}
                   {activeTab === "autopilot" && <AutopilotTab />}
+                  {activeTab === "browser-pilot" && <BrowserPilotTab />}
                 </Suspense>
               </ErrorBoundary>
             )}

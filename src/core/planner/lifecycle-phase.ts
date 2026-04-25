@@ -38,6 +38,74 @@ export type LifecyclePhase =
   | "DEPLOY"
   | "LISTENING";
 
+/**
+ * V11 Maestro Phase 3 — every analyze mode (53 total) lives in EXACTLY ONE phase.
+ * The list mirrors the enum in `src/mcp/tools/analyze.ts`. Integrity is enforced
+ * by `src/tests/get-modes-for-phase.test.ts` (no orphans, no duplicates).
+ */
+export const ALL_ANALYZE_MODES = [
+  "prd_quality", "scope", "ready", "risk", "blockers", "cycles", "critical_path",
+  "contract_coverage", "data_integrity", "decompose", "adr", "formula_consistency",
+  "traceability", "coupling", "interfaces", "tech_risk", "design_ready",
+  "implement_done", "tdd_check", "performance_budget", "progress", "state_completeness",
+  "validate_ready", "done_integrity", "status_flow", "review_ready", "handoff_ready",
+  "doc_completeness", "deploy_ready", "release_check", "listening_ready",
+  "backlog_health", "sprint_health", "auto_ready", "scenario_coverage", "asset_blockers",
+  "config_coverage", "metric_coverage", "concurrency_risk", "economy_simulation", "cfd",
+  "code_sync", "smart_decompose", "security_scan", "code_quality", "test_coverage",
+  "observability_check", "harness_scan", "harness_trend", "harness_advice",
+  "harness_remediate", "adr_challenge", "orphan_tasks",
+] as const;
+
+export type AnalyzeMode = typeof ALL_ANALYZE_MODES[number];
+
+const PHASE_MODE_MAP: Record<LifecyclePhase, ReadonlyArray<AnalyzeMode>> = {
+  ANALYZE: [
+    "prd_quality", "scope", "ready", "risk", "blockers",
+    "decompose", "smart_decompose", "formula_consistency",
+    "contract_coverage", "data_integrity",
+  ],
+  DESIGN: [
+    "adr", "adr_challenge", "traceability", "coupling",
+    "interfaces", "tech_risk", "design_ready",
+  ],
+  PLAN: [
+    "backlog_health", "sprint_health", "performance_budget",
+    "scenario_coverage", "asset_blockers", "config_coverage",
+    "metric_coverage", "concurrency_risk", "critical_path", "cycles",
+  ],
+  IMPLEMENT: [
+    "implement_done", "tdd_check", "progress", "code_sync",
+    "code_quality", "test_coverage", "security_scan", "orphan_tasks",
+  ],
+  VALIDATE: [
+    "validate_ready", "done_integrity", "status_flow",
+    "observability_check", "state_completeness",
+  ],
+  REVIEW: [
+    "review_ready", "harness_scan", "harness_trend",
+    "harness_advice", "harness_remediate",
+  ],
+  HANDOFF: [
+    "handoff_ready", "doc_completeness",
+  ],
+  DEPLOY: [
+    "deploy_ready", "release_check",
+  ],
+  LISTENING: [
+    "listening_ready", "economy_simulation", "cfd", "auto_ready",
+  ],
+};
+
+/**
+ * Modes that `graph_lifecycle({phase})` runs in batch.
+ * Returns `[]` for unknown phases — no throw, safe for arbitrary input.
+ */
+export function getModesForPhase(phase: LifecyclePhase): AnalyzeMode[] {
+  const modes = PHASE_MODE_MAP[phase];
+  return modes ? [...modes] : [];
+}
+
 export interface McpAgentSuggestion {
   name: string;
   action: string;

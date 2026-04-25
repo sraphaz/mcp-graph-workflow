@@ -264,6 +264,45 @@ function extractSymbolsFromNode(node: SyntaxNode, ctx: ExtractionContext): void 
         resolvedKind = "method";
       }
 
+      // Per-language deep enrichment (V11 multi-lang code-graph).
+      // Generic walker emits the cross-language baseline; language-specific
+      // helpers add signal that doesn't survive a generic AST walk.
+      let metadata: Record<string, unknown> | undefined;
+      if (ctx.languageId === "python") {
+        const py = enrichPythonSymbol(node as unknown as PySyntaxNodeLike, name);
+        // Only attach metadata when there's something interesting — keeps
+        // generic Python output clean (no metadata for plain functions
+        // with no decorators / async / dunder / bases).
+        if (
+          py.decorators.length > 0 ||
+          py.isAsync ||
+          py.isDunder ||
+          py.baseClasses.length > 0
+        ) {
+          metadata = { python: py };
+        }
+      } else if (ctx.languageId === "go") {
+        const go = enrichGoSymbol(node as unknown as GoSyntaxNodeLike);
+        if (hasGoEnrichmentSignal(go)) {
+          metadata = { go };
+        }
+      } else if (ctx.languageId === "rust") {
+        const rs = enrichRustSymbol(node as unknown as RsSyntaxNodeLike);
+        if (hasRustEnrichmentSignal(rs)) {
+          metadata = { rust: rs };
+        }
+      } else if (ctx.languageId === "java") {
+        const ja = enrichJavaSymbol(node as unknown as JavaSyntaxNodeLike);
+        if (hasJavaEnrichmentSignal(ja)) {
+          metadata = { java: ja };
+        }
+      } else if (ctx.languageId === "kotlin") {
+        const kt = enrichKotlinSymbol(node as unknown as KtSyntaxNodeLike);
+        if (hasKotlinEnrichmentSignal(kt)) {
+          metadata = { kotlin: kt };
+        }
+      }
+
       ctx.symbols.push({
         name,
         kind: resolvedKind as PartialSymbol["kind"],
@@ -275,6 +314,7 @@ function extractSymbolsFromNode(node: SyntaxNode, ctx: ExtractionContext): void 
         docstring: docstring ?? undefined,
         sourceSnippet: getSourceSnippet(node),
         visibility,
+        ...(metadata ? { metadata } : {}),
       });
 
       // Recurse into class/struct bodies for methods
@@ -409,6 +449,33 @@ function extractCallTarget(node: SyntaxNode): string | null {
 
   return null;
 }
+
+// ── Per-language enrichment ───────────────────────────────
+// Imported next to the call site in extractSymbolsFromNode. Each
+// language module is structurally typed so it doesn't pull in the
+// tree-sitter WASM runtime — pure helpers that just walk the AST.
+
+import { enrichPythonSymbol, type PySyntaxNodeLike } from "./python-enrichment.js";
+import {
+  enrichGoSymbol,
+  hasGoEnrichmentSignal,
+  type GoSyntaxNodeLike,
+} from "./go-enrichment.js";
+import {
+  enrichRustSymbol,
+  hasRustEnrichmentSignal,
+  type RsSyntaxNodeLike,
+} from "./rust-enrichment.js";
+import {
+  enrichJavaSymbol,
+  hasJavaEnrichmentSignal,
+  type JavaSyntaxNodeLike,
+} from "./java-enrichment.js";
+import {
+  enrichKotlinSymbol,
+  hasKotlinEnrichmentSignal,
+  type KtSyntaxNodeLike,
+} from "./kotlin-enrichment.js";
 
 // ── TreeSitterAnalyzer class ─────────────────────────────
 

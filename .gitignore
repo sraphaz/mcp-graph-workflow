@@ -70,3 +70,19 @@ presentation/public/video/*.mov
 # act local CI runner — secrets file is gitignored; the runner itself is
 # configured via .actrc (tracked).
 .secrets
+
+# Sibling repos accidentally cloned into this tree — never commit
+hermes-*/
+browser-*-main/
+
+# Real benchmark data + experiment artifacts — design-sensitive, local-only
+docs/BENCHMARK-*.md
+workflow-graph/h9v2-debug/
+
+# Internal analysis reports + graph exports — design-sensitive
+scripts/*-report.json
+scripts/speckit-*.json
+knowledge-export.json
+
+# Internal research/RAD findings — design rationale stays local
+docs/_research/

@@ -23,6 +23,7 @@
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { generateId } from "../utils/id.js";
 import { logger } from "../utils/logger.js";
+import { validateInvest, type InvestCandidate, type XpSize } from "./invest-validator.js";
 
 export interface DecomposedSubtask {
   title: string;
@@ -155,4 +156,133 @@ export function smartDecompose(
     edges,
     rationale: `Decomposed "${node.title}" into ${subtasks.length} subtasks (1 per AC). Test types: ${subtasks.map((s) => s.suggestedTestType).join(", ")}.`,
   };
+}
+
+// ── INVEST-gated decomposition ────────────────────────────────────────────────
+
+export interface InvestChild {
+  id: string;
+  title: string;
+  xpSize: XpSize;
+  acceptanceCriteria: string[];
+}
+
+export interface InvestRejection {
+  title: string;
+  reasons: string[];
+}
+
+export interface DecomposeEdgeWithRelation {
+  from: string;
+  to: string;
+  relation: "decomposed_into";
+}
+
+export interface SmartDecomposeInvestResult {
+  parentId: string;
+  accepted: InvestChild[];
+  rejected: InvestRejection[];
+  edges: DecomposeEdgeWithRelation[];
+}
+
+/** Sizes eligible for generated children */
+const CHILD_SIZES: XpSize[] = ["S", "M"];
+
+/** Generate 2 placeholder children when the parent has no AC */
+function generatePlaceholderChildren(title: string): InvestCandidate[] {
+  return [
+    {
+      title: `${title} — part 1: core implementation`,
+      xpSize: "S",
+      acceptanceCriteria: [
+        `GIVEN ${title} WHEN core logic runs THEN primary outcome is produced`,
+        `GIVEN invalid input WHEN ${title} runs THEN error is handled gracefully`,
+      ],
+    },
+    {
+      title: `${title} — part 2: validation and integration`,
+      xpSize: "M",
+      acceptanceCriteria: [
+        `GIVEN ${title} WHEN integration boundary is reached THEN data persists correctly`,
+        `GIVEN ${title} with edge case WHEN processing THEN result is deterministic`,
+      ],
+    },
+  ];
+}
+
+/** Build InvestCandidates from the node's AC list (1 AC → 1 child) */
+function candidatesFromAc(parentTitle: string, acTexts: string[]): InvestCandidate[] {
+  return acTexts.map((ac, i) => ({
+    title: `${parentTitle} — part ${i + 1}`,
+    xpSize: CHILD_SIZES[i % CHILD_SIZES.length],
+    acceptanceCriteria: [ac],
+  }));
+}
+
+/**
+ * INVEST-gated decomposition.
+ *
+ * Triggers for L/XL tasks only. If the task has no AC, generates placeholder
+ * children with at least 2 testable AC each. Each proposed child is then
+ * validated against INVEST; passing children produce `decomposed_into` edges,
+ * failing children are recorded in `rejected` with reasons.
+ *
+ * Returns null for non-oversized tasks (XS/S/M) or missing nodes.
+ */
+export function smartDecomposeWithInvest(
+  store: SqliteStore,
+  nodeId: string,
+): SmartDecomposeInvestResult | null {
+  const node = store.getNodeById(nodeId);
+  if (!node) {
+    logger.warn("smart-decompose-invest:node_not_found", { nodeId });
+    return null;
+  }
+
+  if (node.xpSize !== "L" && node.xpSize !== "XL") {
+    return null;
+  }
+
+  // Gather existing AC from inline + child AC nodes
+  const doc = store.toGraphDocument();
+  const acChildNodes = doc.nodes.filter(
+    (n) => n.type === "acceptance_criteria" && n.parentId === nodeId,
+  );
+  const acTexts = [
+    ...(node.acceptanceCriteria ?? []),
+    ...acChildNodes.map((n) => n.title),
+  ];
+
+  const candidates: InvestCandidate[] =
+    acTexts.length === 0
+      ? generatePlaceholderChildren(node.title)
+      : candidatesFromAc(node.title, acTexts);
+
+  const accepted: InvestChild[] = [];
+  const rejected: InvestRejection[] = [];
+  const edges: DecomposeEdgeWithRelation[] = [];
+
+  for (const candidate of candidates) {
+    const { passed, rejectedReasons } = validateInvest(candidate);
+    if (passed) {
+      const childId = generateId("sub");
+      accepted.push({
+        id: childId,
+        title: candidate.title,
+        xpSize: candidate.xpSize!,
+        acceptanceCriteria: candidate.acceptanceCriteria,
+      });
+      edges.push({ from: nodeId, to: childId, relation: "decomposed_into" });
+    } else {
+      rejected.push({ title: candidate.title, reasons: rejectedReasons });
+    }
+  }
+
+  logger.info("smart-decompose-invest:ok", {
+    nodeId,
+    accepted: accepted.length,
+    rejected: rejected.length,
+  });
+
+  return { parentId: nodeId, accepted, rejected, edges };
 }

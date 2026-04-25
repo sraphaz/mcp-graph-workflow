@@ -17,3 +17,28 @@
 
 export { sanitizeText, detectExfiltration, sanitizeToolArgs } from "./input-sanitizer.js";
 export type { SanitizationReport, ExfiltrationReport, ToolArgsSanitizationResult } from "./input-sanitizer.js";
+
+// Phase 3 — MCP RCE hardening (OX Security disclosure)
+export { safeArg, safeArgv, assertCdpMethod } from "./stdio-sanitizer.js";
+export {
+  validateSource,
+  type SourceViolation,
+  type SourceValidationResult,
+  type ValidateSourceOptions,
+} from "./ast-source-validator.js";
+export {
+  assertTrustedMcpServer,
+  isPinnedNpmSpec,
+  parseNpxCommand,
+  type McpServerSpec,
+  type AllowlistOptions,
+} from "./registry-allowlist.js";
+export {
+  wrapToolHandler,
+  redactSecrets,
+  type AuditEntry,
+  type AuditSink,
+  type RateLimitConfig,
+  type WrapOptions,
+  type ToolHandler,
+} from "./tool-invocation-audit.js";

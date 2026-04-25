@@ -634,40 +634,18 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "harness_advice": {
           const { runHarnessScan } = await import("../../core/harness/harness-scan-runner.js");
-          const adviceReport = runHarnessScan(process.cwd(), store.getDb());
+          const { buildAdviceEntries } = await import("../../core/harness/harness-advice-generator.js");
+
+          // Collect file-level violations so advice can reference specific files
+          const adviceReport = runHarnessScan(process.cwd(), store.getDb(), undefined, { collectViolations: true });
+          const violations = adviceReport.violations ?? [];
           const breakdown = adviceReport.breakdown as Record<string, { score: number; weight: number }>;
 
-          interface AdviceFile { file: string; issue: string; suggestion: string }
-          interface AdviceEntry { dimension: string; score: number; files: AdviceFile[] }
-          const advice: AdviceEntry[] = [];
-
-          // For each dimension with score < 70, generate file-level advice
-          for (const [dim, info] of Object.entries(breakdown)) {
-            if (info.score >= 70) continue;
-
-            const files: AdviceFile[] = [];
-            const details = adviceReport.details.find((d) => d.toLowerCase().includes(dim.replace(/([A-Z])/g, " $1").toLowerCase().trim()));
-
-            if (dim === "types") {
-              files.push({ file: "src/**/*.ts", issue: `${info.score}% type coverage — files with 'any'`, suggestion: "Replace 'any' with explicit types. Run: grep -rn ': any\\|as any' src/" });
-            } else if (dim === "tests") {
-              files.push({ file: "src/**/*.ts", issue: `${info.score}% test coverage — modules without test files`, suggestion: "Create test files for untested modules in src/tests/" });
-            } else if (dim === "fitness") {
-              files.push({ file: "src/core/**/*.ts", issue: `${info.score}% fitness — architecture violations`, suggestion: details ?? "Fix dependency direction, circular deps, or barrel exports" });
-            } else if (dim === "docs") {
-              files.push({ file: "CLAUDE.md, README.md", issue: `${info.score}% docs coverage`, suggestion: "Ensure CLAUDE.md, README.md, and .claude/rules/ are comprehensive" });
-            } else if (dim === "naming") {
-              files.push({ file: "src/**/*.ts", issue: `${info.score}% naming clarity — generic or short names`, suggestion: "Rename variables like 'data', 'result', 'temp' to descriptive names" });
-            } else if (dim === "errorHandling") {
-              files.push({ file: "src/**/*.ts", issue: `${info.score}% error handling — raw throws or swallowed catches`, suggestion: "Use typed errors from utils/errors.ts instead of throw new Error()" });
-            } else if (dim === "contextDensity") {
-              files.push({ file: "src/**/*.ts", issue: `${info.score}% context density — exports without JSDoc`, suggestion: "Add /** JSDoc */ comments to all exported functions" });
-            }
-
-            if (files.length > 0) {
-              advice.push({ dimension: dim, score: info.score, files: files.slice(0, 10) });
-            }
-          }
+          const advice = buildAdviceEntries({
+            breakdown,
+            typeViolations: violations.filter((v) => v.dimension === "types"),
+            testViolations: violations.filter((v) => v.dimension === "tests"),
+          });
 
           const message = advice.length === 0 ? "Harness score healthy — all dimensions >= 70" : `${advice.length} dimension(s) need improvement`;
           logger.info("tool:analyze:harness_advice:ok", { score: adviceReport.score, dimensions: advice.length });

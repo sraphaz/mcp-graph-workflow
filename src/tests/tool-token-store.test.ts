@@ -150,4 +150,134 @@ describe("ToolTokenStore", () => {
       expect(summary.totalCalls).toBe(0);
     });
   });
+
+  describe("recordCall (V11 Maestro telemetry)", () => {
+    it("should record success, durationMs, and errorKind", () => {
+      tokenStore.recordCall(projectId, "analyze", {
+        inputTokens: 500,
+        outputTokens: 1200,
+        success: true,
+        durationMs: 247,
+      });
+
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats).toHaveLength(1);
+      expect(stats[0].toolName).toBe("analyze");
+      expect(stats[0].callCount).toBe(1);
+      expect(stats[0].successRate).toBe(1);
+      expect(stats[0].avgDurationMs).toBe(247);
+    });
+
+    it("should record errorKind for failed calls", () => {
+      tokenStore.recordCall(projectId, "export", {
+        inputTokens: 0,
+        outputTokens: 0,
+        success: false,
+        durationMs: 1500,
+        errorKind: "timeout",
+      });
+
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats[0].successRate).toBe(0);
+      expect(stats[0].avgDurationMs).toBe(1500);
+    });
+  });
+
+  describe("getUsageStats (V11 Maestro telemetry)", () => {
+    it("should compute successRate correctly across mixed calls", () => {
+      // 3 successes, 2 failures = 0.6 successRate
+      tokenStore.recordCall(projectId, "list", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 50 });
+      tokenStore.recordCall(projectId, "list", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 60 });
+      tokenStore.recordCall(projectId, "list", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 70 });
+      tokenStore.recordCall(projectId, "list", { inputTokens: 0, outputTokens: 0, success: false, durationMs: 100, errorKind: "validation" });
+      tokenStore.recordCall(projectId, "list", { inputTokens: 0, outputTokens: 0, success: false, durationMs: 200, errorKind: "timeout" });
+
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats).toHaveLength(1);
+      expect(stats[0].callCount).toBe(5);
+      expect(stats[0].successRate).toBeCloseTo(0.6, 2);
+    });
+
+    it("should compute avgDurationMs and p95DurationMs", () => {
+      // 20 calls with durations 100..2000 — p95 should be around 1900
+      for (let i = 1; i <= 20; i++) {
+        tokenStore.recordCall(projectId, "context", {
+          inputTokens: 10,
+          outputTokens: 20,
+          success: true,
+          durationMs: i * 100,
+        });
+      }
+
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats[0].avgDurationMs).toBe(1050); // (100+200+...+2000)/20 = 1050
+      // p95 of [100, 200, ..., 2000] = element at index ceil(0.95 * 20) - 1 = 18 → 1900
+      expect(stats[0].p95DurationMs).toBeGreaterThanOrEqual(1900);
+      expect(stats[0].p95DurationMs).toBeLessThanOrEqual(2000);
+    });
+
+    it("should return one row per distinct toolName", () => {
+      tokenStore.recordCall(projectId, "list", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 50 });
+      tokenStore.recordCall(projectId, "context", { inputTokens: 100, outputTokens: 200, success: true, durationMs: 500 });
+      tokenStore.recordCall(projectId, "next", { inputTokens: 50, outputTokens: 100, success: true, durationMs: 100 });
+
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats).toHaveLength(3);
+      const tools = stats.map((s) => s.toolName).sort();
+      expect(tools).toEqual(["context", "list", "next"]);
+    });
+
+    it("should return lastUsedAt = most recent timestamp", () => {
+      tokenStore.recordCall(projectId, "list", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 50 });
+
+      const before = new Date().toISOString();
+      tokenStore.recordCall(projectId, "list", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 50 });
+      const after = new Date().toISOString();
+
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats[0].lastUsedAt >= before).toBe(true);
+      expect(stats[0].lastUsedAt <= after).toBe(true);
+    });
+
+    it("should filter by sinceDays when provided", () => {
+      const old = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days ago
+      const recent = new Date().toISOString();
+
+      // Manually insert OLD call
+      sqliteStore.getDb().prepare(
+        `INSERT INTO tool_token_usage (project_id, tool_name, input_tokens, output_tokens, called_at, success, duration_ms)
+         VALUES (?, 'old_tool', 10, 20, ?, 1, 50)`,
+      ).run(projectId, old);
+
+      // Recent call via recordCall
+      tokenStore.recordCall(projectId, "recent_tool", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 50 });
+      void recent;
+
+      const last30 = tokenStore.getUsageStats(projectId, 30);
+      const tools30 = last30.map((s) => s.toolName);
+      expect(tools30).toContain("recent_tool");
+      expect(tools30).not.toContain("old_tool");
+
+      const all = tokenStore.getUsageStats(projectId);
+      const allTools = all.map((s) => s.toolName);
+      expect(allTools).toContain("recent_tool");
+      expect(allTools).toContain("old_tool");
+    });
+
+    it("should return empty array for project with no data (no crash)", () => {
+      const stats = tokenStore.getUsageStats(projectId);
+      expect(stats).toEqual([]);
+    });
+
+    it("should treat NULL success (legacy record() rows) as success=true", () => {
+      // Legacy: record() inserts without success column
+      tokenStore.record(projectId, "legacy_tool", 100, 200);
+      tokenStore.recordCall(projectId, "new_tool", { inputTokens: 10, outputTokens: 20, success: true, durationMs: 50 });
+
+      const stats = tokenStore.getUsageStats(projectId);
+      const legacyEntry = stats.find((s) => s.toolName === "legacy_tool")!;
+      expect(legacyEntry.callCount).toBe(1);
+      expect(legacyEntry.successRate).toBe(1); // NULL = legacy success
+    });
+  });
 });

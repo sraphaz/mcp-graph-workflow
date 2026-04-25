@@ -17,3 +17,9 @@
 
 export { JourneyStore } from './journey-store.js';
 export type { JourneyMap, JourneyScreen, JourneyField, JourneyEdge, JourneyVariant, JourneyMapFull } from './journey-store.js';
+export { JourneyRunsStore } from './journey-runs-store.js';
+export type { CreateJourneyRunInput, FinaliseJourneyRunInput, ListJourneyRunsFilter } from './journey-runs-store.js';
+export { JourneyRunner, buildPlan } from './journey-runner.js';
+export type { StepExecutor, StepExecutorResult, OcrLike, RunJourneyInput, JourneyRunnerDeps, JourneyRunEventListener } from './journey-runner.js';
+export { OcrService, shouldOcr } from './ocr-service.js';
+export type { OcrOptions, OcrResult } from './ocr-service.js';

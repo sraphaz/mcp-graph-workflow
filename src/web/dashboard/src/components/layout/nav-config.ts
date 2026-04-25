@@ -36,6 +36,7 @@ import {
   Wrench,
   Settings,
   Shield,
+  Globe,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -58,7 +59,8 @@ export type TabId =
   | "davinci"
   | "docs"
   | "harness"
-  | "autopilot";
+  | "autopilot"
+  | "browser-pilot";
 
 export type NavGroupId = "visualization" | "intelligence" | "tools" | "system";
 
@@ -109,6 +111,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "context", label: "Context", icon: Target },
       { id: "benchmark", label: "Benchmark", icon: Timer },
+      { id: "browser-pilot", label: "Browser Pilot", icon: Globe, beta: true },
       { id: "languages", label: "Languages", icon: Languages, beta: true },
       { id: "davinci", label: "DaVinci", icon: Workflow, beta: true },
       { id: "siebel", label: "Siebel", icon: Database, beta: true },

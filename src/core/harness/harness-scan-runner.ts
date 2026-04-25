@@ -27,6 +27,7 @@ import { scanDocsCoverage } from "./docs-coverage-scanner.js";
 import { scanNamingClarity } from "./naming-clarity-scanner.js";
 import { scanErrorHandling } from "./error-handling-scanner.js";
 import { scanContextDensity } from "./context-density-scanner.js";
+import { scanProvenance } from "./provenance-scanner.js";
 import { computeHarnessabilityScore, type HarnessabilityResult } from "./harnessability-score.js";
 import {
   checkDependencyDirection,
@@ -125,7 +126,10 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
   // 7. Context Density
   const contextResult = scanContextDensity(typeFiles, scannerOpts);
 
-  // 8. Final Score (7 dimensions)
+  // 8. Provenance Coverage (requires DB)
+  const provenanceResult = db ? scanProvenance(db) : null;
+
+  // 9. Final Score (8 dimensions)
   const finalResult = computeHarnessabilityScore({
     typeScore: typeResult.typeScore,
     testScore: testResult.testScore,
@@ -134,9 +138,10 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     namingScore: namingResult.namingScore,
     errorHandlingScore: errorResult.errorHandlingScore,
     contextDensityScore: contextResult.contextDensityScore,
+    provenanceScore: provenanceResult?.provenanceScore,
   });
 
-  // 9. Build details summary
+  // 10. Build details summary
   const details: string[] = [
     `Type Coverage: ${typeResult.typeScore}% (${typeResult.totalFiles} files, ${typeResult.filesWithAny} with 'any')`,
     `Test Coverage: ${testResult.testScore}% (${testResult.totalModules} modules, ${testResult.testedModules} tested)`,
@@ -145,6 +150,9 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     `Naming Clarity: ${namingResult.namingScore}% (${namingResult.flaggedSymbols} violations in ${namingResult.totalSymbols} names)`,
     `Error Handling: ${errorResult.errorHandlingScore}% (${errorResult.rawThrows} raw throws, ${errorResult.swallowedCatches} swallowed catches)`,
     `Context Density: ${contextResult.contextDensityScore}% (${contextResult.documentedExports}/${contextResult.totalExports} exports documented)`,
+    provenanceResult
+      ? `Provenance Coverage: ${provenanceResult.provenanceScore}% (${provenanceResult.nodesWithReceipt}/${provenanceResult.totalNodes} nodes with receipt)`
+      : `Provenance Coverage: n/a (no DB)`,
   ];
 
   // Add fitness failure details
@@ -156,7 +164,7 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     }
   }
 
-  // 10. Merge violations from all scanners (v4)
+  // 11. Merge violations from all scanners (v4)
   let mergedViolations: ViolationDetail[] | undefined;
   if (collect) {
     const maxViolations = options?.maxViolations ?? 500;
@@ -190,7 +198,7 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     mergedViolations = all.slice(0, maxViolations);
   }
 
-  // 11. Rule suggestions from steering loop
+  // 12. Rule suggestions from steering loop
   const ruleSuggestions: RuleSuggestion[] = db
     ? new IssuePatternTracker(db).getSuggestedRules()
     : [];

@@ -70,6 +70,17 @@ import { registerAgentFormat } from "./agent-format.js";
 import { registerDelegate } from "./delegate.js";
 import { registerPipeline } from "./pipeline.js";
 import { registerDaemonStatus } from "./daemon-status.js";
+// Browser harness — direct CDP + self-healing helpers
+import { registerBrowserHarnessTool } from "./browser-harness.js";
+// V11 Maestro Phase 2 — read-only SQL bridge to the graph DB
+import { registerQueryGraph } from "./query-graph.js";
+// V11 Maestro Phase 3 — facade wrapper over the 53 analyze modes
+import { registerGraphLifecycle } from "./graph-lifecycle.js";
+// V11 Maestro Phase 4 — external arms via plan-payload contract
+import { registerGraphMaterialize } from "./graph-materialize.js";
+import { registerGraphValidateUi } from "./graph-validate-ui.js";
+import { registerGraphExploreWeb } from "./graph-explore-web.js";
+import { registerGraphRefreshDocs } from "./graph-refresh-docs.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
@@ -133,5 +144,15 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
   registerDelegate(server, store);
   registerPipeline(server, store);
   registerDaemonStatus(server);
+  registerBrowserHarnessTool(server, store);
+  // V11 Maestro Phase 2 — query_graph SQL read-only bridge
+  registerQueryGraph(server, store);
+  // V11 Maestro Phase 3 — graph_lifecycle facade over analyze modes
+  registerGraphLifecycle(server, store);
+  // V11 Maestro Phase 4 — external arms (graph rastreia, agente cliente executa)
+  registerGraphMaterialize(server, store);
+  registerGraphValidateUi(server);
+  registerGraphExploreWeb(server);
+  registerGraphRefreshDocs(server, store);
   wrapToolsWithGates(server, store);
 }

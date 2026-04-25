@@ -39,6 +39,7 @@ import type { RemediationSuggestion } from "../harness/violation-detail.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { LockConflictError } from "../utils/errors.js";
 import { enforceWipAndFileGates } from "./wip-gate.js";
+import { assembleSiblingContext } from "./assemble-sibling-context.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
 import { createShadowBranch } from "../autonomy/shadow-branch.js";
@@ -63,6 +64,12 @@ export interface StartTaskOptions {
   wipStrict?: boolean;
   /** Files this task will touch — used for file-overlap conflict detection */
   touchedFiles?: readonly string[];
+  /**
+   * v11 Context-Pollination: token budget cap for assembled siblingContext
+   * (default: 4000). Override via this flag to accommodate larger context
+   * windows (e.g. Haiku 200k) or stress-test with forced small budget.
+   */
+  siblingBudget?: number;
 }
 
 export interface StartTaskResult {
@@ -89,6 +96,15 @@ export interface StartTaskResult {
    * without a task-readiness regression.
    */
   modelHint?: TaskReadinessScore;
+  /**
+   * v11 Context-Pollination: markdown-rendered outputs from done sibling
+   * subtasks this task depends on. Empty string when the task has no parent
+   * epic, no depends_on edges to done siblings, or no artifacts persisted.
+   * Ready to inject into the agent prompt.
+   */
+  siblingContext: string;
+  /** Count of ancestor siblings dropped by the budget cap (0 when no truncation). */
+  siblingTruncatedCount: number;
 }
 
 /**
@@ -100,7 +116,7 @@ export function startTask(
   options?: StartTaskOptions,
 ): StartTaskResult | null {
   if (!store) return null;
-  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles } = options ?? {};
+  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles, siblingBudget } = options ?? {};
 
   const doc = store.toGraphDocument();
   if (!doc?.nodes) return null;
@@ -286,12 +302,36 @@ export function startTask(
     }
   }
 
+  // v11 Context-Pollination: assemble sibling artifacts from the parent epic.
+  // Empty string when task has no parentId (standalone), no depends_on edges to
+  // done siblings, or no artifacts persisted.
+  let siblingContext = "";
+  let siblingTruncatedCount = 0;
+  if (taskNode.parentId) {
+    try {
+      const assembled = assembleSiblingContext(store, {
+        epicId: taskNode.parentId,
+        subtaskId: taskNode.id,
+        tokenBudget: siblingBudget,
+      });
+      siblingContext = assembled.markdown;
+      siblingTruncatedCount = assembled.truncatedCount;
+    } catch (err) {
+      logger.warn("pipeline:start_task:sibling_assembly_failed", {
+        nodeId: taskNode.id,
+        error: String(err),
+      });
+    }
+  }
+
   logger.info("pipeline:start_task:ok", {
     nodeId: taskNode.id,
     title: taskNode.title,
     autoStart,
     hasTddHints: tddHints.length > 0,
     teamTask: !!lockManager,
+    siblingContextLen: siblingContext.length,
+    siblingTruncatedCount,
   });
 
   return {
@@ -301,6 +341,8 @@ export function startTask(
     tddHints,
     startedAt,
     harnessWarning,
+    siblingContext,
+    siblingTruncatedCount,
     ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
     ...(leaseToken ? { leaseToken } : {}),
     ...(prefetchHit ? { prefetchHit } : {}),

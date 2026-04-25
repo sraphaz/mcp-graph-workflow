@@ -118,16 +118,16 @@ describe('Docs Coverage Scanner', () => {
 // ── Task 3.4: Harnessability Score ─────────────────────
 
 describe('Harnessability Score', () => {
-  it('should compute weighted score from 4 dimensions (v2 weights, new dims default 100)', () => {
+  it('should compute weighted score from 4 dimensions (v3 weights, new dims default 100)', () => {
     const result = computeHarnessabilityScore({
       typeScore: 95,
       testScore: 80,
       fitnessScore: 100,
       docsScore: 70,
     });
-    // v2: 95*0.25 + 80*0.25 + 100*0.15 + 70*0.15 + 100*0.10 + 100*0.05 + 100*0.05
-    // = 23.75 + 20 + 15 + 10.5 + 10 + 5 + 5 = 89.25 ~ 89.3
-    expect(result.score).toBeCloseTo(89.3, 0);
+    // v3: 95*0.25 + 80*0.25 + 100*0.15 + 70*0.10 + 100*0.10 + 100*0.05 + 100*0.05 + 100*0.05
+    // = 23.75 + 20 + 15 + 7 + 10 + 5 + 5 + 5 = 90.75 ~ 90.8
+    expect(result.score).toBeCloseTo(90.8, 0);
     expect(result.grade).toBe('A');
   });
 
@@ -142,24 +142,26 @@ describe('Harnessability Score', () => {
   });
 
   it('should grade C for score 55-69', () => {
-    const result = computeHarnessabilityScore({ typeScore: 60, testScore: 60, fitnessScore: 60, docsScore: 60 });
+    // With v3 weights and provenanceScore=0: 60*0.25+60*0.25+60*0.15+60*0.10+60*0.10+60*0.05+60*0.05+0*0.05 = 57
+    const result = computeHarnessabilityScore({ typeScore: 60, testScore: 60, fitnessScore: 60, docsScore: 60, namingScore: 60, errorHandlingScore: 60, contextDensityScore: 60, provenanceScore: 0 });
     expect(result.grade).toBe('C');
   });
 
   it('should grade D for score < 55', () => {
-    const result = computeHarnessabilityScore({ typeScore: 0, testScore: 0, fitnessScore: 0, docsScore: 0, namingScore: 0, errorHandlingScore: 0, contextDensityScore: 0 });
+    const result = computeHarnessabilityScore({ typeScore: 0, testScore: 0, fitnessScore: 0, docsScore: 0, namingScore: 0, errorHandlingScore: 0, contextDensityScore: 0, provenanceScore: 0 });
     expect(result.grade).toBe('D');
     expect(result.score).toBe(0);
   });
 
-  it('should include breakdown in result with all 7 dimensions', () => {
-    const result = computeHarnessabilityScore({ typeScore: 90, testScore: 80, fitnessScore: 70, docsScore: 60, namingScore: 50, errorHandlingScore: 40, contextDensityScore: 30 });
+  it('should include breakdown in result with all 8 dimensions', () => {
+    const result = computeHarnessabilityScore({ typeScore: 90, testScore: 80, fitnessScore: 70, docsScore: 60, namingScore: 50, errorHandlingScore: 40, contextDensityScore: 30, provenanceScore: 20 });
     expect(result.breakdown.types).toEqual({ score: 90, weight: 0.25 });
     expect(result.breakdown.tests).toEqual({ score: 80, weight: 0.25 });
     expect(result.breakdown.fitness).toEqual({ score: 70, weight: 0.15 });
-    expect(result.breakdown.docs).toEqual({ score: 60, weight: 0.15 });
+    expect(result.breakdown.docs).toEqual({ score: 60, weight: 0.10 });
     expect(result.breakdown.naming).toEqual({ score: 50, weight: 0.10 });
     expect(result.breakdown.errors).toEqual({ score: 40, weight: 0.05 });
     expect(result.breakdown.context).toEqual({ score: 30, weight: 0.05 });
+    expect(result.breakdown.provenance).toEqual({ score: 20, weight: 0.05 });
   });
 });

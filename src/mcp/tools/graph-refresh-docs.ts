@@ -1,0 +1,102 @@
+/*!
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright © 2026 Diego Lima Nogueira de Paula
+ *
+ * This file is part of mcp-graph.
+ *
+ * mcp-graph is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License v3.0 or later, as published by
+ * the Free Software Foundation. See LICENSE for the full terms.
+ *
+ * mcp-graph is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.
+ *
+ * Commercial licenses are available — see COMMERCIAL.md.
+ */
+
+/**
+ * graph_refresh_docs — V11 Maestro Phase 4.6.
+ *
+ * Alias para `sync_stack_docs` sob o namespace `graph_*`. Comportamento
+ * idêntico — só renomeia a entrada MCP. `sync_stack_docs` continua
+ * funcionando (advisory; remoção controlada por DEPRECATED_TOOLS map em
+ * Phase 5).
+ */
+
+import { z } from "zod/v4";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { SqliteStore } from "../../core/store/sqlite-store.js";
+import { DocsCacheStore } from "../../core/docs/docs-cache-store.js";
+import { KnowledgeStore } from "../../core/store/knowledge-store.js";
+import { DocsSyncer } from "../../core/docs/docs-syncer.js";
+import { createMcpContext7Fetcher } from "../../core/docs/mcp-context7-fetcher.js";
+import { detectStack } from "../../core/docs/stack-detector.js";
+import { indexCachedDocs } from "../../core/rag/docs-indexer.js";
+import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
+import { logger } from "../../core/utils/logger.js";
+import { mcpText } from "../response-helpers.js";
+
+export function registerGraphRefreshDocs(server: McpServer, store: SqliteStore): void {
+  server.tool(
+    "graph_refresh_docs",
+    "Auto-detect project stack and sync library documentation via Context7. Alias of sync_stack_docs under the graph_* namespace (V11 Maestro). Caches results locally and indexes into knowledge store.",
+    {
+      basePath: z.string().optional().describe("Project base path (default: cwd)"),
+      libraries: z.array(z.string()).optional().describe("Specific library names to sync (overrides auto-detection)"),
+    },
+    async ({ basePath, libraries }) => {
+      logger.debug("tool:graph_refresh_docs", { basePath });
+      const projectPath = basePath ?? process.cwd();
+      const docsCacheStore = new DocsCacheStore(store.getDb());
+      const knowledgeStore = new KnowledgeStore(store.getDb());
+      const fetcher = createMcpContext7Fetcher();
+      const syncer = new DocsSyncer(docsCacheStore, fetcher);
+
+      let libNames: string[] = [];
+      if (libraries && libraries.length > 0) {
+        libNames = libraries;
+      } else {
+        const stack = await detectStack(projectPath);
+        if (stack) {
+          libNames = stack.libraries
+            .filter((l) => !l.name.startsWith("@types/"))
+            .slice(0, 20)
+            .map((l) => l.name);
+        }
+      }
+
+      if (libNames.length === 0) {
+        return mcpText({ ok: false, message: "No libraries detected to sync" });
+      }
+
+      const results: Array<{ lib: string; status: string }> = [];
+      for (const lib of libNames) {
+        try {
+          await syncer.syncLib(lib);
+          results.push({ lib, status: "synced" });
+        } catch (err) {
+          results.push({
+            lib,
+            status: `error: ${err instanceof Error ? err.message : String(err)}`,
+          });
+        }
+      }
+
+      const indexResult = indexCachedDocs(knowledgeStore, docsCacheStore);
+      indexEntitiesForSource(store.getDb(), "docs");
+
+      logger.info("tool:graph_refresh_docs:ok", {
+        librariesProcessed: results.length,
+        knowledgeIndexed: indexResult.documentsIndexed,
+      });
+      return mcpText({
+        ok: true,
+        alias: "sync_stack_docs",
+        librariesProcessed: results.length,
+        results,
+        knowledgeIndexed: indexResult.documentsIndexed,
+      });
+    },
+  );
+}

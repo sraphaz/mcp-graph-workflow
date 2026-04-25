@@ -32,6 +32,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { apiClient } from "@/lib/api-client";
 import type { JourneyMap, JourneyMapFull, JourneyScreen, JourneyEdge as JEdge, JourneyField } from "@/lib/types";
+import { JourneyRunPanel } from "./journey-run-panel.js";
 
 // ── Constants ────────────────────────────────────────────
 
@@ -554,6 +555,7 @@ export function JourneyTab(): React.JSX.Element {
   const [activeVariant, setActiveVariant] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [runPanelOpen, setRunPanelOpen] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<JourneyNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -654,13 +656,24 @@ export function JourneyTab(): React.JSX.Element {
 
   return (
     <div className="h-full flex flex-col">
-      <MapSelector
-        maps={maps}
-        selectedId={selectedMapId}
-        onSelect={setSelectedMapId}
-        onImport={() => setImportOpen(true)}
-        loading={false}
-      />
+      <div className="flex items-stretch border-b border-edge">
+        <div className="flex-1">
+          <MapSelector
+            maps={maps}
+            selectedId={selectedMapId}
+            onSelect={setSelectedMapId}
+            onImport={() => setImportOpen(true)}
+            loading={false}
+          />
+        </div>
+        <button
+          onClick={() => setRunPanelOpen((v) => !v)}
+          className={`px-3 text-xs font-medium border-l border-edge ${runPanelOpen ? "bg-accent text-white" : "bg-surface-alt hover:bg-surface-elevated"}`}
+          title="Toggle Run panel"
+        >
+          {runPanelOpen ? "Close Run" : "Run ▶"}
+        </button>
+      </div>
       {journeyData && (
         <VariantSelector
           variants={journeyData.variants}
@@ -703,6 +716,11 @@ export function JourneyTab(): React.JSX.Element {
             screen={selectedScreen}
             onClose={() => setSelectedScreen(null)}
           />
+        )}
+
+        {/* Run panel */}
+        {runPanelOpen && journeyData && (
+          <JourneyRunPanel map={journeyData} />
         )}
       </div>
 

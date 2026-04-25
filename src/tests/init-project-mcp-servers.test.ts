@@ -26,14 +26,15 @@ describe("mcp-servers-config", () => {
   // ── buildMcpServersConfig ─────────────────────────
 
   describe("buildMcpServersConfig", () => {
-    it("should return config with all 3 MCP server entries (no serena)", () => {
+    it("should return config with all 4 MCP server entries (no serena)", () => {
       const config = buildMcpServersConfig();
       const servers = config.mcpServers;
 
-      expect(Object.keys(servers)).toHaveLength(3);
+      expect(Object.keys(servers)).toHaveLength(4);
       expect(servers).toHaveProperty("mcp-graph");
       expect(servers).toHaveProperty("context7");
       expect(servers).toHaveProperty("playwright");
+      expect(servers).toHaveProperty("browser-use");
       expect(servers).not.toHaveProperty("serena");
     });
 
@@ -65,6 +66,7 @@ describe("mcp-servers-config", () => {
       expect(MCP_SERVER_NAMES).toContain("mcp-graph");
       expect(MCP_SERVER_NAMES).toContain("context7");
       expect(MCP_SERVER_NAMES).toContain("playwright");
+      expect(MCP_SERVER_NAMES).toContain("browser-use");
       expect(MCP_SERVER_NAMES).not.toContain("serena");
     });
   });

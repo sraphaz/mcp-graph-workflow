@@ -21,7 +21,7 @@ import {
   type HarnessabilityInput,
 } from "../../core/harness/harnessability-score.js";
 
-describe("computeHarnessabilityScore — 7 dimensions", () => {
+describe("computeHarnessabilityScore — 8 dimensions", () => {
   it("weights sum to exactly 1.0", () => {
     // Derive from known constants by checking perfect score
     const result = computeHarnessabilityScore({
@@ -32,6 +32,7 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 100,
       errorHandlingScore: 100,
       contextDensityScore: 100,
+      provenanceScore: 100,
     });
     expect(result.score).toBe(100);
   });
@@ -51,7 +52,7 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
     expect(result.breakdown).toHaveProperty("context");
   });
 
-  it("all 7 scores = 100 produces score 100 and grade A", () => {
+  it("all 8 scores = 100 produces score 100 and grade A", () => {
     const result = computeHarnessabilityScore({
       typeScore: 100,
       testScore: 100,
@@ -60,12 +61,13 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 100,
       errorHandlingScore: 100,
       contextDensityScore: 100,
+      provenanceScore: 100,
     });
     expect(result.score).toBe(100);
     expect(result.grade).toBe("A");
   });
 
-  it("applies correct weights: types=0.25, tests=0.25, fitness=0.15, docs=0.15, naming=0.10, errors=0.05, context=0.05", () => {
+  it("applies correct weights: types=0.25, tests=0.25, fitness=0.15, docs=0.10, naming=0.10, errors=0.05, context=0.05, provenance=0.05", () => {
     // Only typeScore = 100, rest = 0 → score should be 25
     const result = computeHarnessabilityScore({
       typeScore: 100,
@@ -75,15 +77,17 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 0,
       errorHandlingScore: 0,
       contextDensityScore: 0,
+      provenanceScore: 0,
     });
     expect(result.score).toBe(25);
     expect(result.breakdown.types.weight).toBe(0.25);
     expect(result.breakdown.tests.weight).toBe(0.25);
     expect(result.breakdown.fitness.weight).toBe(0.15);
-    expect(result.breakdown.docs.weight).toBe(0.15);
+    expect(result.breakdown.docs.weight).toBe(0.10);
     expect(result.breakdown.naming.weight).toBe(0.10);
     expect(result.breakdown.errors.weight).toBe(0.05);
     expect(result.breakdown.context.weight).toBe(0.05);
+    expect(result.breakdown.provenance.weight).toBe(0.05);
   });
 
   it("naming dimension correctly weighted at 0.10", () => {
@@ -95,6 +99,7 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 100,
       errorHandlingScore: 0,
       contextDensityScore: 0,
+      provenanceScore: 0,
     });
     expect(result.score).toBe(10);
   });
@@ -108,6 +113,7 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 0,
       errorHandlingScore: 100,
       contextDensityScore: 0,
+      provenanceScore: 0,
     });
     expect(result.score).toBe(5);
   });
@@ -121,11 +127,12 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 0,
       errorHandlingScore: 0,
       contextDensityScore: 100,
+      provenanceScore: 0,
     });
     expect(result.score).toBe(5);
   });
 
-  it("breakdown includes all 7 dimensions with correct scores", () => {
+  it("breakdown includes all 8 dimensions with correct scores", () => {
     const result = computeHarnessabilityScore({
       typeScore: 90,
       testScore: 80,
@@ -134,6 +141,7 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
       namingScore: 50,
       errorHandlingScore: 40,
       contextDensityScore: 30,
+      provenanceScore: 20,
     });
     expect(result.breakdown.types.score).toBe(90);
     expect(result.breakdown.tests.score).toBe(80);
@@ -142,5 +150,6 @@ describe("computeHarnessabilityScore — 7 dimensions", () => {
     expect(result.breakdown.naming.score).toBe(50);
     expect(result.breakdown.errors.score).toBe(40);
     expect(result.breakdown.context.score).toBe(30);
+    expect(result.breakdown.provenance.score).toBe(20);
   });
 });

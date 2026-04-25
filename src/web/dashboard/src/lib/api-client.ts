@@ -15,7 +15,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import type { GraphDocument, GraphEdge, GraphNode, GraphStats, IntegrationStatus, CodeGraphStatus, ProjectMemory, ReindexResult, LogEntry, FolderInfo, OpenFolderResult, BrowseResult, CodeGraphData, ImpactResult, KnowledgeStats, Skill, CustomSkill, CustomSkillInput, ContextBudget, JourneyMap, JourneyMapFull, TranslationAnalysis, TranslationJob, TranslationPrepareResult, TranslationFinalizeResult, TranslationStats, TranslationKnowledgeStats, TranslationProject, TranslationProjectFile, TranslationProjectSummary, TranslationGraphData, DreamStatus, DreamCycleResult, DreamMetrics, KanbanBoard, KanbanMoveResult, KanbanSuggestion, KanbanConfig } from "./types";
+import type { GraphDocument, GraphEdge, GraphNode, GraphStats, IntegrationStatus, CodeGraphStatus, ProjectMemory, ReindexResult, LogEntry, FolderInfo, OpenFolderResult, BrowseResult, CodeGraphData, ImpactResult, KnowledgeStats, Skill, CustomSkill, CustomSkillInput, ContextBudget, JourneyMap, JourneyMapFull, JourneyRun, TranslationAnalysis, TranslationJob, TranslationPrepareResult, TranslationFinalizeResult, TranslationStats, TranslationKnowledgeStats, TranslationProject, TranslationProjectFile, TranslationProjectSummary, TranslationGraphData, DreamStatus, DreamCycleResult, DreamMetrics, KanbanBoard, KanbanMoveResult, KanbanSuggestion, KanbanConfig } from "./types";
 
 const BASE = "/api/v1";
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -236,6 +236,12 @@ export const apiClient = {
     }),
   getJourneyScreenshots: () =>
     request<{ files: Array<{ name: string; size: number; url: string }> }>("/journey/screenshots"),
+  listJourneyRuns: (mapId: string) =>
+    request<{ runs: JourneyRun[] }>(`/journey/maps/${mapId}/runs`),
+  getJourneyRun: (runId: string) =>
+    request<JourneyRun>(`/journey/runs/${runId}`),
+  journeyRunScreenshotUrl: (runId: string, step: number) =>
+    `${BASE}/journey/runs/${runId}/screenshots/${step}`,
 
   // Siebel
   siebelGetObjects: (params?: { type?: string; limit?: number }) => {

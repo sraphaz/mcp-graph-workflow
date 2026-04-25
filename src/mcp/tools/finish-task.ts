@@ -44,11 +44,16 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       agentId: z.string().optional().describe("Agent ID for teamTask mode — verifies task ownership"),
       leaseToken: z.string().optional().describe("Lease token from start_task — used to release the lock"),
       shadowBranch: z.string().optional().describe("Shadow branch name from start_task — merged on done, discarded on blocked"),
+      artifacts: z.array(z.object({
+        kind: z.enum(["diff", "file", "interface", "decision", "note"]),
+        path: z.string().nullable().optional(),
+        content: z.string(),
+      })).optional().describe("v11 Context-Pollination: structured outputs to persist in subtask_artifacts. Optional — omit to keep v10 behavior."),
     },
-    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch }) => {
+    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, artifacts }) => {
       logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch });
+      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts });
 
       logger.info("tool:finish_task:ok", {
         nodeId,
@@ -109,6 +114,9 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       if (result.discoveredTestFiles && result.discoveredTestFiles.length > 0) {
         response.discoveredTestFiles = result.discoveredTestFiles;
       }
+
+      // v11 Context-Pollination: expose persisted artifact ids for auditoria
+      response.artifactIds = result.artifactIds;
 
       // Run optional quality gates (advisory mode — never blocks)
       if (qualityGates && qualityGates.length > 0) {

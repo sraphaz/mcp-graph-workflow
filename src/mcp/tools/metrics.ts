@@ -24,21 +24,134 @@ import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { buildTaskContext } from "../../core/context/compact-context.js";
 import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
 import { RecoveryMetricsStore } from "../../core/autonomy/recovery-metrics-store.js";
-import { ToolTokenStore } from "../../core/store/tool-token-store.js";
+import { ToolTokenStore, type UsageStats } from "../../core/store/tool-token-store.js";
 import { calculateCost } from "../../core/observability/cost-tracker.js";
+import { calculateDoraMetrics } from "../../core/insights/dora-metrics.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+/**
+ * Response shape for `metrics({mode: "dora_metrics"})` — V11 Maestro Phase 5.4.
+ * Replaces forecast(mode="dora") with the same payload so callers can migrate
+ * without behavior change.
+ */
+export interface DoraMetricsResponse {
+  ok: boolean;
+  mode: "dora_metrics";
+  error?: string;
+  metrics: ReturnType<typeof calculateDoraMetrics>;
+  interpretation: {
+    deploymentFrequency: string;
+    leadTime: string;
+    changeFailureRate: string;
+    mttr: string;
+  };
+}
+
+/**
+ * Pure helper — backs `metrics({mode: "dora_metrics"})`. The interpretation
+ * thresholds are kept identical to forecast.ts to make migration a no-op
+ * for downstream consumers.
+ */
+export function buildDoraMetricsResponse(store: SqliteStore): DoraMetricsResponse {
+  const project = store.getProject();
+  const metrics = calculateDoraMetrics(store);
+  const interpretation = {
+    deploymentFrequency: metrics.deploymentFrequency > 2
+      ? "Elite: >2 tasks/day"
+      : metrics.deploymentFrequency > 0.5
+        ? "High: >0.5 tasks/day"
+        : "Needs improvement: <0.5 tasks/day",
+    leadTime: metrics.leadTime.p85 < 24
+      ? "Elite: P85 < 1 day"
+      : metrics.leadTime.p85 < 168
+        ? "High: P85 < 1 week"
+        : "Needs improvement: P85 > 1 week",
+    changeFailureRate: metrics.changeFailureRate < 0.05
+      ? "Elite: <5%"
+      : metrics.changeFailureRate < 0.15
+        ? "High: <15%"
+        : "Needs improvement: >15%",
+    mttr: metrics.mttr < 1
+      ? "Elite: <1 hour"
+      : metrics.mttr < 24
+        ? "High: <1 day"
+        : "Needs improvement: >1 day",
+  };
+  return {
+    ok: project !== null,
+    mode: "dora_metrics",
+    ...(project ? {} : { error: "No project initialized" }),
+    metrics,
+    interpretation,
+  };
+}
+
+/** Response shape for `metrics({mode: "tool_usage"})` — V11 Maestro Phase 1 deprecation-gate evidence. */
+export interface ToolUsageResponse {
+  ok: boolean;
+  mode: "tool_usage";
+  error?: string;
+  sinceDays: number | null;
+  totalDistinctTools: number;
+  toolUsage: UsageStats[];
+}
+
+/**
+ * Build the tool_usage response (V11 Maestro Phase 1).
+ * Pure function — no side effects beyond reading from the store. Tested in isolation.
+ */
+export function buildToolUsageResponse(store: SqliteStore, sinceDays?: number): ToolUsageResponse {
+  const project = store.getProject();
+  if (!project) {
+    return {
+      ok: false,
+      mode: "tool_usage",
+      error: "No project initialized",
+      sinceDays: sinceDays ?? null,
+      totalDistinctTools: 0,
+      toolUsage: [],
+    };
+  }
+  const tokenStore = new ToolTokenStore(store.getDb());
+  const toolUsage = tokenStore.getUsageStats(project.id, sinceDays);
+  return {
+    ok: true,
+    mode: "tool_usage",
+    sinceDays: sinceDays ?? null,
+    totalDistinctTools: toolUsage.length,
+    toolUsage,
+  };
+}
 
 export function registerMetrics(server: McpServer, store: SqliteStore): void {
   server.tool(
     "metrics",
-    "Show project metrics. Mode 'stats' returns aggregate graph statistics; mode 'velocity' returns sprint velocity metrics; mode 'cost' returns per-tool token cost breakdown with budget alerts.",
+    "Show project metrics. Mode 'stats' returns aggregate graph statistics; mode 'velocity' returns sprint velocity metrics; mode 'cost' returns per-tool token cost breakdown with budget alerts; mode 'tool_usage' returns per-tool call telemetry for the deprecation gate (V11 Maestro).",
     {
-      mode: z.enum(["stats", "velocity", "cost"]).describe("Metrics mode: 'stats' for graph statistics, 'velocity' for sprint velocity, 'cost' for token cost breakdown"),
+      mode: z.enum(["stats", "velocity", "cost", "tool_usage", "dora_metrics"]).describe("Metrics mode: 'stats' for graph statistics, 'velocity' for sprint velocity, 'cost' for token cost breakdown, 'tool_usage' for per-tool call telemetry (V11 Maestro deprecation gate), 'dora_metrics' for DORA delivery metrics (V11 Maestro — replaces forecast(mode='dora'))"),
       sprint: z.string().optional().describe("Filter velocity results to a specific sprint (only used in velocity mode)"),
+      sinceDays: z.number().int().positive().optional().describe("Window for tool_usage mode (count calls in the last N days). Default: all time."),
     },
-    async ({ mode, sprint }) => {
-      logger.debug("tool:metrics", { mode, sprint });
+    async ({ mode, sprint, sinceDays }) => {
+      logger.debug("tool:metrics", { mode, sprint, sinceDays });
+
+      if (mode === "dora_metrics") {
+        const res = buildDoraMetricsResponse(store);
+        logger.info("tool:metrics:dora_metrics:ok", {
+          deployFreq: res.metrics.deploymentFrequency,
+        });
+        return mcpText(res);
+      }
+
+      if (mode === "tool_usage") {
+        const res = buildToolUsageResponse(store, sinceDays);
+        logger.info("tool:metrics:tool_usage:ok", {
+          totalDistinctTools: res.totalDistinctTools,
+          sinceDays: res.sinceDays,
+        });
+        return mcpText(res);
+      }
 
       if (mode === "cost") {
         const project = store.getProject();

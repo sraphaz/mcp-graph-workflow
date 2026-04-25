@@ -43,6 +43,7 @@ import { checkInvariants, getBuiltInInvariants, type InvariantResult } from "../
 import { discoverTestFiles } from "../harness/test-discovery.js";
 import { runSyntheticValidation, type SyntheticValidationResult } from "../harness/synthetic-validation-gate.js";
 import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branch.js";
+import { SubtaskArtifactsStore, type ArtifactKind } from "../store/subtask-artifacts-store.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -73,6 +74,15 @@ export interface FinishTaskOptions {
   lockManager?: LockManager;
   /** Shadow branch name from start_task (Phase D — Git Transactional Layer) */
   shadowBranch?: string;
+  /**
+   * v11 Context-Pollination: structured outputs to persist in subtask_artifacts.
+   * Optional — when omitted, behavior is identical to v10 (artifactIds = []).
+   */
+  artifacts?: Array<{
+    kind: ArtifactKind;
+    path?: string | null;
+    content: string;
+  }>;
 }
 
 export interface FinishTaskResult {
@@ -100,6 +110,12 @@ export interface FinishTaskResult {
   discoveredTestFiles?: string[];
   /** Synthetic mutation validation result (advisory) */
   syntheticValidation?: SyntheticValidationResult | null;
+  /**
+   * v11 Context-Pollination: ids dos artifacts persistidos nesta chamada.
+   * Sempre presente; [] quando options.artifacts vazio/ausente ou dedup resultou em zero novos.
+   * Dedup retorna o id existente (pode aparecer uma vez aqui por entry mesmo sendo dup).
+   */
+  artifactIds: string[];
 }
 
 export interface ContractGateResult {
@@ -121,7 +137,7 @@ export async function finishTask(
   options?: FinishTaskOptions,
 ): Promise<FinishTaskResult> {
   if (!nodeId) throw new Error("finishTask requires a nodeId");
-  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager, shadowBranch } = options ?? {};
+  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts } = options ?? {};
   const doc = store.toGraphDocument();
 
   // 0. Update testFiles if provided
@@ -147,6 +163,35 @@ export async function finishTask(
       } catch (err) {
         logger.warn("pipeline:finish_task:test_discovery_failed", { error: String(err) });
       }
+    }
+  }
+
+  // 0c. Persist v11 artifacts (ADR-v11-005 — optional, backward-compatible)
+  const artifactIds: string[] = [];
+  if (artifacts && artifacts.length > 0) {
+    try {
+      const node = store.getNodeById(nodeId);
+      // epic_id = first ancestor epic (derived from parentId chain); fallback to parentId or nodeId
+      const epicId = node?.parentId ?? nodeId;
+      const artifactsStore = new SubtaskArtifactsStore(store);
+      for (const a of artifacts) {
+        const id = artifactsStore.insert({
+          nodeId,
+          epicId,
+          kind: a.kind,
+          path: a.path ?? null,
+          content: a.content,
+        });
+        artifactIds.push(id);
+      }
+      logger.info("pipeline:finish_task:artifacts_persisted", {
+        nodeId,
+        count: artifactIds.length,
+      });
+    } catch (err) {
+      logger.warn("pipeline:finish_task:artifacts_persist_failed", {
+        error: String(err),
+      });
     }
   }
 
@@ -576,6 +621,7 @@ export async function finishTask(
     harnessRegression,
     ...(harnessGate ? { harnessGate } : {}),
     ruleSuggestions,
+    artifactIds,
     ...(remediationValidation ? { remediationValidation } : {}),
     contractGate,
     testGate,

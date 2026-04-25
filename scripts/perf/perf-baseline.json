@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-04-25T03:48:13.306Z",
+  "cliBin": "./dist/cli/index.js",
+  "runsPerMetric": 5,
+  "metrics": {
+    "cliColdHelpMs": 140.69541700184345,
+    "cliStatusJsonMs": 142.6258749999106,
+    "serveBootMs": 460.1987080015242,
+    "rssAfterHelpMb": 46,
+    "distSizeBytes": 12485321,
+    "distBinSizeBytes": 2426
+  },
+  "samples": {
+    "cliColdHelpMs": [
+      145.32612499967217,
+      163.723166000098,
+      140.69541700184345,
+      137.23033300042152,
+      139.56991700083017
+    ],
+    "cliStatusJsonMs": [
+      141.57112499698997,
+      142.6258749999106,
+      140.9847079999745,
+      148.69750000163913,
+      144.13295800238848
+    ],
+    "serveBootMs": [
+      560.2411250025034,
+      431.380708001554,
+      460.1987080015242
+    ]
+  },
+  "errors": {
+    "cliColdHelpMs": null,
+    "cliStatusJsonMs": null,
+    "serveBootMs": null
+  },
+  "targets": {
+    "cliColdHelpMs": 150,
+    "cliStatusJsonMs": 200,
+    "serveBootMs": 1000,
+    "rssAfterHelpMb": 80,
+    "distBinSizeBytes": 4194304
+  }
+}

@@ -939,17 +939,18 @@ export const HARNESS_SECTION = `## Harness Engineering — Agent Readiness Score
 Métrica composta (0-100) que mede quão preparado o código está para geração/manutenção por agentes AI.
 Quanto maior o score, menor o risco de alucinação e retrabalho.
 
-### 7 Dimensões
+### 8 Dimensões
 
 | Dimensão | Peso | O que mede |
 |----------|------|------------|
 | Type Coverage | 25% | % arquivos sem \`any\` |
 | Test Coverage | 25% | Módulos com arquivo de teste correspondente |
 | Architecture Fitness | 15% | Deps direction, circular deps, barrel integrity |
-| Docs Coverage | 15% | CLAUDE.md, README, rules/, docs/ |
+| Docs Coverage | 10% | CLAUDE.md, README, rules/, docs/ |
 | Naming Clarity | 10% | Nomes descritivos (sem data/result/temp/val genéricos) |
 | Error Handling | 5% | Typed errors, sem catch vazio, sem console.error |
 | Context Density | 5% | JSDoc em exports (contexto para agentes) |
+| Provenance Coverage | 5% | Proporção de nodes com receipt de origem (source_file) |
 
 ### Grades
 

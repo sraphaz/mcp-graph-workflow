@@ -361,6 +361,52 @@ export interface JourneyMapFull extends JourneyMap {
   variants: JourneyVariant[];
 }
 
+// ── Journey runs ─────────────────────────────────────────
+
+export type JourneyRunVerdict = "pass" | "fail" | "error" | "running";
+
+export interface JourneyPlannedStep {
+  index: number;
+  screenId: string | null;
+  helper: string;
+  args: Record<string, unknown>;
+}
+
+export interface JourneyStepResult {
+  index: number;
+  screenId: string | null;
+  helper: string;
+  args: Record<string, unknown>;
+  ok: boolean;
+  durationMs: number;
+  screenshotPath: string | null;
+  ocrText: string | null;
+  domText: string | null;
+  error: string | null;
+}
+
+export interface JourneyRun {
+  id: string;
+  mapId: string;
+  variantId: string | null;
+  nodeId: string | null;
+  prompt: string | null;
+  plan: JourneyPlannedStep[];
+  results: JourneyStepResult[];
+  verdict: JourneyRunVerdict;
+  durationMs: number;
+  createdAt: number;
+  finishedAt: number | null;
+}
+
+export type JourneyRunEvent =
+  | { type: "plan"; steps: JourneyPlannedStep[] }
+  | { type: "step"; index: number; screenId: string | null; helper: string; ok: boolean; durationMs: number; error: string | null }
+  | { type: "ocr"; index: number; text: string; confidence: number }
+  | { type: "verdict"; verdict: JourneyRunVerdict; ok: boolean; runId: string; durationMs: number }
+  | { type: "done"; runId: string }
+  | { type: "error"; error: string };
+
 // ── Translation ─────────────────────────────────────────
 
 export type TranslationJobStatus = "pending" | "analyzing" | "translating" | "validating" | "done" | "failed";

@@ -27,6 +27,12 @@ export interface AgentContext {
   constitutionPrinciples?: Array<{ title: string; description: string }>;
   relevantNodes?: Array<{ id: string; title: string; status: string }>;
   specContext?: string;
+  /**
+   * v11 Context-Pollination: pre-rendered markdown from done sibling subtasks
+   * the current task depends on. Empty string / undefined means no pollination —
+   * templates should render nothing (silent absence).
+   */
+  siblingContext?: string;
 }
 
 interface AgentDef {
@@ -89,6 +95,15 @@ function renderMarkdown(agent: string, ctx: AgentContext): string {
     lines.push("");
   }
 
+  if (ctx.siblingContext && ctx.siblingContext.length > 0) {
+    lines.push("## Sibling Context (v11 Context-Pollination)");
+    lines.push("");
+    lines.push("Outputs from predecessor subtasks this task depends on. Extend — do not reinvent:");
+    lines.push("");
+    lines.push(ctx.siblingContext);
+    lines.push("");
+  }
+
   return lines.join("\n");
 }
 
@@ -118,6 +133,16 @@ function renderToml(agent: string, ctx: AgentContext): string {
       lines.push(`title = "${node.title}"`);
       lines.push(`status = "${node.status}"`);
     }
+    lines.push("");
+  }
+
+  if (ctx.siblingContext && ctx.siblingContext.length > 0) {
+    // TOML multi-line string — escape triple-quotes defensively and emit as block
+    const escaped = ctx.siblingContext.replace(/"""/g, '\\"\\"\\"');
+    lines.push("[sibling_context]");
+    lines.push(`markdown = """`);
+    lines.push(escaped);
+    lines.push(`"""`);
   }
 
   return lines.join("\n");
@@ -135,12 +160,16 @@ function renderSkillMd(agent: string, ctx: AgentContext): string {
 }
 
 function renderJson(_agent: string, ctx: AgentContext): string {
-  return JSON.stringify({
+  const out: Record<string, unknown> = {
     phase: ctx.phase,
     principles: ctx.constitutionPrinciples ?? [],
     tasks: (ctx.relevantNodes ?? []).map((n) => ({ id: n.id, title: n.title, status: n.status })),
     specContext: ctx.specContext ?? null,
-  }, null, 2);
+  };
+  if (ctx.siblingContext && ctx.siblingContext.length > 0) {
+    out.siblingContext = ctx.siblingContext;
+  }
+  return JSON.stringify(out, null, 2);
 }
 
 /** Render context-aware agent instructions in the specified output format. */

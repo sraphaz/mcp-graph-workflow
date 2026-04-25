@@ -33,14 +33,16 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
       ragBudget: z.number().min(500).max(32000).optional().describe("Token budget for RAG context (default: 4000)"),
       autoStart: z.boolean().optional().describe("Auto-mark task in_progress (default: true)"),
       agentId: z.string().optional().describe("Agent ID for teamTask mode — enables exclusive task claiming"),
+      siblingBudget: z.number().min(0).max(200000).optional().describe("v11 Context-Pollination: token budget cap for siblingContext (default: 4000)"),
     },
-    async ({ nodeId, contextDetail, ragBudget, autoStart, agentId }) => {
-      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId });
+    async ({ nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget }) => {
+      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget });
 
       const result = startTask(store, {
         nodeId, contextDetail, ragBudget, autoStart,
         agentId,
         lockManager,
+        siblingBudget,
       });
 
       if (!result) {
@@ -72,6 +74,8 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
         ...(result.checkpoint ? { checkpoint: { snapshotId: result.checkpoint.snapshotId } } : {}),
         ...(result.shadowBranch ? { shadowBranch: result.shadowBranch } : {}),
         ...(result.modelHint ? { modelHint: result.modelHint } : {}),
+        siblingContext: result.siblingContext,
+        ...(result.siblingTruncatedCount > 0 ? { siblingTruncatedCount: result.siblingTruncatedCount } : {}),
       });
     },
   );

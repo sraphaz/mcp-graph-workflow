@@ -1,5 +1,11 @@
 # Security Policy
 
+> **Hardening against the OX Security MCP RCE disclosure** — see
+> [`docs/SECURITY-HARDENING-MCP-RCE.md`](docs/SECURITY-HARDENING-MCP-RCE.md)
+> for the concrete mitigations shipped in `mcp-graph`'s governance layer
+> (STDIO arg sanitiser, AST source validator, npm-registry allowlist,
+> tool-invocation audit with secret redaction + rate limits).
+
 ## Supported Versions
 
 mcp-graph is an independent research project maintained by

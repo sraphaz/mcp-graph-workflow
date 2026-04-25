@@ -22,6 +22,8 @@ export const RelationTypeSchema = z.enum([
   "related_to", "priority_over", "implements", "derived_from",
   // Game-specific / advanced relation types
   "provides", "consumes", "requires_asset",
+  // Decomposition
+  "decomposed_into",
 ]);
 
 export const GraphEdgeSchema = z.object({

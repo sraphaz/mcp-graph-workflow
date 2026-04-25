@@ -62,10 +62,10 @@ describe('NAV_GROUPS structure', () => {
     expect(tabIds).toEqual(['gitnexus', 'memories', 'insights', 'skills', 'harness', 'autopilot']);
   });
 
-  it('tools group should contain Context, Benchmark, Languages, DaVinci, Siebel, LSP', () => {
+  it('tools group should contain Context, Benchmark, Browser Pilot, Languages, DaVinci, Siebel, LSP', () => {
     const toolsGroup = NAV_GROUPS.find((g) => g.id === 'tools')!;
     const tabIds = toolsGroup.items.map((i) => i.id);
-    expect(tabIds).toEqual(['context', 'benchmark', 'languages', 'davinci', 'siebel', 'lsp']);
+    expect(tabIds).toEqual(['context', 'benchmark', 'browser-pilot', 'languages', 'davinci', 'siebel', 'lsp']);
   });
 
   it('system group should contain Docs, Logs', () => {
@@ -74,13 +74,13 @@ describe('NAV_GROUPS structure', () => {
     expect(tabIds).toEqual(['docs', 'logs']);
   });
 
-  it('all 19 tabs should be present across all groups (no duplicates)', () => {
+  it('all 20 tabs should be present across all groups (no duplicates)', () => {
     const allTabIds = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
-    expect(allTabIds).toHaveLength(19);
+    expect(allTabIds).toHaveLength(20);
     const expectedIds = new Set([
       'overview', 'graph', 'prd-backlog', 'kanban', 'journey',
       'gitnexus', 'memories', 'insights', 'skills', 'harness', 'autopilot',
-      'context', 'benchmark', 'languages', 'davinci', 'siebel', 'lsp',
+      'context', 'benchmark', 'browser-pilot', 'languages', 'davinci', 'siebel', 'lsp',
       'docs', 'logs',
     ]);
     expect(new Set(allTabIds)).toEqual(expectedIds);
@@ -89,7 +89,7 @@ describe('NAV_GROUPS structure', () => {
   it('should export NAV_ITEMS as flat array for backward compat', () => {
     expect(NAV_ITEMS).toBeDefined();
     expect(Array.isArray(NAV_ITEMS)).toBe(true);
-    expect(NAV_ITEMS).toHaveLength(19);
+    expect(NAV_ITEMS).toHaveLength(20);
   });
 
   it('NAV_ITEMS should equal the flat of NAV_GROUPS items', () => {

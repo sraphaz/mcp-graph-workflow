@@ -20,10 +20,15 @@
  * Generates the complete .mcp.json config with all integrated servers.
  */
 
+import { assertTrustedMcpServer, type AllowlistOptions } from "../security/registry-allowlist.js";
+import { logger } from "../utils/logger.js";
+import { getErrorMessage } from "../utils/errors.js";
+
 export const MCP_SERVER_NAMES = [
   "mcp-graph",
   "context7",
   "playwright",
+  "browser-use",
 ] as const;
 
 export type McpServerName = (typeof MCP_SERVER_NAMES)[number];
@@ -52,6 +57,12 @@ function getDefaultServers(): Record<McpServerName, McpServerEntry> {
       command: "npx",
       args: ["@playwright/mcp@latest"],
     },
+    // V11 Maestro Phase 4.5 — Browser Use MCP for agentic web exploration.
+    // Requires uvx + OPENAI_API_KEY or ANTHROPIC_API_KEY in env.
+    "browser-use": {
+      command: "uvx",
+      args: ["browser-use-mcp"],
+    },
   };
 }
 
@@ -60,11 +71,31 @@ function getDefaultServers(): Record<McpServerName, McpServerEntry> {
  * Standard servers always override existing entries with the same name.
  * Custom servers (not in MCP_SERVER_NAMES) are preserved.
  */
+export interface BuildMcpServersConfigOptions {
+  /** Phase 3 — MCP RCE hardening. Defaults to "warn" for backwards compatibility. */
+  allowlistMode?: "off" | "warn" | "strict";
+  allowlist?: AllowlistOptions;
+}
+
 export function buildMcpServersConfig(
   existing?: Partial<McpServersConfig>,
+  options: BuildMcpServersConfigOptions = {},
 ): McpServersConfig {
   const existingServers = (existing?.mcpServers ?? {}) as Record<string, McpServerEntry>;
   const defaultServers = getDefaultServers();
+  const mode = options.allowlistMode ?? "warn";
+
+  if (mode !== "off") {
+    for (const [name, entry] of Object.entries(existingServers)) {
+      if (name in defaultServers) continue;
+      try {
+        assertTrustedMcpServer(entry, options.allowlist);
+      } catch (err) {
+        if (mode === "strict") throw err;
+        logger.warn("mcp:registry:untrusted", { name, reason: getErrorMessage(err) });
+      }
+    }
+  }
 
   return {
     mcpServers: {

@@ -197,6 +197,62 @@ export class DeployReadinessError extends McpGraphError {
   }
 }
 
+// ── Browser-harness errors ──
+
+export class CdpConnectionError extends McpGraphError {
+  constructor(public readonly endpoint: string, cause: string) {
+    super(`CDP connection failed at ${endpoint}: ${cause}`);
+    this.name = "CdpConnectionError";
+  }
+}
+
+export class CdpProtocolError extends McpGraphError {
+  constructor(
+    public readonly method: string,
+    public readonly code: number,
+    cause: string,
+  ) {
+    super(`CDP ${method} failed (${code}): ${cause}`);
+    this.name = "CdpProtocolError";
+  }
+}
+
+export class HelperNotFoundError extends McpGraphError {
+  constructor(public readonly helperName: string) {
+    super(`Browser-harness helper not found: ${helperName}`);
+    this.name = "HelperNotFoundError";
+  }
+}
+
+export class HelperValidationError extends McpGraphError {
+  constructor(
+    public readonly helperName: string,
+    public readonly violations: string[],
+  ) {
+    super(
+      `Browser-harness helper "${helperName}" rejected by self-heal validator: ${violations.join("; ")}`,
+    );
+    this.name = "HelperValidationError";
+  }
+}
+
+export class HarnessSafetyViolation extends McpGraphError {
+  constructor(
+    public readonly rule: string,
+    public readonly detail: string,
+  ) {
+    super(`Browser-harness safety rule "${rule}" violated: ${detail}`);
+    this.name = "HarnessSafetyViolation";
+  }
+}
+
+export class HarnessSessionNotFoundError extends McpGraphError {
+  constructor(public readonly sessionId: string) {
+    super(`Browser-harness session not found: ${sessionId}`);
+    this.name = "HarnessSessionNotFoundError";
+  }
+}
+
 // ── Lifecycle errors ──
 
 export class LifecycleGateError extends McpGraphError {
@@ -208,5 +264,62 @@ export class LifecycleGateError extends McpGraphError {
   ) {
     super(`Lifecycle gate: "${toolName}" blocked in ${currentPhase} — ${reason}`);
     this.name = "LifecycleGateError";
+  }
+}
+
+// ── Security (Phase 3 — MCP RCE hardening) ──
+
+export type StdioSanitizationKind = "path" | "url" | "identifier" | "command-arg" | "cdp-method";
+
+export class StdioSanitizationError extends McpGraphError {
+  constructor(
+    public readonly kind: StdioSanitizationKind,
+    public readonly reason: string,
+    public readonly value: string,
+  ) {
+    super(`Unsafe ${kind}: ${reason}`);
+    this.name = "StdioSanitizationError";
+  }
+}
+
+export class UntrustedRegistryError extends McpGraphError {
+  constructor(
+    public readonly spec: string,
+    public readonly reason: string,
+  ) {
+    super(`Untrusted registry spec "${spec}": ${reason}`);
+    this.name = "UntrustedRegistryError";
+  }
+}
+
+export class PromptInjectionDetectedError extends McpGraphError {
+  constructor(
+    public readonly category: string,
+    public readonly sample: string,
+  ) {
+    super(`Prompt-injection marker (${category}) detected: ${sample}`);
+    this.name = "PromptInjectionDetectedError";
+  }
+}
+
+export class SourceValidationError extends McpGraphError {
+  constructor(
+    public readonly violations: readonly { kind: string; message: string; loc?: string }[],
+  ) {
+    super(
+      `Source validation rejected (${violations.length} violation${violations.length === 1 ? "" : "s"}): ` +
+        violations.map((v) => `${v.kind}: ${v.message}`).join("; "),
+    );
+    this.name = "SourceValidationError";
+  }
+}
+
+export class RateLimitExceededError extends McpGraphError {
+  constructor(
+    public readonly scope: string,
+    public readonly limitPerMinute: number,
+  ) {
+    super(`Rate limit exceeded for ${scope} (${limitPerMinute}/min)`);
+    this.name = "RateLimitExceededError";
   }
 }

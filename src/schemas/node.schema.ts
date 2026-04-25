@@ -25,6 +25,8 @@ export const NodeTypeSchema = z.enum([
   "performance_budget", "asset", "data_table", "metric", "config_schema",
   // Spec-driven development types
   "constitution",
+  // Journey execution
+  "journey_run",
 ]);
 
 export const NodeStatusSchema = z.enum([

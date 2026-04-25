@@ -106,7 +106,13 @@ export type GraphEventType =
   // Pipeline events (Hermes-agent integration)
   | "pipeline:started"
   | "pipeline:step_completed"
-  | "pipeline:completed";
+  | "pipeline:completed"
+  // OTS provenance events (Task 8.2)
+  | "ots:submitted"
+  | "ots:confirmed"
+  | "ots:retry_scheduled"
+  // v11 Context-Pollination events (Task 1.3)
+  | "subtask_artifact:created";
 
 export interface GraphEvent {
   type: GraphEventType;
@@ -297,4 +303,18 @@ export interface HarnessScanCompletedEvent extends GraphEvent {
 export interface HarnessRegressionEvent extends GraphEvent {
   type: "harness:regression_detected";
   payload: { before: number; after: number; delta: number };
+}
+
+// ── v11 Context-Pollination ──────────────────────────────────
+
+export interface SubtaskArtifactCreatedEvent extends GraphEvent {
+  type: "subtask_artifact:created";
+  payload: {
+    artifactId: string;
+    nodeId: string;
+    epicId: string;
+    kind: "diff" | "file" | "interface" | "decision" | "note";
+    contentHash: string;
+    path: string | null;
+  };
 }

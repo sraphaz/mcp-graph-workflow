@@ -19,6 +19,12 @@
         "-y",
         "@upstash/context7-mcp"
       ]
+    },
+    "browser-use": {
+      "command": "uvx",
+      "args": [
+        "browser-use-mcp"
+      ]
     }
   }
 }

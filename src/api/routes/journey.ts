@@ -21,9 +21,25 @@ import fs from "node:fs";
 import { z } from "zod/v4";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { JourneyStore } from "../../core/journey/journey-store.js";
+import {
+  JourneyRunsStore,
+  JourneyRunner,
+  OcrService,
+  type StepExecutor,
+} from "../../core/journey/index.js";
+import {
+  CdpClient,
+  HelpersRegistry,
+  HelpersRuntime,
+  seedBuiltInHelpers,
+  loadGuardrail,
+  isDomainAllowed,
+} from "../../core/browser-harness/index.js";
+import { HarnessSafetyViolation } from "../../core/utils/errors.js";
 import { validateBody } from "../middleware/validate.js";
 import { GraphNotInitializedError } from "../../core/utils/errors.js";
 import { STORE_DIR } from "../../core/utils/constants.js";
+import { logger } from "../../core/utils/logger.js";
 
 const JOURNEY_SCREENSHOTS_DIR = "journey-screenshots";
 const ID_MAX = 100;
@@ -98,6 +114,36 @@ function getJourneyStore(storeRef: StoreRef): JourneyStore {
   const project = store.getProject();
   if (!project) throw new GraphNotInitializedError();
   return new JourneyStore(store.getDb(), project.id);
+}
+
+const RunJourneySchema = z.object({
+  variantId: z.string().max(ID_MAX).nullable().optional(),
+  cdpEndpoint: z.string().url().max(URL_MAX),
+}).strict();
+
+interface JourneyRuntimeBundle {
+  registry: HelpersRegistry;
+  runtime: HelpersRuntime;
+  runs: JourneyRunsStore;
+  ocr: OcrService;
+}
+
+const runtimeCache = new WeakMap<object, JourneyRuntimeBundle>();
+
+function getJourneyRuntime(storeRef: StoreRef, basePath: string): JourneyRuntimeBundle {
+  const key = storeRef as unknown as object;
+  let bundle = runtimeCache.get(key);
+  if (!bundle) {
+    const db = storeRef.current.getDb();
+    const registry = new HelpersRegistry(db);
+    const runtime = new HelpersRuntime(registry);
+    const runs = new JourneyRunsStore(db, basePath);
+    const ocr = new OcrService({ lang: "eng" });
+    seedBuiltInHelpers(registry);
+    bundle = { registry, runtime, runs, ocr };
+    runtimeCache.set(key, bundle);
+  }
+  return bundle;
 }
 
 export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => string): Router {
@@ -294,6 +340,127 @@ export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => strin
         }));
 
       res.json({ files });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Journey runs: list by map ─────────────────────
+
+  router.get("/maps/:id/runs", (req, res, next) => {
+    try {
+      const bundle = getJourneyRuntime(storeRef, getBasePath());
+      const runs = bundle.runs.list({ mapId: req.params.id as string, limit: 50 });
+      res.json({ runs });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Journey runs: get one ─────────────────────────
+
+  router.get("/runs/:id", (req, res, next) => {
+    try {
+      const bundle = getJourneyRuntime(storeRef, getBasePath());
+      const run = bundle.runs.get(req.params.id as string);
+      if (!run) {
+        res.status(404).json({ error: "Journey run not found" });
+        return;
+      }
+      res.json(run);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Journey runs: screenshot bytes ────────────────
+
+  router.get("/runs/:id/screenshots/:step", (req, res, next) => {
+    try {
+      const bundle = getJourneyRuntime(storeRef, getBasePath());
+      const stepIdx = parseInt(req.params.step as string, 10);
+      if (isNaN(stepIdx)) {
+        res.status(400).json({ error: "Invalid step index" });
+        return;
+      }
+      const png = bundle.runs.loadScreenshot(req.params.id as string, stepIdx);
+      if (!png) {
+        res.status(404).json({ error: "Screenshot not found" });
+        return;
+      }
+      res.setHeader("Content-Type", "image/png");
+      res.send(png);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Start a journey run (SSE stream) ──────────────
+
+  router.post("/maps/:id/runs", validateBody(RunJourneySchema), async (req, res, next) => {
+    try {
+      const journeyStore = getJourneyStore(storeRef);
+      const map = journeyStore.getMap(req.params.id as string);
+      if (!map) {
+        res.status(404).json({ error: "Journey map not found" });
+        return;
+      }
+
+      const input = req.body as z.infer<typeof RunJourneySchema>;
+      const bundle = getJourneyRuntime(storeRef, getBasePath());
+      const guardrail = loadGuardrail();
+
+      const cdp = new CdpClient({ endpoint: input.cdpEndpoint });
+      await cdp.connect();
+
+      const executor: StepExecutor = async (helper, args) => {
+        if (helper === "navigate") {
+          const url = String(args.url ?? "");
+          if (!isDomainAllowed(url, guardrail)) {
+            throw new HarnessSafetyViolation("domain_not_allowed", url);
+          }
+        }
+        const value = (await bundle.runtime.invoke(cdp, helper, args)) as Record<string, unknown> | null | undefined;
+        const obj = value ?? {};
+        return {
+          ok: (obj.ok as boolean | undefined) ?? true,
+          base64: obj.base64 as string | undefined,
+          text: obj.text as string | undefined,
+          error: obj.error as string | undefined,
+          ...obj,
+        };
+      };
+
+      const runner = new JourneyRunner({
+        runs: bundle.runs,
+        executor,
+        ocr: bundle.ocr,
+      });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders?.();
+
+      const send = (event: unknown): void => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      };
+      const off = runner.on(send);
+
+      try {
+        const run = await runner.run({
+          map,
+          variantId: input.variantId ?? null,
+        });
+        send({ type: "done", runId: run.id });
+      } catch (err) {
+        logger.error("api:journey:run:error", { error: String(err) });
+        send({ type: "error", error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        off();
+        try { await cdp.close(); } catch { /* ignore */ }
+        res.end();
+      }
     } catch (err) {
       next(err);
     }

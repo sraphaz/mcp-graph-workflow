@@ -39,7 +39,9 @@ import {
 } from "../core/planner/lifecycle-phase.js";
 import { ToolCallLog } from "../core/store/tool-call-log.js";
 import { KnowledgeStore } from "../core/store/knowledge-store.js";
-import { ToolTokenStore } from "../core/store/tool-token-store.js";
+import { recordToolCallTelemetry, classifyError } from "./unified-gate-telemetry.js";
+import { resolveDeprecation, buildRemovedResponse, attachDeprecationNotice } from "./deprecated-tools.js";
+import { resolveModeDeprecation, extractModeFromArgs } from "./deprecated-modes.js";
 import { estimateTokens } from "../core/context/token-estimator.js";
 import { logger } from "../core/utils/logger.js";
 import { GraphEventBus } from "../core/events/event-bus.js";
@@ -550,6 +552,31 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
     const originalHandler = tool.handler;
 
     tool.handler = async (...args: unknown[]): Promise<unknown> => {
+      // ══ V11 Maestro Phase 5.1 — Deprecation gate (runs BEFORE everything else) ══
+      // "removed" tools are intercepted here; "advisory" silently logs; "warning"
+      // attaches a _deprecation_notice to the response after execution.
+      const deprecation = resolveDeprecation(name);
+      if (deprecation?.stage === "removed") {
+        logger.warn("deprecated-tool:removed:invoked", { tool: name, sinceVersion: deprecation.sinceVersion });
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(buildRemovedResponse(name, deprecation), null, 2) }],
+        };
+      }
+
+      // ── V11 Maestro mode-deprecation — same semantics, keyed by (tool, mode) ──
+      const argMode = extractModeFromArgs(args);
+      const modeDeprecation = argMode ? resolveModeDeprecation(name, argMode) : null;
+      if (modeDeprecation?.stage === "removed") {
+        logger.warn("deprecated-mode:removed:invoked", {
+          tool: name,
+          mode: argMode,
+          sinceVersion: modeDeprecation.sinceVersion,
+        });
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(buildRemovedResponse(`${name}({mode:'${argMode}'})`, modeDeprecation), null, 2) }],
+        };
+      }
+
       // ── Single context load ──
       const ctx = loadGateContext(store);
 
@@ -612,25 +639,65 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         }
       }
 
-      // ══ EXECUTE original handler ══
-      const result = await originalHandler(...args) as ToolCallResult;
+      // ══ EXECUTE original handler (with timing + error capture for telemetry — V11 Maestro Phase 1) ══
+      const startedAt = Date.now();
+      const inputText = JSON.stringify(args);
+      let result: ToolCallResult;
+      try {
+        result = await originalHandler(...args) as ToolCallResult;
+      } catch (err) {
+        const durationMs = Date.now() - startedAt;
+        const errorKind = classifyError(err);
+        // Telemetry on failure path — fail-silent inside, never throws
+        recordToolCallTelemetry(store, name, estimateTokens(inputText), 0, false, durationMs, errorKind);
+        // Re-throw the ORIGINAL error unchanged
+        throw err;
+      }
+      const durationMs = Date.now() - startedAt;
+
+      // ══ V11 Maestro Phase 5.1 — Attach _deprecation_notice (warning stage) ══
+      // Tool-level takes precedence; mode-level is the fallback when tool itself is healthy.
+      const noticeEntry = (deprecation?.stage === "warning")
+        ? { name, entry: deprecation }
+        : (modeDeprecation?.stage === "warning" && argMode)
+          ? { name: `${name}({mode:'${argMode}'})`, entry: modeDeprecation }
+          : null;
+
+      if (noticeEntry && result?.content?.[0]?.type === "text") {
+        try {
+          const text = result.content[0].text ?? "";
+          const parsed = JSON.parse(text);
+          if (parsed && typeof parsed === "object") {
+            const annotated = attachDeprecationNotice(parsed as Record<string, unknown>, noticeEntry.name, noticeEntry.entry);
+            result = {
+              ...result,
+              content: [{ type: "text" as const, text: JSON.stringify(annotated, null, 2) }],
+            };
+          }
+        } catch {
+          // Response wasn't JSON — leave it untouched. Notice still appears in logs.
+          logger.debug("deprecated:warning:notice-skip", { tool: noticeEntry.name, reason: "non-json-response" });
+        }
+      }
 
       // ══ POST-EXECUTION ══
       // Re-load context (handler may have changed state, e.g. set_phase)
       const postCtx = loadGateContext(store);
 
-      // ── Token tracking ──
-      try {
-        const project = store.getProject();
-        if (project) {
-          const inputText = JSON.stringify(args);
-          const outputText = result?.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
-          const toolTokenStore = new ToolTokenStore(store.getDb());
-          toolTokenStore.record(project.id, name, estimateTokens(inputText), estimateTokens(outputText));
-        }
-      } catch {
-        logger.debug("unified-gate: token tracking skipped", { tool: name });
-      }
+      // ── Token tracking + telemetry (V11 Maestro Phase 1) ──
+      // recordCall writes input_tokens, output_tokens AND success/duration_ms/error_kind in one row.
+      // Replaces legacy ToolTokenStore.record() — same table, same cost-tracker compatibility.
+      const outputText = result?.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
+      const succeeded = !result?.isError;
+      recordToolCallTelemetry(
+        store,
+        name,
+        estimateTokens(inputText),
+        estimateTokens(outputText),
+        succeeded,
+        durationMs,
+        succeeded ? undefined : "tool_returned_error",
+      );
 
       // ── Tool result persistence ──
       if (!result?.isError) {
