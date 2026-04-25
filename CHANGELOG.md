@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.1.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.1...mcp-graph-v10.1.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* **cli:** update isFeatureEnabled test for ADR-0054 v2 defaults ([#239](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/239)) ([2eb5369](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/2eb5369fb1040b2607ebd58e30be4c079964568e))
+
 ## [10.1.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.0...mcp-graph-v10.1.1) (2026-04-25)
 
 
