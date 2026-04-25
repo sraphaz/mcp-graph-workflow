@@ -4,13 +4,13 @@
   "description": "MCP Graph Workflow CLI — modern Ink-based REPL with /slash commands. AI-augmented dev workflow agent: graph-driven task tracking + LLM orchestration. Install in 60 seconds, no Docker.",
   "license": "AGPL-3.0-or-later",
   "author": "Diego Lima Nogueira de Paula",
-  "homepage": "https://github.com/diegonogueira/mcp-graph-workflow/tree/master/tools/cli",
+  "homepage": "https://github.com/DiegoNogueiraDev/mcp-graph-workflow/tree/master/tools/cli",
   "bugs": {
-    "url": "https://github.com/diegonogueira/mcp-graph-workflow/issues"
+    "url": "https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/diegonogueira/mcp-graph-workflow.git",
+    "url": "https://github.com/DiegoNogueiraDev/mcp-graph-workflow.git",
     "directory": "tools/cli"
   },
   "type": "module",
