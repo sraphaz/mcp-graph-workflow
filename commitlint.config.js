@@ -6,6 +6,10 @@ export default {
   ignores: [
     (message) =>
       /^chore\(master\): release /.test(message) ||
+      // release-please v4 monorepo mode emits `chore: release master` (no scope)
+      // when bumping multiple packages — exempt alongside the legacy single-pkg
+      // `chore(master): release X.Y.Z` format.
+      /^chore: release master/.test(message) ||
       /^chore\(deps(-dev)?\): bump /.test(message) ||
       /Signed-off-by:\s+dependabot\[bot\]/.test(message) ||
       /Signed-off-by:\s+renovate\[bot\]/.test(message),
