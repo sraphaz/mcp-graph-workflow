@@ -44,9 +44,10 @@ async function defaultResolver(): Promise<GateModule> {
   // Cast through `unknown` because the published types lag the new exports
   // (`loadGateContext`, `checkGates` options) until the parent dist/ is rebuilt.
   // Runtime presence is checked the first time getGateDeps() is invoked.
-  return (await import(
-    "@mcp-graph-workflow/mcp-graph/dist/mcp/unified-gate.js"
-  )) as unknown as GateModule;
+  // String assignment hides the path from TS module resolution (CLI typechecks
+  // standalone without parent package's types being installed).
+  const parentGatePath = "@mcp-graph-workflow/mcp-graph/dist/mcp/unified-gate.js";
+  return (await import(parentGatePath)) as unknown as GateModule;
 }
 
 export function setGateResolver(

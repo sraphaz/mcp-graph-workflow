@@ -55,9 +55,10 @@ async function defaultResolver(): Promise<StoreModule> {
   // Default convention: parent project ships `dist/core/store/sqlite-store.js`.
   // The CLI is expected to run inside (or alongside) an `npm install`ed
   // `@mcp-graph-workflow/mcp-graph` package.
-  return (await import(
-    "@mcp-graph-workflow/mcp-graph/dist/core/store/sqlite-store.js"
-  )) as StoreModule;
+  // String assignment hides the path from TS module resolution (CLI typechecks
+  // standalone without parent package's types being installed).
+  const parentStorePath = "@mcp-graph-workflow/mcp-graph/dist/core/store/sqlite-store.js";
+  return (await import(parentStorePath)) as StoreModule;
 }
 
 export function setStoreResolver(
