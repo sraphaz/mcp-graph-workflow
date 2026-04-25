@@ -19,8 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
+      root_release_created: ${{ steps.release.outputs['.--release_created'] }}
+      root_tag_name: ${{ steps.release.outputs['.--tag_name'] }}
+      cli_release_created: ${{ steps.release.outputs['tools/cli--release_created'] }}
+      cli_tag_name: ${{ steps.release.outputs['tools/cli--tag_name'] }}
+      cli_version: ${{ steps.release.outputs['tools/cli--version'] }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -30,7 +34,7 @@ jobs:
           token: ${{ secrets.RELEASE_PAT }}
 
       - name: Auto-merge release PR
-        if: "!steps.release.outputs.release_created"
+        if: ${{ steps.release.outputs.releases_created != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           REPO: ${{ github.repository }}
@@ -43,7 +47,7 @@ jobs:
 
   publish:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: ${{ needs.release-please.outputs.root_release_created == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: npm
@@ -89,9 +93,49 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-cli:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.cli_release_created == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Install cli workspace dependencies
+        run: cd tools/cli && npm ci
+
+      - name: Typecheck cli
+        run: cd tools/cli && npm run compile
+
+      - name: Test cli
+        run: cd tools/cli && npm test
+
+      - name: Build cli
+        run: cd tools/cli && npm run build
+
+      - name: Verify cli package (dry run)
+        run: cd tools/cli && npm publish --dry-run --access public
+
+      - name: Publish cli to npm
+        run: cd tools/cli && npm publish --access public --provenance --tag beta
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   smoke-test:
     needs: [release-please, publish]
-    if: needs.release-please.outputs.release_created == 'true'
+    if: ${{ needs.release-please.outputs.root_release_created == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -102,7 +146,7 @@ jobs:
         run: sleep 30
       - name: Install published package
         run: |
-          VERSION=$(echo "${{ needs.release-please.outputs.tag_name }}" | sed 's/^mcp-graph-v//')
+          VERSION=$(echo "${{ needs.release-please.outputs.root_tag_name }}" | sed 's/^mcp-graph-v//')
           npm install -g "@mcp-graph-workflow/mcp-graph@${VERSION}"
       - name: Smoke test CLI
         run: |

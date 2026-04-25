@@ -369,6 +369,106 @@ export function buildBlockedResponseCodeIntel(toolName: string, warnings: CodeIn
   };
 }
 
+// ── Deprecation gate ──────────────────────────────────────
+
+/**
+ * Deprecation lifecycle stage for an MCP tool.
+ * - `advisory`: tool runs normally, a warn log is emitted (silent to clients).
+ * - `warning`: tool runs normally, response gets an extra `_deprecation_notice` content item.
+ * - `removed`: tool is blocked, a structured `tool_removed` error is returned.
+ *   Re-enabled in advisory mode when `MCP_GRAPH_LEGACY_TOOLS=on`.
+ */
+export type DeprecationStage = "advisory" | "warning" | "removed";
+
+export interface DeprecationEntry {
+  stage: DeprecationStage;
+  replacement?: string;
+  migrationDoc?: string;
+  reason?: string;
+  since?: string;
+}
+
+export interface DeprecationNotice {
+  tool: string;
+  stage: DeprecationStage;
+  replacement?: string;
+  migrationDoc?: string;
+  reason?: string;
+  since?: string;
+}
+
+/**
+ * Registry of deprecated tools — populated by deprecation cycle (Onda 5).
+ * Mutable to allow tests and future migrations to register entries.
+ */
+export const DEPRECATED_TOOLS: Record<string, DeprecationEntry> = {
+  // Wave D2 (v11 Maestro Surface) — set_phase migrates to `mg set-phase` CLI.
+  // Advisory stage: tool runs normally, only a server-side warn log fires.
+  set_phase: {
+    stage: "advisory",
+    replacement: "mg set-phase",
+    since: "v11.x",
+    migrationDoc: "docs/_internal/migration/v11-maestro-surface.md#set_phase",
+    reason: "set_phase is moving to the `mg set-phase` CLI command. The MCP tool stays available during the deprecation window and graduates to `warning` then `removed` across two minor releases.",
+  },
+};
+
+/** Look up a tool's deprecation entry, if any. */
+export function getDeprecationEntry(toolName: string): DeprecationEntry | undefined {
+  return DEPRECATED_TOOLS[toolName];
+}
+
+/** Returns true when MCP_GRAPH_LEGACY_TOOLS=on (escape hatch for removed tools). */
+export function isLegacyToolsModeEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.MCP_GRAPH_LEGACY_TOOLS === "on";
+}
+
+/**
+ * Resolve the effective deprecation stage. `removed` is downgraded to `advisory`
+ * when MCP_GRAPH_LEGACY_TOOLS=on so users can opt back in temporarily.
+ */
+export function resolveEffectiveStage(
+  entry: DeprecationEntry,
+  env: NodeJS.ProcessEnv = process.env,
+): DeprecationStage {
+  if (entry.stage === "removed" && isLegacyToolsModeEnabled(env)) return "advisory";
+  return entry.stage;
+}
+
+/** Build the `_deprecation_notice` payload appended to responses for `warning` stage. */
+export function buildDeprecationNotice(toolName: string, entry: DeprecationEntry): DeprecationNotice {
+  return {
+    tool: toolName,
+    stage: entry.stage,
+    ...(entry.replacement ? { replacement: entry.replacement } : {}),
+    ...(entry.migrationDoc ? { migrationDoc: entry.migrationDoc } : {}),
+    ...(entry.reason ? { reason: entry.reason } : {}),
+    ...(entry.since ? { since: entry.since } : {}),
+  };
+}
+
+/** Build the structured error returned when a `removed` tool is invoked. */
+export function buildRemovedToolError(toolName: string, entry: DeprecationEntry): ToolCallResult {
+  const hint = entry.replacement
+    ? `Use ${entry.replacement} instead. Set MCP_GRAPH_LEGACY_TOOLS=on to re-enable temporarily in advisory mode.`
+    : "Set MCP_GRAPH_LEGACY_TOOLS=on to re-enable temporarily in advisory mode.";
+  return {
+    content: [{
+      type: "text",
+      text: JSON.stringify({
+        error: "tool_removed",
+        tool: toolName,
+        replacement: entry.replacement ?? null,
+        migrationDoc: entry.migrationDoc ?? null,
+        reason: entry.reason ?? `Tool ${toolName} has been removed.`,
+        since: entry.since ?? null,
+        hint,
+      }),
+    }],
+    isError: true,
+  };
+}
+
 // ── Internal helpers ──────────────────────────────────────
 
 interface RegisteredTool {
@@ -414,7 +514,7 @@ function extractRelevantArgs(toolName: string, toolArgs: Record<string, unknown>
 
 // ── Shared context for a single tool call ─────────────────
 
-interface GateContext {
+export interface GateContext {
   doc: GraphDocument;
   phase: LifecyclePhase;
   lifecycleMode: StrictnessMode;
@@ -423,7 +523,7 @@ interface GateContext {
   hasSnapshots: boolean;
 }
 
-function loadGateContext(store: SqliteStore): GateContext | null {
+export function loadGateContext(store: SqliteStore): GateContext | null {
   try {
     const doc = store.toGraphDocument();
     const phaseOverrideValue = store.getProjectSetting("lifecycle_phase_override");
@@ -454,6 +554,22 @@ export interface GateResult {
   warnings: Array<LifecycleWarning | CodeIntelWarning>;
 }
 
+export interface CheckGatesOptions {
+  /**
+   * When true (default), READ_ONLY_TOOLS skip the tool-phase gate. When false,
+   * every tool — including read-only — runs through `checkToolGate`. The wrapper
+   * (`wrapToolsWithGates`) uses `false` to preserve historical behavior; new
+   * callers (e.g. PreToolUse hook handler) should leave the default.
+   */
+  applyReadOnlySkip?: boolean;
+  /**
+   * When true, skip the code-intelligence block computation. The wrapper sets this
+   * because it builds the code-intel block separately in its post-execution path;
+   * running it twice wastes work and may double-fire stale-warning dedup.
+   */
+  skipCodeIntel?: boolean;
+}
+
 /**
  * Check all gates (lifecycle + code intelligence) for a tool call.
  * Single read of store.toGraphDocument and detectCurrentPhase.
@@ -464,7 +580,9 @@ export function checkGates(
   toolName: string,
   args: unknown[],
   currentGitHash?: string | null,
+  options: CheckGatesOptions = {},
 ): GateResult {
+  const applyReadOnlySkip = options.applyReadOnlySkip ?? true;
   const ctx = loadGateContext(store);
   if (!ctx) {
     return { allowed: true, warnings: [] };
@@ -475,7 +593,7 @@ export function checkGates(
   // ── Lifecycle gate ──
   const gateWarnings: LifecycleWarning[] = [];
 
-  if (!READ_ONLY_TOOLS.has(toolName)) {
+  if (!applyReadOnlySkip || !READ_ONLY_TOOLS.has(toolName)) {
     gateWarnings.push(...checkToolGate(ctx.doc, ctx.phase, toolName, ctx.lifecycleMode));
   }
 
@@ -517,7 +635,7 @@ export function checkGates(
 
   // ── Code Intelligence gate ──
   let codeIntelBlock: CodeIntelligenceBlock | undefined;
-  if (ctx.codeIntelMode !== "off") {
+  if (!options.skipCodeIntel && ctx.codeIntelMode !== "off") {
     try {
       const project = store.getProject();
       if (project) {
@@ -552,8 +670,31 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
     const originalHandler = tool.handler;
 
     tool.handler = async (...args: unknown[]): Promise<unknown> => {
-      // ══ V11 Maestro Phase 5.1 — Deprecation gate (runs BEFORE everything else) ══
-      // "removed" tools are intercepted here; "advisory" silently logs; "warning"
+      // ══ PRE-EXECUTION: Deprecation gate (HEAD local API) ══
+      // Runs before lifecycle/code-intel: removed tools must short-circuit even
+      // when other gates would have approved them.
+      const deprecationEntry = getDeprecationEntry(name);
+      let effectiveDeprecationStage: DeprecationStage | undefined;
+      if (deprecationEntry) {
+        effectiveDeprecationStage = resolveEffectiveStage(deprecationEntry);
+        if (effectiveDeprecationStage === "removed") {
+          logger.warn("unified-gate: deprecated tool blocked (removed)", {
+            tool: name,
+            replacement: deprecationEntry.replacement,
+          });
+          return buildRemovedToolError(name, deprecationEntry);
+        }
+        if (effectiveDeprecationStage === "advisory") {
+          logger.warn("unified-gate: deprecated tool called (advisory)", {
+            tool: name,
+            originalStage: deprecationEntry.stage,
+            replacement: deprecationEntry.replacement,
+          });
+        }
+      }
+
+      // ══ V11 Maestro Phase 5.1 — Deprecation gate (deprecated-tools.ts API) ══
+      // "removed" tools intercepted here; "advisory" silently logs; "warning"
       // attaches a _deprecation_notice to the response after execution.
       const deprecation = resolveDeprecation(name);
       if (deprecation?.stage === "removed") {
@@ -581,42 +722,25 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       const ctx = loadGateContext(store);
 
       // ══ PRE-EXECUTION: Lifecycle gate ══
-      if (ctx) {
-        const gateWarnings: LifecycleWarning[] = [];
-
-        // Tool gate
-        gateWarnings.push(...checkToolGate(ctx.doc, ctx.phase, name, ctx.lifecycleMode));
-
-        // Status gate
-        const statusArgs = extractStatusArgs(name, args);
-        if (statusArgs.nodeId && statusArgs.newStatus) {
-          const statusResult = checkStatusGate(ctx.doc, ctx.phase, statusArgs.nodeId, statusArgs.newStatus, ctx.lifecycleMode);
-          gateWarnings.push(...statusResult.warnings);
-        }
-
-        // Prerequisite gate
-        const prereqModeValue = store.getProjectSetting("tool_prerequisites_mode");
-        const prereqEnabled = prereqModeValue !== "off";
-        const prereqMode: StrictnessMode = prereqModeValue === "strict" ? "strict" : "advisory";
-
-        if (prereqEnabled) {
-          const toolArgs = (args[0] as Record<string, unknown>) ?? {};
-          const nodeId = extractNodeId(args);
-          const project = store.getProject();
-          if (project) {
-            const toolCallLog = new ToolCallLog(store.getDb());
-            gateWarnings.push(...checkPrerequisiteGate(
-              ctx.phase, name, toolArgs, nodeId,
-              (nId, t, tArgs) => toolCallLog.hasBeenCalled(project.id, nId, t, tArgs),
-              prereqMode,
-            ));
-          }
-        }
-
-        // Block if any error-severity warning
-        if (gateWarnings.some((w) => w.severity === "error")) {
+      // Delegate to checkGates() with applyReadOnlySkip=false to preserve the
+      // wrapper's historical "always run tool gate" behavior. The hook-driven
+      // path (B2) will use the default (skip=true).
+      //
+      // Feature flag MCP_GRAPH_GATES_IN_HOOKS=on (Wave C2) short-circuits the
+      // wrapper-side gate so the PreToolUse hook is the sole pre-execution
+      // enforcement layer. The deprecation gate above is intentionally NOT
+      // guarded — `removed` tools must stay blocked in either mode.
+      if (ctx && process.env.MCP_GRAPH_GATES_IN_HOOKS !== "on") {
+        const gateResult = checkGates(store, name, args, undefined, {
+          applyReadOnlySkip: false,
+          skipCodeIntel: true,
+        });
+        const lifecycleWarnings = gateResult.warnings.filter(
+          (w): w is LifecycleWarning => "severity" in w && (w.severity === "error" || w.severity === "warning" || w.severity === "info"),
+        );
+        if (lifecycleWarnings.some((w) => w.severity === "error")) {
           logger.warn("unified-gate: tool blocked by lifecycle gate", { tool: name, phase: ctx.phase });
-          return buildBlockedResponse(name, ctx.phase, gateWarnings);
+          return buildBlockedResponse(name, ctx.phase, lifecycleWarnings);
         }
       }
 
@@ -793,6 +917,20 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
           result.content.push({ type: "text", text: JSON.stringify({ _lifecycle: lifecycleBlock }) });
         } catch {
           logger.debug("unified-gate: lifecycle block skipped", { tool: name });
+        }
+      }
+
+      // ── Append _deprecation_notice for `warning` stage ──
+      if (effectiveDeprecationStage === "warning" && deprecationEntry && result && Array.isArray(result.content) && !result.isError) {
+        try {
+          const notice = buildDeprecationNotice(name, deprecationEntry);
+          result.content.push({ type: "text", text: JSON.stringify({ _deprecation_notice: notice }) });
+          logger.warn("unified-gate: deprecated tool called (warning)", {
+            tool: name,
+            replacement: deprecationEntry.replacement,
+          });
+        } catch {
+          logger.debug("unified-gate: deprecation notice skipped", { tool: name });
         }
       }
 

@@ -48,7 +48,10 @@ function addInProgressNode(store: SqliteStore): string {
 
 // ── AC 1: metadata._fileLeases released on done ────────────────────────────
 
-describe("finishTask file locks (AC 1 — release _fileLeases on done)", () => {
+// Default 15s timeout was tight under concurrent shard load — bumped to 60s
+// for the file-locks pipeline tests. The code-under-test runs in <100ms; the
+// budget is for OS-level scheduling jitter on CI Linux runners.
+describe("finishTask file locks (AC 1 — release _fileLeases on done)", { timeout: 60_000 }, () => {
   let store: SqliteStore;
   let lockManager: LockManager;
 
@@ -113,7 +116,7 @@ describe("finishTask file locks (AC 1 — release _fileLeases on done)", () => {
 
 // ── AC 2: git diff --name-only harvested to touchedFilesObserved ───────────
 
-describe("finishTask git harvest (AC 2 — touchedFilesObserved)", () => {
+describe("finishTask git harvest (AC 2 — touchedFilesObserved)", { timeout: 60_000 }, () => {
   let store: SqliteStore;
 
   beforeEach(() => {
@@ -145,7 +148,7 @@ describe("finishTask git harvest (AC 2 — touchedFilesObserved)", () => {
 
 // ── AC 3: no orphan file locks after happy-path finish ────────────────────
 
-describe("finishTask file locks (AC 3 — no orphan locks after happy-path)", () => {
+describe("finishTask file locks (AC 3 — no orphan locks after happy-path)", { timeout: 60_000 }, () => {
   let store: SqliteStore;
   let lockManager: LockManager;
 

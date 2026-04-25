@@ -59,53 +59,6 @@ export const ALL_ANALYZE_MODES = [
 
 export type AnalyzeMode = typeof ALL_ANALYZE_MODES[number];
 
-const PHASE_MODE_MAP: Record<LifecyclePhase, ReadonlyArray<AnalyzeMode>> = {
-  ANALYZE: [
-    "prd_quality", "scope", "ready", "risk", "blockers",
-    "decompose", "smart_decompose", "formula_consistency",
-    "contract_coverage", "data_integrity",
-  ],
-  DESIGN: [
-    "adr", "adr_challenge", "traceability", "coupling",
-    "interfaces", "tech_risk", "design_ready",
-  ],
-  PLAN: [
-    "backlog_health", "sprint_health", "performance_budget",
-    "scenario_coverage", "asset_blockers", "config_coverage",
-    "metric_coverage", "concurrency_risk", "critical_path", "cycles",
-  ],
-  IMPLEMENT: [
-    "implement_done", "tdd_check", "progress", "code_sync",
-    "code_quality", "test_coverage", "security_scan", "orphan_tasks",
-  ],
-  VALIDATE: [
-    "validate_ready", "done_integrity", "status_flow",
-    "observability_check", "state_completeness",
-  ],
-  REVIEW: [
-    "review_ready", "harness_scan", "harness_trend",
-    "harness_advice", "harness_remediate",
-  ],
-  HANDOFF: [
-    "handoff_ready", "doc_completeness",
-  ],
-  DEPLOY: [
-    "deploy_ready", "release_check",
-  ],
-  LISTENING: [
-    "listening_ready", "economy_simulation", "cfd", "auto_ready",
-  ],
-};
-
-/**
- * Modes that `graph_lifecycle({phase})` runs in batch.
- * Returns `[]` for unknown phases — no throw, safe for arbitrary input.
- */
-export function getModesForPhase(phase: LifecyclePhase): AnalyzeMode[] {
-  const modes = PHASE_MODE_MAP[phase];
-  return modes ? [...modes] : [];
-}
-
 export interface McpAgentSuggestion {
   name: string;
   action: string;
@@ -271,6 +224,125 @@ const GUIDANCE: Record<LifecyclePhase, PhaseGuidance> = {
 /** Get reminder, tools, and principles for a lifecycle phase. */
 export function getPhaseGuidance(phase: LifecyclePhase): PhaseGuidance {
   return GUIDANCE[phase];
+}
+
+// ── Phase → analyze() modes mapping ────────────────────────────
+// Backing data for graph_lifecycle (Task 3.2): one wrapper that runs every
+// mode relevant to a given phase via Promise.all and aggregates the outputs.
+// Source of truth for the universe of modes is `ANALYZE_MODES` in
+// src/mcp/tools/analyze.ts. Every mode there must appear in at least one
+// phase entry below — orphans are caught by the test suite.
+
+/**
+ * Static mapping of lifecycle phase → analyze() modes that the
+ * `graph_lifecycle` facade should fan-out across.
+ *
+ * Decisions:
+ *   - Modes that span multiple phases (e.g. `harness_scan` is useful in
+ *     IMPLEMENT, VALIDATE, REVIEW) are listed in every phase that needs
+ *     them. Duplicates are intentional — the facade dedupes at run time
+ *     if it ever needs to.
+ *   - `ANALYZE` covers PRD-quality / requirements-shape / risks. `DESIGN`
+ *     covers architecture / interfaces / contracts. `PLAN` covers sprint
+ *     mechanics. `IMPLEMENT` covers TDD + code coupling. `VALIDATE` covers
+ *     test coverage + observability. `REVIEW` covers DoD + state integrity.
+ *     `HANDOFF` covers docs + release readiness. `DEPLOY` covers release
+ *     check. `LISTENING` covers feedback / next-cycle triggers.
+ */
+const PHASE_MODES: Record<LifecyclePhase, readonly string[]> = {
+  ANALYZE: [
+    "prd_quality",
+    "scope",
+    "decompose",
+    "smart_decompose",
+    "risk",
+    "orphan_tasks",
+  ],
+  DESIGN: [
+    "adr",
+    "traceability",
+    "coupling",
+    "interfaces",
+    "tech_risk",
+    "design_ready",
+    "adr_challenge",
+  ],
+  PLAN: [
+    "ready",
+    "auto_ready",
+    "backlog_health",
+    "sprint_health",
+    "critical_path",
+    "blockers",
+    "cycles",
+    "formula_consistency",
+  ],
+  IMPLEMENT: [
+    "tdd_check",
+    "implement_done",
+    "code_sync",
+    "code_quality",
+    "performance_budget",
+  ],
+  VALIDATE: [
+    "validate_ready",
+    "test_coverage",
+    "security_scan",
+    "observability_check",
+    "scenario_coverage",
+    "asset_blockers",
+    "config_coverage",
+    "metric_coverage",
+    "concurrency_risk",
+    "contract_coverage",
+    "data_integrity",
+    "economy_simulation",
+  ],
+  REVIEW: [
+    "review_ready",
+    "done_integrity",
+    "status_flow",
+    "state_completeness",
+    "harness_scan",
+    "harness_trend",
+    "harness_advice",
+    "harness_remediate",
+    "progress",
+    "cfd",
+  ],
+  HANDOFF: [
+    "handoff_ready",
+    "doc_completeness",
+  ],
+  DEPLOY: [
+    "deploy_ready",
+    "release_check",
+  ],
+  LISTENING: [
+    "listening_ready",
+  ],
+};
+
+/**
+ * Return the analyze() modes that `graph_lifecycle` should fan-out for the
+ * given phase. Returns a fresh array per call — callers may mutate it
+ * without affecting future invocations.
+ *
+ * Returns `[]` (never throws) when the phase is unknown, empty, null, or
+ * undefined. This is intentional: the facade tool surfaces the empty
+ * result as a structured warning rather than crashing the caller.
+ *
+ * @example
+ *   getModesForPhase("DESIGN")
+ *   // → ["adr","traceability","coupling","interfaces","tech_risk","design_ready","adr_challenge"]
+ *
+ *   getModesForPhase("WHATEVER" as LifecyclePhase)
+ *   // → []
+ */
+export function getModesForPhase(phase: LifecyclePhase): string[] {
+  if (!phase || typeof phase !== "string") return [];
+  const modes = PHASE_MODES[phase];
+  return modes ? [...modes] : [];
 }
 
 // ── Warnings ────────────────────────────────

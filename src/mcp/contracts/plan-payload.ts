@@ -37,10 +37,14 @@ import { z } from "zod/v4";
 export const EXECUTORS = ["native-write", "playwright", "browser-use", "context7"] as const;
 export type Executor = typeof EXECUTORS[number];
 
+/** Schema-form alias of EXECUTORS — used by callers that want to validate executor strings. */
+export const PlanExecutorSchema = z.enum(EXECUTORS);
+export type PlanExecutor = z.infer<typeof PlanExecutorSchema>;
+
 /** Step individual do plan — referencia tool por nome + args estruturados. */
 export const PlanStepSchema = z.object({
   tool: z.string().min(1).describe("Nome da tool (ex: Write, browser_navigate, browser_use_run)"),
-  args: z.record(z.string(), z.unknown()).describe("Args estruturados que o executor passa para a tool"),
+  args: z.record(z.string(), z.unknown()).optional().describe("Args estruturados que o executor passa para a tool. Optional — alguns steps (e.g. browser_close) não precisam."),
 });
 
 export type PlanStep = z.infer<typeof PlanStepSchema>;
@@ -48,7 +52,7 @@ export type PlanStep = z.infer<typeof PlanStepSchema>;
 /** Callback opcional disparado pelo agente após executar todos os steps. */
 export const PostCallbackSchema = z.object({
   tool: z.string().min(1),
-  args: z.record(z.string(), z.unknown()),
+  args: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type PostCallback = z.infer<typeof PostCallbackSchema>;

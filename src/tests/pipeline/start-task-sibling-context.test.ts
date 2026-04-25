@@ -5,7 +5,7 @@
 
 /**
  * Task 2.2: start_task integrates assembleSiblingContext (v11 Context-Pollination)
- * ADR-v11-006: siblingContext markdown pronto no response.
+ * ADR-0047: siblingContext markdown pronto no response.
  */
 
 import { describe, it, expect } from "vitest";

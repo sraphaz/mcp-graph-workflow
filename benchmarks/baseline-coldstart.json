@@ -1,0 +1,26 @@
+{
+  "cli": "/Users/diegonogueira/mcp-graph-workflow/dist/cli/index.js",
+  "cmd": "--help",
+  "runs": 10,
+  "warmup": 1,
+  "samples_ms": [
+    311.92275,
+    312.499917,
+    315.706709,
+    316.187875,
+    316.872958,
+    317.907084,
+    317.920708,
+    320.760875,
+    322.177208,
+    333.399334
+  ],
+  "min_ms": 311.923,
+  "max_ms": 333.399,
+  "mean_ms": 318.536,
+  "median_ms": 317.39,
+  "stddev_ms": 5.8,
+  "node_version": "v25.8.0",
+  "platform": "darwin-arm64",
+  "ts": "2026-04-25T18:07:13.507Z"
+}

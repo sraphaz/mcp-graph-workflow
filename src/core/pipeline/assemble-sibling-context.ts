@@ -11,10 +11,10 @@
  * topologically with created_at as tiebreak, and a pre-rendered markdown.
  *
  * Implements:
- * - ADR-v11-003: topological sort + created_at tiebreak, fallback warning
+ * - ADR-0047: topological sort + created_at tiebreak, fallback warning
  *   when depends_on edges are missing.
- * - ADR-v11-004: token budget (default 4000) truncate-oldest-first.
- * - ADR-v11-006: siblingContext as ready-to-prompt markdown.
+ * - ADR-0047: token budget (default 4000) truncate-oldest-first.
+ * - ADR-0047: siblingContext as ready-to-prompt markdown.
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
@@ -192,7 +192,7 @@ export function assembleSiblingContext(
   const ancestors = collectAncestors(store, opts.subtaskId, siblingIds);
 
   // Fallback: if 0 ancestors found (no depends_on edges from subtaskId), log
-  // warning and return empty (per ADR-v11-003 the fallback is created_at, but
+  // warning and return empty (per ADR-0047 the fallback is created_at, but
   // without any dep signal we can't know which siblings matter; emptiness is safer).
   if (ancestors.size === 0) {
     logger.warn("assembly:missing_deps_fallback", {

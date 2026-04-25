@@ -97,15 +97,20 @@ export async function startDaemonRunner(options: DaemonRunnerOptions): Promise<D
       { name: serverName, version: serverVersion },
       { capabilities: { tools: {} } },
     );
-    registerAllTools(mcp, store);
 
+    // T2.5 — registerAllTools is async (lazy `await import()` per profile
+    // gate). Connect happens AFTER all tools resolve so MCP clients never
+    // see a partial surface. socket.destroy on registration failure mirrors
+    // the existing connect-failure path.
     const transport = new SocketTransport(socket);
-    void mcp.connect(transport).catch((err: unknown) => {
-      logger.warn("daemon:mcp-connect-failed", {
-        error: err instanceof Error ? err.message : String(err),
+    void registerAllTools(mcp, store)
+      .then(() => mcp.connect(transport))
+      .catch((err: unknown) => {
+        logger.warn("daemon:mcp-connect-failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        socket.destroy();
       });
-      socket.destroy();
-    });
   });
 
   let idleTimer: ReturnType<typeof setInterval> | null = null;

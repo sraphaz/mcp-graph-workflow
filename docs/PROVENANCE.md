@@ -58,18 +58,18 @@ chain.
 
 For each release, the commit SHA is anchored to the Bitcoin blockchain via
 [OpenTimestamps](https://opentimestamps.org/). Proofs live under
-[`docs/provenance/ots/`](provenance/ots/) and are committed to the
+[`docs/_internal/provenance-ots/`](provenance/ots/) and are committed to the
 repository.
 
 ### Where the proofs live
 
 ```
-docs/provenance/ots/mcp-graph-v10.0.0.commit-hash.txt
-docs/provenance/ots/mcp-graph-v10.0.0.commit-hash.txt.ots
-docs/provenance/ots/mcp-graph-v10.0.1.commit-hash.txt
-docs/provenance/ots/mcp-graph-v10.0.1.commit-hash.txt.ots
-docs/provenance/ots/mcp-graph-v10.0.2.commit-hash.txt
-docs/provenance/ots/mcp-graph-v10.0.2.commit-hash.txt.ots
+docs/_internal/provenance-ots/mcp-graph-v10.0.0.commit-hash.txt
+docs/_internal/provenance-ots/mcp-graph-v10.0.0.commit-hash.txt.ots
+docs/_internal/provenance-ots/mcp-graph-v10.0.1.commit-hash.txt
+docs/_internal/provenance-ots/mcp-graph-v10.0.1.commit-hash.txt.ots
+docs/_internal/provenance-ots/mcp-graph-v10.0.2.commit-hash.txt
+docs/_internal/provenance-ots/mcp-graph-v10.0.2.commit-hash.txt.ots
 ```
 
 Each `.txt` file contains the release commit SHA (one line). The matching
@@ -83,7 +83,7 @@ brew install opentimestamps-client            # macOS
 pipx install opentimestamps-client            # cross-platform
 
 # Verify any release.
-ots verify docs/provenance/ots/mcp-graph-v10.0.1.commit-hash.txt.ots
+ots verify docs/_internal/provenance-ots/mcp-graph-v10.0.1.commit-hash.txt.ots
 ```
 
 Immediately after stamping, `ots verify` reports *"Pending attestation in
@@ -128,7 +128,7 @@ authorship chain is established by:
 - The first public commit on GitHub (2026-03-09) and every subsequent
   signed commit.
 - npm registry publish timestamps.
-- OpenTimestamps proofs in `docs/provenance/ots/` (Layer 2).
+- OpenTimestamps proofs in `docs/_internal/provenance-ots/` (Layer 2).
 
 ### INPI registration — optional evidentiary reinforcement
 
@@ -186,7 +186,7 @@ remain verifiable via:
 
 - npm registry publish timestamps — `npm view @mcp-graph-workflow/mcp-graph time`
 - GitHub commit authorship dates — shown on the release commit page
-- OpenTimestamps proofs under [`docs/provenance/ots/`](provenance/ots/)
+- OpenTimestamps proofs under [`docs/_internal/provenance-ots/`](provenance/ots/)
 
 ---
 

@@ -28,21 +28,34 @@ import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
-export function registerSyncStackDocs(server: McpServer, store: SqliteStore): void {
-  server.tool(
-    "sync_stack_docs",
-    "Auto-detect project stack and sync documentation for all libraries via Context7. Caches results locally and indexes into knowledge store.",
-    {
-      basePath: z
-        .string()
-        .optional()
-        .describe("Project base path (default: cwd)"),
-      libraries: z
-        .array(z.string())
-        .optional()
-        .describe("Specific library names to sync (overrides auto-detection)"),
-    },
-    async ({ basePath, libraries }) => {
+/**
+ * Shared input schema — exported so name-aliases (e.g. graph_refresh_docs)
+ * can register against the exact same contract.
+ */
+export const SyncStackDocsInputSchema = {
+  basePath: z
+    .string()
+    .optional()
+    .describe("Project base path (default: cwd)"),
+  libraries: z
+    .array(z.string())
+    .optional()
+    .describe("Specific library names to sync (overrides auto-detection)"),
+};
+
+export interface SyncStackDocsArgs {
+  basePath?: string;
+  libraries?: string[];
+}
+
+/**
+ * Core handler — pure delegation target. Both `sync_stack_docs` and the
+ * alias `graph_refresh_docs` route here so behaviour is byte-identical.
+ */
+export async function runSyncStackDocs(
+  store: SqliteStore,
+  { basePath, libraries }: SyncStackDocsArgs,
+): Promise<ReturnType<typeof mcpText>> {
       logger.debug("tool:sync_stack_docs", { basePath });
       const projectPath = basePath ?? process.cwd();
       const docsCacheStore = new DocsCacheStore(store.getDb());
@@ -94,6 +107,13 @@ export function registerSyncStackDocs(server: McpServer, store: SqliteStore): vo
         results,
         knowledgeIndexed: indexResult.documentsIndexed,
       });
-    },
+}
+
+export function registerSyncStackDocs(server: McpServer, store: SqliteStore): void {
+  server.tool(
+    "sync_stack_docs",
+    "Auto-detect project stack and sync documentation for all libraries via Context7. Caches results locally and indexes into knowledge store.",
+    SyncStackDocsInputSchema,
+    async (args) => runSyncStackDocs(store, args),
   );
 }

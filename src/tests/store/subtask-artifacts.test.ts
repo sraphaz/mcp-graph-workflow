@@ -5,8 +5,8 @@
 
 /**
  * Task 1.1: Nova tabela subtask_artifacts (v11 Context-Pollination)
- * ADR-v11-001: tabela dedicada + indexes em (epic_id, created_at) e (node_id)
- * ADR-v11-002: canonicalization via ts-morph com fallback whitespace-strip
+ * ADR-0046: tabela dedicada + indexes em (epic_id, created_at) e (node_id)
+ * ADR-0048: canonicalization via ts-morph com fallback whitespace-strip
  */
 
 import { describe, it, expect } from "vitest";

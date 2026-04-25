@@ -5,9 +5,9 @@
 
 /**
  * Task 2.1: assembleSiblingContext helper (v11 Context-Pollination)
- * ADR-v11-003: topological sort + created_at tiebreak, fallback warning
- * ADR-v11-004: budget 4000 truncate-oldest-first
- * ADR-v11-006: markdown pré-renderizado no response
+ * ADR-0047: topological sort + created_at tiebreak, fallback warning
+ * ADR-0047: budget 4000 truncate-oldest-first
+ * ADR-0047: markdown pré-renderizado no response
  */
 
 import { describe, it, expect } from "vitest";
@@ -307,7 +307,7 @@ describe("AC3 — Budget truncate-oldest-first", () => {
   });
 });
 
-describe("Markdown rendering (ADR-v11-006)", () => {
+describe("Markdown rendering (ADR-0047)", () => {
   it("should render markdown with ### Subtask header per sibling", () => {
     const { store, artifacts } = setup();
     mkNode(store, "epic1", null, "Epic");

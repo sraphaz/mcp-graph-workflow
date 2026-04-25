@@ -199,7 +199,7 @@ describe("Wave-12 Goals Schema", () => {
           tags: ["wave-12", "sandbox", "goals", "smart"],
           isConsolidated: true,
           sourceFile:
-            "docs/prd/waves/wave-12-sandbox-build-local-ci-cd-isolation.md",
+            "docs/_internal/prd/waves/wave-12-sandbox-build-local-ci-cd-isolation.md",
         },
         createdAt: new Date().toISOString(),
         createdBy: "agent-wave12-2",
@@ -314,7 +314,7 @@ describe("Wave-12 Out of Scope Schema", () => {
           tags: ["wave-12", "sandbox", "out-of-scope"],
           isConsolidated: true,
           sourceFile:
-            "docs/prd/waves/wave-12-sandbox-build-local-ci-cd-isolation.md",
+            "docs/_internal/prd/waves/wave-12-sandbox-build-local-ci-cd-isolation.md",
         },
         createdAt: new Date().toISOString(),
         createdBy: "agent-wave12-2",

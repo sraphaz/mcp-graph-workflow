@@ -105,6 +105,40 @@ jobs:
         if: needs.changes.outputs.code != 'true'
         run: echo "::notice::Docs/site-only change; shard ${{ matrix.shard }}/4 trivially passed."
 
+  test-hooks-flag:
+    # Wave E3 — runs the suite with MCP_GRAPH_GATES_IN_HOOKS=on so the
+    # feature-flagged hook-driven enforcement path is covered alongside the
+    # default (wrapper-driven) path that the sharded `test` job exercises.
+    # One unsharded job: the suite is fast enough end-to-end and the goal is
+    # parity with the default path, not faster wall-clock.
+    needs: [changes, preflight]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      MCP_GRAPH_GATES_IN_HOOKS: "on"
+    steps:
+      - uses: actions/checkout@v6
+      - if: needs.changes.outputs.code == 'true'
+        uses: ./.github/actions/setup
+        with:
+          install-dashboard: 'true'
+      - name: Build (required for cross-package gate primitives)
+        if: needs.changes.outputs.code == 'true'
+        run: npm run build
+      - name: Vitest with MCP_GRAPH_GATES_IN_HOOKS=on
+        if: needs.changes.outputs.code == 'true'
+        run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-hooks-flag.xml
+      - name: Upload junit report
+        if: needs.changes.outputs.code == 'true' && always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-hooks-flag
+          path: junit-hooks-flag.xml
+          retention-days: 7
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true'
+        run: echo "::notice::Docs/site-only change; hooks-flag suite trivially passed."
+
   build:
     needs: [changes, preflight]
     runs-on: ubuntu-latest
@@ -153,6 +187,19 @@ jobs:
           npm pack --dry-run 2>&1 | tail -20
           echo "## Package Contents" >> $GITHUB_STEP_SUMMARY
           npm pack --dry-run 2>&1 | grep -E "^npm notice" >> $GITHUB_STEP_SUMMARY || true
+
+      # Sprint 8 #8.6 — bench regression gate.
+      # Builds the v11 CLI (tools/cli) so its dist/cli.mjs exists, then
+      # compares cold-start median against the persisted baseline. Fails
+      # the job when median regresses past +15%. Heap gate (+10%) is
+      # documented as deferred in docs/_internal/dx/v10-baseline.md.
+      - name: Build v11 CLI for bench gate
+        if: needs.changes.outputs.code == 'true'
+        run: npm --prefix tools/cli ci && npm --prefix tools/cli run build
+
+      - name: Cold-start regression gate (≤ +15%)
+        if: needs.changes.outputs.code == 'true'
+        run: node scripts/bench-regression-check.mjs --runs 30 --threshold 15
 
       - name: Docs-only skip
         if: needs.changes.outputs.code != 'true'

@@ -97,7 +97,7 @@ Every security fix lands as:
 1. A commit GPG/SSH-signed by the maintainer (PROVENANCE Layer 1 in
    [`docs/PROVENANCE.md`](docs/PROVENANCE.md)).
 2. A signed, OpenTimestamps-anchored release tag (PROVENANCE Layer 2);
-   proofs live under [`docs/provenance/ots/`](docs/provenance/ots/).
+   proofs live under [`docs/_internal/provenance-ots/`](docs/_internal/provenance-ots/).
 3. A GitHub Security Advisory with a unique `GHSA-*` identifier and, when
    the issue warrants, a CVE assigned via GitHub's CNA.
 

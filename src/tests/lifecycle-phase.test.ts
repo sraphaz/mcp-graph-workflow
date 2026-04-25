@@ -16,7 +16,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { detectCurrentPhase, getPhaseGuidance, type LifecyclePhase } from "../core/planner/lifecycle-phase.js";
+import {
+  detectCurrentPhase,
+  getModesForPhase,
+  getPhaseGuidance,
+  type LifecyclePhase,
+} from "../core/planner/lifecycle-phase.js";
 import type { GraphDocument, GraphNode, GraphEdge } from "../core/graph/graph-types.js";
 
 function makeDoc(
@@ -208,5 +213,120 @@ describe("getPhaseGuidance", () => {
       const guidance = getPhaseGuidance(phase);
       expect(guidance.suggestedMcpAgents ?? []).toHaveLength(0);
     }
+  });
+});
+
+describe("getModesForPhase", () => {
+  // Source of truth: ANALYZE_MODES enum in src/mcp/tools/analyze.ts.
+  // PRD says "todos 52 modes" — keep this list in sync with that enum so the
+  // coverage assertion below catches drift.
+  const ALL_ANALYZE_MODES = [
+    "prd_quality", "scope", "ready", "risk", "blockers", "cycles",
+    "critical_path", "contract_coverage", "data_integrity", "decompose",
+    "adr", "formula_consistency", "traceability", "coupling", "interfaces",
+    "tech_risk", "design_ready", "implement_done", "tdd_check",
+    "performance_budget", "progress", "state_completeness", "validate_ready",
+    "done_integrity", "status_flow", "review_ready", "handoff_ready",
+    "doc_completeness", "deploy_ready", "release_check", "listening_ready",
+    "backlog_health", "sprint_health", "auto_ready", "scenario_coverage",
+    "asset_blockers", "config_coverage", "metric_coverage", "concurrency_risk",
+    "economy_simulation", "cfd", "code_sync", "smart_decompose",
+    "security_scan", "code_quality", "test_coverage", "observability_check",
+    "harness_scan", "harness_trend", "harness_advice", "harness_remediate",
+    "adr_challenge", "orphan_tasks",
+  ] as const;
+
+  // AC #1: GIVEN phase=DESIGN WHEN getModesForPhase chamado
+  // THEN retorna [adr, traceability, coupling, interfaces, tech_risk,
+  //               design_ready, adr_challenge]
+  it("returns the 7 DESIGN modes specified in the PRD", () => {
+    const modes = getModesForPhase("DESIGN");
+    expect(modes).toEqual(
+      expect.arrayContaining([
+        "adr",
+        "traceability",
+        "coupling",
+        "interfaces",
+        "tech_risk",
+        "design_ready",
+        "adr_challenge",
+      ]),
+    );
+    expect(modes).toHaveLength(7);
+  });
+
+  // AC #2: GIVEN phase invalida WHEN chamado THEN retorna array vazio (sem throw)
+  it("returns [] for an invalid phase string and never throws", () => {
+    expect(() => {
+      const result = getModesForPhase("NOT_A_PHASE" as LifecyclePhase);
+      expect(result).toEqual([]);
+    }).not.toThrow();
+  });
+
+  it("returns [] for empty/null/undefined inputs without throwing", () => {
+    expect(getModesForPhase("" as LifecyclePhase)).toEqual([]);
+    expect(getModesForPhase(undefined as unknown as LifecyclePhase)).toEqual([]);
+    expect(getModesForPhase(null as unknown as LifecyclePhase)).toEqual([]);
+  });
+
+  // AC #3: GIVEN todas 9 fases WHEN consultadas THEN cobrem todos 52 modes
+  // do analyze (sem orfaos)
+  it("union of modes across all 9 phases covers every analyze mode", () => {
+    const phases: LifecyclePhase[] = [
+      "ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE",
+      "REVIEW", "HANDOFF", "DEPLOY", "LISTENING",
+    ];
+    const union = new Set<string>();
+    for (const phase of phases) {
+      for (const mode of getModesForPhase(phase)) {
+        union.add(mode);
+      }
+    }
+    const orphans = ALL_ANALYZE_MODES.filter((m) => !union.has(m));
+    expect(orphans, `orphan modes: ${orphans.join(", ")}`).toEqual([]);
+  });
+
+  it("returns a non-empty list for each of the 9 lifecycle phases", () => {
+    const phases: LifecyclePhase[] = [
+      "ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE",
+      "REVIEW", "HANDOFF", "DEPLOY", "LISTENING",
+    ];
+    for (const phase of phases) {
+      const modes = getModesForPhase(phase);
+      expect(modes.length, `phase ${phase} should have ≥1 mode`).toBeGreaterThan(0);
+    }
+  });
+
+  it("returns only valid analyze modes (no typos)", () => {
+    const phases: LifecyclePhase[] = [
+      "ANALYZE", "DESIGN", "PLAN", "IMPLEMENT", "VALIDATE",
+      "REVIEW", "HANDOFF", "DEPLOY", "LISTENING",
+    ];
+    const valid = new Set<string>(ALL_ANALYZE_MODES);
+    for (const phase of phases) {
+      for (const mode of getModesForPhase(phase)) {
+        expect(valid.has(mode), `unknown mode "${mode}" returned for phase ${phase}`).toBe(true);
+      }
+    }
+  });
+
+  it("IMPLEMENT phase includes tdd_check and implement_done", () => {
+    const modes = getModesForPhase("IMPLEMENT");
+    expect(modes).toContain("tdd_check");
+    expect(modes).toContain("implement_done");
+  });
+
+  it("VALIDATE phase includes validate_ready and test_coverage", () => {
+    const modes = getModesForPhase("VALIDATE");
+    expect(modes).toContain("validate_ready");
+  });
+
+  it("returns a fresh array per call (no shared mutable state)", () => {
+    const a = getModesForPhase("DESIGN");
+    const b = getModesForPhase("DESIGN");
+    expect(a).not.toBe(b); // different references
+    expect(a).toEqual(b); // same content
+    a.push("mutated" as never);
+    expect(getModesForPhase("DESIGN")).not.toContain("mutated");
   });
 });

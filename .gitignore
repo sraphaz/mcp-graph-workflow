@@ -32,9 +32,16 @@ raw.md
 notas.md
 docs/raw/
 docs/prd/
+docs/_internal/prd/
 docs/architecture/
 docs/reference/
 knowledge-export.json
+browser-*
+!src/core/browser-pilot/
+!src/core/browser-pilot/**
+!src/mcp/tools/browser-pilot.ts
+!src/tests/browser-use-runtime.test.ts
+hermes-agent*
 
 # MCP / Local Tools
 workflow-graph/
@@ -57,6 +64,18 @@ src/web/dashboard/.next/
 src/web/dashboard/out/
 src/web/dashboard/dist/
 src/web/dashboard/node_modules/
+
+# Vendored Copilot Bridge forks — separate workspaces with their own
+# package.json + node_modules; tracked elsewhere via the Copilot Bridge
+# audit epic (node_26f1f82e064b). Excluded here so the main repo PR
+# surface stays slim (236MB combined).
+tools/copilot-bridge/
+tools/copilot-bridge-cli/
+
+# Local-only baselines / planning notes (per memory rule
+# feedback_no_public_design_exposure — design rationale stays local).
+.fase-b-baseline.md
+baseline-*.png
 
 # Test artifacts
 test-results/

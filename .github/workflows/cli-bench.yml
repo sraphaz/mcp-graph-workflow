@@ -1,0 +1,140 @@
+name: CLI cold-start bench
+
+# Sprint 8.6 — gate cold-start regressions on the v11 CLI.
+#
+# Triggered on PRs that touch tools/cli/. Runs the bench-coldstart.mjs
+# script (10 runs of `mg --version`) and asserts:
+#   - median ≤ 500 ms (success-criterion target)
+#   - median ≤ baseline + 15% (regression gate per Sprint 8.6)
+#
+# Baseline lives at `benchmarks/baseline-cli-v11-alpha.json` and is updated
+# manually by maintainers in a separate PR when an intentional perf shift
+# lands (e.g. a new heavy dep). The gate fails closed; if you intend to
+# regress perf, update the baseline file in the same PR.
+
+on:
+  pull_request:
+    paths:
+      - "tools/cli/**"
+      - "benchmarks/baseline-cli-v11-alpha.json"
+      - ".github/workflows/cli-bench.yml"
+  push:
+    branches: [master]
+    paths:
+      - "tools/cli/**"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: cli-bench-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/cli
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tools/cli/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify bundle exists
+        run: |
+          test -f dist/cli.mjs
+          ls -la dist/cli.mjs
+
+      - name: Run cold-start benchmark
+        id: bench
+        run: |
+          # warmup: 3 runs (CI VMs have noisy first-spawn) + 30 measured runs
+          node scripts/bench-coldstart.mjs --warmup 3 --runs 30 --json > bench-result.json
+          echo "── result ──"
+          cat bench-result.json
+          {
+            echo "median_ms=$(node -e 'console.log(JSON.parse(require("node:fs").readFileSync("bench-result.json","utf8")).median_ms)')"
+            echo "p95_ms=$(node -e 'console.log(JSON.parse(require("node:fs").readFileSync("bench-result.json","utf8")).p95_ms)')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Compare to baseline (target ≤ 500ms · regression gate ≤ baseline + 15%)
+        run: |
+          MEDIAN=${{ steps.bench.outputs.median_ms }}
+          BASELINE_PATH=../../benchmarks/baseline-cli-v11-alpha.json
+          if [ ! -f "$BASELINE_PATH" ]; then
+            echo "::warning::no baseline at $BASELINE_PATH — recording first run as informational only"
+            exit 0
+          fi
+          BASELINE=$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('$BASELINE_PATH','utf8')).median_ms)")
+
+          # absolute target
+          if awk "BEGIN{exit !($MEDIAN > 500)}"; then
+            echo "::error::cold-start regression — median ${MEDIAN}ms > 500ms target"
+            exit 1
+          fi
+
+          # regression gate: baseline + 15%
+          THRESHOLD=$(awk "BEGIN{print $BASELINE * 1.15}")
+          if awk "BEGIN{exit !($MEDIAN > $THRESHOLD)}"; then
+            echo "::error::cold-start regression — median ${MEDIAN}ms > baseline ${BASELINE}ms + 15% (= ${THRESHOLD}ms)"
+            echo "::error::if this perf shift is intentional, update benchmarks/baseline-cli-v11-alpha.json in the same PR"
+            exit 1
+          fi
+
+          echo "::notice::cold-start ${MEDIAN}ms (baseline ${BASELINE}ms · target ≤ 500ms · gate ≤ ${THRESHOLD}ms) — PASS"
+
+      - name: Upload bench artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-bench-result
+          path: tools/cli/bench-result.json
+          retention-days: 30
+
+  size-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: tools/cli
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tools/cli/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Bundle size gate (≤ 3 MB launcher artifact per ADR-0050)
+        run: |
+          BYTES=$(stat -c%s dist/cli.mjs 2>/dev/null || stat -f%z dist/cli.mjs)
+          MAX=3145728   # 3 MB
+          if [ "$BYTES" -gt "$MAX" ]; then
+            echo "::error::launcher bundle ${BYTES} B exceeds 3 MB target (ADR-0050)"
+            echo "::error::reduce bundle size or update the ADR with a new target"
+            exit 1
+          fi
+          KB=$((BYTES / 1024))
+          echo "::notice::launcher bundle ${KB} KB (target ≤ 3 MB · ADR-0050) — PASS"

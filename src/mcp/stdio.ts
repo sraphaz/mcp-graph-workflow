@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { registerAllTools } from "./tools/index.js";
+import { ProfileFilterSchema } from "./tools/taxonomy.js";
 import { runInit } from "./init-project.js";
 import { GraphEventBus } from "../core/events/event-bus.js";
 import { loadConfig } from "../core/config/config-loader.js";
@@ -49,7 +50,8 @@ const mcp = new McpServer(
   { capabilities: { tools: {} } },
 );
 
-registerAllTools(mcp, store);
+const profile = ProfileFilterSchema.safeParse(process.env.MCP_GRAPH_PROFILE).data ?? "all";
+await registerAllTools(mcp, store, profile);
 
 // ── Background dashboard (HTTP + auto-open browser) ──────
 // Skipped when invoked by an agent host (stdin piped) or MCP_STDIO_ONLY=1 —

@@ -22,6 +22,8 @@ node_modules/
 .git/
 .gitattributes
 .github/
+browser-*
+hermes-agent*
 
 # === BUILDS / COMPILADOS ===
 dist/

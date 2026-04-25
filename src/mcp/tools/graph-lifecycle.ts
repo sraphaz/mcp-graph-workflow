@@ -81,7 +81,7 @@ export async function buildGraphLifecycleResponse(
     return { ok: false, phase, error: `Unknown lifecycle phase: ${phase}` };
   }
 
-  let target: ReadonlyArray<AnalyzeMode> = modes;
+  let target: ReadonlyArray<AnalyzeMode> = modes as AnalyzeMode[];
   if (options.subCheck !== undefined) {
     if (!modes.includes(options.subCheck)) {
       return {

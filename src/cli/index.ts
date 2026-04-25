@@ -27,6 +27,18 @@ const pkg = require("../../package.json") as { name: string; version: string };
 // or as an interactive CLI (TTY stdin or explicit subcommand/flags).
 const isMcpClient = !process.stdin.isTTY && process.argv.length <= 2;
 
+// Sprint 9 #9.5 — non-blocking deprecation banner. Only fires when the
+// user is actually looking at the terminal (stderr TTY) and we're not
+// being driven as an MCP transport. The banner never blocks; the legacy
+// CLI continues to work after.
+if (!isMcpClient) {
+  const { printDeprecationBanner } = await import("./deprecation.js");
+  printDeprecationBanner({
+    newCommand: "npm i -g @mcp-graph-workflow/cli  →  mg <command>",
+    migrationDoc: "docs/_internal/migration/v10-to-v11-cli.md",
+  });
+}
+
 if (isMcpClient) {
   // Delegate to MCP stdio server — the client expects JSON-RPC over stdin/stdout
   await import("../mcp/stdio.js");

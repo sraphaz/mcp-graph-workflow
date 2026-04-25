@@ -4,7 +4,7 @@
  */
 
 /**
- * TypeScript canonicalization for stable content hashing (ADR-v11-002).
+ * TypeScript canonicalization for stable content hashing (ADR-0048).
  *
  * Strategy:
  * 1. Try ts-morph / typescript compiler API to parse + print canonical form.

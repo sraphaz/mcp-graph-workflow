@@ -15,41 +15,23 @@
   <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/%40mcp-graph-workflow%2Fmcp-graph" alt="Node.js"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
   <a href="COMMERCIAL.md"><img src="https://img.shields.io/badge/Commercial-available-informational" alt="Commercial license available"></a>
-  <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/dm/%40mcp-graph-workflow%2Fmcp-graph" alt="npm downloads"></a>
 </p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/status-academic%20experiment-orange" alt="Academic Experiment">
-  <img src="https://img.shields.io/badge/research-Master's%20Degree-blueviolet" alt="Master's Research">
-  <img src="https://img.shields.io/badge/defense-pending-yellow" alt="Not yet defended">
-</p>
-
----
-
-> ⚠️ **Academic Experiment — Not yet defended.**
-> This project is an active research experiment developed as part of a Master's program in Computer Engineering at **UNOPAR — Universidade Norte do Paraná**, by **Diego Lima Nogueira de Paula** ([ORCID 0009-0002-1117-9571](https://orcid.org/0009-0002-1117-9571)).
-> The research is ongoing and under discussion. Findings, methodologies, and interfaces are subject to change.
-> Academic citation is required when this system is referenced or reimplemented — see [How to Cite](#how-to-cite) below.
-
----
 
 ## What It Does
 
-**mcp-graph** is a local-first tool that structures AI-assisted software development by converting natural language requirement documents (PRDs) into persistent, executable task graphs.
+`mcp-graph` is a local-first tool that converts natural-language requirement documents (PRDs) into persistent, executable task graphs. An AI coding assistant navigates this graph instead of reasoning from scratch each session — reducing hallucination, preserving context, and enforcing discipline across the full development cycle.
 
-Rather than relying on AI to improvise a development path, mcp-graph imposes structure: requirements are parsed into a directed graph of tasks with dependencies, acceptance criteria, and lifecycle states. An AI coding assistant (Claude Code, GitHub Copilot, Cursor, etc.) navigates this graph instead of reasoning from scratch each session — reducing hallucination, improving context continuity, and enforcing discipline across the full development cycle.
-
-The system operates entirely offline, with no external AI/LLM dependency at runtime. All decisions are deterministic and reproducible.
+Operates entirely offline. No external AI/LLM dependency at runtime. All decisions deterministic and reproducible.
 
 ## Key Capabilities
 
-- **PRD → Task Graph** — import `.md`, `.txt`, `.pdf`, or `.html` requirement documents; parsed automatically into structured task trees with dependencies
-- **Agent-navigable workflow** — a 9-phase development lifecycle (Analyze → Design → Plan → Implement → Validate → Review → Handoff → Deploy → Listening) with gate checks between phases
-- **Context continuity** — agents request task context from the graph rather than reconstructing it each session; token-efficient compression included
-- **Knowledge base** — project knowledge is indexed and retrievable by semantic similarity; supports multi-project cross-referencing
-- **Sprint planning & metrics** — velocity-based sprint planning, progress tracking, and delivery metrics
-- **Visual dashboard** — browser-based task board with graph visualization, kanban view, and analytics panels
-- **Multi-agent support** — multiple AI agent terminals can work on the same graph concurrently with conflict prevention
+- **PRD → Task Graph** — `.md`/`.txt`/`.pdf`/`.html` requirement docs parsed into structured task trees with dependencies
+- **Agent-navigable workflow** — 9-phase lifecycle (Analyze → Design → Plan → Implement → Validate → Review → Handoff → Deploy → Listening) with gate checks
+- **Context continuity** — agents request task context from the graph; token-efficient compression included
+- **Knowledge base** — project knowledge indexed and retrievable by semantic similarity
+- **Sprint planning & metrics** — velocity-based planning, progress tracking, delivery metrics
+- **Visual dashboard** — browser-based task board with graph, kanban, and analytics
+- **Multi-agent support** — concurrent agent terminals with conflict prevention
 
 ## Installation
 
@@ -61,27 +43,7 @@ npm install -g @mcp-graph-workflow/mcp-graph
 
 ## Quick Start
 
-### With GitHub Copilot (VS Code)
-
-Create `.vscode/mcp.json` in your project:
-
-```json
-{
-  "servers": {
-    "mcp-graph": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@mcp-graph-workflow/mcp-graph"]
-    }
-  }
-}
-```
-
-Enable **Agent Mode** in Copilot Chat, then ask the agent to `init` your project.
-
-### With Claude Code / Cursor / IntelliJ
-
-Add to `.mcp.json`:
+Add to `.mcp.json` (Claude Code, Cursor, IntelliJ) or `.vscode/mcp.json` (Copilot):
 
 ```json
 {
@@ -94,63 +56,19 @@ Add to `.mcp.json`:
 }
 ```
 
-### With any MCP-compatible client
-
-```
-npx -y @mcp-graph-workflow/mcp-graph
-```
-
-### From Source
-
-```bash
-git clone https://github.com/DiegoNogueiraDev/mcp-graph-workflow.git
-cd mcp-graph-workflow
-npm install && npm run build
-npm run dev        # starts server + dashboard at localhost:3000
-```
-
-## Typical Workflow
-
-```
-1. init               — initialize graph database for your project
-2. import_prd         — parse your requirements document into tasks
-3. plan_sprint        — allocate tasks to a sprint based on capacity
-4. start_task → [implement with TDD] → finish_task   — work cycle
-5. kanban / metrics   — monitor progress and delivery health
-```
-
-The graph tracks every task state, decision, and context piece so your AI agent always knows what was done, what is next, and why.
+Then in your agent: `init` → `import_prd <file>` → `plan_sprint` → `start_task` / `finish_task`.
 
 ## Documentation
 
-→ **[User Guide](docs/guides/USER-GUIDE.md)** — complete reference for installation, concepts, workflow, CLI commands, and dashboard.
+- **[User Guide](docs/guides/USER-GUIDE.md)** — full reference: install, concepts, workflow, CLI, dashboard
+- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 5-minute setup
+- **[Cheatsheet](docs/getting-started/CHEATSHEET.md)** — common commands
+- **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — fix common issues
+- **[Glossary](docs/getting-started/GLOSSARY.md)** — terminology
 
-## Research Context
+## Research & Citation
 
-This project investigates a central hypothesis: that **imposing deterministic graph structure over AI-assisted development workflows** reduces error rates, improves context continuity between sessions, and increases delivery predictability compared to unstructured prompt-based development.
-
-The research is being conducted in the context of real software projects, with empirical measurements of productivity metrics (DORA), code quality indicators, and agent behavior patterns. It is **not yet defended** and does not represent a final scientific contribution.
-
-Methodology documents are available in [`docs/preprint/`](docs/preprint/).
-
-## How to Cite
-
-If you reference or build upon this work in academic or derivative contexts:
-
-**BibTeX:**
-```bibtex
-@software{nogueira2025mcpgraph,
-  author    = {de Paula, Diego Lima Nogueira},
-  title     = {mcp-graph: Structured Execution for AI-Driven Development},
-  year      = {2025},
-  url       = {https://github.com/DiegoNogueiraDev/mcp-graph-workflow},
-  note      = {Master's research experiment. Not yet defended. UNOPAR.},
-  orcid     = {0009-0002-1117-9571}
-}
-```
-
-**ABNT:**
-> DE PAULA, Diego Lima Nogueira. **mcp-graph: Structured Execution for AI-Driven Development**. 2025. Experimento de pesquisa de mestrado — UNOPAR. Disponível em: https://github.com/DiegoNogueiraDev/mcp-graph-workflow. Acesso em: [data].
+This project is an active Master's research experiment (UNOPAR). For academic context, citation (BibTeX/ABNT), and the research hypothesis: see [`docs/_internal/RESEARCH.md`](docs/_internal/RESEARCH.md).
 
 ## License
 

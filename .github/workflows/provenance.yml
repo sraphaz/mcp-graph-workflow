@@ -1,0 +1,79 @@
+name: Provenance — OpenTimestamps
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to stamp (e.g. mcp-graph-v10.0.3)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: provenance-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  stamp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - name: Resolve tag and commit
+        id: resolve
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            echo "::error::No tag resolved"
+            exit 1
+          fi
+          SHA=$(git rev-list -n 1 "$TAG")
+          if [ -z "$SHA" ]; then
+            echo "::error::Tag $TAG not found"
+            exit 1
+          fi
+          echo "tag=$TAG"  >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA"  >> "$GITHUB_OUTPUT"
+          echo "Stamping $TAG → $SHA"
+
+      - name: Install opentimestamps-client
+        run: pipx install opentimestamps-client
+
+      - name: Write commit hash file
+        run: |
+          mkdir -p docs/_internal/provenance-ots
+          HASH_FILE="docs/_internal/provenance-ots/${{ steps.resolve.outputs.tag }}.commit-hash.txt"
+          if [ -f "$HASH_FILE" ] && [ -f "${HASH_FILE}.ots" ]; then
+            echo "Already stamped — skipping"
+            echo "skip=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "${{ steps.resolve.outputs.sha }}" > "$HASH_FILE"
+
+      - name: Stamp via OpenTimestamps
+        if: env.skip != 'true'
+        run: |
+          HASH_FILE="docs/_internal/provenance-ots/${{ steps.resolve.outputs.tag }}.commit-hash.txt"
+          ots stamp "$HASH_FILE"
+          ots info "${HASH_FILE}.ots" || true
+
+      - name: Commit and push proof
+        if: env.skip != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/_internal/provenance-ots/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "chore(provenance): OTS stamp ${{ steps.resolve.outputs.tag }} [skip ci]"
+          git push origin master

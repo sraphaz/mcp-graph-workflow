@@ -166,7 +166,7 @@ export async function finishTask(
     }
   }
 
-  // 0c. Persist v11 artifacts (ADR-v11-005 — optional, backward-compatible)
+  // 0c. Persist v11 artifacts (ADR-0049 — optional, backward-compatible)
   const artifactIds: string[] = [];
   if (artifacts && artifacts.length > 0) {
     try {

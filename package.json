@@ -18,8 +18,8 @@
     "dashboard:install": "cd src/web/dashboard && npm install",
     "dashboard:dev": "cd src/web/dashboard && npm run dev",
     "dashboard:build": "cd src/web/dashboard && npm run build",
-    "build": "tsc && npm run copy-assets && npm run generate-docs-manifest && npm run dashboard:build && npm run copy-dashboard",
-    "generate-docs-manifest": "node dist/core/docs/generate-docs-manifest.js",
+    "build": "tsup && npm run copy-assets && npm run generate-docs-manifest && npm run dashboard:build && npm run copy-dashboard",
+    "generate-docs-manifest": "tsx src/core/docs/generate-docs-manifest.ts",
     "copy-assets": "node scripts/copy-assets.mjs",
     "copy-dashboard": "node -e \"const fs=require('fs');if(fs.existsSync('dist/web/dashboard/dist')){fs.rmSync('dist/web/dashboard/dist',{recursive:true})};fs.cpSync('src/web/dashboard/dist','dist/web/dashboard/dist',{recursive:true})\"",
     "start": "node dist/mcp/server.js",
@@ -91,6 +91,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "supertest": "^7.2.2",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript-eslint": "^8.58.1",
     "vitest": "^4.0.18"

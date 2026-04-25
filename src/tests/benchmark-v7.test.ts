@@ -46,15 +46,17 @@ describe("Benchmark v7.0 — Real Impact Measurements", () => {
   // ── B1: Tool Registration (v6: 59 tools, v7: 53 tools) ──
 
   describe("B1: Tool Registration Count", () => {
-    it("should register exactly 53 tools (no deprecated)", () => {
+    it("should register exactly 54 tools (no deprecated)", async () => {
       const server = new McpServer({ name: "bench", version: "7.0.0" }, { capabilities: { tools: {} } });
-      registerAllTools(server, store);
+      // T2.5 — registerAllTools is async (lazy `await import()` per profile gate).
+      await registerAllTools(server, store);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tools = (server as any)._registeredTools;
       const toolNames = Object.keys(tools);
 
-      // v7: 53 active tools, 0 deprecated
+      // Post-T4.0: 54 active tools (v7 had 53 active + 6 deprecated;
+      // T4.0 added the 5 graph_* tools and T0 wired browser_pilot_run).
       expect(toolNames).not.toContain("add_node");
       expect(toolNames).not.toContain("delete_node");
       expect(toolNames).not.toContain("update_node");
@@ -67,18 +69,24 @@ describe("Benchmark v7.0 — Real Impact Measurements", () => {
       expect(toolNames).toContain("validate");
       expect(toolNames).toContain("manage_skill");
 
-      console.log(`[B1] Registered tools: ${toolNames.length} (v6 had 59 = 53 active + 6 deprecated)`);
+      console.log(`[B1] Registered tools: ${toolNames.length} (v7 had 53; T4.0 → 54)`);
     });
 
-    it("should register all tools in < 100ms", () => {
+    it("should register all tools in < 1500ms (lazy import budget post-T2.5)", async () => {
       const server = new McpServer({ name: "bench", version: "7.0.0" }, { capabilities: { tools: {} } });
 
+      // T2.5 — lazy `await import()` shifts cost from process boot to
+      // first registerAllTools call. Pre-T2.5 budget was 100ms (deps
+      // already evaluated at module load); post-T2.5 the call evaluates
+      // 49 modules on first hit, so the budget grows. This is the
+      // intended trade — saves cold-start cost when profile=core skips
+      // most modules entirely.
       const start = performance.now();
-      registerAllTools(server, store);
+      await registerAllTools(server, store);
       const elapsed = performance.now() - start;
 
       console.log(`[B1] Tool registration time: ${elapsed.toFixed(1)}ms`);
-      expect(elapsed).toBeLessThan(150);
+      expect(elapsed).toBeLessThan(1500);
     });
   });
 

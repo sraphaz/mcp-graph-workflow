@@ -5,7 +5,7 @@
 
 /**
  * Task 1.2: finish_task aceita artifacts payload (v11 Context-Pollination)
- * ADR-v11-005: parametro artifacts opcional + artifactIds no response.
+ * ADR-0049: parametro artifacts opcional + artifactIds no response.
  */
 
 import { describe, it, expect } from "vitest";

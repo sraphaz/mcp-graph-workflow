@@ -87,9 +87,13 @@ export function registerValidate(server: McpServer, store: SqliteStore): void {
         }
 
         // V11 Maestro Phase 4.3 — soft deprecation in favor of graph_validate_ui.
-        // The old path still works (no-op for callers) but signals migration.
-        response._deprecation_notice =
-          "validate(action='task') is deprecated. Prefer graph_validate_ui({nodeId, url, checks}) — returns a plan-payload that the agent client executes via Playwright MCP. validate(action='task') is scheduled for removal after the V11 Maestro 30-day telemetry gate.";
+        response._deprecation_notice = {
+          stage: "advisory",
+          replacement: "graph_validate_ui",
+          migrationDoc: "docs/migration/v11-maestro-surface.md",
+          reason: "validate(action=task) is being replaced by graph_validate_ui (plan-payload routed to Playwright MCP).",
+          since: "v11.0.0",
+        };
 
         logger.info("tool:validate:task:ok", { nodeId, url, deprecated: true });
         return mcpText(response);

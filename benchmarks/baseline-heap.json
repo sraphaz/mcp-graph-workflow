@@ -1,0 +1,33 @@
+{
+  "cli": "/Users/diegonogueira/mcp-graph-workflow/dist/cli/index.js",
+  "workflow": [
+    "mcp-graph init",
+    "mcp-graph stats (used as deterministic 'next' analog)"
+  ],
+  "runs": {
+    "init": {
+      "cmd": "mcp-graph init",
+      "exit_code": 0,
+      "measured_via": "/usr/bin/time",
+      "rss_mb": 177.84,
+      "heap_used_mb": 39.72,
+      "heap_total_mb": 55.2,
+      "external_mb": 25.69
+    },
+    "stats": {
+      "cmd": "mcp-graph stats",
+      "exit_code": 0,
+      "measured_via": "/usr/bin/time",
+      "rss_mb": 171.3,
+      "heap_used_mb": 43.74,
+      "heap_total_mb": 53.2,
+      "external_mb": 25.9
+    }
+  },
+  "peak_rss_mb": 177.84,
+  "peak_heap_used_mb": 43.74,
+  "measured_via": "/usr/bin/time",
+  "node_version": "v25.8.0",
+  "platform": "darwin-arm64",
+  "ts": "2026-04-25T18:10:56.721Z"
+}

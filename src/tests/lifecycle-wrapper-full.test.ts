@@ -201,7 +201,12 @@ describe("wrapToolsWithLifecycle gate blocking", () => {
     store.close();
   });
 
-  it("should block tool in strict mode when gate check produces errors", async () => {
+  // Skip when MCP_GRAPH_GATES_IN_HOOKS=on: that flag short-circuits the wrapper's
+  // lifecycle gate so the PreToolUse hook is the sole pre-execution enforcer.
+  // Wrapper-block assertions only hold in the default (flag-off) path.
+  it.skipIf(process.env.MCP_GRAPH_GATES_IN_HOOKS === "on")(
+    "should block tool in strict mode when gate check produces errors",
+  async () => {
     // Force ANALYZE phase via override + strict mode
     store.setProjectSetting("lifecycle_phase_override", "ANALYZE");
     store.setProjectSetting("lifecycle_strictness_mode", "strict");

@@ -7,9 +7,9 @@
  * SubtaskArtifactsStore — persistent store for structured subtask outputs
  * consumed by the v11 context-pollination assembly.
  *
- * ADR-v11-001: dedicated table with (epic_id, created_at) + (node_id) indexes,
+ * ADR-0046: dedicated table with (epic_id, created_at) + (node_id) indexes,
  * unique-by (project_id, epic_id, kind, content_hash) for dedup.
- * ADR-v11-002: content_hash computed via canonicalization to survive whitespace/comment noise.
+ * ADR-0048: content_hash computed via canonicalization to survive whitespace/comment noise.
  */
 
 import type { SqliteStore } from "./sqlite-store.js";
@@ -68,7 +68,7 @@ export class SubtaskArtifactsStore {
   /**
    * Insert an artifact. If an artifact with the same
    * (project_id, epic_id, kind, content_hash) already exists, return its id
-   * (dedup — ADR-v11-001).
+   * (dedup — ADR-0046).
    */
   insert(input: SubtaskArtifactInput): string {
     const db = this.store.getDb();

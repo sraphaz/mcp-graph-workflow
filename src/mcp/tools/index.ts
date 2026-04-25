@@ -17,75 +17,28 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
-import { registerInit } from "./init.js";
-import { registerImportPrd } from "./import-prd.js";
-import { registerList } from "./list.js";
-import { registerShow } from "./show.js";
-import { registerNext } from "./next.js";
-import { registerUpdateStatus } from "./update-status.js";
-import { registerMetrics } from "./metrics.js";
-import { registerContext } from "./context.js";
-import { registerSearch } from "./search.js";
-import { registerAnalyze } from "./analyze.js";
-import { registerEdge } from "./edge.js";
-import { registerSnapshot } from "./snapshot.js";
-import { registerExport } from "./export.js";
-import { registerImportGraph } from "./import-graph.js";
-import { registerMoveNode } from "./move-node.js";
-import { registerCloneNode } from "./clone-node.js";
-import { registerSyncStackDocs } from "./sync-stack-docs.js";
-import { registerPlanSprint } from "./plan-sprint.js";
-import { registerSetPhase } from "./set-phase.js";
-import { registerMemory } from "./memory.js";
-import { registerManageSkill } from "./manage-skill.js";
-import { registerJourney } from "./journey.js";
-import { registerHelp } from "./help.js";
-// Consolidated tools (v8.0)
-import { registerSiebel } from "./siebel.js";
-import { registerKnowledge } from "./knowledge.js";
-import { registerDavinci } from "./davinci.js";
-import { registerTranslate } from "./translate.js";
-import { registerNode } from "./node.js";
-import { registerValidate } from "./validate.js";
-// Task templates
-import { registerTemplate } from "./template.js";
-// LSP Code Intelligence
-import { registerCodeIntelligence } from "./code-intelligence.js";
-// Pipeline tools (v8.0)
-import { registerStartTask } from "./start-task.js";
-import { registerFinishTask } from "./finish-task.js";
-// Predictive analytics (v8.0)
-import { registerForecast } from "./forecast.js";
-// Kanban orchestrator
-import { registerKanban } from "./kanban.js";
-// Graph health scanner
-import { registerGraphHealth } from "./graph-health.js";
-// Spec-driven development (spec-kit v8)
-import { registerConstitution } from "./constitution.js";
-import { registerPlugin } from "./plugin.js";
-import { registerPreset } from "./preset.js";
-import { registerSpec } from "./spec.js";
-import { registerSpecSync } from "./spec-sync.js";
-import { registerAgentFormat } from "./agent-format.js";
-import { registerDelegate } from "./delegate.js";
-import { registerPipeline } from "./pipeline.js";
-import { registerDaemonStatus } from "./daemon-status.js";
-// Browser harness — direct CDP + self-healing helpers
-import { registerBrowserHarnessTool } from "./browser-harness.js";
-// V11 Maestro Phase 2 — read-only SQL bridge to the graph DB
-import { registerQueryGraph } from "./query-graph.js";
-// V11 Maestro Phase 3 — facade wrapper over the 53 analyze modes
-import { registerGraphLifecycle } from "./graph-lifecycle.js";
-// V11 Maestro Phase 4 — external arms via plan-payload contract
-import { registerGraphMaterialize } from "./graph-materialize.js";
-import { registerGraphValidateUi } from "./graph-validate-ui.js";
-import { registerGraphExploreWeb } from "./graph-explore-web.js";
-import { registerGraphRefreshDocs } from "./graph-refresh-docs.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
+import { isToolVisibleForProfile, type ProfileFilter } from "./taxonomy.js";
 
-export function registerAllTools(server: McpServer, store: SqliteStore): void {
+// T2.5 — Lazy MCP tool imports.
+//
+// Static imports of every tool module forced cold-boot to evaluate ALL of
+// them even when the active profile only registers a handful (e.g.
+// profile=core registers 8 of 49 classified tools). Dynamic `await
+// import()` inside each profile gate defers module evaluation until the
+// gate passes; profile=core boots without ever loading siebel/davinci/
+// forecast/etc. Bundlers preserve dynamic-import semantics; with tsup
+// splitting=false the modules end up in the bundle but evaluation is
+// still deferred — RAM/time savings come from the deferred top-level
+// side-effects (logger registration, regex compilation, schema parsing).
+
+export async function registerAllTools(
+  server: McpServer,
+  store: SqliteStore,
+  profile: ProfileFilter = "all",
+): Promise<void> {
   // Initialize LockManager when teamTask mode is enabled
   let lockManager: LockManager | undefined;
   try {
@@ -98,61 +51,65 @@ export function registerAllTools(server: McpServer, store: SqliteStore): void {
     // Project may not be initialized yet — no team task mode
   }
 
-  registerInit(server, store);
-  registerImportPrd(server, store);
-  registerList(server, store);
-  registerShow(server, store);
-  registerNext(server, store, lockManager);
-  registerUpdateStatus(server, store);
-  registerMetrics(server, store);
-  registerContext(server, store);
-  registerSearch(server, store);
-  registerAnalyze(server, store);
-  registerEdge(server, store);
-  registerSnapshot(server, store);
-  registerExport(server, store);
-  registerImportGraph(server, store);
-  registerMoveNode(server, store);
-  registerCloneNode(server, store);
-  registerSyncStackDocs(server, store);
-  registerPlanSprint(server, store);
-  registerSetPhase(server, store);
-  registerMemory(server, store);
-  registerManageSkill(server, store);
-  registerJourney(server, store);
-  registerHelp(server);
+  const visible = (toolName: string): boolean =>
+    isToolVisibleForProfile(toolName, profile);
+
+  if (visible("init")) (await import("./init.js")).registerInit(server, store);
+  if (visible("import_prd")) (await import("./import-prd.js")).registerImportPrd(server, store);
+  if (visible("list")) (await import("./list.js")).registerList(server, store);
+  if (visible("show")) (await import("./show.js")).registerShow(server, store);
+  if (visible("next")) (await import("./next.js")).registerNext(server, store, lockManager);
+  if (visible("update_status")) (await import("./update-status.js")).registerUpdateStatus(server, store);
+  if (visible("metrics")) (await import("./metrics.js")).registerMetrics(server, store);
+  if (visible("context")) (await import("./context.js")).registerContext(server, store);
+  if (visible("search")) (await import("./search.js")).registerSearch(server, store);
+  if (visible("analyze")) (await import("./analyze.js")).registerAnalyze(server, store);
+  if (visible("graph_lifecycle")) (await import("./graph-lifecycle.js")).registerGraphLifecycle(server, store);
+  if (visible("graph_materialize")) (await import("./graph-materialize.js")).registerGraphMaterialize(server, store);
+  if (visible("graph_validate_ui")) (await import("./graph-validate-ui.js")).registerGraphValidateUi(server);
+  if (visible("graph_explore_web")) (await import("./graph-explore-web.js")).registerGraphExploreWeb(server);
+  if (visible("graph_refresh_docs")) (await import("./graph-refresh-docs.js")).registerGraphRefreshDocs(server, store);
+  if (visible("edge")) (await import("./edge.js")).registerEdge(server, store);
+  if (visible("snapshot")) (await import("./snapshot.js")).registerSnapshot(server, store);
+  if (visible("export")) (await import("./export.js")).registerExport(server, store);
+  if (visible("import_graph")) (await import("./import-graph.js")).registerImportGraph(server, store);
+  if (visible("move_node")) (await import("./move-node.js")).registerMoveNode(server, store);
+  if (visible("clone_node")) (await import("./clone-node.js")).registerCloneNode(server, store);
+  if (visible("sync_stack_docs")) (await import("./sync-stack-docs.js")).registerSyncStackDocs(server, store);
+  if (visible("plan_sprint")) (await import("./plan-sprint.js")).registerPlanSprint(server, store);
+  if (visible("set_phase")) (await import("./set-phase.js")).registerSetPhase(server, store);
+  if (visible("write_memory") || visible("read_memory") || visible("list_memories") || visible("delete_memory")) {
+    // memory tool registers 4 names; gate on the union — if any visible, load the module once
+    (await import("./memory.js")).registerMemory(server, store);
+  }
+  if (visible("manage_skill")) (await import("./manage-skill.js")).registerManageSkill(server, store);
+  if (visible("journey")) (await import("./journey.js")).registerJourney(server, store);
+  if (visible("help")) (await import("./help.js")).registerHelp(server);
   // Consolidated tools (v8.0)
-  registerSiebel(server, store);
-  registerKnowledge(server, store);
-  registerDavinci(server, store);
-  registerTranslate(server, store);
-  registerNode(server, store);
-  registerValidate(server, store);
-  registerTemplate(server, store);
-  registerCodeIntelligence(server, store);
-  registerStartTask(server, store, lockManager);
-  registerFinishTask(server, store, lockManager);
-  registerForecast(server, store);
-  registerKanban(server, store);
-  registerGraphHealth(server, store);
-  registerConstitution(server, store);
-  registerPlugin(server, store);
-  registerPreset(server, store);
-  registerSpec(server, store);
-  registerSpecSync(server, store);
-  registerAgentFormat(server, store);
-  registerDelegate(server, store);
-  registerPipeline(server, store);
-  registerDaemonStatus(server);
-  registerBrowserHarnessTool(server, store);
-  // V11 Maestro Phase 2 — query_graph SQL read-only bridge
-  registerQueryGraph(server, store);
-  // V11 Maestro Phase 3 — graph_lifecycle facade over analyze modes
-  registerGraphLifecycle(server, store);
-  // V11 Maestro Phase 4 — external arms (graph rastreia, agente cliente executa)
-  registerGraphMaterialize(server, store);
-  registerGraphValidateUi(server);
-  registerGraphExploreWeb(server);
-  registerGraphRefreshDocs(server, store);
+  if (visible("siebel")) (await import("./siebel.js")).registerSiebel(server, store);
+  if (visible("knowledge")) (await import("./knowledge.js")).registerKnowledge(server, store);
+  if (visible("davinci")) (await import("./davinci.js")).registerDavinci(server, store);
+  if (visible("translate")) (await import("./translate.js")).registerTranslate(server, store);
+  if (visible("node")) (await import("./node.js")).registerNode(server, store);
+  if (visible("validate")) (await import("./validate.js")).registerValidate(server, store);
+  if (visible("template")) (await import("./template.js")).registerTemplate(server, store);
+  if (visible("code_intelligence")) (await import("./code-intelligence.js")).registerCodeIntelligence(server, store);
+  if (visible("start_task")) (await import("./start-task.js")).registerStartTask(server, store, lockManager);
+  if (visible("finish_task")) (await import("./finish-task.js")).registerFinishTask(server, store, lockManager);
+  if (visible("forecast")) (await import("./forecast.js")).registerForecast(server, store);
+  if (visible("kanban")) (await import("./kanban.js")).registerKanban(server, store);
+  if (visible("graph_health")) (await import("./graph-health.js")).registerGraphHealth(server, store);
+  if (visible("constitution")) (await import("./constitution.js")).registerConstitution(server, store);
+  if (visible("plugin")) (await import("./plugin.js")).registerPlugin(server, store);
+  if (visible("preset")) (await import("./preset.js")).registerPreset(server, store);
+  if (visible("spec")) (await import("./spec.js")).registerSpec(server, store);
+  if (visible("spec_sync")) (await import("./spec-sync.js")).registerSpecSync(server, store);
+  if (visible("agent_format")) (await import("./agent-format.js")).registerAgentFormat(server, store);
+  if (visible("delegate")) (await import("./delegate.js")).registerDelegate(server, store);
+  if (visible("pipeline")) (await import("./pipeline.js")).registerPipeline(server, store);
+  if (visible("daemon_status")) (await import("./daemon-status.js")).registerDaemonStatus(server);
+  if (visible("browser_harness")) (await import("./browser-harness.js")).registerBrowserHarnessTool(server, store);
+  if (visible("browser_pilot_run")) (await import("./browser-pilot.js")).registerBrowserPilotTool(server, store);
+  if (visible("query_graph")) (await import("./query-graph.js")).registerQueryGraph(server, store);
   wrapToolsWithGates(server, store);
 }

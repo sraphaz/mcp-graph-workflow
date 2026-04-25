@@ -5,7 +5,7 @@
 
 /**
  * Task 2.3: Agent format templates emit siblingContext (v11 Context-Pollination)
- * ADR-v11-006: templates expose siblingContext when non-empty, silent when empty.
+ * ADR-0047: templates expose siblingContext when non-empty, silent when empty.
  */
 
 import { describe, it, expect } from "vitest";

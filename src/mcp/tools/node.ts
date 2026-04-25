@@ -96,6 +96,22 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         }
 
         const timestamp = now();
+        // Sprint 7.6 #7.6.8 — auto-fill provenance metadata when absent.
+        // Caller can pre-populate metadata.provenance to override (the
+        // graph-importer / spec-sync paths already do this); for everyone
+        // else we stamp source / actor / ts so downstream replay/audit
+        // tooling can attribute the node to the channel that created it.
+        const enrichedMetadata = ((): Record<string, unknown> | undefined => {
+          if (metadata && typeof metadata.provenance === "object" && metadata.provenance !== null) {
+            return metadata; // caller-supplied; respect.
+          }
+          const provenance = {
+            source: "mcp" as const,
+            actor: agentId ?? process.env.USER ?? "unknown",
+            ts: timestamp,
+          };
+          return { ...(metadata ?? {}), provenance };
+        })();
         const node = {
           id: generateId("node"),
           type,
@@ -111,7 +127,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
           acceptanceCriteria,
           testFiles,
           blocked,
-          metadata,
+          metadata: enrichedMetadata,
           createdAt: timestamp,
           updatedAt: timestamp,
         };
@@ -301,7 +317,19 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
             sprint: entry.sprint,
             acceptanceCriteria: entry.acceptanceCriteria,
             blocked: entry.blocked,
-            metadata: entry.metadata as GraphNode["metadata"],
+            // Sprint 7.6 #7.6.8 — same auto-fill as the single-add branch.
+            metadata: ((): GraphNode["metadata"] => {
+              const m = entry.metadata as Record<string, unknown> | undefined;
+              if (m && typeof m.provenance === "object" && m.provenance !== null) {
+                return m as GraphNode["metadata"];
+              }
+              const provenance = {
+                source: "mcp" as const,
+                actor: agentId ?? process.env.USER ?? "unknown",
+                ts: timestamp,
+              };
+              return { ...(m ?? {}), provenance } as GraphNode["metadata"];
+            })(),
             createdAt: timestamp,
             updatedAt: timestamp,
           };

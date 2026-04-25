@@ -22,10 +22,13 @@ import { BROWSER_PILOT_MODELS } from "../../schemas/browser-pilot.schema.js";
 export const ContextModeSchema = z.enum(["ultra-lean", "lean", "full"]);
 export type ContextMode = z.infer<typeof ContextModeSchema>;
 
+export const ProfileFilterConfigSchema = z.enum(["core", "pro", "expert", "all"]);
+export type ProfileFilterConfig = z.infer<typeof ProfileFilterConfigSchema>;
+
 /**
  * V11 Copilot Bridge — browser-use orchestration via Copilot LLM bridge.
  * Disabled by default; flipping `enabled=true` activates the
- * `browser_pilot_run` MCP tool. Plan: ~/.claude/plans/immutable-weaving-ocean.md.
+ * `browser_pilot_run` MCP tool.
  */
 export const BrowserAutomationConfigSchema = z.object({
   enabled: z.boolean().default(false),
@@ -52,6 +55,7 @@ export const ConfigSchema = z.object({
   dbPath: z.string().default("workflow-graph"),
   basePath: z.string().optional(),
   contextMode: ContextModeSchema.default("lean"),
+  profile: ProfileFilterConfigSchema.default("all"),
   dashboard: z
     .object({
       autoOpen: z.boolean().default(true),

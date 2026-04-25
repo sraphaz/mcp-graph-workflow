@@ -22953,14 +22953,14 @@ Mitigacao: <strategy>
 - `**Tamanho:**`, `**Prioridade:**`, `**Depende de:**` for metadata extraction
 - Risk/Constraint sections use keywords the classifier recognizes
 
-Save to `docs/prd/<kebab-case-name>.md`.
+Save to `docs/_internal/prd/<kebab-case-name>.md`.
 
 ### Step 9: Quality Validation (Dry Run)
 
 Preview the PRD import without persisting:
 
 ```
-Tool: mcp__mcp-graph__import_prd (filePath: "docs/prd/<name>.md", dryRun: true)
+Tool: mcp__mcp-graph__import_prd (filePath: "docs/_internal/prd/<name>.md", dryRun: true)
 ```
 
 Review the preview:
@@ -22976,7 +22976,7 @@ If issues found, iterate on the PRD file and re-run dry-run.
 Present summary and guide user to the next phase:
 
 ```
-PRD ready at docs/prd/<name>.md
+PRD ready at docs/_internal/prd/<name>.md
 Next step: Run /graph-analyze to import this PRD and begin the 9-phase lifecycle.
 ```
 
@@ -22985,7 +22985,7 @@ Next step: Run /graph-analyze to import this PRD and begin the 9-phase lifecycle
 ```
 Phase: PRD (Phase 0 — Pre-lifecycle)
 Methodologies: 5W2H, JTBD, Pareto 80/20, MoSCoW, INVEST, GWT, Risk Matrix
-File: docs/prd/<name>.md
+File: docs/_internal/prd/<name>.md
 Epics: N defined
 Tasks: M with acceptance criteria
 Risks: K identified

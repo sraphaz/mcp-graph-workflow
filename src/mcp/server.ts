@@ -18,6 +18,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAllTools } from "./tools/index.js";
+import { ProfileFilterSchema } from "./tools/taxonomy.js";
 import { GraphEventBus } from "../core/events/event-bus.js";
 import { logger } from "../core/utils/logger.js";
 import { loadConfig } from "../core/config/config-loader.js";
@@ -42,7 +43,8 @@ const mcp = new McpServer(
   { capabilities: { tools: {} } },
 );
 
-registerAllTools(mcp, storeManager.store);
+const profile = ProfileFilterSchema.safeParse(process.env.MCP_GRAPH_PROFILE).data ?? "all";
+await registerAllTools(mcp, storeManager.store, profile);
 
 // ── Express app ──────────────────────────────────────────
 const app = createApp({
