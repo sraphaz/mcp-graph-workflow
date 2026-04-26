@@ -81,6 +81,7 @@ tools/copilot-bridge-cli/
 .coverage-baseline.txt
 .harness-baseline.txt
 .feature-depth-baseline.json
+.feature-depth-cache.json
 baseline-*.png
 
 # Test artifacts
