@@ -19,12 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      root_release_created: ${{ steps.release.outputs['.--release_created'] }}
-      root_tag_name: ${{ steps.release.outputs['.--tag_name'] }}
+      # release-please-action v4 emits per-path outputs as `<path>--<key>`,
+      # but the literal `.` for the root path silently fails to flow through
+      # `steps.release.outputs[...]` here (publish was skipped on every prior
+      # release run). Derive the root flags from `paths_released` instead.
+      root_release_created: ${{ contains(fromJSON(steps.release.outputs.paths_released || '[]'), '.') }}
+      root_tag_name: ${{ steps.release.outputs['mcp-graph--tag_name'] || steps.release.outputs['.--tag_name'] }}
       cli_release_created: ${{ steps.release.outputs['tools/cli--release_created'] }}
       cli_tag_name: ${{ steps.release.outputs['tools/cli--tag_name'] }}
       cli_version: ${{ steps.release.outputs['tools/cli--version'] }}
       releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
