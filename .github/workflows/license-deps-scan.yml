@@ -1,30 +1,18 @@
 name: License — dependency scan
 
+# Always runs on every push/PR so the required `scan` check is always emitted
+# back to branch protection. The `changes` job classifies the diff: when no
+# dep-related files changed, the `scan` job posts a no-op success notice in
+# ~5s; when deps did change, it runs the full license-checker pass.
+#
+# Pattern mirrors ci.yml's `changes` job — keeping branch protection happy
+# without forcing every PR to pay the full ~30s npm install + scan cost.
+
 on:
   push:
     branches: [master]
-    paths:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'src/web/dashboard/package.json'
-      - 'src/web/dashboard/package-lock.json'
-      # Meta-CI PRs (only workflow files changed) still need to satisfy the
-      # required `scan` gate. Triggering on any workflow change keeps branch
-      # protection happy without adding noise — the scan runs in ~30s and
-      # reuses the cached dep install.
-      - '.github/workflows/**'
   pull_request:
     branches: [master]
-    paths:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'src/web/dashboard/package.json'
-      - 'src/web/dashboard/package-lock.json'
-      # Meta-CI PRs (only workflow files changed) still need to satisfy the
-      # required `scan` gate. Triggering on any workflow change keeps branch
-      # protection happy without adding noise — the scan runs in ~30s and
-      # reuses the cached dep install.
-      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -34,13 +22,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            deps:
+              - 'package.json'
+              - 'package-lock.json'
+              - 'src/web/dashboard/package.json'
+              - '.github/workflows/**'
+
   scan:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+        if: needs.changes.outputs.deps == 'true'
 
       - name: Setup Node.js
+        if: needs.changes.outputs.deps == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -51,9 +59,11 @@ jobs:
         # (husky install), which is itself in devDependencies. With --omit=dev
         # husky is absent, so prepare would exit 127. We don't need hooks
         # inside the scan runner anyway.
+        if: needs.changes.outputs.deps == 'true'
         run: npm ci --omit=dev --ignore-scripts
 
       - name: Scan for AGPL-incompatible licenses
+        if: needs.changes.outputs.deps == 'true'
         run: |
           set -euo pipefail
           # Reject licenses that are incompatible with redistribution under
@@ -72,6 +82,10 @@ jobs:
           #    intelephense license then governs directly between them and
           #    its author. Treating this as mere aggregation is defensible;
           #    the scan exclusion documents it explicitly.
+          #
+          # Dashboard deps are covered by this scan because dashboard is a
+          # workspace member of the root package; root `npm ci` installs
+          # them under the hoisted node_modules tree.
           npx --yes license-checker-rseidelsohn \
             --production \
             --excludePrivatePackages \
@@ -79,13 +93,6 @@ jobs:
             --excludePackages "mcp-graph;@mcp-graph-workflow/mcp-graph;intelephense" \
             --summary
 
-      - name: Scan dashboard dependencies
-        run: |
-          set -euo pipefail
-          cd src/web/dashboard
-          npm ci --omit=dev --ignore-scripts
-          npx --yes license-checker-rseidelsohn \
-            --production \
-            --excludePrivatePackages \
-            --onlyAllow "MIT;MIT-0;ISC;BSD;BSD*;BSD-2-Clause;BSD-3-Clause;BSD-3-Clause-Clear;Apache-2.0;Apache 2.0;0BSD;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Unlicense;WTFL;Python-2.0;Zlib;BlueOak-1.0.0;(MIT OR Apache-2.0);(MIT OR CC0-1.0);(MIT OR WTFPL);(MIT OR GPL-3.0-or-later);(MIT AND Zlib);(BSD-2-Clause OR MIT OR Apache-2.0);(Apache-2.0 OR MPL-1.1);AGPL-3.0;AGPL-3.0-or-later;LGPL-3.0-or-later;GPL-3.0-or-later" \
-            --summary
+      - name: No-op (deps unchanged)
+        if: needs.changes.outputs.deps != 'true'
+        run: echo "::notice::No dep-related files changed; license-deps scan trivially passed."

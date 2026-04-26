@@ -22,6 +22,13 @@ CLAUDE.md
 *~
 .claude/rules
 .claude/*
+# Project-level skills that ship with the repo so future maintainers get
+# the same agentic recipes the author relied on. Git requires unignoring
+# parent dirs before files; we then re-ignore everything under skills/
+# and only un-ignore the specific skills meant to ship.
+!.claude/skills
+.claude/skills/*
+!.claude/skills/mcp-graph-release-monitor/
 # OS
 .DS_Store
 Thumbs.db
