@@ -107,6 +107,20 @@ function resolveGrammarPath(languageId: string): string | null {
   const entry = GRAMMAR_REGISTRY[languageId];
   if (!entry) return null;
 
+  // Strategy 0: bundled grammar inside our own dist (preferred for installed package).
+  // This file lives at dist/core/code/treesitter/treesitter-manager.js;
+  // grammars are copied to dist/wasm/<wasm> by scripts/copy-grammars.mjs.
+  try {
+    const thisDir = new URL(".", import.meta.url).pathname;
+    const bundled = join(thisDir, "..", "..", "..", "wasm", entry.wasm);
+    if (existsSync(bundled)) {
+      logger.debug("treesitter-manager:resolved-bundled", { languageId, path: bundled });
+      return bundled;
+    }
+  } catch {
+    // Bundled path not found — fall through to npm-package strategies
+  }
+
   // Strategy 1: require.resolve from CWD
   try {
     const pkgMain = require.resolve(`${entry.pkg}/package.json`);
