@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.2.0...mcp-graph-v10.3.0) (2026-04-26)
+
+
+### Features
+
+* **cli:** mg deprecation banner + docs sweep to mcp-graph (PR 2/3) ([#253](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/253)) ([983f082](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/983f0827c212856cc78af757f17e67133cdfeb2b))
+* **cli:** unify v11 lifecycle commands under single mcp-graph bin (PR 1/3) ([#251](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/251)) ([d126be8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d126be8438d3777910d87e481a23f9817d5885d9))
+
 ## [10.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.1.3...mcp-graph-v10.2.0) (2026-04-25)
 
 

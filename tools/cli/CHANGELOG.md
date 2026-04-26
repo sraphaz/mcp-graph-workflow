@@ -2,6 +2,13 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [11.3.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.2.0-beta.0...cli-v11.3.0-beta.0) (2026-04-26)
+
+
+### Features
+
+* **cli:** mg deprecation banner + docs sweep to mcp-graph (PR 2/3) ([#253](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/253)) ([983f082](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/983f0827c212856cc78af757f17e67133cdfeb2b))
+
 ## [11.2.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.1.3-beta.0...cli-v11.2.0-beta.0) (2026-04-25)
 
 
