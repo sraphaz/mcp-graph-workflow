@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.1.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.0...mcp-graph-v12.1.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **vercel:** no-op install/build + .vercelignore (unblock landing deploy) ([#262](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/262)) ([8f887df](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/8f887df3b2670516501130b386aa73abb35ead81))
+
 ## [12.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.0.0...mcp-graph-v12.1.0) (2026-04-26)
 
 
