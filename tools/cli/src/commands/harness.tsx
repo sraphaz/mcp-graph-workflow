@@ -27,9 +27,9 @@ function detectActor(): "user" | "claude-code" {
 }
 
 /**
- * `mg harness <action>` — first-class CLI surface for the parent's
+ * `mcp-graph harness <action>` — first-class CLI surface for the parent's
  * `browser_harness` MCP tool family. Same code path under the hood; the
- * difference is the user types `mg harness call <helper> --sid <id>` instead
+ * difference is the user types `mcp-graph harness call <helper> --sid <id>` instead
  * of constructing an MCP `tools/call` payload.
  *
  * Actions:
@@ -223,7 +223,7 @@ async function dispatch(
     throw err;
   } finally {
     // Sprint 7.55 #7.55.8 — every harness subaction emits a single
-    // provenance entry to events.jsonl so a downstream `mg log` replay
+    // provenance entry to events.jsonl so a downstream `mcp-graph log` replay
     // can reconstruct who did what against the browser harness.
     logEvent("events", {
       source: "cli",
@@ -277,7 +277,7 @@ async function doStart(
   if (!cdpEndpoint) {
     return {
       exitCode: 2,
-      text: "usage: mg harness start --cdp <ws-url>\n  hint: launch Chrome with --remote-debugging-port=9222 and copy ws://… from /json/version",
+      text: "usage: mcp-graph harness start --cdp <ws-url>\n  hint: launch Chrome with --remote-debugging-port=9222 and copy ws://… from /json/version",
     };
   }
   const cdp = new mod.CdpClient({ endpoint: cdpEndpoint });
@@ -301,7 +301,7 @@ async function doStop(
 ): Promise<CommandHandlerResult> {
   const sid = pickSid(ctx);
   if (!sid) {
-    return { exitCode: 2, text: "usage: mg harness stop --sid <session-id>" };
+    return { exitCode: 2, text: "usage: mcp-graph harness stop --sid <session-id>" };
   }
   await bundle.sessions.close(sid);
   bundle.selfHeal.audit(sid, "stop", {}, { ok: true });
@@ -320,7 +320,7 @@ async function doCall(
   if (!helperName || !sid) {
     return {
       exitCode: 2,
-      text: "usage: mg harness call <helper> --sid <session-id> [--args '{\"k\":\"v\"}' | k=v ...]",
+      text: "usage: mcp-graph harness call <helper> --sid <session-id> [--args '{\"k\":\"v\"}' | k=v ...]",
     };
   }
   // Sprint 7.55 #7.55.3 — accept either:
@@ -385,7 +385,7 @@ async function doCdp(
   if (!method || !sid) {
     return {
       exitCode: 2,
-      text: "usage: mg harness cdp <Method.name> --sid <id> [--params '{\"k\":\"v\"}']",
+      text: "usage: mcp-graph harness cdp <Method.name> --sid <id> [--params '{\"k\":\"v\"}']",
     };
   }
   const guardrail = mod.loadGuardrail();
@@ -415,7 +415,7 @@ async function doAddHelper(
   if (!name || !sid || (!source && !inline)) {
     return {
       exitCode: 2,
-      text: "usage: mg harness add <name> --sid <id> (--source <file> | --inline '<code>')",
+      text: "usage: mcp-graph harness add <name> --sid <id> (--source <file> | --inline '<code>')",
     };
   }
   const guardrail = mod.loadGuardrail();
@@ -451,7 +451,7 @@ function doSessions(
   }
 
   if (list.length === 0) {
-    return { exitCode: 0, text: "no active sessions. run `mg harness start --cdp <url>`." };
+    return { exitCode: 0, text: "no active sessions. run `mcp-graph harness start --cdp <url>`." };
   }
   return {
     exitCode: 0,
@@ -518,7 +518,7 @@ function formatResult(result: unknown): string {
 
 function helpText(): string {
   return [
-    "usage: mg harness <action> [args]",
+    "usage: mcp-graph harness <action> [args]",
     "",
     "  list [--filter <regex>]                       list registered helpers",
     "  start --cdp <ws-url>                          open a CDP session",
@@ -536,7 +536,7 @@ function helpText(): string {
 }
 
 /**
- * Sprint 7.55 #7.55.5 — `mg harness inspect` deep-link.
+ * Sprint 7.55 #7.55.5 — `mcp-graph harness inspect` deep-link.
  *
  * Builds the dashboard URL for a session and opens it in the user's
  * browser. Default port 3000 matches the parent's `mcp-graph serve`;
@@ -548,7 +548,7 @@ function doInspect(ctx: CommandHandlerArgs): CommandHandlerResult {
   if (!sid) {
     return {
       exitCode: 2,
-      text: "missing --sid <id>\n\nusage: mg harness inspect --sid <id> [--port <p>] [--no-open]",
+      text: "missing --sid <id>\n\nusage: mcp-graph harness inspect --sid <id> [--port <p>] [--no-open]",
     };
   }
   const port = typeof ctx.flags.port === "string" || typeof ctx.flags.port === "number"

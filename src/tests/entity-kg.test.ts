@@ -196,6 +196,178 @@ describe("EntityStore", () => {
       expect(docs).toContain("doc_1");
       expect(docs).toContain("doc_2");
     });
+
+    it("should move outgoing relations from merged to keeper", () => {
+      const keep = store.upsertEntity("Express", "technology", "doc_1");
+      const merge = store.upsertEntity("expressjs", "technology", "doc_2");
+      const target = store.upsertEntity("Node", "technology");
+
+      store.addRelation(merge.id, target.id, "uses");
+
+      store.mergeEntities(keep.id, merge.id);
+
+      const fromKeeper = store.getRelationsFrom(keep.id);
+      expect(fromKeeper.map((r) => r.toEntityId)).toContain(target.id);
+      expect(store.getRelationsFrom(merge.id)).toHaveLength(0);
+    });
+
+    it("should move incoming relations from merged to keeper", () => {
+      const keep = store.upsertEntity("React", "technology", "doc_1");
+      const merge = store.upsertEntity("react.js", "technology", "doc_2");
+      const source = store.upsertEntity("MyApp", "module");
+
+      store.addRelation(source.id, merge.id, "depends_on");
+
+      store.mergeEntities(keep.id, merge.id);
+
+      const toKeeper = store.getRelationsTo(keep.id);
+      expect(toKeeper.map((r) => r.fromEntityId)).toContain(source.id);
+      expect(store.getRelationsTo(merge.id)).toHaveLength(0);
+    });
+
+    it("should dedupe when keeper already has the same relation (UPDATE OR IGNORE + cleanup)", () => {
+      // Distinct names so they don't normalize to the same entity.
+      const keep = store.upsertEntity("Postgres", "technology");
+      const merge = store.upsertEntity("PostgreSQL", "technology");
+      const target = store.upsertEntity("DB", "technology");
+
+      // Both keep and merge have the same (type, target) outgoing relation.
+      store.addRelation(keep.id, target.id, "uses");
+      store.addRelation(merge.id, target.id, "uses");
+
+      store.mergeEntities(keep.id, merge.id);
+
+      // After merge, only one (keep, target, uses) relation should exist —
+      // not two — because the duplicate from merge was cleaned up.
+      const fromKeeper = store.getRelationsFrom(keep.id);
+      const usesTarget = fromKeeper.filter(
+        (r) => r.toEntityId === target.id && r.relationType === "uses",
+      );
+      expect(usesTarget).toHaveLength(1);
+
+      // Merged entity has no surviving relations.
+      expect(store.getRelationsFrom(merge.id)).toHaveLength(0);
+      expect(store.getRelationsTo(merge.id)).toHaveLength(0);
+    });
+
+    it("should recompute mention_count on keeper after merge", () => {
+      // upsertEntity normalizes name (lowercase + trim), so "React" and
+      // "react" collapse to the same entity. Use distinct names to keep two
+      // entities apart for the merge.
+      const keep = store.upsertEntity("ReactCore", "technology", "doc_1");
+      // Add a second mention to keeper (same name = upsert, increments count)
+      store.upsertEntity("ReactCore", "technology", "doc_2");
+      const merge = store.upsertEntity("ReactDom", "technology", "doc_3");
+      // Merged entity gets one more mention
+      store.upsertEntity("ReactDom", "technology", "doc_4");
+
+      const before = store.getById(keep.id)!;
+      expect(before.mentionCount).toBeGreaterThanOrEqual(2);
+
+      store.mergeEntities(keep.id, merge.id);
+
+      const after = store.getById(keep.id)!;
+      // mention_count is recomputed from the kg_mentions table; should reflect
+      // all 4 mentions now consolidated under keeper.
+      expect(after.mentionCount).toBe(4);
+    });
+
+    it("should be idempotent across chained merges (A←B then A←C)", () => {
+      const a = store.upsertEntity("A", "technology", "doc_1");
+      const b = store.upsertEntity("B", "technology", "doc_2");
+      const c = store.upsertEntity("C", "technology", "doc_3");
+      const target = store.upsertEntity("Target", "module");
+
+      store.addRelation(b.id, target.id, "uses");
+      store.addRelation(c.id, target.id, "uses");
+
+      store.mergeEntities(a.id, b.id);
+      store.mergeEntities(a.id, c.id);
+
+      // Both b and c are gone; a inherits the (uses, target) relation
+      // exactly once (deduped via UPDATE OR IGNORE).
+      expect(store.getById(b.id)).toBeUndefined();
+      expect(store.getById(c.id)).toBeUndefined();
+
+      const fromA = store.getRelationsFrom(a.id);
+      const usesTarget = fromA.filter(
+        (r) => r.toEntityId === target.id && r.relationType === "uses",
+      );
+      expect(usesTarget).toHaveLength(1);
+
+      // a accumulates mentions from all three docs.
+      const docs = store.getDocIdsForEntity(a.id);
+      expect(docs).toContain("doc_1");
+      expect(docs).toContain("doc_2");
+      expect(docs).toContain("doc_3");
+    });
+  });
+
+  describe("getRelations (symmetric — from OR to)", () => {
+    it("should return empty array for entity with no relations", () => {
+      const lonely = store.upsertEntity("Hermit", "module");
+
+      const rels = store.getRelations(lonely.id);
+
+      expect(rels).toHaveLength(0);
+    });
+
+    it("should return only outgoing when entity has only outgoing relations", () => {
+      const a = store.upsertEntity("A", "class");
+      const b = store.upsertEntity("B", "class");
+      store.addRelation(a.id, b.id, "uses");
+
+      const rels = store.getRelations(a.id);
+
+      expect(rels).toHaveLength(1);
+      expect(rels[0].fromEntityId).toBe(a.id);
+      expect(rels[0].toEntityId).toBe(b.id);
+    });
+
+    it("should return only incoming when entity has only incoming relations", () => {
+      const a = store.upsertEntity("A", "class");
+      const b = store.upsertEntity("B", "class");
+      store.addRelation(a.id, b.id, "uses");
+
+      const rels = store.getRelations(b.id);
+
+      expect(rels).toHaveLength(1);
+      expect(rels[0].fromEntityId).toBe(a.id);
+      expect(rels[0].toEntityId).toBe(b.id);
+    });
+
+    it("should return both directions when entity participates as from and to", () => {
+      const a = store.upsertEntity("A", "class");
+      const b = store.upsertEntity("B", "class");
+      const c = store.upsertEntity("C", "class");
+      store.addRelation(a.id, b.id, "uses");
+      store.addRelation(c.id, a.id, "extends");
+
+      const relsForA = store.getRelations(a.id);
+
+      expect(relsForA).toHaveLength(2);
+      const outgoing = relsForA.find((r) => r.fromEntityId === a.id);
+      const incoming = relsForA.find((r) => r.toEntityId === a.id);
+      expect(outgoing?.toEntityId).toBe(b.id);
+      expect(incoming?.fromEntityId).toBe(c.id);
+    });
+
+    it("should include self-loops once (same entity in from and to)", () => {
+      const a = store.upsertEntity("Recursive", "class");
+      store.addRelation(a.id, a.id, "calls");
+
+      const rels = store.getRelations(a.id);
+
+      // Self-loop matches both `from_entity_id = ?` and `to_entity_id = ?`,
+      // so the OR clause may return it once or twice depending on how SQLite
+      // evaluates it. Document the actual behavior so a future change to the
+      // query is intentional, not silent.
+      expect(rels.length).toBeGreaterThanOrEqual(1);
+      for (const r of rels) {
+        expect(r.fromEntityId).toBe(a.id);
+        expect(r.toEntityId).toBe(a.id);
+      }
+    });
   });
 
   describe("getRelationsFrom / getRelationsTo", () => {

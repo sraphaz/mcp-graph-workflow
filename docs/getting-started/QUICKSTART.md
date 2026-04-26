@@ -1,5 +1,7 @@
 # Quickstart — 60 segundos até a primeira task
 
+> **Categoria:** mcp-graph é uma camada de **engenharia de software dirigida por IA (AISE — AI-Driven Software Engineering)**. Significa que cada task aqui passa pelo mesmo rigor de um time sênior: spec antes do código, TDD obrigatório, decisão rastreada, memória entre sessões. Sem vibe-coding.
+
 Três comandos e você está rodando:
 
 ```bash
@@ -24,8 +26,6 @@ npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
 Um único pacote — traz servidor MCP + CLI completo (24 subcomandos). Veja `mcp-graph --help`.
-
-(Ou `curl -fsSL https://mcp-graph.dev/install.sh | sh` — mesmo efeito, com check amigável de Node.)
 
 ## Tour de 60 segundos
 
@@ -130,7 +130,7 @@ Cria um sandbox descartável em `~/.mcp-graph/demos/<stamp>/` com um PRD de exem
 Dois comandos, duas respostas:
 
 ```bash
-mcp-graph --version           # 11.x.x-beta — o CLI v11 que você acabou de instalar
+mcp-graph --version           # 12.x.x
 mcp-graph --version    # 10.x.x — o servidor MCP (runtime que o `mcp-graph` conversa)
 ```
 
@@ -152,7 +152,7 @@ As skills do Claude são auto-instaladas no seu projeto pelo `mcp-graph init` (e
 
 - **Cheatsheet** — todos os comandos em uma página: [CHEATSHEET.md](CHEATSHEET.md)
 - **Guia completo** — conceitos, lifecycle, três modos lado a lado: [GUIDE.md](GUIDE.md)
-- **Três modos lado a lado** — quando usar tool do Claude vs `mcp-graph` shell vs slash do REPL: [mapa de superfície v11](../guides/v11-cli-surface-map.md)
+- **Três modos lado a lado** — quando usar tool do Claude vs `mcp-graph` shell vs slash do REPL: [mapa de superfície](../guides/cli-surface-map.md)
 - **PRD de exemplo** — copie e teste: [sample-prd.md](../examples/sample-prd.md)
 - **Listar todos os comandos** — `mcp-graph help` (ou `mcp-graph help <busca>`, ex: `mcp-graph help auth`)
 

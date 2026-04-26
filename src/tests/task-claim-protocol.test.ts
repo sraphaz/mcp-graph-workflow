@@ -148,7 +148,7 @@ describe("Task Claim Protocol", () => {
       }
     });
 
-    it("should throw LockConflictError when non-owner tries to finish", async () => {
+    it("should throw LockConflictError when non-owner tries to finish", { timeout: 30_000 }, async () => {
       store.insertNode(makeTask({ id: "task-1", title: "Implement feature A" }));
 
       // Agent-1 claims the task

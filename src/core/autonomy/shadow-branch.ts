@@ -75,8 +75,16 @@ export interface DiscardResult {
 
 export interface PruneResult {
   pruned: boolean;
+  reapedBranches: number;
+  reapedWorktrees: number;
   output?: string;
   error?: string;
+}
+
+export interface PruneOptions {
+  cwd?: string;
+  /** Branches whose encoded timestamp is older than this are reaped. Default: 1h. */
+  ttlMs?: number;
 }
 
 /** Accepts either the legacy string form or a `{branchName, worktreePath?}` handle. */
@@ -226,23 +234,104 @@ export function discardShadowBranch(
   }
 }
 
-/**
- * Best-effort GC — calls `git worktree prune` to reclaim metadata for
- * worktree directories that were removed outside git's knowledge
- * (process crash, kill -9, manual rm -rf, etc.). Never throws.
- *
- * Safe to call from any pipeline checkpoint (e.g. after each
- * `finish_task`). Cheap (typically <50ms even with many worktrees).
- */
-export function pruneOrphanWorktrees(cwd?: string): PruneResult {
-  const opts = { cwd: cwd ?? process?.cwd() ?? ".", encoding: "utf-8" as const, timeout: 10000 };
+/** Extract the trailing `-<digits>` timestamp the branch-name builder embeds. */
+function parseShadowTimestamp(branchName: string): number | null {
+  const match = /-(\d{10,})$/.exec(branchName);
+  if (!match) return null;
+  const ts = Number(match[1]);
+  return Number.isFinite(ts) && ts > 0 ? ts : null;
+}
+
+/** Map ai-shadow branch → its registered worktree path, parsed from `git worktree list --porcelain`. */
+function listShadowWorktrees(execOpts: {
+  cwd: string;
+  encoding: "utf-8";
+  timeout: number;
+}): Map<string, string> {
+  const map = new Map<string, string>();
+  let raw: string;
   try {
-    const output = execSync("git worktree prune --verbose", opts).toString();
-    logger.debug("shadow-branch:prune-ok", { output });
-    return { pruned: true, output };
+    raw = execSync("git worktree list --porcelain", execOpts).toString();
+  } catch {
+    return map; // best-effort
+  }
+  let currentPath = "";
+  for (const line of raw.split("\n")) {
+    if (line.startsWith("worktree ")) {
+      currentPath = line.slice("worktree ".length).trim();
+    } else if (line.startsWith("branch refs/heads/ai-shadow/")) {
+      const branch = line.slice("branch refs/heads/".length).trim();
+      if (currentPath) map.set(branch, currentPath);
+    }
+  }
+  return map;
+}
+
+/**
+ * Best-effort GC — reaps shadow branches and worktrees whose embedded
+ * timestamp is older than `ttlMs` (default 1h), then runs
+ * `git worktree prune` to reclaim metadata for dirs removed outside
+ * git's knowledge. Never throws — every step is silent-fail.
+ *
+ * Wired into daemon startup and shutdown so leftover shadows from
+ * crashed agents are reaped when the next daemon comes up. Cheap even
+ * with many branches (one `for-each-ref` + N small ops).
+ */
+export function pruneOrphanWorktrees(options?: PruneOptions): PruneResult {
+  const cwd = options?.cwd ?? process?.cwd() ?? ".";
+  const envTtl = Number(process.env.MCP_GRAPH_SHADOW_TTL_MS ?? "");
+  const ttlMs = options?.ttlMs ?? (Number.isFinite(envTtl) && envTtl > 0 ? envTtl : 60 * 60 * 1000);
+  const execOpts = { cwd, encoding: "utf-8" as const, timeout: 10000 };
+  const cutoff = Date.now() - ttlMs;
+  let reapedBranches = 0;
+  let reapedWorktrees = 0;
+
+  // 1. Enumerate ai-shadow/* branches (silent-fail; empty list on error).
+  let branches: string[] = [];
+  try {
+    const out = execSync(
+      "git for-each-ref --format='%(refname:short)' refs/heads/ai-shadow",
+      execOpts,
+    ).toString();
+    branches = out.split("\n").map((s) => s.trim()).filter(Boolean);
+  } catch (err) {
+    logger.debug("shadow-branch:prune:list-failed", { error: String(err) });
+  }
+
+  // 2. For each stale branch, remove its worktree (if any) then delete the branch.
+  const wtMap = branches.length > 0 ? listShadowWorktrees(execOpts) : new Map<string, string>();
+  for (const branch of branches) {
+    const ts = parseShadowTimestamp(branch);
+    if (ts === null || ts >= cutoff) continue; // skip fresh or unparsable
+    const wtPath = wtMap.get(branch);
+    if (wtPath) {
+      try {
+        execSync(`git worktree remove --force ${wtPath}`, execOpts);
+        reapedWorktrees += 1;
+      } catch (err) {
+        logger.debug("shadow-branch:prune:wt-remove-failed", { branch, wtPath, error: String(err) });
+      }
+    }
+    try {
+      execSync(`git branch -D ${branch}`, execOpts);
+      reapedBranches += 1;
+    } catch (err) {
+      logger.debug("shadow-branch:prune:branch-delete-failed", { branch, error: String(err) });
+    }
+  }
+
+  // 3. Cheap metadata sweep.
+  try {
+    const output = execSync("git worktree prune --verbose", execOpts).toString();
+    if (reapedBranches > 0 || reapedWorktrees > 0) {
+      logger.info("shadow-branch:prune-ok", { reapedBranches, reapedWorktrees, ttlMs });
+    } else {
+      logger.debug("shadow-branch:prune-ok", { reapedBranches, reapedWorktrees, output });
+    }
+    return { pruned: true, reapedBranches, reapedWorktrees, output };
   } catch (err) {
     const error = String(err);
     logger.debug("shadow-branch:prune-failed", { error });
-    return { pruned: false, error };
+    return { pruned: false, reapedBranches, reapedWorktrees, error };
   }
 }

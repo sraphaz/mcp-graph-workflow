@@ -78,7 +78,7 @@ export async function runNext(
       const msg = err instanceof Error ? err.message : String(err);
       return {
         exitCode: 1,
-        text: `${msg}\n  → run \`mg init\` to bootstrap a project here.`,
+        text: `${msg}\n  → run \`mcp-graph init\` to bootstrap a project here.`,
       };
     }
     result = plannerMod.findNextTask(doc);
@@ -183,9 +183,9 @@ function NextCard({ result }: NextCardProps): JSX.Element {
       <Box marginTop={1}>
         <Text dimColor>
           {t("next.startHint")}
-          <Text color="green">{`mg start ${node.id}`}</Text>
+          <Text color="green">{`mcp-graph start ${node.id}`}</Text>
           <Text dimColor>{t("next.seeAll")}</Text>
-          <Text color="green">mg list</Text>
+          <Text color="green">mcp-graph list</Text>
         </Text>
       </Box>
     </Box>

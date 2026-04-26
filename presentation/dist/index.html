@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mcp-graph — Engenharia de software dirigida por IA</title>
+  <meta name="description" content="Engenharia de software dirigida por IA, sem vibe-coding. PRD vira grafo persistente, TDD obrigatório, contexto que sobrevive ao reload. Local-first. AGPL v3." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://mcp-graph-workflow.vercel.app/" />
+
+  <meta property="og:site_name" content="mcp-graph" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://mcp-graph-workflow.vercel.app/" />
+  <meta property="og:title" content="mcp-graph — Engenharia de software dirigida por IA" />
+  <meta property="og:description" content="Engenharia de software dirigida por IA, sem vibe-coding. PRD vira grafo persistente, TDD obrigatório, contexto sobrevive ao reload. Local-first." />
+  <meta property="og:image" content="https://mcp-graph-workflow.vercel.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="mcp-graph — Engenharia de software dirigida por IA" />
+  <meta name="twitter:description" content="Sem vibe-coding. PRD vira grafo persistente, TDD obrigatório, contexto sobrevive ao reload. Local-first. AGPL v3." />
+  <meta name="twitter:image" content="https://mcp-graph-workflow.vercel.app/og-image.png" />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "name": "mcp-graph: A graph-based orchestration framework for AI-driven software engineering",
+    "description": "Investigates how deterministic graph structure enables disciplined AI-driven software engineering — improving reliability, context continuity, and predictability of agent-assisted workflows.",
+    "url": "https://github.com/DiegoNogueiraDev/mcp-graph-workflow",
+    "author": {
+      "@type": "Person",
+      "name": "Diego Lima Nogueira de Paula",
+      "url": "https://diegonogueira.blog",
+      "identifier": "https://orcid.org/0009-0002-1117-9571",
+      "sameAs": [
+        "https://orcid.org/0009-0002-1117-9571",
+        "https://github.com/DiegoNogueiraDev",
+        "https://linkedin.com/in/diegonogueirapaula"
+      ],
+      "affiliation": {
+        "@type": "CollegeOrUniversity",
+        "name": "UNOPAR — Universidade Norte do Paraná",
+        "department": "Programa de Pós-Graduação em Engenharia da Computação"
+      }
+    },
+    "license": "https://spdx.org/licenses/AGPL-3.0-or-later.html",
+    "dateCreated": "2025-01-01",
+    "datePublished": "2026-04-26",
+    "copyrightYear": 2026
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-elev: #111111;
+      --bg-soft: #161616;
+      --fg: #fafafa;
+      --fg-muted: #a1a1aa;
+      --fg-dim: #52525b;
+      --rule: #262626;
+      --rule-strong: #3f3f46;
+      --accent: #22c55e;
+      --accent-soft: rgba(34,197,94,0.10);
+      --code-bg: #0d0d0d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    code, pre, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    .container { max-width: 1040px; margin: 0 auto; padding: 0 32px; }
+    @media (max-width: 600px) { .container { padding: 0 20px; } }
+
+    .skip-link {
+      position: absolute; top: -40px; left: 8px;
+      background: var(--accent); color: #000;
+      padding: 8px 14px; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      z-index: 100;
+    }
+    .skip-link:focus { top: 8px; }
+
+    /* NAV */
+    nav {
+      border-bottom: 1px solid var(--rule);
+      padding: 18px 0;
+      position: sticky; top: 0;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(12px);
+      z-index: 50;
+    }
+    nav .container { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .brand .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--fg-muted);
+      background: var(--bg-soft);
+      border: 1px solid var(--rule-strong);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    nav .links { display: flex; gap: 28px; }
+    nav .links a {
+      color: var(--fg-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color .15s;
+    }
+    nav .links a:hover, nav .links a:focus-visible { color: var(--fg); outline: none; }
+    nav .links a:focus-visible { color: var(--accent); }
+    @media (max-width: 600px) { nav .links a:not(.primary) { display: none; } }
+
+    /* HERO */
+    .hero { padding: 110px 0 90px; border-bottom: 1px solid var(--rule); }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--fg-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 28px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .eyebrow::before {
+      content: ''; width: 24px; height: 1px; background: var(--fg-dim);
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5.6vw, 64px);
+      line-height: 1.08;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      max-width: 920px;
+      margin-bottom: 28px;
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero h1 em { font-style: normal; color: var(--fg); }
+    .hero .lede {
+      font-size: clamp(16px, 1.4vw, 19px);
+      color: var(--fg-muted);
+      max-width: 660px;
+      margin-bottom: 44px;
+      line-height: 1.55;
+    }
+    .hero .lede strong { color: var(--fg); font-weight: 500; }
+    .cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .install {
+      display: inline-flex; align-items: stretch;
+      background: var(--code-bg);
+      border: 1px solid var(--rule-strong);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      overflow: hidden;
+    }
+    .install .cmd { padding: 14px 18px; color: var(--fg); white-space: nowrap; overflow-x: auto; max-width: 70vw; }
+    .install .cmd .prompt { color: var(--accent); margin-right: 8px; }
+    .install .copy {
+      padding: 14px 18px;
+      background: var(--bg-soft);
+      color: var(--fg-muted);
+      border: none; border-left: 1px solid var(--rule-strong);
+      cursor: pointer;
+      font-family: inherit; font-size: 12px;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      transition: color .15s, background .15s;
+    }
+    .install .copy:hover, .install .copy:focus-visible { color: var(--accent); background: var(--accent-soft); outline: none; }
+    .btn-secondary {
+      padding: 14px 22px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-secondary:hover, .btn-secondary:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+    /* SECTION */
+    section.body { padding: 96px 0; border-bottom: 1px solid var(--rule); }
+    .section-head { margin-bottom: 56px; max-width: 720px; }
+    .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .label::before {
+      content: '//'; color: var(--fg-dim);
+    }
+    h2 {
+      font-size: clamp(28px, 3.4vw, 40px);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+      line-height: 1.15;
+    }
+    .section-sub {
+      color: var(--fg-muted);
+      font-size: 17px;
+      max-width: 660px;
+      line-height: 1.55;
+    }
+
+    /* AISE definition block */
+    .aise-grid { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+    @media (min-width: 720px) { .aise-grid { grid-template-columns: 1fr 1fr; } }
+    .aise-cell { background: var(--bg-elev); padding: 32px 28px; }
+    .aise-cell .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 14px;
+    }
+    .aise-cell h3 { font-size: 19px; font-weight: 600; margin-bottom: 10px; letter-spacing: -0.015em; }
+    .aise-cell p { color: var(--fg-muted); font-size: 15px; line-height: 1.6; }
+
+    /* Methodology block (SDD + CDE pillars) */
+    .methodology { margin-top: 40px; padding: 28px; border: 1px solid var(--rule); border-radius: 10px; background: var(--bg-elev); }
+    .methodology .lede { color: var(--fg); font-size: 16px; line-height: 1.6; margin-bottom: 22px; }
+    .method-pills { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 720px) { .method-pills { grid-template-columns: 1fr 1fr; } }
+    .method-pill { padding: 18px 22px; background: var(--bg-soft); border-radius: 8px; border-left: 2px solid var(--accent); }
+    .method-pill .acronym {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 8px;
+    }
+    .method-pill strong { font-size: 15px; }
+    .method-pill p { color: var(--fg-muted); font-size: 14px; margin-top: 6px; line-height: 1.55; }
+    .methodology .footnote { color: var(--fg-muted); font-size: 14px; margin-top: 22px; line-height: 1.6; }
+    .methodology .footnote a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--rule-strong); }
+    .methodology .footnote a:hover, .methodology .footnote a:focus-visible { border-color: var(--accent); outline: none; }
+
+    /* INSTALL STEPS */
+    .steps-list { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+    .step-row { background: var(--bg-elev); padding: 28px 32px; display: grid; grid-template-columns: 60px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 600px) { .step-row { grid-template-columns: 40px 1fr; padding: 22px 20px; gap: 16px; } }
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 500;
+      color: var(--fg-dim);
+      padding-top: 4px;
+    }
+    .step-content h3 {
+      font-size: 17px; font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .step-content p {
+      color: var(--fg-muted); font-size: 14px;
+      margin-bottom: 16px; line-height: 1.55;
+    }
+    .step-content pre {
+      background: var(--code-bg);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--fg);
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .step-content pre .prompt { color: var(--accent); }
+    .step-content pre .cmt { color: var(--fg-dim); }
+
+    /* FEATURES GRID */
+    .features { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+    @media (min-width: 720px) { .features { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1000px) { .features { grid-template-columns: 1fr 1fr 1fr; } }
+    .feature {
+      background: var(--bg-elev);
+      padding: 32px 28px;
+      transition: background .15s;
+    }
+    .feature:hover { background: var(--bg-soft); }
+    .feature .icon {
+      width: 32px; height: 32px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    .feature h3 { font-size: 16px; font-weight: 600; margin-bottom: 10px; letter-spacing: -0.01em; }
+    .feature p { color: var(--fg-muted); font-size: 14px; line-height: 1.6; }
+
+    /* DIFF TABLE */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .diff {
+      width: 100%; min-width: 580px;
+      border-collapse: collapse;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .diff th, .diff td { padding: 18px 24px; text-align: left; border-bottom: 1px solid var(--rule); font-size: 14px; vertical-align: top; }
+    .diff th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--fg-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      background: var(--bg-soft);
+    }
+    .diff tr:last-child td { border-bottom: 0; }
+    .diff td:first-child { color: var(--fg); width: 38%; font-weight: 500; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    .diff tr { background: var(--bg-elev); }
+
+    /* DEMO */
+    .demo-shell {
+      background: var(--code-bg);
+      border: 1px solid var(--rule-strong);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .demo-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg-soft);
+      border-bottom: 1px solid var(--rule);
+    }
+    .demo-bar .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--rule-strong); }
+    .demo-bar .title {
+      margin-left: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--fg-dim);
+    }
+    .demo-body {
+      padding: 24px 28px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      overflow-x: auto;
+      white-space: pre;
+      tab-size: 2;
+      margin: 0;
+    }
+    .demo-body .cmt { color: var(--fg-dim); }
+    .demo-body .ok { color: var(--accent); }
+    .demo-body .fg { color: var(--fg); }
+    @media (max-width: 600px) { .demo-body { font-size: 11px; padding: 18px 16px; } }
+
+    .images-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 40px; }
+    .images-row a {
+      display: block; border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--rule);
+      transition: border-color .15s;
+    }
+    .images-row a:hover, .images-row a:focus-visible { border-color: var(--accent); outline: none; }
+    .images-row img { width: 100%; height: auto; display: block; opacity: 0.8; transition: opacity .2s; }
+    .images-row a:hover img, .images-row a:focus-visible img { opacity: 1; }
+
+    /* RESEARCH */
+    .research-box {
+      padding: 32px 36px;
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      background: var(--bg-elev);
+    }
+    .research-box .who { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+    .research-box .meta { color: var(--fg-muted); font-size: 13px; line-height: 1.7; }
+    .research-box .meta a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--rule-strong); }
+    .research-box .meta a:hover, .research-box .meta a:focus-visible { border-color: var(--accent); outline: none; }
+    .research-box .hyp { font-style: italic; color: var(--fg); font-size: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--rule); line-height: 1.55; }
+
+    /* License block — AGPL reinforced */
+    .license-box {
+      padding: 28px 32px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(34,197,94,0.04), transparent);
+    }
+    .license-box .badge-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .license-box .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px;
+      background: var(--accent); color: #000;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .license-box .copyleft-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--fg-muted);
+      text-transform: uppercase; letter-spacing: 0.12em;
+    }
+    .license-box h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; letter-spacing: -0.01em; }
+    .license-box p { color: var(--fg-muted); font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+    .license-box p:last-child { margin-bottom: 0; }
+    .license-box strong { color: var(--fg); font-weight: 500; }
+    .license-box a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--rule-strong); }
+    .license-box a:hover, .license-box a:focus-visible { border-color: var(--accent); outline: none; }
+
+    /* FOOTER */
+    footer { padding: 56px 0 80px; }
+    footer .container { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+    footer .col { display: flex; flex-direction: column; gap: 8px; }
+    footer .col a {
+      font-size: 13px; color: var(--fg-muted); text-decoration: none;
+      transition: color .15s;
+    }
+    footer .col a:hover, footer .col a:focus-visible { color: var(--accent); outline: none; }
+    footer .meta-block { font-size: 12px; color: var(--fg-dim); font-family: 'JetBrains Mono', monospace; line-height: 1.7; }
+    footer .meta-block .tagline { color: var(--accent); font-weight: 600; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+    }
+
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <a href="#main" class="skip-link">Pular para o conteúdo</a>
+
+  <nav aria-label="Navegação principal">
+    <div class="container">
+      <div class="brand">
+        <span class="brand-dot" aria-hidden="true"></span>
+        mcp-graph
+        <span class="badge">v12.0</span>
+      </div>
+      <div class="links">
+        <a href="#aise">O que é AISE</a>
+        <a href="#install">Instalar</a>
+        <a href="#demo">Demonstração</a>
+        <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow" class="primary">GitHub</a>
+        <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph">npm</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <header class="hero">
+      <div class="container">
+        <div class="eyebrow">engenharia de software dirigida por IA · local-first · AGPL v3</div>
+        <h1>
+          <em>Engenharia de software dirigida por IA</em> —
+          <span class="accent">e o Claude Code não esquece mais o que vocês combinaram.</span>
+        </h1>
+        <p class="lede">
+          <strong>mcp-graph</strong> é a camada de engenharia de software dirigida por IA
+          que faltava entre o seu PRD e o seu agente. PRD vira grafo persistente, TDD é
+          obrigatório, contexto sobrevive ao reload. Tudo local, zero vibe-coding.
+        </p>
+        <div class="cta-row">
+          <div class="install">
+            <span class="cmd"><span class="prompt">$</span>npm install -g @mcp-graph-workflow/mcp-graph</span>
+            <button
+              class="copy"
+              type="button"
+              aria-label="Copiar comando de instalação"
+              aria-live="polite"
+              onclick="navigator.clipboard.writeText('npm install -g @mcp-graph-workflow/mcp-graph');this.textContent='Copiado';setTimeout(()=>this.textContent='Copy',1400);"
+            >Copy</button>
+          </div>
+          <a class="btn-secondary" href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow">Ver no GitHub →</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="body" id="aise">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">O que é AISE</div>
+          <h2>Engenharia de software dirigida por IA, traduzida.</h2>
+          <p class="section-sub">
+            <strong style="color:var(--fg)">AI-Driven Software Engineering (AISE)</strong> é entregar software
+            com agentes de IA aplicando a mesma disciplina que time sênior usa: spec antes do código,
+            TDD obrigatório, rastreabilidade de decisão, memória entre sessões. mcp-graph é a
+            instância local-first dessa categoria.
+          </p>
+        </div>
+
+        <div class="aise-grid">
+          <div class="aise-cell">
+            <div class="tag">Sem AISE</div>
+            <h3>Vibe-coding</h3>
+            <p>Prompt solto, agente improvisa, código nasce sem teste, sessão seguinte recomeça do zero. Quem revisa não consegue dizer o que foi feito nem por quê. Não escala.</p>
+          </div>
+          <div class="aise-cell">
+            <div class="tag">Com AISE</div>
+            <h3>Engenharia de verdade, com IA</h3>
+            <p>PRD vira grafo de tasks atômicas com critérios de aceite. Toda task tem teste antes da implementação. Contexto comprimido sobrevive ao reload. Decisões ficam rastreadas. O agente <em>navega</em> em vez de improvisar.</p>
+          </div>
+        </div>
+
+        <div class="methodology">
+          <div class="label">Tecnicamente</div>
+          <p class="lede">mcp-graph implementa as <strong>duas metodologias canônicas</strong> da AISE:</p>
+          <div class="method-pills">
+            <div class="method-pill">
+              <div class="acronym">SDD</div>
+              <strong>Specification-Driven Development</strong>
+              <p>PRD vira grafo de specs executáveis com AC. TDD obrigatório torna o teste a forma executável da especificação. Raízes em métodos formais e BDD.</p>
+            </div>
+            <div class="method-pill">
+              <div class="acronym">CDE</div>
+              <strong>Context-Driven Engineering</strong>
+              <p>Grafo + RAG + memory dão contexto completo entre sessões. Reduz a fração não-determinística do agente — intenção e constraints viajam juntas com a task.</p>
+            </div>
+          </div>
+          <p class="footnote">É a "capacidade de plataforma" que o <a href="https://www.infoq.com/news/2026/03/ai-dora-report/" rel="noopener">DORA Report 2025</a> identifica como condição necessária para AI converter produtividade em entrega.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="body" id="install">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">Começar</div>
+          <h2>Três passos para shipar com disciplina.</h2>
+          <p class="section-sub">Sem cloud, sem chave de API de LLM, sem Docker. Roda no seu projeto, ao lado do seu agente. Node.js ≥ 20.</p>
+        </div>
+
+        <ol class="steps-list">
+          <li class="step-row">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <h3>Instalar</h3>
+              <p>Pacote unificado v12 traz servidor MCP + CLI completo em um único binário.</p>
+              <pre><span class="prompt">$</span> npm install -g @mcp-graph-workflow/mcp-graph</pre>
+            </div>
+          </li>
+          <li class="step-row">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <h3>Configurar</h3>
+              <p>Adicione ao <code>.mcp.json</code> (Claude Code, Cursor) ou <code>.vscode/mcp.json</code> (Copilot).</p>
+              <pre>{
+  <span class="cmt">"mcpServers"</span>: {
+    <span class="cmt">"mcp-graph"</span>: {
+      <span class="cmt">"command"</span>: <span class="cmt">"npx"</span>,
+      <span class="cmt">"args"</span>: [<span class="cmt">"-y"</span>, <span class="cmt">"@mcp-graph-workflow/mcp-graph"</span>]
+    }
+  }
+}</pre>
+            </div>
+          </li>
+          <li class="step-row">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <h3>Rodar</h3>
+              <p>Inicialize o grafo no projeto e comece a executar tasks com TDD obrigatório.</p>
+              <pre><span class="prompt">$</span> mcp-graph init                            <span class="cmt"># cria grafo + configs do IDE</span>
+<span class="prompt">$</span> mcp-graph import ./PRD.md                 <span class="cmt"># PRD vira grafo de tasks</span>
+<span class="prompt">$</span> mcp-graph next                            <span class="cmt"># próxima task desbloqueada</span>
+<span class="prompt">$</span> mcp-graph start &lt;id&gt;                       <span class="cmt"># status → in_progress, TDD checklist</span>
+<span class="prompt">$</span> mcp-graph finish                          <span class="cmt"># status → done, sugere a próxima</span></pre>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="body" id="demo">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">Demonstração</div>
+          <h2>Estrutura primeiro, código depois.</h2>
+          <p class="section-sub">Output capturado de uma sessão real importando o <code>sample-prd.md</code>.</p>
+        </div>
+
+        <div class="demo-shell">
+          <div class="demo-bar">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="dot" aria-hidden="true"></span>
+            <span class="dot" aria-hidden="true"></span>
+            <span class="title">~/seu-projeto — mcp-graph</span>
+          </div>
+          <pre class="demo-body" aria-label="Sessão real de uso do mcp-graph"><span class="ok">$</span> <span class="fg">mcp-graph import docs/examples/sample-prd.md</span>
+<span class="cmt">Imported: 8 nodes, 14 edges</span>
+
+<span class="ok">$</span> <span class="fg">mcp-graph next</span>
+<span class="cmt">╭────────────────────────────────────────────╮
+│ NEXT TASK  node_39cdd632e169               │
+│                                            │
+│ Endpoint POST /auth/login                  │
+│                                            │
+│ type: task · priority: 3 · desbloqueada    │
+│                                            │
+│ ▸ start: mcp-graph start node_39cdd632e169 │
+╰────────────────────────────────────────────╯</span>
+
+<span class="ok">$</span> <span class="fg">mcp-graph start node_39cdd632e169</span>
+<span class="cmt">╭────────────────────────────────────────────╮
+│ ▶ STARTED   node_39cdd632e169              │
+│                                            │
+│ TDD checklist                              │
+│   ☐ failing test que captura a AC          │
+│   ☐ implementação mínima até passar        │
+│   ☐ refactor; suite verde                  │
+│                                            │
+│ ▸ when done: mcp-graph finish              │
+╰────────────────────────────────────────────╯</span></pre>
+        </div>
+
+        <div class="images-row">
+          <a href="/images/tab-graph.png"><img src="/images/tab-graph.png" alt="Visualização do grafo de tasks no dashboard" loading="lazy" width="600" height="375" /></a>
+          <a href="/images/tab-code-graph.png"><img src="/images/tab-code-graph.png" alt="Code intelligence — análise de símbolos" loading="lazy" width="600" height="375" /></a>
+          <a href="/images/tab-insights.png"><img src="/images/tab-insights.png" alt="Insights e métricas do projeto" loading="lazy" width="600" height="375" /></a>
+          <a href="/images/tab-benchmark.png"><img src="/images/tab-benchmark.png" alt="Benchmarks de performance" loading="lazy" width="600" height="375" /></a>
+          <a href="/images/tab-languages.png"><img src="/images/tab-languages.png" alt="Suporte multi-linguagem" loading="lazy" width="600" height="375" /></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="body" id="features">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">O que entrega</div>
+          <h2>Seis garantias que toda sessão com IA deveria ter.</h2>
+          <p class="section-sub">Não é mais uma issue tracker. Não é mais um framework de agente. É a camada de memória + governança que faltava para tornar AISE viável.</p>
+        </div>
+
+        <div class="features">
+          <article class="feature">
+            <div class="icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M9.5 9.5 7 7M14.5 9.5 17 7M9.5 14.5 7 17M14.5 14.5 17 17"/></svg>
+            </div>
+            <h3>Estrutura antes do código</h3>
+            <p>PRD vira grafo persistente em SQLite. Tasks atômicas, dependências explícitas, critérios de aceite. Zero trabalho não-rastreado.</p>
+          </article>
+          <article class="feature">
+            <div class="icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h3>TDD não-negociável</h3>
+            <p>Toda task tem teste antes da implementação. Hook bloqueia commit sem teste primeiro. O agente recusa pular a etapa.</p>
+          </article>
+          <article class="feature">
+            <div class="icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+            </div>
+            <h3>Memória persistente</h3>
+            <p>Contexto comprimido entre sessões, RAG local sobre o repositório, snapshots versionados. O agente continua de onde parou.</p>
+          </article>
+          <article class="feature">
+            <div class="icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>50+ ferramentas MCP</h3>
+            <p>Tool surface unificada para Claude Code, Cursor, Copilot. Code intelligence nativa, RAG, sprint planning, validação de AC.</p>
+          </article>
+          <article class="feature">
+            <div class="icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <h3>Multi-agente sincronizado</h3>
+            <p>Dois agentes em paralelo? <code>unified-gate</code> mantém ambos coerentes via grafo + locks. Sem corrida, sem retrabalho.</p>
+          </article>
+          <article class="feature">
+            <div class="icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <h3>Local-first, sem infra</h3>
+            <p>Roda em Node.js ≥ 20. Sem Docker, sem cloud, sem chave de API de LLM. SQLite no diretório do projeto. Reproduzível.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="body">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">Onde se encaixa</div>
+          <h2>Não substitui — preenche a lacuna.</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table class="diff">
+            <thead>
+              <tr><th scope="col">Comparação</th><th scope="col">O que mcp-graph traz</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>vs Cursor / Copilot puros</td><td>Persistência e governança entre sessões — o agente não recomeça do zero a cada chat.</td></tr>
+              <tr><td>vs Linear / Jira</td><td>Grafo executável pelo agente, não apenas visual. Status muda durante o trabalho, não depois.</td></tr>
+              <tr><td>vs LangGraph e frameworks de agente</td><td>É AISE pura: PRD vira spec executável, não prompt solto. Local-first, zero infraestrutura.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="body">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">Pesquisa</div>
+          <h2>Experimento ativo de pesquisa.</h2>
+          <p class="section-sub">Investiga estrutura determinística em grafo como condição de viabilidade da engenharia de software dirigida por IA — confiabilidade, continuidade de contexto, previsibilidade.</p>
+        </div>
+
+        <div class="research-box">
+          <div class="who">Diego Lima Nogueira de Paula</div>
+          <div class="meta">
+            Programa de Pós-Graduação em Engenharia da Computação · UNOPAR<br/>
+            <a href="https://orcid.org/0009-0002-1117-9571">ORCID 0009-0002-1117-9571</a> ·
+            <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/docs/_internal/RESEARCH.md">Hipótese e citação (BibTeX/ABNT)</a>
+          </div>
+          <div class="hyp">
+            “Estrutura determinística em grafo, com TDD não-negociável e memória persistente,
+            é condição necessária para que a engenharia de software dirigida por IA produza
+            código auditável, reproduzível e seguro em produção.”
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="body">
+      <div class="container">
+        <div class="section-head">
+          <div class="label">Licença</div>
+          <h2>AGPL v3 por padrão. Copyleft forte, sem rodeios.</h2>
+        </div>
+
+        <div class="license-box">
+          <div class="badge-row">
+            <span class="pill">AGPL-3.0-or-later</span>
+            <span class="copyleft-tag">copyleft forte · §13 cobre uso por rede</span>
+          </div>
+          <h3>O que isso significa, em uma linha cada:</h3>
+          <p><strong>Open source, pesquisa, uso interno:</strong> grátis. Use, modifique, contribua.</p>
+          <p><strong>Distribui versão modificada (incluindo SaaS via rede — §13):</strong> precisa publicar o código fonte da sua versão sob a mesma AGPL. É o contrato copyleft.</p>
+          <p><strong>Quer fechar o código? SaaS proprietário?</strong> Existe <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/COMMERCIAL.md">licença comercial</a> que remove o copyleft — escrita pra organizações que precisam de modelo fechado.</p>
+          <p style="margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--rule);">
+            <strong>Por que copyleft forte, não permissivo:</strong> garante que melhorias derivadas voltem pra comunidade. mcp-graph é pesquisa de mestrado em código aberto — AGPL preserva esse contrato.
+            Detalhes em <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/LICENSE">LICENSE</a>, <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/NOTICE.md">NOTICE.md</a> e <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/docs/LICENSING.md">guia em linguagem clara</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="col">
+        <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow">GitHub</a>
+        <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph">npm</a>
+        <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/LICENSE">AGPL v3</a>
+        <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/COMMERCIAL.md">Licença comercial</a>
+        <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/edit/master/presentation/dist/index.html">Editar esta página</a>
+      </div>
+      <div class="meta-block">
+        <span class="tagline">AI-Driven Software Engineering</span><br/>
+        Local-first · AGPL v3 · v12.0<br/>
+        © 2026 Diego Lima Nogueira de Paula
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

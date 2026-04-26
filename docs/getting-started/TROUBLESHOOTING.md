@@ -1,6 +1,6 @@
 # mcp-graph — Troubleshooting
 
-Erros comuns, sintomas, e como resolver. Cada item segue o formato:
+Erros comuns, sintomas, e como resolver — operando o mcp-graph como camada de **engenharia de software dirigida por IA (AISE)**. Cada item segue o formato:
 **Sintoma** → **Causa provável** → **Fix em 1-2 comandos**.
 
 > Faltou um caso aqui? Abra issue em <https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues> com o output exato do terminal.

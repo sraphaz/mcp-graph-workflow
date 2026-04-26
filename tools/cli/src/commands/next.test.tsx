@@ -123,7 +123,7 @@ describe("runNext", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.text).toContain("Graph not initialized");
-    expect(result.text).toContain("mg init");
+    expect(result.text).toContain("mcp-graph init");
     expect(isClosed()).toBe(true);
   });
 

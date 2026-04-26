@@ -10,7 +10,7 @@
  * parent project's compiled `dist/` so this CLI sub-package never imports
  * from the parent `src/` directly at type-check time.
  *
- * The pre-tool-use hook (`mg hook pre-tool-use`) calls `getGateDeps()` to
+ * The pre-tool-use hook (`mcp-graph hook pre-tool-use`) calls `getGateDeps()` to
  * obtain `loadGateContext` + `checkGates` and forwards them to
  * `evaluatePreToolUse(input, { store, gateDeps })`. Tests inject a fake
  * resolver via `setGateResolver`.

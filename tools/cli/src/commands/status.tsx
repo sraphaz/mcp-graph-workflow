@@ -190,7 +190,7 @@ function StatusCard({
         {summary.bridge !== "ok" && (
           <Text dimColor>{t("status.bridgeHint")}</Text>
         )}
-        {summary.bridge !== "ok" && <Text color="green">mg login</Text>}
+        {summary.bridge !== "ok" && <Text color="green">mcp-graph login</Text>}
         {summary.bridge !== "ok" && <Text dimColor>{`)`}</Text>}
       </Box>
     </Box>

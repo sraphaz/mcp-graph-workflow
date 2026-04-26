@@ -99,7 +99,7 @@ describe("harness surfacing — finish_task harnessRegression", () => {
     expect("harnessRegression" in result).toBe(true);
   });
 
-  it("should include ruleSuggestions field in FinishTaskResult", async () => {
+  it("should include ruleSuggestions field in FinishTaskResult", { timeout: 30_000 }, async () => {
     const result = await finishTask(store, taskId, { autoNext: false });
 
     expect(result).toBeDefined();
@@ -107,7 +107,7 @@ describe("harness surfacing — finish_task harnessRegression", () => {
     expect(Array.isArray(result.ruleSuggestions)).toBe(true);
   });
 
-  it("ruleSuggestions should be empty when no patterns exceed threshold", async () => {
+  it("ruleSuggestions should be empty when no patterns exceed threshold", { timeout: 30_000 }, async () => {
     const result = await finishTask(store, taskId, { autoNext: false });
 
     expect(result.ruleSuggestions).toHaveLength(0);

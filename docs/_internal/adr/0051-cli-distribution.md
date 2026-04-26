@@ -4,6 +4,12 @@
 - **Driver:** v11 User-First DX Overhaul — 60-second install→first-value
 - **Owner:** @diegonogueira
 
+> **NOTE (2026-04-26):** O domínio `mcp-graph.dev` referenciado abaixo
+> (em `https://mcp-graph.dev/install.sh` e `install.ps1`) **não está
+> registrado**. Os comandos `curl`/`iwr` são aspiracionais até o registro
+> do domínio. Por enquanto, o caminho de instalação suportado é apenas
+> `npm install -g @mcp-graph-workflow/mcp-graph`.
+
 ## Context
 
 v10 ships only as `npm install -g @mcp-graph-workflow/mcp-graph`. Two friction points block the 60-second goal:

@@ -24,7 +24,7 @@ export interface BridgeRunResult {
  *
  * For `login`, stdio is inherited so the device-flow URL + user code print
  * directly to the terminal. For `status`, stdio is captured so we can return
- * the JSON output to the caller (`mg status` aggregates).
+ * the JSON output to the caller (`mcp-graph status` aggregates).
  */
 export async function runBridge(
   opts: BridgeRunOptions,

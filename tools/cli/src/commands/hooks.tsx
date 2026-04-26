@@ -22,9 +22,9 @@ import type {
 // installer / `__mg__` tag) to the dispatcher action name written into
 // hooks.jsonl by hook-dispatch.ts. The two namespaces don't overlap by
 // accident: Claude Code uses PascalCase event names ("SessionStart"),
-// while `mg hook <name>` uses kebab-case ("session-start"). This map is
+// while `mcp-graph hook <name>` uses kebab-case ("session-start"). This map is
 // the single source of truth used by both the installer's PROFILES and
-// the activity rendering in `mg hooks status`.
+// the activity rendering in `mcp-graph hooks status`.
 const HOOK_EVENT_TO_ACTION: Record<string, string> = {
   SessionStart: "session-start",
   Stop: "session-stop",
@@ -48,11 +48,11 @@ function relativeTime(iso: string): string {
 }
 
 /**
- * `mg hooks <action>` — install / uninstall / status for Claude Code hooks.
+ * `mcp-graph hooks <action>` — install / uninstall / status for Claude Code hooks.
  *
- *   mg hooks install [--profile minimal|balanced|aggressive]
- *   mg hooks uninstall
- *   mg hooks status
+ *   mcp-graph hooks install [--profile minimal|balanced|aggressive]
+ *   mcp-graph hooks uninstall
+ *   mcp-graph hooks status
  */
 
 export async function runHooks(
@@ -74,9 +74,9 @@ export async function runHooks(
         text: [
           `unknown hooks action: ${action}`,
           "",
-          "  mg hooks install [--profile minimal|balanced|aggressive]",
-          "  mg hooks uninstall",
-          "  mg hooks status",
+          "  mcp-graph hooks install [--profile minimal|balanced|aggressive]",
+          "  mcp-graph hooks uninstall",
+          "  mcp-graph hooks status",
         ].join("\n"),
       };
   }
@@ -215,7 +215,7 @@ function InstallCard({
         </Text>
         <Text>
           <Text dimColor>{"override anytime with "}</Text>
-          <Text color="green">mg hooks uninstall</Text>
+          <Text color="green">mcp-graph hooks uninstall</Text>
           <Text dimColor>{" or env "}</Text>
           <Text color="green">MCP_GRAPH_HOOKS_OFF=1</Text>
         </Text>

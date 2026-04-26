@@ -62,7 +62,7 @@ export function renderHelp(ctx: CommandHandlerArgs): CommandHandlerResult {
               <Box key={c.id} paddingLeft={2}>
                 <Box width={28}>
                   <Text color="green">/{c.slashAliases[0] ?? c.id}</Text>
-                  <Text dimColor> · mg {c.shellAliases[0] ?? c.id}</Text>
+                  <Text dimColor> · mcp-graph {c.shellAliases[0] ?? c.id}</Text>
                 </Box>
                 <Text>{c.description}</Text>
               </Box>

@@ -33,7 +33,7 @@ export const ptBr: Record<string, string> = {
   "next.startHint": "▸ inicie: ",
   "next.seeAll": "  ·  ver todas: ",
   "next.empty":
-    "sem tarefas desbloqueadas. Execute `mg list --status backlog` para ver pendências, ou `mg add task` para adicionar.",
+    "sem tarefas desbloqueadas. Execute `mcp-graph list --status backlog` para ver pendências, ou `mcp-graph add task` para adicionar.",
 
   // /list
   "list.header": "tarefas  ({shown}/{total} exibindo)",
@@ -55,7 +55,7 @@ export const ptBr: Record<string, string> = {
   "finish.success": "✔ concluída",
   "finish.nextHeader": "próxima",
   "finish.noMore":
-    "sem mais tarefas desbloqueadas. execute `mg list` ou `mg add task`",
+    "sem mais tarefas desbloqueadas. execute `mcp-graph list` ou `mcp-graph add task`",
 
   // /add
   "add.created": "✔ {type} criado(a)",
@@ -68,14 +68,14 @@ export const ptBr: Record<string, string> = {
   "status.bridgeLabel": "auth bridge: ",
   "status.bridgeHint": "  (execute ",
   "status.graphUnavailable":
-    "(grafo indisponível — execute `mg init` para iniciar)",
+    "(grafo indisponível — execute `mcp-graph init` para iniciar)",
 
   // /demo
   "demo.ready": "✔ sandbox de demo pronto",
   "demo.locationLabel": "local: ",
   "demo.tryHeader": "experimente",
   "demo.cleanupHint":
-    "ao concluir: rm -rf {path}   ·   ou execute mg demo --cleanup",
+    "ao concluir: rm -rf {path}   ·   ou execute mcp-graph demo --cleanup",
 
   // /lang
   "lang.current": "idioma: {lang}",
@@ -88,35 +88,35 @@ export const ptBr: Record<string, string> = {
   "hooks.installed": "✔ hooks instalados  (perfil: {profile})",
   "hooks.uninstalled": "✔ hooks desinstalados",
   "hooks.empty":
-    "nenhum hook do mcp-graph instalado neste projeto. execute `mg hooks install`",
+    "nenhum hook do mcp-graph instalado neste projeto. execute `mcp-graph hooks install`",
 
   // /config
   "config.synced": "✔ configs sincronizadas  ({ides})",
   "config.inSync": "✔ todas as configs estão sincronizadas",
   "config.drift": "⚠ {n} arquivo(s) seriam alterados",
-  "config.applyHint": "execute `mg config sync` para aplicar",
+  "config.applyHint": "execute `mcp-graph config sync` para aplicar",
 
   // Errors
   "error.parentNotInstalled":
-    "runtime do @mcp-graph-workflow/mcp-graph não encontrado. execute `mg init` primeiro ou instale: `npm install -g @mcp-graph-workflow/mcp-graph`",
+    "runtime do @mcp-graph-workflow/mcp-graph não encontrado. execute `mcp-graph init` primeiro ou instale: `npm install -g @mcp-graph-workflow/mcp-graph`",
   "error.bridgeNotFound":
     "Não foi possível localizar o bridge CLI do GitHub Copilot. Instale: `npm install -g @mcp-graph-workflow/bridge-cli`",
   "error.notInitialized":
-    "Grafo não inicializado. Execute `mg init` para iniciar um projeto aqui.",
+    "Grafo não inicializado. Execute `mcp-graph init` para iniciar um projeto aqui.",
   "error.unknownCommand": "comando desconhecido: {cmd}",
   "error.didYouMean": "  você quis dizer: {hits}?",
 
   // /help shell layout
   "help.tagline": "CLI moderno para o MCP Graph Workflow",
   "help.usageHeader": "Uso:",
-  "help.usage1": "  mg                       # entra no REPL com comandos /slash",
-  "help.usage2": "  mg <comando> [args]      # modo shell one-shot",
+  "help.usage1": "  mcp-graph                # entra no REPL com comandos /slash",
+  "help.usage2": "  mcp-graph <comando> [args] # modo shell one-shot",
   "help.commandsHeader": "Comandos:",
   "help.replHint":
-    "Equivalentes slash no REPL (dentro de `mg`):  /init  /next  /help  /exit",
+    "Equivalentes slash no REPL (dentro de `mcp-graph`):  /init  /next  /help  /exit",
   "help.docsHint": "Docs: https://github.com/diegonogueira/mcp-graph-workflow",
 
-  // Command descriptions (mg --help)
+  // Command descriptions (mcp-graph --help)
   "cmd.help.description":
     "Mostra todos os comandos. Passe uma busca para correspondência aproximada.",
   "cmd.exit.description": "Sai do REPL (no modo shell: sem efeito).",

@@ -100,10 +100,10 @@ the attestation into a block-confirmed proof.
 
 ### Scope
 
-OTS is applied forward-only from the AGPL transition (v10.0.0 onward). Old
-MIT releases are not OTS-anchored; Layer 1 (forward-only signing) and
-the Brazilian statutory protection described in Layer 3 provide their
-coverage.
+OTS is applied forward-only under AGPL-3.0-or-later (all current and
+future releases). Pre-AGPL legacy releases are not OTS-anchored;
+Layer 1 (forward-only signing) and the Brazilian statutory protection
+described in Layer 3 provide their coverage.
 
 ---
 
@@ -192,7 +192,7 @@ remain verifiable via:
 
 ## Forward-only policy (tags < v10.0.0)
 
-Tags published before v10.0.0 (MIT era: v4.x through v9.4.0) remain
+Tags published before v10.0.0 (legacy era: v4.x through v9.4.0) remain
 **unsigned** by design. Retroactively signing every historical tag would
 create ambiguity about the policy itself and does not add practical value —
 those releases are anchored instead by:

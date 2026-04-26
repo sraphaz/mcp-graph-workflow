@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
  * Minimal structured JSONL logger.
  *
  * Sprint 7.6 will extend this with redaction, async batching, rotation,
- * and a richer query surface (`mg log`). For Sprint 7.5 we ship just enough
+ * and a richer query surface (`mcp-graph log`). For Sprint 7.5 we ship just enough
  * to get hooks emitting consistently-shaped events to:
  *   ~/.mcp-graph/logs/<sink>.jsonl
  *
@@ -96,7 +96,7 @@ export function logEvent(
 
 /**
  * Sprint 7.5 #7.5.10 — group entries from hooks.jsonl by action, returning
- * per-action last-fire + last-error timestamps with counts. `mg hooks status`
+ * per-action last-fire + last-error timestamps with counts. `mcp-graph hooks status`
  * uses this to render a regression-aware row alongside listInstalledHooks().
  * Only reads the hooks sink. Returns `{}` when the file is missing or
  * unreadable — never throws.

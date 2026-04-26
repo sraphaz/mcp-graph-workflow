@@ -39,15 +39,9 @@ runs:
       shell: bash
       run: npm ci
 
-    - name: Cache dashboard dependencies
-      if: inputs.install-dashboard == 'true'
-      id: dashboard-cache
-      uses: actions/cache@v5
-      with:
-        path: src/web/dashboard/node_modules
-        key: dashboard-${{ runner.os }}-node22-${{ hashFiles('src/web/dashboard/package-lock.json') }}
-
-    - name: Install dashboard dependencies
-      if: inputs.install-dashboard == 'true' && steps.dashboard-cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: cd src/web/dashboard && npm ci
+    # Dashboard deps are installed by the root `npm ci` above via npm
+    # workspaces (root package.json declares `src/web/dashboard` as a
+    # workspace). A second `npm ci` inside the dashboard would install a
+    # separate physical copy of `react` there, which broke recharts in
+    # vitest with a null `useContext`. The `install-dashboard` input is
+    # kept for compatibility but is now a no-op.

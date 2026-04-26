@@ -45,7 +45,7 @@ export async function runStart(
   if (!id) {
     return {
       exitCode: 2,
-      text: "usage: mg start <node-id>\n  hint: `mg next` to see the suggested next task.",
+      text: "usage: mcp-graph start <node-id>\n  hint: `mcp-graph next` to see the suggested next task.",
     };
   }
 
@@ -74,7 +74,7 @@ export async function runStart(
     } else if (original.status === "done") {
       return {
         exitCode: 1,
-        text: `node ${id} is already done. Use \`mg next\` for the next task.`,
+        text: `node ${id} is already done. Use \`mcp-graph next\` for the next task.`,
       };
     } else if (!STARTABLE_FROM.includes(original.status as never)) {
       return {
@@ -180,7 +180,7 @@ function StartCard({ node, previousStatus }: StartCardProps): JSX.Element {
       <Box marginTop={1}>
         <Text dimColor>
           {t("start.whenDone")}
-          <Text color="green">{`mg finish`}</Text>
+          <Text color="green">{`mcp-graph finish`}</Text>
         </Text>
       </Box>
     </Box>

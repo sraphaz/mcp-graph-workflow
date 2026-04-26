@@ -19,9 +19,23 @@ async function runScan() {
   const typeResult = scanTypeCoverage(typeFiles);
 
   // 2. Test Coverage
-  const modules = globSync('src/**/*.ts', { ignore: ['src/**/*.test.ts', 'src/**/*.bench.ts', 'src/index.ts'] })
-    .map(p => path.basename(p, '.ts'));
-  const testFiles = globSync('src/tests/**/*.test.ts').map(p => ({
+  // Modules now include both .ts (server-side) and .tsx (dashboard React)
+  // sources. Test files come from src/tests/**/*.test.ts AND any colocated
+  // *.test.tsx in the dashboard tree (src/web/dashboard/src/**/*.test.tsx).
+  const modules = globSync('src/**/*.{ts,tsx}', {
+    ignore: [
+      'src/**/*.test.ts', 'src/**/*.test.tsx',
+      'src/**/*.bench.ts',
+      'src/index.ts',
+      'src/web/dashboard/src/test-setup.ts',
+      'src/web/dashboard/src/main.tsx',
+      'src/web/dashboard/src/vite-env.d.ts',
+    ],
+  }).map(p => path.basename(p).replace(/\.(ts|tsx)$/, ''));
+  const testFiles = [
+    ...globSync('src/tests/**/*.test.ts'),
+    ...globSync('src/web/dashboard/src/**/*.test.tsx'),
+  ].map(p => ({
     name: path.basename(p),
     hasAssertions: fs.readFileSync(p, 'utf-8').includes('expect(')
   }));

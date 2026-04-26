@@ -18,7 +18,7 @@ import type {
 } from "./registry.js";
 
 /**
- * `mg hook <name>` — internal dispatcher invoked by Claude Code hook entries.
+ * `mcp-graph hook <name>` — internal dispatcher invoked by Claude Code hook entries.
  *
  * Each handler is non-blocking, fail-silent, and emits a structured event to
  * `~/.mcp-graph/logs/hooks.jsonl`. Claude Code passes hook context as JSON on
@@ -42,7 +42,7 @@ export async function runHookDispatch(
   if (!name) {
     return {
       exitCode: 2,
-      text: "internal: mg hook <name> — name required",
+      text: "internal: mcp-graph hook <name> — name required",
     };
   }
 
@@ -124,7 +124,7 @@ async function handleSessionStart(): Promise<Record<string, unknown>> {
     return {
       drift: "unknown",
       reason: "drift_check_failed",
-      summary: "mg: drift check failed (session continues)",
+      summary: "mcp-graph: drift check failed (session continues)",
     };
   }
   // Sprint 7.6 will add: project name, sprint progress, harness score,
@@ -136,8 +136,8 @@ async function handleSessionStart(): Promise<Record<string, unknown>> {
       installedVersion: drift.installedVersion,
       installedProfile: drift.installedProfile,
       hint: drift.hint,
-      message: `mg hooks config is out of date (installed ${drift.installedVersion} vs current ${drift.currentVersion}). Re-run \`${drift.hint}\` to refresh.`,
-      summary: `mg: hooks stale (${drift.installedVersion} → ${drift.currentVersion}) — \`${drift.hint}\``,
+      message: `mcp-graph hooks config is out of date (installed ${drift.installedVersion} vs current ${drift.currentVersion}). Re-run \`${drift.hint}\` to refresh.`,
+      summary: `mcp-graph: hooks stale (${drift.installedVersion} → ${drift.currentVersion}) — \`${drift.hint}\``,
     };
   }
   return {
@@ -145,8 +145,8 @@ async function handleSessionStart(): Promise<Record<string, unknown>> {
     currentVersion: drift.currentVersion,
     summary:
       drift.status === "ok"
-        ? `mg: hooks ok @ ${drift.currentVersion}${drift.installedProfile ? ` (${drift.installedProfile})` : ""}`
-        : "mg: hooks not installed — run `mg hooks install`",
+        ? `mcp-graph: hooks ok @ ${drift.currentVersion}${drift.installedProfile ? ` (${drift.installedProfile})` : ""}`
+        : "mcp-graph: hooks not installed — run `mcp-graph hooks install`",
   };
 }
 

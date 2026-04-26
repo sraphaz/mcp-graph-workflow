@@ -14,16 +14,16 @@ import type {
 } from "./registry.js";
 
 /**
- * `/ui` · `mg ui` — launch the dashboard.
+ * `/ui` · `mcp-graph ui` — launch the dashboard.
  *
  * Spawns the parent project's `mcp-graph serve` (Express :3000) as a child
  * process, prints the URL, and waits until Ctrl-C. Output streams through
  * so the user sees server logs.
  *
- *   mg ui                  default :3000
- *   mg ui --port 3377      override port
- *   mg ui --no-open        do not auto-open browser
- *   mg ui --json           one-shot: print {url, pid} and exit
+ *   mcp-graph ui                  default :3000
+ *   mcp-graph ui --port 3377      override port
+ *   mcp-graph ui --no-open        do not auto-open browser
+ *   mcp-graph ui --json           one-shot: print {url, pid} and exit
  *
  * In `--json` mode we don't keep the process attached — useful for scripts
  * that just want the URL after a separate `mcp-graph serve` is already running.
@@ -43,7 +43,7 @@ export async function runUi(
       json: {
         url,
         port,
-        note: "use `mg ui` (without --json) to actually start the server",
+        note: "use `mcp-graph ui` (without --json) to actually start the server",
       },
     };
   }

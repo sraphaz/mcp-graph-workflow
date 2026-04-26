@@ -6,7 +6,7 @@
 /**
  * Pre-tool-use hook handler — Wave B of the v11.x roadmap.
  *
- * This module is the testable core of `mg hook pre-tool-use`. The CLI dispatcher
+ * This module is the testable core of `mcp-graph hook pre-tool-use`. The CLI dispatcher
  * (hook-dispatch.ts) reads stdin best-effort and passes the parsed payload here.
  * `evaluatePreToolUse` returns a structured outcome that the dispatcher translates
  * into Claude Code's hook protocol (exit code + stdout JSON).

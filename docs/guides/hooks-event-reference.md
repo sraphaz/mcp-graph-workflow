@@ -61,5 +61,5 @@ Hook lifecycle was assembled in stages:
 - E1: [`mcp-graph hooks` CLI](./hooks.md) — install/uninstall/status surface
 - E2: [`mcp-graph set-phase`](./set-phase.md) — companion CLI, also exposed via SessionStart drift
 - E4: [Migration MCP `set_phase` → CLI `mcp-graph set-phase`](./set-phase-migration.md)
-- ADR-0053 — v11 CLI surface
+- ADR-0053 — CLI surface design
 - ADR-0054 — capability gate (hooks themselves are unaffected; only `assembleSiblingContext` call sites are gated)

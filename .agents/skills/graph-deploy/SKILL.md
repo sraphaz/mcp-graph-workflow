@@ -11,7 +11,7 @@ model:
   fallback: sonnet
   rationale: "Deploy pipeline steps — recipe-driven, low judgment"
 ---
-> 💡 **v11 CLI surface available** (`@mcp-graph-workflow/cli@beta`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[v11-cli-surface-map.md](../../../docs/guides/v11-cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
+> 💡 **CLI shell surface available** (`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[cli-surface-map.md](../../../docs/guides/cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
 
 
 # graph-deploy

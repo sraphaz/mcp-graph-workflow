@@ -20,15 +20,15 @@ import type {
 } from "./registry.js";
 
 /**
- * `mg log` — query structured logs at `~/.mcp-graph/logs/*.jsonl`.
+ * `mcp-graph log` — query structured logs at `~/.mcp-graph/logs/*.jsonl`.
  *
- *   mg log                      # last 50 entries (newest first)
- *   mg log --task <id>          # filter by target task id
- *   mg log --hook <name>        # filter by hook name
- *   mg log --trace <uuid>       # all events with same trace_id
- *   mg log --since 1h           # time-windowed
- *   mg log --level error
- *   mg log --json               # raw JSONL passthrough for scripts
+ *   mcp-graph log                      # last 50 entries (newest first)
+ *   mcp-graph log --task <id>          # filter by target task id
+ *   mcp-graph log --hook <name>        # filter by hook name
+ *   mcp-graph log --trace <uuid>       # all events with same trace_id
+ *   mcp-graph log --since 1h           # time-windowed
+ *   mcp-graph log --level error
+ *   mcp-graph log --json               # raw JSONL passthrough for scripts
  */
 
 export async function runLog(
@@ -134,7 +134,7 @@ function LogTable({
       </Box>
       <Box marginTop={1}>
         <Text dimColor>{`raw: `}</Text>
-        <Text color="green">{`mg log --json`}</Text>
+        <Text color="green">{`mcp-graph log --json`}</Text>
         <Text dimColor>{`   ·   widen: `}</Text>
         <Text color="green">--since 7d</Text>
         <Text dimColor>{` / `}</Text>

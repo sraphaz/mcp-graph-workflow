@@ -43,9 +43,14 @@ if (isMcpClient) {
   // Delegate to MCP stdio server — the client expects JSON-RPC over stdin/stdout
   await import("../mcp/stdio.js");
 } else {
-  // Check for updates (non-blocking, background check)
-  const updateNotifier = (await import("update-notifier")).default;
-  updateNotifier({ pkg }).notify();
+  // Check for updates (non-blocking, background check). Skipped when the
+  // user opts out via MCP_GRAPH_NO_UPDATE_CHECK=1 or under CI — see
+  // ADR-0057 (local-first invariant).
+  const { shouldCheckForUpdates } = await import("../core/utils/update-check.js");
+  if (shouldCheckForUpdates(process.env)) {
+    const updateNotifier = (await import("update-notifier")).default;
+    updateNotifier({ pkg }).notify();
+  }
 
   // Interactive CLI with Commander.js
   const { Command } = await import("commander");
@@ -55,6 +60,7 @@ if (isMcpClient) {
   const { initCommand } = await import("./commands/init.js");
   const { indexCommand } = await import("./commands/index-cmd.js");
   const { doctorCommand } = await import("./commands/doctor.js");
+  const { installNeuralCommand } = await import("./commands/install-neural.js");
   const { updateCommand } = await import("./commands/update.js");
   const { browserHarnessCommand } = await import("./commands/browser-harness.js");
   // v11 lifecycle + ops wrappers (delegate to @mcp-graph-workflow/cli bundle)
@@ -90,6 +96,7 @@ if (isMcpClient) {
   program.addCommand(initCommand());
   program.addCommand(indexCommand());
   program.addCommand(doctorCommand());
+  program.addCommand(installNeuralCommand());
   program.addCommand(updateCommand());
   program.addCommand(browserHarnessCommand());
   // v11 lifecycle + ops (delegated)

@@ -7,16 +7,19 @@ import (
 
 // Config holds all CLI configuration for the analyzer.
 type Config struct {
-	Dir       string
-	Output    string // "json", "table", "both"
-	CorePath  string
-	McpPath   string
-	ApiPath   string
-	TestPath  string
-	E2EPath   string
-	Threshold int
-	JSONOut   string
-	Modules   []string // empty = all
+	Dir         string
+	Output      string // "json", "table", "both"
+	CorePath    string
+	McpPath     string
+	ApiPath     string
+	TestPath    string
+	E2EPath     string
+	Threshold   int
+	JSONOut     string
+	Modules     []string // empty = all
+	Granularity string   // "module" (default) or "file"
+	Growth      bool     // when true, run growth-mode (git-history LOC analysis) instead of scoring
+	Baseline    string   // optional path to a previous file-mode JSON for diff
 }
 
 // Weights for the precision score calculation.
@@ -76,6 +79,9 @@ func ParseFlags() Config {
 	threshold := flag.Int("threshold", 50, "minimum acceptable precision score")
 	jsonOut := flag.String("json-out", "", "output file path for JSON report (empty = stdout)")
 	modules := flag.String("modules", "", "comma-separated list of modules to analyze (empty = all)")
+	granularity := flag.String("granularity", "module", "report granularity: module (default) or file")
+	growthMode := flag.Bool("growth", false, "run project-growth analysis from git history instead of scoring")
+	baseline := flag.String("baseline", "", "optional path to a previous file-mode JSON for delta comparison")
 
 	flag.Parse()
 
@@ -90,15 +96,18 @@ func ParseFlags() Config {
 	}
 
 	return Config{
-		Dir:       *dir,
-		Output:    *output,
-		CorePath:  *corePath,
-		McpPath:   *mcpPath,
-		ApiPath:   *apiPath,
-		TestPath:  *testPath,
-		E2EPath:   *e2ePath,
-		Threshold: *threshold,
-		JSONOut:   *jsonOut,
-		Modules:   moduleList,
+		Dir:         *dir,
+		Output:      *output,
+		CorePath:    *corePath,
+		McpPath:     *mcpPath,
+		ApiPath:     *apiPath,
+		TestPath:    *testPath,
+		E2EPath:     *e2ePath,
+		Threshold:   *threshold,
+		JSONOut:     *jsonOut,
+		Modules:     moduleList,
+		Granularity: *granularity,
+		Growth:      *growthMode,
+		Baseline:    *baseline,
 	}
 }

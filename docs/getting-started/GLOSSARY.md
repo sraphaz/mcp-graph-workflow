@@ -4,6 +4,28 @@ Sem jargão. Cada termo explicado como se fosse pra alguém com 15 anos que nunc
 
 ---
 
+## O termo guarda-chuva
+
+### AISE — AI-Driven Software Engineering (engenharia de software dirigida por IA)
+**A categoria que mcp-graph instancia.** Pense em "engenharia de software" do jeito que time sênior faz: spec antes do código, teste antes da implementação, decisão registrada, ninguém improvisa. AISE é fazer isso **com agentes de IA** no meio do processo — sem perder o rigor.
+
+Sem AISE → "vibe-coding": prompt solto, agente improvisa, código nasce sem teste, sessão seguinte recomeça do zero.
+Com AISE → grafo de tasks atômicas + TDD obrigatório + memória persistente + decisão rastreada. O agente *navega*, não inventa.
+
+**mcp-graph é a instância local-first dessa categoria.** Tudo neste projeto — graph, node, edge, TDD hook, memory — existe pra tornar AISE viável no seu fluxo diário.
+
+**Os dois pilares operacionais da AISE** (que mcp-graph implementa lado a lado):
+
+### SDD — Specification-Driven Development
+Escrever especificações precisas e *machine-readable* **antes** do código. Raízes em métodos formais, BDD e API design. No mcp-graph: PRD vira grafo de tasks com critérios de aceite explícitos; o TDD obrigatório torna o teste a forma executável da especificação.
+
+### CDE — Context-Driven Engineering
+Dar contexto completo (intenção + constraints + histórico) ao agente em vez de prompts soltos. Reduz a fração não-determinística do output. No mcp-graph: grafo persistente + RAG local + memory snapshots = contexto que sobrevive ao reload e cresce a cada sessão.
+
+> **Validação externa:** o [DORA Report 2025](https://www.infoq.com/news/2026/03/ai-dora-report/) (citado em InfoQ, Pragmatic Engineer e no *2026 Agentic Coding Trends Report* da Anthropic) afirma que organizações com workflows definidos e capacidades de plataforma maduras convertem ganhos de IA em entrega — sem isso, o agente fica mais rápido sem o ciclo de delivery acompanhar.
+
+---
+
 ## Os 5 termos principais
 
 ### Graph (grafo)

@@ -21,6 +21,9 @@
  * Uses real in-memory SQLite store — no mocks.
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import os from "node:os";
 import request from "supertest";
 import { createTestApp, type TestContext } from "./helpers/test-app.js";
 
@@ -68,10 +71,29 @@ describe("API /api/v1/code-graph (coverage)", () => {
   });
 
   // ── POST /code-graph/reindex ────────────────────
-
+  // Uses a small temp fixture so reindex completes fast — pointing basePath
+  // at process.cwd() (the full repo) makes the test exceed any reasonable
+  // timeout.
   describe("POST /api/v1/code-graph/reindex", () => {
-    it("should return success with indexing result", { timeout: 30_000 }, async () => {
-      const res = await request(ctx.app).post("/api/v1/code-graph/reindex");
+    let reindexCtx: TestContext;
+    let fixtureDir: string;
+
+    beforeEach(() => {
+      fixtureDir = mkdtempSync(path.join(os.tmpdir(), "mcp-graph-reindex-fixture-"));
+      writeFileSync(
+        path.join(fixtureDir, "sample.ts"),
+        "export function add(a: number, b: number): number { return a + b; }\n",
+      );
+      reindexCtx = createTestApp({ basePath: fixtureDir });
+    });
+
+    afterEach(() => {
+      reindexCtx.store.close();
+      rmSync(fixtureDir, { recursive: true, force: true });
+    });
+
+    it("should return success with indexing result", { timeout: 15_000 }, async () => {
+      const res = await request(reindexCtx.app).post("/api/v1/code-graph/reindex");
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -80,8 +102,8 @@ describe("API /api/v1/code-graph (coverage)", () => {
       expect(res.body).toHaveProperty("relationCount");
     });
 
-    it("should include typescriptAvailable field in reindex response", { timeout: 30_000 }, async () => {
-      const res = await request(ctx.app).post("/api/v1/code-graph/reindex");
+    it("should include typescriptAvailable field in reindex response", { timeout: 15_000 }, async () => {
+      const res = await request(reindexCtx.app).post("/api/v1/code-graph/reindex");
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("typescriptAvailable");

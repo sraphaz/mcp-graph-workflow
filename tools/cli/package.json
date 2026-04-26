@@ -1,7 +1,8 @@
 {
   "name": "@mcp-graph-workflow/cli",
-  "version": "12.0.0-beta.0",
-  "description": "Internal library for @mcp-graph-workflow/mcp-graph v12+ — provides the v11 CLI bundle (lifecycle commands, REPL, hooks). No bin entries; consumed by the parent package's mcp-graph bin via spawn. Direct install is no longer recommended (use @mcp-graph-workflow/mcp-graph).",
+  "version": "12.0.0",
+  "private": true,
+  "description": "Internal workspace for @mcp-graph-workflow/mcp-graph — bundled CLI surface (REPL, hooks, lifecycle). Not published to npm; consumed by the parent package via local bundle copy. Use @mcp-graph-workflow/mcp-graph instead.",
   "license": "AGPL-3.0-or-later",
   "author": "Diego Lima Nogueira de Paula",
   "homepage": "https://github.com/DiegoNogueiraDev/mcp-graph-workflow/tree/master/tools/cli",

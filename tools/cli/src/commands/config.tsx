@@ -17,11 +17,11 @@ import type {
 } from "./registry.js";
 
 /**
- * `mg config <action>` — manage IDE/agent configs.
+ * `mcp-graph config <action>` — manage IDE/agent configs.
  *
- *   mg config sync   — emit/refresh .mcp.json, .vscode/mcp.json (if VS Code),
+ *   mcp-graph config sync   — emit/refresh .mcp.json, .vscode/mcp.json (if VS Code),
  *                      .cursor/mcp.json (if Cursor), .claude/settings.local.json
- *   mg config check  — dry-run; report drift without writing
+ *   mcp-graph config check  — dry-run; report drift without writing
  */
 
 export async function runConfig(
@@ -40,8 +40,8 @@ export async function runConfig(
         text: [
           `unknown config action: ${action}`,
           "",
-          "  mg config sync    — emit/refresh all IDE/agent configs",
-          "  mg config check   — report drift without writing",
+          "  mcp-graph config sync    — emit/refresh all IDE/agent configs",
+          "  mcp-graph config check   — report drift without writing",
         ].join("\n"),
       };
   }

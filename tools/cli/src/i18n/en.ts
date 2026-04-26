@@ -36,7 +36,7 @@ export const en: Record<string, string> = {
   "next.startHint": "▸ start it: ",
   "next.seeAll": "  ·  see all: ",
   "next.empty":
-    "no unblocked tasks. Run `mg list --status backlog` to see what's pending, or `mg add task` to add one.",
+    "no unblocked tasks. Run `mcp-graph list --status backlog` to see what's pending, or `mcp-graph add task` to add one.",
 
   // /list
   "list.header": "tasks  ({shown}/{total} showing)",
@@ -58,7 +58,7 @@ export const en: Record<string, string> = {
   "finish.success": "✔ finished",
   "finish.nextHeader": "next up",
   "finish.noMore":
-    "no more unblocked tasks. run `mg list` or `mg add task`",
+    "no more unblocked tasks. run `mcp-graph list` or `mcp-graph add task`",
 
   // /add
   "add.created": "✔ created {type}",
@@ -71,13 +71,13 @@ export const en: Record<string, string> = {
   "status.bridgeLabel": "bridge auth: ",
   "status.bridgeHint": "  (run ",
   "status.graphUnavailable":
-    "(graph not available — run `mg init` to bootstrap)",
+    "(graph not available — run `mcp-graph init` to bootstrap)",
 
   // /demo
   "demo.ready": "✔ demo sandbox ready",
   "demo.locationLabel": "location: ",
   "demo.tryHeader": "try this",
-  "demo.cleanupHint": "when done: rm -rf {path}   ·   or run mg demo --cleanup",
+  "demo.cleanupHint": "when done: rm -rf {path}   ·   or run mcp-graph demo --cleanup",
 
   // /lang
   "lang.current": "language: {lang}",
@@ -89,35 +89,35 @@ export const en: Record<string, string> = {
   "hooks.installed": "✔ hooks installed  (profile: {profile})",
   "hooks.uninstalled": "✔ hooks uninstalled",
   "hooks.empty":
-    "no mcp-graph hooks installed in this project. run `mg hooks install`",
+    "no mcp-graph hooks installed in this project. run `mcp-graph hooks install`",
 
   // /config
   "config.synced": "✔ configs synced  ({ides})",
   "config.inSync": "✔ all configs in sync",
   "config.drift": "⚠ {n} file(s) would change",
-  "config.applyHint": "run `mg config sync` to apply",
+  "config.applyHint": "run `mcp-graph config sync` to apply",
 
   // Errors
   "error.parentNotInstalled":
-    "@mcp-graph-workflow/mcp-graph runtime not found. run `mg init` first or install it: `npm install -g @mcp-graph-workflow/mcp-graph`",
+    "@mcp-graph-workflow/mcp-graph runtime not found. run `mcp-graph init` first or install it: `npm install -g @mcp-graph-workflow/mcp-graph`",
   "error.bridgeNotFound":
     "Could not locate the GitHub Copilot bridge CLI. Install it: `npm install -g @mcp-graph-workflow/bridge-cli`",
   "error.notInitialized":
-    "Graph not initialized. Run `mg init` to bootstrap a project here.",
+    "Graph not initialized. Run `mcp-graph init` to bootstrap a project here.",
   "error.unknownCommand": "unknown command: {cmd}",
   "error.didYouMean": "  did you mean: {hits}?",
 
   // /help shell layout
   "help.tagline": "modern CLI for MCP Graph Workflow",
   "help.usageHeader": "Usage:",
-  "help.usage1": "  mg                       # enter REPL with /slash commands",
-  "help.usage2": "  mg <command> [args]      # one-shot shell mode",
+  "help.usage1": "  mcp-graph                # enter REPL with /slash commands",
+  "help.usage2": "  mcp-graph <command> [args] # one-shot shell mode",
   "help.commandsHeader": "Commands:",
   "help.replHint":
-    "REPL slash equivalents (inside `mg`):  /init  /next  /help  /exit",
+    "REPL slash equivalents (inside `mcp-graph`):  /init  /next  /help  /exit",
   "help.docsHint": "Docs: https://github.com/diegonogueira/mcp-graph-workflow",
 
-  // Command descriptions (mg --help)
+  // Command descriptions (mcp-graph --help)
   "cmd.help.description": "Show all commands. Pass a query for fuzzy match.",
   "cmd.exit.description": "Leave the REPL (shell mode: no-op).",
   "cmd.version.description": "Print CLI version + project status.",

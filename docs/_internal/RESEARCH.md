@@ -14,6 +14,8 @@ The research is ongoing and under discussion. Findings, methodologies, and inter
 
 This project investigates a central hypothesis: that **imposing deterministic graph structure over AI-assisted development workflows** reduces error rates, improves context continuity between sessions, and increases delivery predictability compared to unstructured prompt-based development.
 
+The work positions itself within an emerging engineering discipline — **AI-Driven Software Engineering (AISE)** — defined here as: *the practice of delivering production software through AI agents while preserving the rigor of senior engineering teams (specification before code, test-first, traceable decisions, persistent context).* `mcp-graph` is proposed as a local-first instance of this category, and the hypothesis above operationalizes the conditions under which AISE becomes viable in everyday workflows.
+
 The research is being conducted in the context of real software projects, with empirical measurements of productivity metrics (DORA), code quality indicators, and agent behavior patterns. It is **not yet defended** and does not represent a final scientific contribution.
 
 Methodology documents are available in [`docs/preprint/`](../preprint/).

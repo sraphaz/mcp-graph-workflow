@@ -11,7 +11,7 @@ model:
   fallback: sonnet
   rationale: "Atomic TDD Red→Green→Refactor steps — low reasoning load, high volume"
 ---
-> 💡 **v11 CLI surface available** (`@mcp-graph-workflow/cli@beta`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[v11-cli-surface-map.md](../../../docs/guides/v11-cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
+> 💡 **CLI shell surface available** (`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[cli-surface-map.md](../../../docs/guides/cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
 
 
 # graph-implement
@@ -45,7 +45,7 @@ next → context → context(action: "rag") → update_status(in_progress) → [
 
 ### Step 1: Start Task (v6.0 Pipeline)
 
-**v11 surface (preferred — installs `@mcp-graph-workflow/cli@beta`):**
+**v11 surface (preferred — installs `):**
 ```
 /start                  # Claude skill — picks up next task or pass <id>
 mg start [<id>]         # shell — same handler, also works in CI/scripts

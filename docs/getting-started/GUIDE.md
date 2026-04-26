@@ -1,6 +1,8 @@
 # mcp-graph — Guia Prático
 
-**Em uma frase:** mcp-graph dá memória persistente e disciplina ao seu agente de IA — em vez dele improvisar a cada sessão, ele navega um grafo executável que vive no seu projeto.
+**Em uma frase:** mcp-graph é a camada de **engenharia de software dirigida por IA (AISE)** que dá memória persistente e disciplina ao seu agente — em vez dele improvisar a cada sessão, ele navega um grafo executável que vive no seu projeto.
+
+> **AISE = AI-Driven Software Engineering.** É entregar software com agentes de IA aplicando o mesmo rigor que time sênior usa: spec antes do código, TDD obrigatório, rastreabilidade, memória entre sessões. mcp-graph é a instância local-first dessa categoria.
 
 Este guia te leva de "nunca ouvi falar" até "primeira task entregue" em **5 minutos** de leitura + **5 minutos** de mão na massa.
 
@@ -34,17 +36,15 @@ mcp-graph resolve esses três problemas juntos: pega seu PRD (Markdown, PDF, HTM
 ```
 Você (humano)
  └─ CLI de IA (Claude Code · Copilot CLI · Cursor)        ← agente roda aqui, sem memória
-    ├─ mcp-graph (MCP server, v10.x)                       ← memória estruturada do projeto
-    └─ mcp-graph CLI (v11 beta)                                   ← porta de entrada humana + auto-hooks
+    └─ mcp-graph (servidor MCP + CLI unificado)           ← memória + porta humana + auto-hooks
                                                            ↓
                                   workflow-graph/graph.db (a "memória" persistente)
 ```
 
-**Ganho por camada, em uma frase cada:**
+**O que mcp-graph adiciona:**
 
-- **CLI de IA sozinha:** ótimo agente, **memória zero**. Cada chat começa do nada.
-- **+ mcp-graph (server):** dá **memória estruturada**. PRD vira grafo, lifecycle de 9 fases força disciplina, contexto comprimido entrega só o relevante.
-- **+ mcp-graph CLI (v11):** dá **acesso humano direto + automação invisível**. Você roda `mcp-graph next` sem gastar tokens, hooks configuram-se sozinhos, skill files reduzem alucinação.
+- **Sem ele:** ótimo agente, **memória zero**. Cada chat começa do nada.
+- **Com ele:** memória estruturada (PRD → grafo, lifecycle de 9 fases) + acesso humano direto via `mcp-graph next` (sem gastar tokens) + auto-hooks no Claude Code + skill files que reduzem alucinação.
 
 > **As 9 fases do lifecycle** (você não precisa decorar — `mcp-graph` te guia):
 > ANALYZE → DESIGN → PLAN → IMPLEMENT → VALIDATE → REVIEW → HANDOFF → DEPLOY → LISTENING.
@@ -236,9 +236,9 @@ Você consegue fazer **a mesma operação** de três formas. A escolha é só **
 
 **REPL `/cmd`** — você abriu `mcp-graph`, está em sessão interativa. `/help` te mostra a paleta inteira, fuzzy search funciona, history navega com setas. Bom pra explorar o que existe.
 
-> ⚠️ **Cobertura `mcp-graph` (v11 beta)**: o CLI cobre o ciclo de vida (`init`, `start`, `finish`, `next`, `list`, `status`, `add`, `set-phase`) e ops (`hooks`, `ui`, `demo`, `login`). As demais ~45 tools (`analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban`, `import_prd`, `plan_sprint` etc.) continuam **só via MCP** — use dentro de Claude Code/Cursor via `mcp__mcp-graph__<nome>`.
+> **Cobertura do CLI `mcp-graph`**: cobre o ciclo de vida (`init`, `start`, `finish`, `next`, `list`, `status`, `add`, `set-phase`) e ops (`hooks`, `ui`, `demo`, `login`). As demais ~45 tools (`analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban`, `import_prd`, `plan_sprint` etc.) ficam **só via MCP** — use dentro de Claude Code/Cursor via `mcp__mcp-graph__<nome>`.
 
-> Tabela completa de equivalência (todos os comandos `mcp-graph` + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
+> Tabela completa de equivalência (todos os comandos `mcp-graph` + tools que continuam só MCP) em [cli-surface-map.md](../guides/cli-surface-map.md).
 
 ---
 
@@ -287,7 +287,7 @@ MCP_GRAPH_HOOKS_OFF=1 mcp-graph ...    # ou desativa pra um comando só
 - 🔖 [CHEATSHEET.md](./CHEATSHEET.md) — todos os comandos em uma página
 - 📖 [GLOSSARY.md](./GLOSSARY.md) — termos em linguagem clara
 - 🔧 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — quando algo não funciona
-- 🗺️ [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md) — tabela completa MCP ↔ shell ↔ REPL
+- 🗺️ [cli-surface-map.md](../guides/cli-surface-map.md) — tabela completa MCP ↔ shell ↔ REPL
 - 🌐 Dashboard em <http://localhost:3000> depois de `mcp-graph ui`
 - 💬 Dúvidas: <https://github.com/DiegoNogueiraDev/mcp-graph-workflow/discussions>
 

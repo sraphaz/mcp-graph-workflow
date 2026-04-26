@@ -8,8 +8,8 @@
  *
  * The same registry feeds three thin routers:
  *   1. REPL slash router  — `mg` (no args) → `/cmd args` inside the REPL
- *   2. Shell router       — `mg cmd args` at the OS prompt (Commander)
- *   3. Skill emitter      — `mg init` writes `.claude/skills/<cmd>.md`
+ *   2. Shell router       — `mcp-graph cmd args` at the OS prompt (Commander)
+ *   3. Skill emitter      — `mcp-graph init` writes `.claude/skills/<cmd>.md`
  *
  * Adding a command means adding ONE entry here. The routers enumerate
  * this list at startup; nothing else needs to change.
@@ -50,7 +50,7 @@ export interface CommandDefinition {
     | "ops"
     | "meta"
     | "internal";
-  /** When true, the command is hidden from the default `mg --help` listing. */
+  /** When true, the command is hidden from the default `mcp-graph --help` listing. */
   readonly hidden?: boolean;
   readonly examples?: readonly string[];
   readonly emitSkill?: boolean;

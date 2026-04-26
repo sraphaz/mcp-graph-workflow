@@ -31,15 +31,15 @@ describe("emitClaudeMd (Sprint 7.4 #7.4.7)", () => {
     emitClaudeMd(tmp);
     const body = readFileSync(join(tmp, "CLAUDE.md"), "utf8");
     // mg <cmd> workflow
-    expect(body).toContain("`mg next`");
-    expect(body).toContain("`mg start <id>`");
-    expect(body).toContain("`mg finish <id>`");
+    expect(body).toContain("`mcp-graph next`");
+    expect(body).toContain("`mcp-graph start <id>`");
+    expect(body).toContain("`mcp-graph finish <id>`");
     // Auto-fired hooks
-    expect(body).toContain("mg hooks install");
+    expect(body).toContain("mcp-graph hooks install");
     expect(body).toContain("PreToolUse");
     expect(body).toContain("SessionStart");
     // Provenance + redact-test
-    expect(body).toContain("mg log --redact-test");
+    expect(body).toContain("mcp-graph log --redact-test");
   });
 
   it("template stays under the 80-line ceiling", () => {

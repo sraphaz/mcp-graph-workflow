@@ -119,10 +119,8 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   }
 
   if (eventBus) {
-    // NOTE: SSE is already handled by createEventsSseRouter above.
-    // createEventsRouter was previously also mounted at /events causing a
-    // duplicate route — it is intentionally omitted here (E14-T09 fix).
-
+    // SSE is handled by createEventsSseRouter mounted at /events above.
+    // E14-T09 invariant test ensures /events is mounted exactly once.
     let emitting = false;
     setLogListener((entry) => {
       if (emitting) return;

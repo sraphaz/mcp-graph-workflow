@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"feature-depth/analyzer"
 	"feature-depth/config"
+	"feature-depth/growth"
 	"feature-depth/reporter"
 	"feature-depth/scanner"
 	"feature-depth/scorer"
 	"fmt"
 	"os"
+	"os/exec"
 	"sort"
 	"sync"
 	"time"
@@ -15,6 +18,20 @@ import (
 
 func main() {
 	cfg := config.ParseFlags()
+
+	if cfg.Growth {
+		runGrowth(cfg)
+		return
+	}
+	if cfg.Granularity == "file" {
+		runFileGranularity(cfg)
+		return
+	}
+	if cfg.Granularity != "" && cfg.Granularity != "module" {
+		fmt.Fprintf(os.Stderr, "Error: --granularity must be 'module' or 'file', got %q\n", cfg.Granularity)
+		os.Exit(2)
+	}
+
 	weights := config.DefaultWeights()
 
 	// Discover modules
@@ -96,6 +113,134 @@ func main() {
 			}
 			fmt.Fprintf(os.Stderr, "\nJSON report written to %s\n", cfg.JSONOut)
 		}
+	}
+}
+
+// runGrowth analyses the entire git history of cfg.Dir and emits a
+// project-growth report (LOC over time, per-module breakdown, hotspot
+// files). Reads `git log --numstat --pretty=format:%H|%aI` once.
+//
+// Rationale: architectural decisions get more empirical when the model
+// can see how the codebase actually grew — which modules exploded,
+// which stayed stable, when the test/source ratio cratered, where
+// churn concentrates. Static snapshots miss the trajectory.
+func runGrowth(cfg config.Config) {
+	cmd := exec.Command("git", "-C", cfg.Dir, "log", "--reverse", "--numstat", "--pretty=format:%H|%aI")
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "git log failed: %v\n", err)
+		os.Exit(1)
+	}
+	commits, err := growth.ParseGitLog(&stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parse git log: %v\n", err)
+		os.Exit(1)
+	}
+	if len(commits) == 0 {
+		fmt.Fprintln(os.Stderr, "No commits found.")
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "Analyzing %d commits...\n", len(commits))
+
+	report := growth.Aggregate(commits)
+
+	switch cfg.Output {
+	case "json":
+		if err := reporter.WriteGrowthJSON(report, cfg.JSONOut); err != nil {
+			fmt.Fprintf(os.Stderr, "json: %v\n", err)
+			os.Exit(1)
+		}
+	case "table":
+		reporter.WriteGrowthTable(report)
+	default:
+		reporter.WriteGrowthTable(report)
+		if cfg.JSONOut != "" {
+			if err := reporter.WriteGrowthJSON(report, cfg.JSONOut); err != nil {
+				fmt.Fprintf(os.Stderr, "json: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Fprintf(os.Stderr, "\nGrowth JSON written to %s\n", cfg.JSONOut)
+		}
+	}
+}
+
+// runFileGranularity is the file-mode entry point. It walks core/, scores
+// each .ts file independently using AnalyzeFile (analyzer/file.go), and
+// emits a top/bottom table plus an "untested files" worklist. This is
+// the answer to the per-module dilution problem: 12 deep tests in one
+// file are visible here even when the surrounding module of 65 files
+// barely budges.
+func runFileGranularity(cfg config.Config) {
+	files, err := scanner.DiscoverFiles(cfg.Dir, cfg.CorePath, cfg.TestPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error discovering files: %v\n", err)
+		os.Exit(1)
+	}
+	if len(files) == 0 {
+		fmt.Fprintf(os.Stderr, "No files found in %s/%s\n", cfg.Dir, cfg.CorePath)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "Analyzing %d files (granularity=file)...\n", len(files))
+
+	results := make([]analyzer.FileAnalysis, len(files))
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 8)
+	for i, f := range files {
+		wg.Add(1)
+		go func(idx int, file scanner.File) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			results[idx] = analyzer.AnalyzeFile(file)
+		}(i, f)
+	}
+	wg.Wait()
+
+	avg := 0.0
+	for _, r := range results {
+		avg += r.Score
+	}
+	if len(results) > 0 {
+		avg /= float64(len(results))
+	}
+
+	report := reporter.FileReport{
+		Tool:       "feature-depth-analyzer",
+		Mode:       "file",
+		TotalFiles: len(results),
+		AvgScore:   avg,
+		Files:      results,
+	}
+
+	switch cfg.Output {
+	case "json":
+		if err := reporter.WriteFileJSON(report, cfg.JSONOut); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing JSON: %v\n", err)
+			os.Exit(1)
+		}
+	case "table":
+		reporter.WriteFileTable(results)
+	default: // "both"
+		reporter.WriteFileTable(results)
+		if cfg.JSONOut != "" {
+			if err := reporter.WriteFileJSON(report, cfg.JSONOut); err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing JSON: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Fprintf(os.Stderr, "\nFile JSON report written to %s\n", cfg.JSONOut)
+		}
+	}
+
+	if cfg.Baseline != "" && cfg.Output != "json" {
+		baseline, err := reporter.LoadBaselineFiles(cfg.Baseline)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "baseline: %v\n", err)
+			os.Exit(1)
+		}
+		deltas := reporter.ComputeDeltas(results, baseline)
+		reporter.WriteDeltaTable(deltas)
 	}
 }
 

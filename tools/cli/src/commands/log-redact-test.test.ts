@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runLog } from "./log.js";
 import type { CommandHandlerArgs } from "./registry.js";
 
-describe("`mg log --redact-test` (Sprint 7.6 #7.6.15)", () => {
+describe("`mcp-graph log --redact-test` (Sprint 7.6 #7.6.15)", () => {
   let tmp: string;
   let prevHome: string | undefined;
 

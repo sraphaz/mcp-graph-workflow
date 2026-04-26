@@ -59,7 +59,7 @@ describe("installHooks — PreToolUse for mcp-graph (C1)", () => {
   it("balanced profile installs PreToolUse with matcher='mcp__mcp-graph__.*'", () => {
     installHooks(cwd, { profile: "balanced" });
     const settings = readSettings(cwd);
-    const entry = findHook(settings, "PreToolUse", "mg hook pre-tool-use");
+    const entry = findHook(settings, "PreToolUse", "mcp-graph hook pre-tool-use");
     expect(entry).not.toBeNull();
     expect(entry?.matcher).toBe("mcp__mcp-graph__.*");
   });
@@ -67,7 +67,7 @@ describe("installHooks — PreToolUse for mcp-graph (C1)", () => {
   it("aggressive profile installs PreToolUse with matcher='mcp__mcp-graph__.*'", () => {
     installHooks(cwd, { profile: "aggressive" });
     const settings = readSettings(cwd);
-    const entry = findHook(settings, "PreToolUse", "mg hook pre-tool-use");
+    const entry = findHook(settings, "PreToolUse", "mcp-graph hook pre-tool-use");
     expect(entry).not.toBeNull();
     expect(entry?.matcher).toBe("mcp__mcp-graph__.*");
   });
@@ -75,7 +75,7 @@ describe("installHooks — PreToolUse for mcp-graph (C1)", () => {
   it("minimal profile does NOT install PreToolUse (gate-free)", () => {
     installHooks(cwd, { profile: "minimal" });
     const settings = readSettings(cwd);
-    const entry = findHook(settings, "PreToolUse", "mg hook pre-tool-use");
+    const entry = findHook(settings, "PreToolUse", "mcp-graph hook pre-tool-use");
     expect(entry).toBeNull();
   });
 
@@ -85,7 +85,7 @@ describe("installHooks — PreToolUse for mcp-graph (C1)", () => {
     installHooks(cwd, { profile: "balanced" });
     const settings = readSettings(cwd);
     const matches = settings.hooks?.PreToolUse?.filter((entry) =>
-      entry.hooks.some((h) => h.command === "mg hook pre-tool-use"),
+      entry.hooks.some((h) => h.command === "mcp-graph hook pre-tool-use"),
     ) ?? [];
     expect(matches.length).toBe(1);
   });

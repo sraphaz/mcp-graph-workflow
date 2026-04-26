@@ -18,8 +18,8 @@
 /**
  * High-level embedding generator with automatic provider selection.
  *
- * Uses ONNX provider when available (ADR-05), falls back to TF-IDF hash-based
- * embeddings for deterministic local operation (ADR-06).
+ * Uses ONNX provider when available (ADR-0055), falls back to TF-IDF hash-based
+ * embeddings for deterministic local operation (ADR-0056).
  */
 
 import { logger } from '../utils/logger.js';

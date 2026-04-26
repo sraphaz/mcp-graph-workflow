@@ -18,8 +18,8 @@
 /**
  * ONNX Runtime embedding provider for hybrid semantic search.
  *
- * ADR-05: onnxruntime-node is an optional dependency loaded via dynamic import.
- * ADR-06: Implements EmbeddingProvider interface for dual-mode embeddings.
+ * ADR-0055: onnxruntime-node is an optional dependency loaded via dynamic import.
+ * ADR-0056: Implements EmbeddingProvider interface for dual-mode embeddings.
  *
  * Model: all-MiniLM-L6-v2 (quantized int8, ~23MB, 384-dim output)
  * Fallback: Returns null when onnxruntime-node is not installed.
@@ -32,7 +32,7 @@ import { OnnxModelNotFoundError } from '../utils/errors.js';
 
 // ── Types ──
 
-/** Provider interface for generating embeddings (ADR-06). */
+/** Provider interface for generating embeddings (ADR-0056). */
 export interface EmbeddingProvider {
   readonly name: string;
   readonly dimensions: number;

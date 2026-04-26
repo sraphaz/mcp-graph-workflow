@@ -7,8 +7,8 @@
  * Lazy SQLite store factory.
  *
  * The store module is heavy (better-sqlite3 native + migrations + indexes).
- * Loading it eagerly costs ~200ms cold-start — unacceptable for `mg --version`
- * or `mg --help`. This factory:
+ * Loading it eagerly costs ~200ms cold-start — unacceptable for `mcp-graph --version`
+ * or `mcp-graph --help`. This factory:
  *
  *  1. Defers `import("...sqlite-store.js")` until `getStore()` is first called.
  *  2. Caches the resolved store per `basePath` so subsequent calls are O(1).
@@ -38,7 +38,7 @@ let modulePromise: Promise<StoreModule> | null = null;
 
 /**
  * Override the resolution path. Used by tests to inject a stub module,
- * and by `mg init` flows that may run before the parent `dist/` is built.
+ * and by `mcp-graph init` flows that may run before the parent `dist/` is built.
  *
  * The resolver returns the absolute import specifier (file URL or package
  * name). It runs once; the result is memoized in `modulePromise`.

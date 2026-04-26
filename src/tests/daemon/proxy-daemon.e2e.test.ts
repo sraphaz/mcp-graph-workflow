@@ -36,6 +36,24 @@ const DAEMON_ENTRY = path.join(REPO_ROOT, "dist", "mcp", "daemon-entry.js");
 const PROXY_ENTRY = path.join(REPO_ROOT, "dist", "mcp", "stdio-proxy.js");
 const BUILT = fs.existsSync(DAEMON_ENTRY) && fs.existsSync(PROXY_ENTRY);
 
+/**
+ * SIGTERM the child and SIGKILL it after `timeoutMs` if it didn't exit. Always
+ * resolves once the child is gone — never leaves a zombie daemon behind.
+ */
+async function killChildSafely(child: ChildProcess, timeoutMs = 3000): Promise<void> {
+  if (child.killed || child.exitCode !== null) return;
+  const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+  child.kill("SIGTERM");
+  const killer = setTimeout(() => {
+    if (!child.killed && child.exitCode === null) child.kill("SIGKILL");
+  }, timeoutMs);
+  try {
+    await exited;
+  } finally {
+    clearTimeout(killer);
+  }
+}
+
 async function waitForSocket(socketPath: string, timeoutMs = 15_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -102,13 +120,11 @@ describe.skipIf(!BUILT)("daemon + proxy (E2E via child_process)", () => {
   }, 30_000);
 
   afterEach(async () => {
-    if (proxy && !proxy.killed) {
-      proxy.kill("SIGTERM");
-    }
-    if (!daemon.killed) {
-      daemon.kill("SIGTERM");
-      await new Promise((r) => daemon.once("exit", r));
-    }
+    // Always wait for both children to actually exit, escalating to SIGKILL
+    // after a timeout. A zombie daemon would otherwise leak across runs and
+    // pollute /tmp/mcp-graph-e2e-*.
+    if (proxy) await killChildSafely(proxy);
+    await killChildSafely(daemon);
     try { fs.rmSync(workspace, { recursive: true, force: true }); } catch { /* ignore */ }
     try { fs.unlinkSync(socketPath); } catch { /* ignore */ }
     try { fs.unlinkSync(pidFile); } catch { /* ignore */ }

@@ -37,8 +37,8 @@ const TAG = "mcp-graph-hook";
 const VERSION = "v1";
 
 /**
- * Hook map: which Claude Code event fires which `mg hook <name>` invocation.
- * The `mg hook <name>` dispatcher (Sprint 7.5/7.6) runs the actual handler.
+ * Hook map: which Claude Code event fires which `mcp-graph hook <name>` invocation.
+ * The `mcp-graph hook <name>` dispatcher (Sprint 7.5/7.6) runs the actual handler.
  *
  * Matcher regexes scope when each hook fires.
  */
@@ -50,66 +50,66 @@ const PROFILES: Record<HookProfile, ReadonlyArray<{
   minimal: [
     {
       event: "SessionStart",
-      command: "mg hook session-start",
+      command: "mcp-graph hook session-start",
     },
   ],
   balanced: [
     {
       event: "SessionStart",
-      command: "mg hook session-start",
+      command: "mcp-graph hook session-start",
     },
     {
       event: "PreToolUse",
       matcher: "mcp__mcp-graph__.*",
-      command: "mg hook pre-tool-use",
+      command: "mcp-graph hook pre-tool-use",
     },
     {
       event: "PostToolUse",
       matcher: "Edit|Write|MultiEdit",
-      command: "mg hook post-edit",
+      command: "mcp-graph hook post-edit",
     },
     {
       event: "PostToolUse",
       matcher: "mcp__mcp-graph__finish_task",
-      command: "mg hook post-finish-task",
+      command: "mcp-graph hook post-finish-task",
     },
     {
       event: "Stop",
-      command: "mg hook session-stop",
+      command: "mcp-graph hook session-stop",
     },
   ],
   aggressive: [
     {
       event: "SessionStart",
-      command: "mg hook session-start",
+      command: "mcp-graph hook session-start",
     },
     {
       event: "PreToolUse",
       matcher: "mcp__mcp-graph__.*",
-      command: "mg hook pre-tool-use",
+      command: "mcp-graph hook pre-tool-use",
     },
     {
       event: "PostToolUse",
       matcher: "Edit|Write|MultiEdit",
-      command: "mg hook post-edit",
+      command: "mcp-graph hook post-edit",
     },
     {
       event: "PostToolUse",
       matcher: "Bash",
-      command: "mg hook post-bash",
+      command: "mcp-graph hook post-bash",
     },
     {
       event: "PostToolUse",
       matcher: "mcp__mcp-graph__finish_task",
-      command: "mg hook post-finish-task",
+      command: "mcp-graph hook post-finish-task",
     },
     {
       event: "UserPromptSubmit",
-      command: "mg hook pre-prompt",
+      command: "mcp-graph hook pre-prompt",
     },
     {
       event: "Stop",
-      command: "mg hook session-stop",
+      command: "mcp-graph hook session-stop",
     },
   ],
 };
@@ -173,7 +173,7 @@ export function listInstalledHooks(cwd: string): InstalledHookSummary[] {
  * installer's VERSION constant. Drift surfaces when:
  *   - the schema bumped (e.g. a profile gained a new hook entry but the
  *     installed config still reflects the old shape)
- *   - the user upgraded the CLI without re-running `mg hooks install`
+ *   - the user upgraded the CLI without re-running `mcp-graph hooks install`
  *
  * Returns a structured detail object the SessionStart hook surfaces back
  * to Claude Code so the host can prompt the user to re-sync. Status:
@@ -224,7 +224,7 @@ export function detectConfigDrift(cwd: string): ConfigDriftReport {
     currentVersion: VERSION,
     installedVersion,
     installedProfile,
-    hint: `mg hooks install${installedProfile ? ` --profile ${installedProfile}` : ""}`,
+    hint: `mcp-graph hooks install${installedProfile ? ` --profile ${installedProfile}` : ""}`,
   };
 }
 
@@ -241,7 +241,7 @@ function applyProfile(
   settings: SettingsShape,
   profile: HookProfile,
 ): SettingsShape {
-  // Drop any pre-existing mg hooks first (idempotent re-install).
+  // Drop any pre-existing mcp-graph hooks first (idempotent re-install).
   const cleared = stripOurHooks(settings);
   const hooks = { ...(cleared.hooks ?? {}) };
 

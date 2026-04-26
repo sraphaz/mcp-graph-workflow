@@ -1,6 +1,7 @@
 # mcp-graph — Cheat Sheet
 
 Tudo o que você precisa em uma página. Imprimível em A4.
+Camada de **engenharia de software dirigida por IA (AISE)** — sem vibe-coding.
 
 > **3 modos para a mesma ação** — escolha o que cabe no fluxo:
 > **Claude direto** = `mcp__mcp-graph__X` no chat • **Shell `mcp-graph`** = no terminal • **REPL slash** = `mcp-graph repl` aberto, depois `/X`
@@ -22,7 +23,7 @@ Tudo o que você precisa em uma página. Imprimível em A4.
 | Demo descartável | (não disponível) | `mcp-graph demo` | `/demo` |
 | Login GitHub Copilot | (não disponível) | `mcp-graph login` | `/login` |
 
-📎 Tabela completa (todos os 20 comandos + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
+📎 Tabela completa (todos os 20 comandos + tools que continuam só MCP) em [cli-surface-map.md](../guides/cli-surface-map.md).
 
 > 📌 **Não está na tabela acima?** Tools como `analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban` etc. continuam **só via MCP** — o CLI `mcp-graph` não as expõe ainda. Use dentro de Claude Code/Cursor via `mcp__mcp-graph__<nome>`.
 
@@ -49,8 +50,7 @@ Tudo o que você precisa em uma página. Imprimível em A4.
 
 | Ação | Comando |
 |---|---|
-| Inicializar (v11 — recomendado) | `mcp-graph init` |
-| Inicializar (v10 legado) | `npx mcp-graph init` |
+| Inicializar | `mcp-graph init` |
 | Inicializar sem prompts (CI) | `mcp-graph init --force` |
 | Instalar hooks Claude Code | `mcp-graph hooks install --profile balanced` |
 | Ver status dos hooks | `mcp-graph hooks status` |
@@ -82,16 +82,16 @@ Bom pra entender o produto em 60s sem mexer no seu projeto.
 | Dashboard web | `mcp-graph ui` (abre `http://localhost:3000`) |
 | Status compacto | `mcp-graph status` |
 | Ver logs estruturados | `mcp-graph log` |
-| Diagnóstico (v10) | `mcp-graph doctor` |
+| Diagnóstico do ambiente | `mcp-graph doctor` |
 
-## Servidor MCP (v10 — legado, ainda funciona)
+## Servidor MCP standalone (avançado)
 
-Se você está no fluxo two-terminal v10 (sem v11 CLI):
+Pra quem quer rodar o dashboard sem o REPL:
 
 | Ação | Comando |
 |---|---|
-| Iniciar servidor | `npx mcp-graph serve --port 3000` |
-| Em outra porta | `npx mcp-graph serve --port 3001` |
+| Iniciar servidor | `mcp-graph serve --port 3000` |
+| Em outra porta | `mcp-graph serve --port 3001` |
 | Encerrar | Ctrl+C |
 
 ## MCP tool surface (avançado)
@@ -122,7 +122,6 @@ mcp-graph update                                # sync configs do projeto
 - **Gates não pulam** — fixe a causa raiz, não o gate.
 - **TDD obrigatório** em IMPLEMENT (Red → Green → Refactor).
 - **Hooks são silenciosos** — se nada apareceu, está tudo OK (logs em `~/.mcp-graph/logs/hooks.jsonl`).
-- **v10 e v11 coexistem** — v11 é opt-in, não força migração.
 
 ---
 
@@ -130,4 +129,4 @@ mcp-graph update                                # sync configs do projeto
 🚀 [QUICKSTART.md](./QUICKSTART.md) — 60 segundos até o primeiro `mcp-graph next`
 🔧 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — erros comuns e soluções
 📖 [GLOSSARY.md](./GLOSSARY.md) — termos em linguagem clara
-🗺️ [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md) — tabela completa de 3-mode parity
+🗺️ [cli-surface-map.md](../guides/cli-surface-map.md) — tabela completa de 3-mode parity

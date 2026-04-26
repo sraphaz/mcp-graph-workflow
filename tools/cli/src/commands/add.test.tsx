@@ -57,7 +57,7 @@ describe("runAdd", () => {
     setParentRuntimeForTests(makeRuntime().runtime);
     const result = await runAdd(baseCtx);
     expect(result.exitCode).toBe(2);
-    expect(result.text).toContain("usage: mg add");
+    expect(result.text).toContain("usage: mcp-graph add");
   });
 
   it("rejects unknown type", async () => {
@@ -88,7 +88,7 @@ describe("runAdd", () => {
     const json = result.json as { id: string; type: string; provenance: { cmd: string; source: string; actor: string } };
     expect(json.type).toBe("task");
     expect(json.provenance.source).toBe("cli");
-    expect(json.provenance.cmd).toBe("mg add task");
+    expect(json.provenance.cmd).toBe("mcp-graph add task");
 
     expect(ctrl.inserted?.title).toBe("fix auth bug");
     expect(ctrl.inserted?.priority).toBe(2);

@@ -71,7 +71,10 @@ export function scanTestCoverage(
   let emptyTests = 0;
 
   for (const tf of testFiles) {
-    const stem = tf.name.replace(/\.test\.ts$/, '').replace(/\.bench\.ts$/, '');
+    const stem = tf.name
+      .replace(/\.test\.tsx$/, '')
+      .replace(/\.test\.ts$/, '')
+      .replace(/\.bench\.ts$/, '');
     if (tf.hasAssertions) {
       testedStems.add(stem);
     } else {

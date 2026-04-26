@@ -36,7 +36,7 @@ description: Direct CDP browser automation via the local Chrome DevTools harness
 
 # /browser-harness
 
-This skill mirrors the \`mg harness\` CLI command and the parent's MCP \`browser_harness\` tool. Use it when the user wants to:
+This skill mirrors the \`mcp-graph harness\` CLI command and the parent's MCP \`browser_harness\` tool. Use it when the user wants to:
 
 - "open a browser at <url>"
 - "take a screenshot of <site>"
@@ -60,13 +60,13 @@ Use the \`webSocketDebuggerUrl\` value (looks like \`ws://127.0.0.1:9222/devtool
 
 | Intent | Command |
 |---|---|
-| List installed helpers | \`mg harness list\` |
-| Open a session | \`mg harness start --cdp <ws-url>\` |
-| Close a session | \`mg harness stop --sid <id>\` |
-| Call a helper | \`mg harness call <name> --sid <id> --args '{"k":"v"}'\` |
-| Raw CDP method | \`mg harness cdp Page.navigate --sid <id> --params '{"url":"https://…"}'\` |
-| Register a new helper | \`mg harness add <name> --sid <id> --source helpers/<name>.ts\` |
-| List active sessions | \`mg harness sessions\` |
+| List installed helpers | \`mcp-graph harness list\` |
+| Open a session | \`mcp-graph harness start --cdp <ws-url>\` |
+| Close a session | \`mcp-graph harness stop --sid <id>\` |
+| Call a helper | \`mcp-graph harness call <name> --sid <id> --args '{"k":"v"}'\` |
+| Raw CDP method | \`mcp-graph harness cdp Page.navigate --sid <id> --params '{"url":"https://…"}'\` |
+| Register a new helper | \`mcp-graph harness add <name> --sid <id> --source helpers/<name>.ts\` |
+| List active sessions | \`mcp-graph harness sessions\` |
 
 ## Safety rules (non-negotiable)
 
@@ -86,8 +86,8 @@ These come from \`.claude/rules/browser-pilot.md\`:
 
 ## Failure modes
 
-- **Helper not found**: respond with \`mg harness add <name> --source ...\` to register it, or fall back to \`mg harness cdp <method>\` if a built-in CDP call works.
-- **Session not found**: ask the user to \`mg harness start\` first, or list sessions with \`mg harness sessions\`.
+- **Helper not found**: respond with \`mcp-graph harness add <name> --source ...\` to register it, or fall back to \`mcp-graph harness cdp <method>\` if a built-in CDP call works.
+- **Session not found**: ask the user to \`mcp-graph harness start\` first, or list sessions with \`mcp-graph harness sessions\`.
 - **Forbidden method**: explain which method tripped the safety check and suggest a non-destructive alternative.
 - **Bridge unreachable**: this skill does NOT depend on the Copilot bridge; if the harness errors, it's about Chrome / CDP, not the LLM gateway.
 

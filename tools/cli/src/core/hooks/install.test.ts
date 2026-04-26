@@ -60,7 +60,7 @@ describe("hook installer", () => {
     const preToolUse = installed.find((h) => h.event === "PreToolUse");
     expect(preToolUse).toBeDefined();
     expect(preToolUse!.matcher).toBe("mcp__mcp-graph__.*");
-    expect(preToolUse!.command).toBe("mg hook pre-tool-use");
+    expect(preToolUse!.command).toBe("mcp-graph hook pre-tool-use");
   });
 
   it("aggressive installs the PreToolUse mcp-graph gate hook", () => {
@@ -69,7 +69,7 @@ describe("hook installer", () => {
     const preToolUse = installed.find((h) => h.event === "PreToolUse");
     expect(preToolUse).toBeDefined();
     expect(preToolUse!.matcher).toBe("mcp__mcp-graph__.*");
-    expect(preToolUse!.command).toBe("mg hook pre-tool-use");
+    expect(preToolUse!.command).toBe("mcp-graph hook pre-tool-use");
   });
 
   it("minimal does NOT install PreToolUse (gate-free profile)", () => {
@@ -193,7 +193,7 @@ describe("hook installer", () => {
       installHooks(tmp, { profile: "minimal" });
       // Hand-edit the persisted settings to simulate an older schema version
       // (this mirrors what would happen if the user upgraded the CLI without
-      // re-running `mg hooks install`).
+      // re-running `mcp-graph hooks install`).
       const path = settingsPath(tmp);
       const settings = JSON.parse(readFileSync(path, "utf8")) as {
         hooks: Record<string, Array<{ __mg__?: { version: string } }>>;
@@ -207,7 +207,7 @@ describe("hook installer", () => {
       const drift = detectConfigDrift(tmp);
       expect(drift.status).toBe("stale");
       expect(drift.installedVersion).toBe("v0");
-      expect(drift.hint).toContain("mg hooks install");
+      expect(drift.hint).toContain("mcp-graph hooks install");
       expect(drift.hint).toContain("--profile minimal");
     });
   });

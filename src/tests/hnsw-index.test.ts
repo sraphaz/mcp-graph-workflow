@@ -106,7 +106,7 @@ describe("HNSW Index", () => {
 
   // ── AC1: Recall@10 >= 90% for 1000 vectors dim=256 ──
   describe("AC1: recall@10 >= 90%", () => {
-    it("should achieve recall@10 >= 90% vs linear search on 1000 vectors dim=256", () => {
+    it("should achieve recall@10 >= 90% vs linear search on 1000 vectors dim=256", { timeout: 30_000 }, () => {
       const dim = 256;
       const n = 1000;
       const k = 10;

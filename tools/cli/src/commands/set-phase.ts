@@ -4,7 +4,7 @@
  */
 
 /**
- * `mg set-phase <PHASE>` — CLI replacement for the deprecated `set_phase` MCP
+ * `mcp-graph set-phase <PHASE>` — CLI replacement for the deprecated `set_phase` MCP
  * tool. Forwards to `setPhaseCore(store, opts)` in the parent runtime so
  * lifecycle/code-intel/prereq mode persistence stays in a single place.
  */
@@ -74,7 +74,7 @@ interface StoreModule {
   };
 }
 
-const USAGE = "usage: mg set-phase <PHASE> [--mode strict|advisory] [--code-intel strict|advisory|off] [--prerequisites strict|advisory|off] [--force] [--json]";
+const USAGE = "usage: mcp-graph set-phase <PHASE> [--mode strict|advisory] [--code-intel strict|advisory|off] [--prerequisites strict|advisory|off] [--force] [--json]";
 
 function isPhase(value: unknown): value is Phase {
   return typeof value === "string" && (VALID_PHASES as readonly string[]).includes(value);

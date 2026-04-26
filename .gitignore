@@ -8,6 +8,9 @@ node_modules/
 # Build
 dist/
 build/
+# Exception: the static landing site is shipped from presentation/dist/ (Vercel)
+!presentation/dist/
+!presentation/dist/**
 skills-graph/
 workflow-graph/
 CLAUDE.md
@@ -75,6 +78,9 @@ tools/copilot-bridge-cli/
 # Local-only baselines / planning notes (per memory rule
 # feedback_no_public_design_exposure — design rationale stays local).
 .fase-b-baseline.md
+.coverage-baseline.txt
+.harness-baseline.txt
+.feature-depth-baseline.json
 baseline-*.png
 
 # Test artifacts
@@ -85,6 +91,9 @@ coverage/
 .nyc_output/
 .gitnexus
 presentation/public/video/*.mov
+presentation/node_modules/
+presentation/dist/.DS_Store
+presentation/.DS_Store
 
 # act local CI runner — secrets file is gitignored; the runner itself is
 # configured via .actrc (tracked).

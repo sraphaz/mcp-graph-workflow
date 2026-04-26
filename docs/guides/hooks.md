@@ -1,6 +1,6 @@
 # `mcp-graph hooks` — install, manage, observe Claude Code hooks
 
-`mcp-graph hooks` is the v11 CLI surface for Claude Code's `.claude/settings.local.json` hook configuration. It replaces hand-editing the JSON and the implicit hook lifecycle that lived inside MCP tools.
+`mcp-graph hooks` is the CLI surface design for Claude Code's `.claude/settings.local.json` hook configuration. It replaces hand-editing the JSON and the implicit hook lifecycle that lived inside MCP tools.
 
 ## Quick start
 
@@ -49,8 +49,8 @@ Set `MCP_GRAPH_HOOKS_OFF=1` to disable the dispatcher without uninstalling. Usef
 ## See also
 
 - `mcp-graph hook <name>` — internal dispatcher invoked by Claude Code; humans should not call this directly. See [Hook event reference](./hooks-event-reference.md) (E3) for what each handler does.
-- `mcp-graph set-phase` — companion CLI for the `set_phase` MCP tool, deprecated in v11. See [`mcp-graph set-phase` guide](./set-phase.md) (E2).
-- ADR-0053 — v11 CLI surface (defines `hooks <action>` as one of the meta sub-trees).
+- `mcp-graph set-phase` — companion CLI for the `set_phase` MCP tool, deprecated . See [`mcp-graph set-phase` guide](./set-phase.md) (E2).
+- ADR-0053 — CLI surface design (defines `hooks <action>` as one of the meta sub-trees).
 - ADR-0054 — capability gate. *Note: hooks themselves are not gated; the `assembleSiblingContext` call inside graph tools is. Hook installation is unaffected by tier.*
 
 ## Troubleshooting

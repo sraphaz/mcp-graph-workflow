@@ -4,6 +4,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
+import * as path from "node:path";
 import {
   buildRuntimeSpec,
   prepareRuntimeFiles,
@@ -60,37 +61,43 @@ describe("buildRuntimeSpec", () => {
 
 describe("prepareRuntimeFiles", () => {
   it("writes the JSON payload under tmpdir and threads --config <path>", async () => {
+    const tmpRoot = path.join(path.sep, "tmp");
+    const mockRuntimeDir = path.join(tmpRoot, "mock-runtime-xyz");
+    const expectedPrefix = path.join(tmpRoot, "browser-pilot-");
+    const expectedConfigPath = path.join(mockRuntimeDir, "config.json");
+
     const writeFile = vi.fn().mockResolvedValue(undefined);
-    const mkdtemp = vi.fn().mockResolvedValue("/tmp/mock-runtime-xyz");
+    const mkdtemp = vi.fn().mockResolvedValue(mockRuntimeDir);
     const spec = buildRuntimeSpec(baseConfig);
 
     const result = await prepareRuntimeFiles(spec, {
       writeFile,
       mkdtemp,
-      tmpRoot: "/tmp",
+      tmpRoot,
     });
 
-    expect(mkdtemp).toHaveBeenCalledWith("/tmp/browser-pilot-");
+    expect(mkdtemp).toHaveBeenCalledWith(expectedPrefix);
     expect(writeFile).toHaveBeenCalledWith(
-      "/tmp/mock-runtime-xyz/config.json",
+      expectedConfigPath,
       spec.configFileContent,
       "utf8",
     );
-    expect(result.configPath).toBe("/tmp/mock-runtime-xyz/config.json");
+    expect(result.configPath).toBe(expectedConfigPath);
     expect(result.args).toContain("--config");
-    expect(result.args).toContain("/tmp/mock-runtime-xyz/config.json");
-    expect(result.tmpDir).toBe("/tmp/mock-runtime-xyz");
+    expect(result.args).toContain(expectedConfigPath);
+    expect(result.tmpDir).toBe(mockRuntimeDir);
   });
 
   it("preserves the spec base args before injecting --config", async () => {
+    const tmpRoot = path.join(path.sep, "tmp");
     const writeFile = vi.fn().mockResolvedValue(undefined);
-    const mkdtemp = vi.fn().mockResolvedValue("/tmp/aaa");
+    const mkdtemp = vi.fn().mockResolvedValue(path.join(tmpRoot, "aaa"));
     const spec = buildRuntimeSpec(baseConfig);
 
     const result = await prepareRuntimeFiles(spec, {
       writeFile,
       mkdtemp,
-      tmpRoot: "/tmp",
+      tmpRoot,
     });
 
     expect(result.args.slice(0, 3)).toEqual([

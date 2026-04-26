@@ -179,12 +179,18 @@ describe("shadow-branch (worktree-based)", () => {
   });
 
   describe("pruneOrphanWorktrees", () => {
-    it("invokes git worktree prune --verbose", () => {
-      vi.mocked(execSync).mockReturnValue(Buffer.from("Removing worktrees/wt-orphan: gitdir gone"));
+    it("invokes git worktree prune --verbose at the end", () => {
+      // No ai-shadow branches → only the final prune call runs.
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        if (String(cmd).includes("for-each-ref")) return Buffer.from("");
+        return Buffer.from("Removing worktrees/wt-orphan: gitdir gone");
+      });
       const r = pruneOrphanWorktrees();
       expect(r.pruned).toBe(true);
-      expect(r.output).toContain("Removing worktrees");
-      expect(calls()[0]).toContain("git worktree prune --verbose");
+      expect(r.reapedBranches).toBe(0);
+      expect(r.reapedWorktrees).toBe(0);
+      const allCmds = calls().join("\n");
+      expect(allCmds).toContain("git worktree prune --verbose");
     });
 
     it("never throws even when git fails", () => {
@@ -192,6 +198,76 @@ describe("shadow-branch (worktree-based)", () => {
       const r = pruneOrphanWorktrees();
       expect(r.pruned).toBe(false);
       expect(r.error).toContain("not a git repo");
+    });
+
+    it("reaps branches whose timestamp suffix is older than ttlMs", () => {
+      const now = Date.now();
+      const oldTs = now - 2 * 60 * 60 * 1000; // 2h ago
+      const freshTs = now - 5 * 60 * 1000;    // 5m ago
+      const wtPath = "/tmp/mcpg-wt-stale-" + oldTs;
+
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("for-each-ref")) {
+          return Buffer.from(`ai-shadow/stale-${oldTs}\nai-shadow/fresh-${freshTs}\n`);
+        }
+        if (c.includes("worktree list --porcelain")) {
+          return Buffer.from(
+            `worktree ${wtPath}\nHEAD abc\nbranch refs/heads/ai-shadow/stale-${oldTs}\n\n`,
+          );
+        }
+        return Buffer.from("");
+      });
+
+      const r = pruneOrphanWorktrees({ ttlMs: 60 * 60 * 1000 }); // 1h
+      expect(r.pruned).toBe(true);
+      expect(r.reapedBranches).toBe(1);
+      expect(r.reapedWorktrees).toBe(1);
+
+      const allCmds = calls().join("\n");
+      expect(allCmds).toContain(`git worktree remove --force ${wtPath}`);
+      expect(allCmds).toContain(`git branch -D ai-shadow/stale-${oldTs}`);
+      // Fresh branch must NOT be reaped.
+      expect(allCmds).not.toContain(`git branch -D ai-shadow/fresh-${freshTs}`);
+    });
+
+    it("reaps branch even when no worktree is registered (orphan branch)", () => {
+      const oldTs = Date.now() - 2 * 60 * 60 * 1000;
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("for-each-ref")) return Buffer.from(`ai-shadow/lone-${oldTs}\n`);
+        if (c.includes("worktree list --porcelain")) return Buffer.from("");
+        return Buffer.from("");
+      });
+      const r = pruneOrphanWorktrees({ ttlMs: 60 * 60 * 1000 });
+      expect(r.reapedBranches).toBe(1);
+      expect(r.reapedWorktrees).toBe(0);
+      expect(calls().join("\n")).toContain(`git branch -D ai-shadow/lone-${oldTs}`);
+    });
+
+    it("ignores branches with malformed timestamp suffix", () => {
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("for-each-ref")) return Buffer.from("ai-shadow/no-ts\nai-shadow/abc-not-a-number\n");
+        if (c.includes("worktree list --porcelain")) return Buffer.from("");
+        return Buffer.from("");
+      });
+      const r = pruneOrphanWorktrees({ ttlMs: 0 });
+      expect(r.reapedBranches).toBe(0);
+    });
+
+    it("tolerates per-branch reap failures and continues", () => {
+      const oldTs = Date.now() - 2 * 60 * 60 * 1000;
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("for-each-ref")) return Buffer.from(`ai-shadow/a-${oldTs}\nai-shadow/b-${oldTs}\n`);
+        if (c.includes("worktree list --porcelain")) return Buffer.from("");
+        if (c.includes(`branch -D ai-shadow/a-${oldTs}`)) throw new Error("locked");
+        return Buffer.from("");
+      });
+      const r = pruneOrphanWorktrees({ ttlMs: 60 * 60 * 1000 });
+      expect(r.pruned).toBe(true);
+      expect(r.reapedBranches).toBe(1); // only b succeeded
     });
   });
 

@@ -25,13 +25,23 @@ export interface TestContext {
   store: SqliteStore;
 }
 
-export function createTestApp(): TestContext {
+export interface CreateTestAppOptions {
+  /** Override basePath for routes that depend on it (code-graph reindex, lsp, etc.). Defaults to process.cwd(). */
+  basePath?: string;
+}
+
+export function createTestApp(options: CreateTestAppOptions = {}): TestContext {
   const store = SqliteStore.open(":memory:");
   store.initProject("Test Project");
 
   const app = express();
   app.use(express.json());
-  app.use("/api/v1", createApiRouter(store));
+  app.use(
+    "/api/v1",
+    createApiRouter(
+      options.basePath !== undefined ? { store, basePath: options.basePath } : store,
+    ),
+  );
 
   return { app, store };
 }

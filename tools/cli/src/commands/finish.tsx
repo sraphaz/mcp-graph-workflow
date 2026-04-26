@@ -76,7 +76,7 @@ export async function runFinish(
       if (inProgress.length === 0) {
         return {
           exitCode: 1,
-          text: "no in_progress task found. Pass an id: `mg finish <node_xxx>`.",
+          text: "no in_progress task found. Pass an id: `mcp-graph finish <node_xxx>`.",
         };
       }
       if (inProgress.length > 1) {
@@ -84,7 +84,7 @@ export async function runFinish(
           exitCode: 2,
           text: [
             `${inProgress.length} tasks are in progress — pass an explicit id:`,
-            ...inProgress.map((n) => `  mg finish ${n.id}   # ${n.title ?? ""}`),
+            ...inProgress.map((n) => `  mcp-graph finish ${n.id}   # ${n.title ?? ""}`),
           ].join("\n"),
         };
       }
@@ -104,7 +104,7 @@ export async function runFinish(
     if (original.status !== "in_progress") {
       return {
         exitCode: 1,
-        text: `cannot finish a node with status=${original.status}. Run \`mg start ${id}\` first.`,
+        text: `cannot finish a node with status=${original.status}. Run \`mcp-graph start ${id}\` first.`,
       };
     }
 
@@ -180,7 +180,7 @@ function FinishCard({ finished, next }: FinishCardProps): JSX.Element {
           <Text dimColor>{`  ${next.reason}`}</Text>
           <Box marginTop={1}>
             <Text dimColor>{t("next.startHint")}</Text>
-            <Text color="green">{`mg start ${next.node.id}`}</Text>
+            <Text color="green">{`mcp-graph start ${next.node.id}`}</Text>
           </Box>
         </Box>
       ) : (

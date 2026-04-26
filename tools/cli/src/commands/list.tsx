@@ -78,7 +78,7 @@ export async function runList(
     const msg = err instanceof Error ? err.message : String(err);
     return {
       exitCode: 1,
-      text: `${msg}\n  → run \`mg init\` to bootstrap a project here.`,
+      text: `${msg}\n  → run \`mcp-graph init\` to bootstrap a project here.`,
     };
   } finally {
     try {
@@ -218,7 +218,7 @@ function ListCard({ nodes, total, flags }: ListCardProps): JSX.Element {
       <Box marginTop={1}>
         <Text dimColor>
           {t("list.startHint")}
-          <Text color="green">mg start &lt;id&gt;</Text>
+          <Text color="green">mcp-graph start &lt;id&gt;</Text>
           <Text dimColor>{t("list.filterLabel")}</Text>
           <Text color="green">--status</Text>
           <Text dimColor>{` / `}</Text>
@@ -291,7 +291,7 @@ function filterHint(flags: Record<string, string | boolean>): string {
   if (typeof flags.type === "string" && !KNOWN_TYPES.includes(flags.type as never)) {
     return `unknown type — try one of: ${KNOWN_TYPES.join(", ")}`;
   }
-  return "try `mg list --all` to include done/cancelled, or change --status / --type.";
+  return "try `mcp-graph list --all` to include done/cancelled, or change --status / --type.";
 }
 
 function truncate(s: string, max: number): string {

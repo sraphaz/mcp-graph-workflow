@@ -10,7 +10,7 @@ import type {
 } from "./registry.js";
 
 /**
- * `/login` · `mg login` — thin wrapper over `mcp-graph-bridge login`.
+ * `/login` · `mcp-graph login` — thin wrapper over `mcp-graph-bridge login`.
  *
  * The device-flow CLI is fully implemented in `tools/copilot-bridge-cli/`.
  * We delegate end-to-end so device-code prompts print directly to the user's

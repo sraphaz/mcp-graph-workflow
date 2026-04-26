@@ -21,12 +21,12 @@ import type {
 } from "./registry.js";
 
 /**
- * `mg lang` — view / toggle / set the user-facing language.
+ * `mcp-graph lang` — view / toggle / set the user-facing language.
  *
- *   mg lang                    print current language + how to change it
- *   mg lang toggle             flip between en and pt-br, persist
- *   mg lang en                 set to English, persist
- *   mg lang pt-br              set to Portuguese-BR, persist
+ *   mcp-graph lang                    print current language + how to change it
+ *   mcp-graph lang toggle             flip between en and pt-br, persist
+ *   mcp-graph lang en                 set to English, persist
+ *   mcp-graph lang pt-br              set to Portuguese-BR, persist
  *
  * `--lang <code>` flag on any other command is a one-shot override that
  * does NOT persist — useful for scripts.
@@ -89,12 +89,12 @@ function showCurrent(ctx: CommandHandlerArgs): CommandHandlerResult {
           <Text dimColor>switch:</Text>
           <Text>
             <Text dimColor>  </Text>
-            <Text color="green">mg lang toggle</Text>
+            <Text color="green">mcp-graph lang toggle</Text>
             <Text dimColor>{"     # flip between en and pt-br"}</Text>
           </Text>
           <Text>
             <Text dimColor>  </Text>
-            <Text color="green">mg lang &lt;code&gt;</Text>
+            <Text color="green">mcp-graph lang &lt;code&gt;</Text>
             <Text dimColor>{"     # set explicitly + persist"}</Text>
           </Text>
           <Text>

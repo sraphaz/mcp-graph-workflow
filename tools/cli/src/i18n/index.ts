@@ -11,7 +11,7 @@
  *   - Ink card labels, success cards, hint lines in next-steps lists
  *
  * Out of scope (always English):
- *   - log entries (tooling parity — `mg log --json` is consumed by scripts)
+ *   - log entries (tooling parity — `mcp-graph log --json` is consumed by scripts)
  *   - JSON output keys (script stability)
  *   - code identifiers, file paths, node IDs
  *
@@ -128,7 +128,7 @@ export function resetActiveLangForTests(): void {
  * Translate a key with optional `{var}` interpolation.
  *
  *   t("init.success")                      → "✔ mcp-graph initialized"
- *   t("next.startHint", { id: "abc" })     → "▸ start it: mg start abc"
+ *   t("next.startHint", { id: "abc" })     → "▸ start it: mcp-graph start abc"
  *
  * Falls back to English if a key is missing in the active language.
  * Falls back to the literal key if missing in both — never crashes.

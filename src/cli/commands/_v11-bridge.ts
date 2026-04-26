@@ -36,15 +36,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Resolve the v11 CLI bundle path.
+ * Resolve the bundled CLI path.
  *
- * Walks up from this module's directory looking for either:
- * - `tools/cli/dist/cli.mjs` (monorepo dev — works for tsx source and tsup bundle)
- * - `node_modules/@mcp-graph-workflow/cli/dist/cli.mjs` (peer dep — npm install layout)
+ * Tries (in order):
+ * 1. `MG_V11_BUNDLE` env override (escape hatch for unusual setups)
+ * 2. `<rootDist>/v11-cli.mjs` — post-build layout (also what ships on npm).
+ *    Walks up from `__dirname` to find a `dist/` containing the bundle.
+ * 3. `tools/cli/dist/cli.mjs` — monorepo dev pre-copy fallback.
  *
- * Stops at filesystem root or after 6 levels (whichever comes first).
- *
- * Override with `MG_V11_BUNDLE=/abs/path/to/cli.mjs` for unusual setups.
+ * The published `@mcp-graph-workflow/mcp-graph` tarball includes
+ * `dist/v11-cli.mjs` directly (copied from the private `tools/cli`
+ * workspace during build). End users never need a separate npm package.
  */
 export function resolveV11Bundle(): string | null {
   const envOverride = process.env.MG_V11_BUNDLE;
@@ -52,14 +54,15 @@ export function resolveV11Bundle(): string | null {
 
   let dir = __dirname;
   for (let i = 0; i < 6; i++) {
-    const monorepoCandidate = join(dir, "tools/cli/dist/cli.mjs");
-    if (existsSync(monorepoCandidate)) return monorepoCandidate;
+    // Post-build / published layout: dist/v11-cli.mjs alongside dist/cli/index.js
+    const distCandidate = join(dir, "v11-cli.mjs");
+    if (existsSync(distCandidate)) return distCandidate;
+    const distNestedCandidate = join(dir, "dist", "v11-cli.mjs");
+    if (existsSync(distNestedCandidate)) return distNestedCandidate;
 
-    const nodeModulesCandidate = join(
-      dir,
-      "node_modules/@mcp-graph-workflow/cli/dist/cli.mjs",
-    );
-    if (existsSync(nodeModulesCandidate)) return nodeModulesCandidate;
+    // Monorepo dev fallback: tools/cli built but bundle not yet copied
+    const monorepoCandidate = join(dir, "tools", "cli", "dist", "cli.mjs");
+    if (existsSync(monorepoCandidate)) return monorepoCandidate;
 
     const parent = dirname(dir);
     if (parent === dir) break;

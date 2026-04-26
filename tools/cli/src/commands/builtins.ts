@@ -21,11 +21,11 @@ export function registerBuiltinCommands(): void {
     id: "help",
     name: "help",
     description: "Show all commands. Pass a query for fuzzy match.",
-    usage: "/help [query]   ·   mg help [query]",
+    usage: "/help [query]   ·   mcp-graph help [query]",
     slashAliases: ["help", "?"],
     shellAliases: ["help"],
     category: "meta",
-    examples: ["/help", "/help next", "mg help harness"],
+    examples: ["/help", "/help next", "mcp-graph help harness"],
     handler: async (ctx) => {
       const { renderHelp } = await import("./help.js");
       return renderHelp(ctx);
@@ -47,7 +47,7 @@ export function registerBuiltinCommands(): void {
     id: "version",
     name: "version",
     description: "Print CLI version + project status.",
-    usage: "/version   ·   mg --version",
+    usage: "/version   ·   mcp-graph --version",
     slashAliases: ["version", "v"],
     shellAliases: ["version", "--version", "-v"],
     category: "meta",
@@ -61,12 +61,12 @@ export function registerBuiltinCommands(): void {
     id: "init",
     name: "init",
     description: "Initialize mcp-graph in this project (interactive wizard).",
-    usage: "/init [--non-interactive]   ·   mg init",
+    usage: "/init [--non-interactive]   ·   mcp-graph init",
     slashAliases: ["init"],
     shellAliases: ["init"],
     category: "lifecycle",
     emitSkill: true,
-    examples: ["/init", "mg init --non-interactive"],
+    examples: ["/init", "mcp-graph init --non-interactive"],
     handler: async (ctx) => {
       const { runInit } = await import("./init.js");
       return runInit(ctx);
@@ -78,12 +78,12 @@ export function registerBuiltinCommands(): void {
     name: "login",
     description:
       "Authenticate with GitHub Copilot via device flow (or import gh-copilot).",
-    usage: "/login [--fresh]   ·   mg login",
+    usage: "/login [--fresh]   ·   mcp-graph login",
     slashAliases: ["login"],
     shellAliases: ["login"],
     category: "auth",
     emitSkill: true,
-    examples: ["/login", "mg login --fresh"],
+    examples: ["/login", "mcp-graph login --fresh"],
     handler: async (ctx) => {
       const { runLogin } = await import("./login.js");
       return runLogin(ctx);
@@ -95,7 +95,7 @@ export function registerBuiltinCommands(): void {
     name: "demo",
     description:
       "Zero-config first-value tour: tmp project + sample PRD + dashboard.",
-    usage: "/demo   ·   mg demo",
+    usage: "/demo   ·   mcp-graph demo",
     slashAliases: ["demo"],
     shellAliases: ["demo"],
     category: "lifecycle",
@@ -111,15 +111,15 @@ export function registerBuiltinCommands(): void {
     name: "log",
     description:
       "Query structured logs (~/.mcp-graph/logs/*.jsonl). Filters: --task --hook --trace --since.",
-    usage: "/log [filters]   ·   mg log",
+    usage: "/log [filters]   ·   mcp-graph log",
     slashAliases: ["log"],
     shellAliases: ["log"],
     category: "ops",
     examples: [
       "/log",
-      "mg log --hook post-edit --since 1h",
-      "mg log --task node_799f48ee8dfb",
-      "mg log --json | jq",
+      "mcp-graph log --hook post-edit --since 1h",
+      "mcp-graph log --task node_799f48ee8dfb",
+      "mcp-graph log --json | jq",
     ],
     handler: async (ctx) => {
       const { runLog } = await import("./log.js");
@@ -139,9 +139,9 @@ export function registerBuiltinCommands(): void {
     category: "ops",
     examples: [
       "/hooks install",
-      "mg hooks install --profile aggressive",
-      "mg hooks status",
-      "mg hooks uninstall",
+      "mcp-graph hooks install --profile aggressive",
+      "mcp-graph hooks status",
+      "mcp-graph hooks uninstall",
     ],
     handler: async (ctx) => {
       const { runHooks } = await import("./hooks.js");
@@ -154,7 +154,7 @@ export function registerBuiltinCommands(): void {
     name: "hook",
     description:
       "(internal) Dispatcher invoked by Claude Code hook entries. Non-blocking, fail-silent.",
-    usage: "mg hook <name>",
+    usage: "mcp-graph hook <name>",
     slashAliases: [],
     shellAliases: ["hook"],
     category: "internal",
@@ -171,11 +171,11 @@ export function registerBuiltinCommands(): void {
     description:
       "Switch CLI language (English / Portuguese-BR). Toggle, set, or one-shot via --lang.",
     usage:
-      "/lang [toggle|en|pt-br]   ·   mg lang [toggle|<code>]   ·   --lang <code> on any cmd",
+      "/lang [toggle|en|pt-br]   ·   mcp-graph lang [toggle|<code>]   ·   --lang <code> on any cmd",
     slashAliases: ["lang"],
     shellAliases: ["lang"],
     category: "ops",
-    examples: ["/lang", "mg lang toggle", "mg lang pt-br", "mg next --lang en"],
+    examples: ["/lang", "mcp-graph lang toggle", "mcp-graph lang pt-br", "mcp-graph next --lang en"],
     handler: async (ctx) => {
       const { runLang } = await import("./lang.js");
       return runLang(ctx);
@@ -186,11 +186,11 @@ export function registerBuiltinCommands(): void {
     id: "config",
     name: "config",
     description: "Manage IDE/agent configs (sync .mcp.json, .vscode/, .cursor/, .claude/).",
-    usage: "/config <sync|check> [--force]   ·   mg config <action>",
+    usage: "/config <sync|check> [--force]   ·   mcp-graph config <action>",
     slashAliases: ["config"],
     shellAliases: ["config"],
     category: "ops",
-    examples: ["/config sync", "mg config check", "mg config sync --force"],
+    examples: ["/config sync", "mcp-graph config check", "mcp-graph config sync --force"],
     handler: async (ctx) => {
       const { runConfig } = await import("./config.js");
       return runConfig(ctx);
@@ -201,15 +201,15 @@ export function registerBuiltinCommands(): void {
     id: "add",
     name: "add",
     description: "Create a graph node (task, epic, decision, risk, …) — provenance tagged.",
-    usage: "/add <type> --title \"…\" [flags]   ·   mg add <type> ...",
+    usage: "/add <type> --title \"…\" [flags]   ·   mcp-graph add <type> ...",
     slashAliases: ["add"],
     shellAliases: ["add"],
     category: "lifecycle",
     emitSkill: true,
     examples: [
-      "mg add task --title \"fix auth bug\" --priority 2",
-      "mg add epic --title \"Q4 onboarding\" --xpSize XL",
-      "mg add risk --title \"vendor outage\" --tags infra,blocker",
+      "mcp-graph add task --title \"fix auth bug\" --priority 2",
+      "mcp-graph add epic --title \"Q4 onboarding\" --xpSize XL",
+      "mcp-graph add risk --title \"vendor outage\" --tags infra,blocker",
     ],
     handler: async (ctx) => {
       const { runAdd } = await import("./add.js");
@@ -223,7 +223,7 @@ export function registerBuiltinCommands(): void {
     description:
       "Browser harness: list/start/stop/call/cdp/add helpers via the parent's CDP module.",
     usage:
-      "/harness <list|start|stop|call|cdp|add|sessions> [args]   ·   mg harness …",
+      "/harness <list|start|stop|call|cdp|add|sessions> [args]   ·   mcp-graph harness …",
     slashAliases: ["harness"],
     shellAliases: ["harness"],
     category: "browser",
@@ -231,8 +231,8 @@ export function registerBuiltinCommands(): void {
     examples: [
       "/harness list",
       "/harness start --cdp ws://127.0.0.1:9222/devtools/browser/<id>",
-      "mg harness call screenshot --sid <id> --args '{\"selector\":\"body\"}'",
-      "mg harness sessions --json",
+      "mcp-graph harness call screenshot --sid <id> --args '{\"selector\":\"body\"}'",
+      "mcp-graph harness sessions --json",
     ],
     handler: async (ctx) => {
       const { runHarness } = await import("./harness.js");
@@ -245,12 +245,12 @@ export function registerBuiltinCommands(): void {
     name: "ui",
     description:
       "Launch the dashboard (Express :3000). Wraps the parent's serve command.",
-    usage: "/ui [--port N]   ·   mg ui",
+    usage: "/ui [--port N]   ·   mcp-graph ui",
     slashAliases: ["ui", "dashboard"],
     shellAliases: ["ui", "dashboard"],
     category: "ops",
     emitSkill: true,
-    examples: ["/ui", "mg ui --port 3377", "mg ui --json"],
+    examples: ["/ui", "mcp-graph ui --port 3377", "mcp-graph ui --json"],
     handler: async (ctx) => {
       const { runUi } = await import("./ui.js");
       return runUi(ctx);
@@ -261,16 +261,16 @@ export function registerBuiltinCommands(): void {
     id: "list",
     name: "list",
     description: "List nodes (default: actionable tasks). Filters by status/type/search.",
-    usage: "/list [--status …] [--type …] [--search …] [--all]   ·   mg list",
+    usage: "/list [--status …] [--type …] [--search …] [--all]   ·   mcp-graph list",
     slashAliases: ["list", "ls"],
     shellAliases: ["list", "ls"],
     category: "lifecycle",
     emitSkill: true,
     examples: [
       "/list",
-      "mg list --status in_progress",
-      "mg list --search auth",
-      "mg list --type epic --limit 50",
+      "mcp-graph list --status in_progress",
+      "mcp-graph list --search auth",
+      "mcp-graph list --type epic --limit 50",
     ],
     handler: async (ctx) => {
       const { runList } = await import("./list.js");
@@ -282,12 +282,12 @@ export function registerBuiltinCommands(): void {
     id: "start",
     name: "start",
     description: "Begin a task: status → in_progress, render TDD checklist + AC.",
-    usage: "/start <id>   ·   mg start <id>",
+    usage: "/start <id>   ·   mcp-graph start <id>",
     slashAliases: ["start"],
     shellAliases: ["start"],
     category: "lifecycle",
     emitSkill: true,
-    examples: ["/start node_799f48ee8dfb", "mg start node_799f48ee8dfb --json"],
+    examples: ["/start node_799f48ee8dfb", "mcp-graph start node_799f48ee8dfb --json"],
     handler: async (ctx) => {
       const { runStart } = await import("./start.js");
       return runStart(ctx);
@@ -298,12 +298,12 @@ export function registerBuiltinCommands(): void {
     id: "finish",
     name: "finish",
     description: "Complete the in-progress task: status → done, suggest next.",
-    usage: "/finish [<id>]   ·   mg finish [<id>]",
+    usage: "/finish [<id>]   ·   mcp-graph finish [<id>]",
     slashAliases: ["finish", "done"],
     shellAliases: ["finish", "done"],
     category: "lifecycle",
     emitSkill: true,
-    examples: ["/finish", "mg finish node_799f48ee8dfb"],
+    examples: ["/finish", "mcp-graph finish node_799f48ee8dfb"],
     handler: async (ctx) => {
       const { runFinish } = await import("./finish.js");
       return runFinish(ctx);
@@ -314,12 +314,12 @@ export function registerBuiltinCommands(): void {
     id: "next",
     name: "next",
     description: "Show the next unblocked task (animated card).",
-    usage: "/next [--id]   ·   mg next",
+    usage: "/next [--id]   ·   mcp-graph next",
     slashAliases: ["next", "n"],
     shellAliases: ["next"],
     category: "lifecycle",
     emitSkill: true,
-    examples: ["/next", "mg next --json", "mg next --id"],
+    examples: ["/next", "mcp-graph next --json", "mcp-graph next --id"],
     handler: async (ctx) => {
       const { runNext } = await import("./next.js");
       return runNext(ctx);
@@ -331,7 +331,7 @@ export function registerBuiltinCommands(): void {
     name: "status",
     description:
       "1-screen project health: tasks, sprint progress, harness, bridge auth.",
-    usage: "/status [--oneline]   ·   mg status",
+    usage: "/status [--oneline]   ·   mcp-graph status",
     slashAliases: ["status"],
     shellAliases: ["status"],
     category: "ops",
@@ -354,9 +354,9 @@ export function registerBuiltinCommands(): void {
     category: "lifecycle",
     emitSkill: true,
     examples: [
-      "mg set-phase IMPLEMENT --mode strict",
-      "mg set-phase auto",
-      "mg set-phase PLAN --code-intel advisory --prerequisites advisory",
+      "mcp-graph set-phase IMPLEMENT --mode strict",
+      "mcp-graph set-phase auto",
+      "mcp-graph set-phase PLAN --code-intel advisory --prerequisites advisory",
     ],
     handler: async (ctx) => {
       const { runSetPhase } = await import("./set-phase.js");

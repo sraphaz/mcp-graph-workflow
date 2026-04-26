@@ -15,13 +15,13 @@ import type {
 } from "./registry.js";
 
 /**
- * `mg add <type>` — create a graph node.
+ * `mcp-graph add <type>` — create a graph node.
  *
  * Two modes:
  *   - **scripted** (default if --title provided or --json):
- *       mg add task --title "fix bug" --priority 2 --xpSize S --description "..."
+ *       mcp-graph add task --title "fix bug" --priority 2 --xpSize S --description "..."
  *   - **interactive** (Clack prompts; only when stdin TTY available and no --title):
- *       mg add task   → prompts walk through fields
+ *       mcp-graph add task   → prompts walk through fields
  *
  * Sprint 7.6 provenance: every created node carries
  *   metadata.provenance = { source: "cli", actor, cmd, trace_id, ts }
@@ -100,8 +100,8 @@ export async function runAdd(
         `--title is required (interactive mode coming in 7.3.1).`,
         ``,
         `  examples:`,
-        `    mg add ${typeArg} --title "fix auth bug" --priority 2`,
-        `    mg add ${typeArg} --title "Q4 epic" --priority 1 --xpSize XL`,
+        `    mcp-graph add ${typeArg} --title "fix auth bug" --priority 2`,
+        `    mcp-graph add ${typeArg} --title "Q4 epic" --priority 1 --xpSize XL`,
       ].join("\n"),
     };
   }
@@ -188,7 +188,7 @@ function buildNode(b: BuildArgs): NewNode {
   const provenance: ProvenanceMeta = {
     source: "cli",
     actor: b.actor,
-    cmd: `mg add ${b.type}`,
+    cmd: `mcp-graph add ${b.type}`,
     trace_id: b.traceId,
     ts: now,
   };
@@ -258,7 +258,7 @@ function validate(node: NewNode): string | null {
 
 function helpText(): string {
   return [
-    "usage: mg add <type> --title \"…\" [flags]",
+    "usage: mcp-graph add <type> --title \"…\" [flags]",
     "",
     "  types:",
     `    ${NODE_TYPES.join(", ")}`,
@@ -303,7 +303,7 @@ function CreatedCard({ node }: { readonly node: NewNode }): JSX.Element {
       )}
       <Box marginTop={1}>
         <Text dimColor>{t("add.startHint")}</Text>
-        <Text color="green">{`mg start ${node.id}`}</Text>
+        <Text color="green">{`mcp-graph start ${node.id}`}</Text>
       </Box>
     </Box>
   );

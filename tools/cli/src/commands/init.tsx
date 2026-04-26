@@ -156,9 +156,9 @@ function labelFor(action: ScaffoldChange["action"]): string {
 
 function nextStepsList(): readonly string[] {
   return [
-    "mg login   — authenticate with GitHub Copilot (terminal-only flow)",
-    "mg next    — show the first task from PRD.md",
-    "mg ui      — open the dashboard at http://localhost:3000",
-    "mg demo    — guided 60-second tour with a sample project",
+    "mcp-graph login   — authenticate with GitHub Copilot (terminal-only flow)",
+    "mcp-graph next    — show the first task from PRD.md",
+    "mcp-graph ui      — open the dashboard at http://localhost:3000",
+    "mcp-graph demo    — guided 60-second tour with a sample project",
   ];
 }

@@ -1,5 +1,26 @@
 # Changelog
 
+## [12.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v11.0.0...mcp-graph-v12.0.0) (2026-04-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** `mg` bin removed. Use `mcp-graph` (single unified bin). MicroEmacs (`/usr/bin/mg`) on macOS no longer collides with our binary.
+* **packaging:** `@mcp-graph-workflow/cli` is no longer published to npm as a separate package. Its source is bundled into `@mcp-graph-workflow/mcp-graph` so a single `npm install -g @mcp-graph-workflow/mcp-graph` brings everything.
+
+### Features
+
+* **cli:** unified single bin `mcp-graph` exposes all 24 subcommands (8 v10 server CLI + 16 lifecycle/ops verbs) ([#251](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/251), [#254](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/254)).
+* **build:** cross-platform CI compat — `scripts/prepare-husky.mjs` and `scripts/build-lib.mjs` replace bash-only `|| true` patterns ([#256](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/256)).
+* **packaging:** `tools/cli` workspace marked `private: true`; bundle copied into root `dist/v11-cli.mjs` during build.
+
+### Documentation
+
+* All public docs (README, QUICKSTART, GUIDE, CHEATSHEET) rewritten as single-narrative v12 — no more "v10 legacy + v11 opt-in" split.
+* `docs/guides/v11-cli-surface-map.md` renamed to `docs/guides/cli-surface-map.md` with updated content.
+* `docs/migration/mg-to-mcp-graph.md` and `docs/guides/set-phase-migration.md` removed (audience never materialized).
+* PT-BR (Brazilian Portuguese) docs in `docs/getting-started/` ([#250](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/250)).
+
 ## [11.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.3.0...mcp-graph-v11.0.0) (2026-04-26)
 
 

@@ -12,11 +12,11 @@ import type {
 } from "./registry.js";
 
 /**
- * `/demo` · `mg demo` — zero-config first-value tour.
+ * `/demo` · `mcp-graph demo` — zero-config first-value tour.
  *
  * Creates an ephemeral sandbox under `~/.mcp-graph/demos/<stamp>/` with a
  * pre-imported sample PRD. The user can `cd` into the sandbox and run
- * `mg next`, `mg ui`, etc. to feel the workflow without polluting their
+ * `mcp-graph next`, `mcp-graph ui`, etc. to feel the workflow without polluting their
  * own repo. Optional cleanup with `--cleanup` flag (otherwise the dir stays
  * for revisits).
  */
@@ -79,8 +79,8 @@ export async function runDemo(
 function nextStepsList(sandbox: string): readonly string[] {
   return [
     `cd ${sandbox}`,
-    "mg next     — see the first task from the sample PRD",
-    "mg ui       — open the dashboard at http://localhost:3000",
-    "mg start <id>  → mg finish   — close the loop",
+    "mcp-graph next     — see the first task from the sample PRD",
+    "mcp-graph ui       — open the dashboard at http://localhost:3000",
+    "mcp-graph start <id>  → mcp-graph finish   — close the loop",
   ];
 }

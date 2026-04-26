@@ -1,6 +1,11 @@
 # `mcp-graph set-phase` — lifecycle phase + enforcement override
 
-In v10 the lifecycle phase (`ANALYZE` … `DEPLOY` … `LISTENING`) and its enforcement modes were set via the `set_phase` MCP tool — only callable from inside an agent session. In v11 the same operation is a first-class CLI command: `mcp-graph set-phase`. The MCP tool stays available for backwards compat through the v11 line and is removed in v12.
+The lifecycle phase (`ANALYZE` … `DEPLOY` … `LISTENING`) and its enforcement modes can be set two ways:
+
+- **Shell:** `mcp-graph set-phase <PHASE>` — fast (in-process), works in scripts/CI.
+- **MCP tool:** `mcp__mcp-graph__set_phase` — call from inside Claude Code/Cursor.
+
+Both share the same SQLite store; last write wins.
 
 ## Quick start
 
@@ -58,10 +63,10 @@ Use `mcp-graph log --tool set-phase` to query.
 
 ## Migration
 
-If you have agent prompts or hooks that call the MCP `set_phase` tool, switch to `mcp-graph set-phase` at your convenience — the MCP tool is **advisory through v11.x** and **removed in v12.0**. See [`MCP set_phase → mcp-graph set-phase` migration](./set-phase-migration.md) (E4) for the timeline + sed recipe.
+Both the MCP tool and the shell command keep working — pick whichever fits your flow.
 
 ## See also
 
 - `mcp-graph hooks install` — installs the SessionStart hook that can auto-fire `mcp-graph set-phase` based on graph drift detection.
-- ADR-0053 — v11 CLI surface (`set-phase` listed under §"de-emphasis" because it's specialist, but always available).
+- ADR-0053 — CLI surface design (`set-phase` listed under §"de-emphasis" because it's specialist, but always available).
 - ADR-0054 — capability gate. **Independent**: `set-phase` does not call `assembleSiblingContext` and is not gated.

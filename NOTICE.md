@@ -15,17 +15,13 @@ methodological work. The extended private timeline is documented in the
 author's Master's program records and is verifiable through the program
 coordinators at UNOPAR.
 
-**Licensing.** Starting with **v10.0.0**, the source code is released under
-the **GNU Affero General Public License v3.0 or later** (AGPL-3.0-or-later —
-see [`LICENSE`](LICENSE) and the plain-language guide in
-[`docs/LICENSING.md`](docs/LICENSING.md)). The AGPL grants broad permissions
-for use, modification, and redistribution under copyleft terms — in
-particular, **§13** requires that modifications exposed over a network be
-made available in source form to those network users.
-
-Versions **≤ v9.4.0** were released under the MIT License; the preserved
-MIT text (see [`LICENSE.MIT`](LICENSE.MIT)) remains in force for those
-versions, and the grants given to users of those versions are irrevocable.
+**Licensing.** The source code is released under the **GNU Affero General
+Public License v3.0 or later** (AGPL-3.0-or-later — see [`LICENSE`](LICENSE)
+and the plain-language guide in [`docs/LICENSING.md`](docs/LICENSING.md)).
+The AGPL grants broad permissions for use, modification, and redistribution
+under copyleft terms — in particular, **§13** requires that modifications
+exposed over a network be made available in source form to those network
+users.
 
 **Commercial licensing.** Organizations that cannot or do not wish to comply
 with the AGPL may obtain a commercial license that removes the copyleft
@@ -33,7 +29,7 @@ obligations. See [`COMMERCIAL.md`](COMMERCIAL.md) for who qualifies, what
 is granted, and how to request one.
 
 This notice documents the authorship chain and does **not** reduce or alter
-the rights granted by AGPL-3.0-or-later or by the historical MIT License.
+the rights granted by AGPL-3.0-or-later.
 
 ## Request for Academic Citation
 

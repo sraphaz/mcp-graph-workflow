@@ -68,11 +68,11 @@ async function runShellCommand(
   const cmd = findCommandByShell(head);
   if (!cmd) {
     const hits = fuzzyMatchCommands(head, 3)
-      .map((c) => `mg ${c.shellAliases[0] ?? c.id}`)
+      .map((c) => `mcp-graph ${c.shellAliases[0] ?? c.id}`)
       .join(", ");
     const lines = [t("error.unknownCommand", { cmd: head })];
     if (hits) lines.push(t("error.didYouMean", { hits }));
-    lines.push("  try: mg --help");
+    lines.push("  try: mcp-graph --help");
     process.stderr.write(`${lines.join("\n")}\n`);
     return 2;
   }
@@ -121,7 +121,7 @@ function runShellHelp(): number {
     // to the registry's static description so registry consumers still get
     // a useful string for commands without a dictionary entry.
     const display = desc === `cmd.${c.id}.description` ? c.description : desc;
-    arr.push(`  mg ${(c.shellAliases[0] ?? c.id).padEnd(16)} ${display}`);
+    arr.push(`  mcp-graph ${(c.shellAliases[0] ?? c.id).padEnd(16)} ${display}`);
     cats.set(c.category, arr);
   }
   for (const [cat, list] of cats.entries()) {

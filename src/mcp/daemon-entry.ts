@@ -38,6 +38,7 @@ import { resolveDaemonPaths, ensureStateDir } from "../core/daemon/daemon-paths.
 import { acquireLock, releaseLock } from "../core/daemon/daemon-lockfile.js";
 import { startDaemonRunner } from "./daemon/runner.js";
 import { registerDaemon, unregisterDaemon } from "./daemon/daemon-registry.js";
+import { pruneOrphanWorktrees } from "../core/autonomy/shadow-branch.js";
 
 const workspace = process.argv[2] ?? process.cwd();
 const paths = resolveDaemonPaths(workspace);
@@ -53,6 +54,19 @@ try {
 // Validate config early — a bad config should crash with a clear message
 // before we bind the socket and accept clients.
 loadConfig(workspace);
+
+// Reap any ai-shadow/* branches and worktrees left behind by a prior daemon
+// crash, kill -9, or test suite that skipped its teardown. TTL-gated so an
+// in-flight task on a fresh peer daemon survives.
+{
+  const reaped = pruneOrphanWorktrees({ cwd: workspace });
+  if (reaped.reapedBranches > 0 || reaped.reapedWorktrees > 0) {
+    logger.info("daemon:startup:gc", {
+      reapedBranches: reaped.reapedBranches,
+      reapedWorktrees: reaped.reapedWorktrees,
+    });
+  }
+}
 
 const store = SqliteStore.open(workspace);
 const eventBus = new GraphEventBus();
@@ -90,6 +104,7 @@ async function shutdown(signal: string): Promise<void> {
     unregisterDaemon();
     await handle.close();
     store.close();
+    try { pruneOrphanWorktrees({ cwd: workspace }); } catch { /* GC is best-effort */ }
   } catch (err) {
     logger.error("daemon:shutdown:error", {
       error: err instanceof Error ? err.message : String(err),
