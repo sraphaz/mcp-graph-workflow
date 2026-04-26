@@ -18,6 +18,9 @@ on:
       # check to fire so branch protection does not block them. All workflow
       # changes trigger a trivial run of the SPDX check — stable and fast.
       - '.github/workflows/**'
+      # Build-script-only PRs (e.g. tweaking scripts/*.mjs) also need the
+      # check to fire so branch protection does not deadlock auto-merge.
+      - 'scripts/**'
   pull_request:
     branches: [master]
     paths:
@@ -35,6 +38,9 @@ on:
       # check to fire so branch protection does not block them. All workflow
       # changes trigger a trivial run of the SPDX check — stable and fast.
       - '.github/workflows/**'
+      # Build-script-only PRs (e.g. tweaking scripts/*.mjs) also need the
+      # check to fire so branch protection does not deadlock auto-merge.
+      - 'scripts/**'
 
 permissions:
   contents: read

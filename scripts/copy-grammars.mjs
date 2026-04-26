@@ -63,3 +63,14 @@ console.log(`copy-grammars: bundled ${copied.length}/${GRAMMARS.length} grammars
 if (missing.length > 0) {
   console.warn(`copy-grammars: skipped — ${missing.join(", ")}`);
 }
+
+// Fail the build if zero grammars were bundled — shipping an empty
+// dist/wasm/ would silently strip tree-sitter language support from the
+// published package. Better to fail early than fail in production.
+if (copied.length === 0) {
+  console.error(
+    "copy-grammars: FATAL — no grammars copied. " +
+      "Run `npm install` to fetch tree-sitter-* devDependencies before building.",
+  );
+  process.exit(1);
+}
