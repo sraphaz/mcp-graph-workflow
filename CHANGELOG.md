@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.0.0...mcp-graph-v12.1.0) (2026-04-26)
+
+
+### Features
+
+* **release:** release-monitor skill + always-on scan check ([#264](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/264)) ([4be9020](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4be90201d233d455344c0f4ad7c218d3d491d4c7))
+
 ## [12.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v11.0.0...mcp-graph-v12.0.0) (2026-04-26)
 
 
