@@ -5,8 +5,6 @@ Tudo o que você precisa em uma página. Imprimível em A4.
 > **3 modos para a mesma ação** — escolha o que cabe no fluxo:
 > **Claude direto** = `mcp__mcp-graph__X` no chat • **Shell `mcp-graph`** = no terminal • **REPL slash** = `mcp-graph repl` aberto, depois `/X`
 
-> 📌 **Migrando de `mg`?** O comando curto está sendo descontinuado em v12.0 (conflito com `/usr/bin/mg` MicroEmacs no macOS). Use `mcp-graph` no lugar — mesmo handler, mesmo resultado. Detalhes em [docs/migration/mg-to-mcp-graph.md](../migration/mg-to-mcp-graph.md).
-
 ---
 
 ## Equivalência: Claude tool ↔ `mcp-graph` shell ↔ REPL slash
@@ -44,9 +42,8 @@ Tudo o que você precisa em uma página. Imprimível em A4.
 |---|---|
 | Verificar Node ≥ 18 | `node -v` |
 | Verificar Git | `git --version` |
-| **Instalar MCP server (v10)** | `npm install -g @mcp-graph-workflow/mcp-graph` |
-| **Instalar v11 CLI (opcional, recomendado)** | `npm install -g @mcp-graph-workflow/cli@beta` |
-| Verificar versões | `mcp-graph --version` e `mcp-graph --version` |
+| **Instalar mcp-graph** | `npm install -g @mcp-graph-workflow/mcp-graph` |
+| Verificar versão | `mcp-graph --version` |
 
 ## Setup do projeto (por projeto)
 
@@ -111,8 +108,7 @@ Profiles controlam quantas tools o agente vê:
 ## Atualizações
 
 ```bash
-npm update -g @mcp-graph-workflow/mcp-graph    # v10 server
-npm update -g @mcp-graph-workflow/cli@beta     # v11 CLI
+npm update -g @mcp-graph-workflow/mcp-graph
 mcp-graph update                                # sync configs do projeto
 ```
 

@@ -60,48 +60,20 @@ npm install -g @mcp-graph-workflow/mcp-graph@latest
 
 ---
 
-## v11 CLI (`mcp-graph`)
+## CLI
 
-### `mcp-graph: command not found` (ou `mg: command not found`)
+### `mcp-graph: command not found`
 
-**Causa:** você instalou o MCP server (`@mcp-graph-workflow/mcp-graph`) mas não o CLI v11 (`@mcp-graph-workflow/cli`), ou nenhum dos dois.
+**Causa:** o pacote não está instalado globalmente.
 
 ```bash
-# Instalar os dois pacotes (recomendado)
 npm install -g @mcp-graph-workflow/mcp-graph
-npm install -g @mcp-graph-workflow/cli@beta
 
 # Verificar
-mcp-graph --version           # 11.x.x-beta (CLI) ou 10.x.x (server)
+mcp-graph --version           # 12.x.x
 ```
 
-> 💡 O comando `mcp-graph` é exposto pelos dois pacotes. Quando os dois estão instalados, o último a ser instalado vence (npm sobrescreve o symlink). Em v12.0 isso é resolvido — um único pacote unificado.
-
-### Migrei de `mg` pra `mcp-graph` — algo mudou?
-
-Não. **Mesmo handler, mesmo comportamento, só o nome mudou.**
-
-`mg` está sendo descontinuado em v12.0 porque colide com `/usr/bin/mg` (MicroEmacs) no macOS. Veja o [guia de migração completo](../migration/mg-to-mcp-graph.md) com mapeamento 1-pra-1 dos comandos.
-
-Em v11.3.0-beta, `mg` ainda funciona mas printa banner. Silencie temporariamente com `MG_NO_DEPRECATION_WARNING=1` se precisar (não recomendado — o banner é seu lembrete).
-
-### Qual versão eu tenho?
-
-```bash
-mcp-graph --version
-# pode mostrar:
-#   10.x.x         → você está usando o MCP server (commands: serve, import, stats, doctor, etc.)
-#   11.x.x-beta    → você está usando o CLI v11 (commands: start, finish, next, hooks, etc.)
-```
-
-| Pacote | Bin | Adiciona |
-|---|---|---|
-| `@mcp-graph-workflow/mcp-graph` | `mcp-graph` | grafo persistente, ~54 tools MCP, dashboard, comandos v10 (serve, import, stats, doctor, etc.) |
-| `@mcp-graph-workflow/cli@beta` | `mcp-graph` (e `mg` legado) | REPL Ink, hooks zero-config, skill files, comandos v11 (start, finish, next, hooks, etc.) |
-
-Como os dois pacotes reivindicam o mesmo bin, `npm install -g` no segundo dá EEXIST. Use `--force` pra sobrescrever (o último vence). Em v12.0, o pacote unificado evita esse conflito.
-
-> O CLI v11 precisa do MCP server instalado pra funcionar — ele localiza o runtime via env override (`MG_PARENT_DIST`) → monorepo sibling → `node_modules` → erro amigável se não achar.
+A partir de v12, um único pacote (`@mcp-graph-workflow/mcp-graph`) traz todos os 24 subcomandos: setup (init, doctor, serve, import) + lifecycle (start, finish, next, hooks, ui, demo, login, set-phase, ...). Veja `mcp-graph --help`.
 
 ### Erro: `parent runtime not found`
 

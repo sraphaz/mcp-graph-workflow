@@ -20,11 +20,10 @@ Só isso. Sem Docker, sem cloud, sem cadastro.
 ## Instalação
 
 ```bash
-npm install -g @mcp-graph-workflow/mcp-graph    # servidor MCP (v10.x)
-npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (com o comando `mcp-graph`)
+npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-> Você precisa dos **dois pacotes**: o `mcp-graph` é o runtime (mantém o grafo), e o `cli@beta` é a porta `mcp-graph`. Sem o primeiro, `mcp-graph init` falha com `parent runtime not found`.
+Um único pacote — traz servidor MCP + CLI completo (24 subcomandos). Veja `mcp-graph --help`.
 
 (Ou `curl -fsSL https://mcp-graph.dev/install.sh | sh` — mesmo efeito, com check amigável de Node.)
 

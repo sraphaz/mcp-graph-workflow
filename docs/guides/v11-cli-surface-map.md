@@ -1,6 +1,6 @@
 # v11 CLI Surface Map — replaces legacy `mcp__mcp-graph__*` MCP calls
 
-**Status:** beta. `@mcp-graph-workflow/cli@11.1.3-beta.0` published 2026-04-25. Install: `npm i -g @mcp-graph-workflow/cli@beta`.
+**Status:** beta. `@mcp-graph-workflow/mcp-graph@>=12` (CLI surface unified). Install: `npm i -g @mcp-graph-workflow/mcp-graph`.
 
 > **Coverage:** v11 CLI exposes lifecycle verbs (`start`, `finish`, `next`, `list`, `status`, `add`, `set-phase`) plus ops (`init`, `hooks`, `ui`, `demo`, `login`, `lang`, `config`, `log`, `harness`, `help`). The other ~45 tools (`analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban`, `import_prd`, `plan_sprint`, etc.) remain **MCP-only** — invoke them from Claude Code, Cursor, or Copilot CLI via the standard `mcp__mcp-graph__<tool>` surface. The migration table below shows only commands that have a `mcp-graph` form today.
 

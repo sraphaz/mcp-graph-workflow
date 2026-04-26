@@ -90,27 +90,17 @@ Você (humano)
 
 **Pré-requisito único:** Node.js ≥ 18 (`node -v`). Sem Docker, sem cloud.
 
-### Caminho v11 (recomendado pra projetos novos)
-
-```bash
-npm install -g @mcp-graph-workflow/mcp-graph    # MCP server (v10.x — runtime do grafo)
-npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (REPL + hooks + skills)
-```
-
-### Caminho v10 (legado — ainda funciona, sem `mcp-graph`)
-
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
+Um pacote, 24 subcomandos: setup (init, doctor, serve, import) + lifecycle (start, finish, next, hooks, ui, demo, login, set-phase, ...). Veja `mcp-graph --help`.
+
 ### Verificar
 
 ```bash
-mcp-graph --version           # 11.x.x-beta — só aparece se instalou v11
-mcp-graph --version    # 10.x.x — sempre aparece (server é base de tudo)
+mcp-graph --version           # 12.x.x
 ```
-
-> **v11 é opt-in.** Se você só instalou o server v10, segue tudo funcionando como antes — basta usar `npx mcp-graph` em vez de `mcp-graph`. v11 adiciona conveniência (REPL, hooks zero-config, skill files), não troca a fundação.
 
 ---
 

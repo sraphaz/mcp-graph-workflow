@@ -92,8 +92,6 @@ mcp-graph repl                                # REPL interativo — digite /help
 
 **Pré-requisitos:** Node.js ≥ 18. Sem Docker, sem infra externa, sem chave de API de LLM.
 
-> 📦 **Veio de v10.x ou v11.x-beta?** Veja o [guia de migração](docs/migration/mg-to-mcp-graph.md). v12 unifica os dois pacotes (`@mcp-graph-workflow/mcp-graph` e `@mcp-graph-workflow/cli`) sob um único bin `mcp-graph`. O comando `mg` foi removido (conflitava com `/usr/bin/mg` MicroEmacs no macOS).
-
 ## Documentação
 
 Comece por aqui:

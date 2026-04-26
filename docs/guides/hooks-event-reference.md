@@ -1,12 +1,12 @@
-# Hook event reference — what fires when, and what each `mg hook <name>` handler does
+# Hook event reference — what fires when, and what each `mcp-graph hook <name>` handler does
 
-This page documents every hook entry the `balanced` and `aggressive` profiles install. For installation see [E1 `mg hooks` CLI](./mg-hooks.md).
+This page documents every hook entry the `balanced` and `aggressive` profiles install. For installation see [E1 `mcp-graph hooks` CLI](./hooks.md).
 
 ## Lifecycle map
 
-| Claude Code event | Matcher | Profiles | `mg hook <name>` | Handler does |
+| Claude Code event | Matcher | Profiles | `mcp-graph hook <name>` | Handler does |
 |---|---|---|---|---|
-| `SessionStart` | — | minimal, balanced, aggressive | `session-start` | Detects `.claude/settings.local.json` drift, emits 1-line summary + drift detail. Auto-suggests `mg hooks install` re-sync if drift detected. |
+| `SessionStart` | — | minimal, balanced, aggressive | `session-start` | Detects `.claude/settings.local.json` drift, emits 1-line summary + drift detail. Auto-suggests `mcp-graph hooks install` re-sync if drift detected. |
 | `PreToolUse` | `mcp__mcp-graph__.*` | balanced, aggressive | `pre-tool-use` | Evaluates unified gates (`checkGates` parity with MCP server). Behind `MCP_GRAPH_GATES_IN_HOOKS=1` flag; off by default. |
 | `PreToolUse` | `*` (any) | aggressive only | `pre-tool-use` | Same handler, broader scope — emits a tool-call audit row regardless of matcher. |
 | `PostToolUse` | `Edit\|Write\|MultiEdit` | balanced, aggressive | `post-edit` | Refreshes graph artifacts touched by the edit; advisory harness scan diff. |
@@ -21,7 +21,7 @@ Each handler is **non-blocking and fail-silent**: a failure in any handler emits
 
 ## Disabling specific events
 
-Edit the profile in `tools/cli/src/core/hooks/install.ts` and `mg hooks install` again. Or remove the specific entry by hand and accept the drift on next `SessionStart`.
+Edit the profile in `tools/cli/src/core/hooks/install.ts` and `mcp-graph hooks install` again. Or remove the specific entry by hand and accept the drift on next `SessionStart`.
 
 ## Hook stdin contract
 
@@ -41,7 +41,7 @@ Every handler invocation produces one line in `~/.mcp-graph/logs/hooks.jsonl`:
 }
 ```
 
-Use `mg log --hook post-edit` to query. `outcome` is `ok | warn | error`; tools/cli/src/commands/hook-dispatch.ts is the source of truth.
+Use `mcp-graph log --hook post-edit` to query. `outcome` is `ok | warn | error`; tools/cli/src/commands/hook-dispatch.ts is the source of truth.
 
 ## Sprint history
 
@@ -52,14 +52,14 @@ Hook lifecycle was assembled in stages:
 | 7.5 | Skeleton handlers + structured emission | `60f40c85` |
 | 7.6 | SessionStart drift detection + re-sync hint | `153fe1b9` |
 | 7.6 | SessionStart 1-line summary | `5f4039f6` |
-| 7.6 | `mg hooks status` last-fire / last-error per hook | `ff6ef964` |
+| 7.6 | `mcp-graph hooks status` last-fire / last-error per hook | `ff6ef964` |
 | 7.5 | PreToolUse handler + lazy gate deps | `37144187` |
 | 7.6 | `MCP_GRAPH_GATES_IN_HOOKS` parity flag | `a4472791` |
 
 ## See also
 
-- E1: [`mg hooks` CLI](./mg-hooks.md) — install/uninstall/status surface
-- E2: [`mg set-phase`](./mg-set-phase.md) — companion CLI, also exposed via SessionStart drift
-- E4: [Migration MCP `set_phase` → CLI `mg set-phase`](./set-phase-migration.md)
+- E1: [`mcp-graph hooks` CLI](./hooks.md) — install/uninstall/status surface
+- E2: [`mcp-graph set-phase`](./set-phase.md) — companion CLI, also exposed via SessionStart drift
+- E4: [Migration MCP `set_phase` → CLI `mcp-graph set-phase`](./set-phase-migration.md)
 - ADR-0053 — v11 CLI surface
 - ADR-0054 — capability gate (hooks themselves are unaffected; only `assembleSiblingContext` call sites are gated)
