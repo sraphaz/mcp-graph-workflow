@@ -57,6 +57,23 @@ if (isMcpClient) {
   const { doctorCommand } = await import("./commands/doctor.js");
   const { updateCommand } = await import("./commands/update.js");
   const { browserHarnessCommand } = await import("./commands/browser-harness.js");
+  // v11 lifecycle + ops wrappers (delegate to @mcp-graph-workflow/cli bundle)
+  const { nextCommand } = await import("./commands/next.js");
+  const { startCommand } = await import("./commands/start.js");
+  const { finishCommand } = await import("./commands/finish.js");
+  const { listCommand } = await import("./commands/list.js");
+  const { statusCommand } = await import("./commands/status.js");
+  const { addCommand } = await import("./commands/add.js");
+  const { hooksCommand } = await import("./commands/hooks.js");
+  const { uiCommand } = await import("./commands/ui.js");
+  const { demoCommand } = await import("./commands/demo.js");
+  const { loginCommand } = await import("./commands/login.js");
+  const { setPhaseCommand } = await import("./commands/set-phase.js");
+  const { harnessCommand } = await import("./commands/harness.js");
+  const { langCommand } = await import("./commands/lang.js");
+  const { configCommand } = await import("./commands/config.js");
+  const { logCommand } = await import("./commands/log.js");
+  const { replCommand } = await import("./commands/repl.js");
 
   const program = new Command();
 
@@ -75,6 +92,23 @@ if (isMcpClient) {
   program.addCommand(doctorCommand());
   program.addCommand(updateCommand());
   program.addCommand(browserHarnessCommand());
+  // v11 lifecycle + ops (delegated)
+  program.addCommand(nextCommand());
+  program.addCommand(startCommand());
+  program.addCommand(finishCommand());
+  program.addCommand(listCommand());
+  program.addCommand(statusCommand());
+  program.addCommand(addCommand());
+  program.addCommand(hooksCommand());
+  program.addCommand(uiCommand());
+  program.addCommand(demoCommand());
+  program.addCommand(loginCommand());
+  program.addCommand(setPhaseCommand());
+  program.addCommand(harnessCommand());
+  program.addCommand(langCommand());
+  program.addCommand(configCommand());
+  program.addCommand(logCommand());
+  program.addCommand(replCommand());
 
   program.parse();
 }
