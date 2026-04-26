@@ -65,17 +65,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Cache dashboard dependencies
-        id: dashboard-cache
-        uses: actions/cache@v5
-        with:
-          path: src/web/dashboard/node_modules
-          key: dashboard-ubuntu-latest-node22-${{ hashFiles('src/web/dashboard/package-lock.json') }}
-
-      - name: Install dashboard dependencies
-        if: steps.dashboard-cache.outputs.cache-hit != 'true'
-        run: cd src/web/dashboard && npm ci
-
       - name: Lint
         run: npm run lint
 
