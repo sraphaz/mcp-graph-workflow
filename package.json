@@ -1,6 +1,6 @@
 {
   "name": "@mcp-graph-workflow/mcp-graph",
-  "version": "12.1.1",
+  "version": "12.1.2",
   "workspaces": [
     "tools/cli",
     "src/web/dashboard"

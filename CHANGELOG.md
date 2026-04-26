@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.1.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.1...mcp-graph-v12.1.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* **build:** fail copy-grammars if zero wasm files bundled ([#268](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/268)) ([c9a8c4d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c9a8c4de5f32c44f84dfed25f035a10b9baea4d8))
+
 ## [12.1.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.0...mcp-graph-v12.1.1) (2026-04-26)
 
 
