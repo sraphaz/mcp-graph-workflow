@@ -60,6 +60,94 @@ npm install -g @mcp-graph-workflow/mcp-graph@latest
 
 ---
 
+## v11 CLI (`mg`)
+
+### `mg: command not found`
+
+**Causa:** você instalou o MCP server (`@mcp-graph-workflow/mcp-graph`) mas não o CLI v11 (`@mcp-graph-workflow/cli`). São dois pacotes separados.
+
+```bash
+# Instalar a v11 CLI
+npm install -g @mcp-graph-workflow/cli@beta
+
+# Verificar
+mg --version           # 11.x.x-beta
+```
+
+> 💡 v11 é **opt-in**. Se você prefere o fluxo v10 (Copilot CLI two-terminal), o MCP server sozinho é suficiente.
+
+### Qual versão eu tenho?
+
+Dois pacotes, dois comandos:
+
+```bash
+mg --version           # CLI v11 (entry point humano: REPL, hooks, skill files)
+mcp-graph --version    # MCP server v10.x (runtime que mantém o grafo)
+```
+
+| Comando | Pacote | Adiciona |
+|---|---|---|
+| `mcp-graph` | `@mcp-graph-workflow/mcp-graph` | grafo persistente, ~54 tools MCP, dashboard |
+| `mg` | `@mcp-graph-workflow/cli@beta` | REPL Ink, hooks zero-config, skill files automáticos |
+
+`mg` precisa do MCP server instalado para funcionar — ele localiza o runtime via env override (`MCP_GRAPH_PATH`) → monorepo sibling → `node_modules` → erro amigável se não achar.
+
+### Erro: `parent runtime not found`
+
+**Sintoma:** `mg --version` funciona mas `mg init` falha com `parent runtime not found`.
+
+**Causa:** o pacote `@mcp-graph-workflow/mcp-graph` (parent runtime) não está instalado.
+
+```bash
+npm install -g @mcp-graph-workflow/mcp-graph
+```
+
+Em monorepo de dev: build do parent primeiro (`npm --prefix path/to/parent run build`) e setar `MG_PARENT_DIST=/abs/path/to/dist`.
+
+### Aviso "numerical-convergence" no `mg start` (capability gate)
+
+**Sintoma:** ao começar uma task, aparece um warning como `capability gate: numerical-convergence`.
+
+**Causa:** o gate detectou que a task envolve otimização numérica / calibração de ML — área onde modelos rápidos (ex: Haiku) historicamente erram. É **advisory**, não bloqueia.
+
+**O que fazer:**
+- **Sonnet/Opus**: ignore o aviso, esses modelos lidam bem com o tipo de task.
+- **Haiku**: considere trocar pra Sonnet 4.6+ pra essa task específica, ou aceitar o risco e seguir.
+- **Desligar o aviso por completo**: `mg set-phase IMPLEMENT --code-intel advisory` (vira advisory) ou `--code-intel off`.
+
+> O gate é opcionado em duas dimensões: tipo da task (estrutura/CRUD/REST → "World 1", seguro pra qualquer modelo) e tipo de teste (otimização numérica → "World 2", exige modelo capaz). É o teste que decide o fit do modelo, não o modelo em si.
+
+### Hooks instalados mas não disparam
+
+**Sintoma:** rodou `mg hooks install --profile balanced` mas Claude Code não exibe o banner em SessionStart, ou os hooks não rodam em edits.
+
+**Diagnóstico em ordem:**
+
+```bash
+# 1. Confirmar status
+mg hooks status
+
+# 2. Conferir que o arquivo foi escrito
+cat .claude/settings.local.json | grep -A2 SessionStart
+
+# 3. Conferir env var de off
+echo $MCP_GRAPH_HOOKS_OFF      # se "1", desligado intencionalmente — limpe: unset MCP_GRAPH_HOOKS_OFF
+
+# 4. Logs estruturados
+mg log --tail
+# ou diretamente
+tail -f ~/.mcp-graph/logs/hooks.jsonl
+```
+
+**Causas comuns:**
+- Claude Code precisa **reabrir** a sessão depois de instalar hooks novos
+- `.claude/settings.local.json` está em `.gitignore` mas escrito em outro pasta — confirme que rodou `mg hooks install` no root do projeto, não em subpasta
+- `MCP_GRAPH_HOOKS_OFF=1` está exportado no shell profile (`.zshrc`/`.bashrc`)
+
+**Fix universal:** `mg hooks uninstall && mg hooks install --profile balanced` e reabra Claude Code.
+
+---
+
 ## Servidor
 
 ### Porta 3000 já está em uso

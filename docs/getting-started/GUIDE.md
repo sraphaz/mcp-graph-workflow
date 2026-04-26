@@ -1,481 +1,301 @@
-# mcp-graph — Guia Completo de Instalação, Configuração e Uso
+# mcp-graph — Guia Prático
 
-**Versão:** v10.2.0
-**Para:** desenvolvedores que querem usar mcp-graph para guiar workflows de IA (GitHub Copilot, Claude, Cursor) com estrutura e disciplina.
+**Em uma frase:** mcp-graph dá memória persistente e disciplina ao seu agente de IA — em vez dele improvisar a cada sessão, ele navega um grafo executável que vive no seu projeto.
+
+Este guia te leva de "nunca ouvi falar" até "primeira task entregue" em **5 minutos** de leitura + **5 minutos** de mão na massa.
 
 ---
 
 ## Sumário
 
-1. [Visão Geral — Como Funciona](#1-visão-geral)
-2. [Pré-Requisitos](#2-pré-requisitos)
-3. [Instalação](#3-instalação)
-4. [Primeiro uso (60 segundos)](#4-primeiro-uso-60-segundos)
-5. [Inicialização do Projeto](#5-inicialização-do-projeto)
-6. [Iniciando o Servidor](#6-iniciando-o-servidor)
-7. [Ciclo de Vida em 4 Fases](#7-ciclo-de-vida-em-4-fases)
-8. [Exemplo Real — Sessão de Repasse](#8-exemplo-real)
-9. [Dicas e Boas Práticas](#9-dicas-e-boas-práticas)
-10. [Troubleshooting & Cheat Sheet](#10-troubleshooting--cheat-sheet)
+1. [O que é mcp-graph?](#1-o-que-é-mcp-graph)
+2. [Quando usar (e quando não)](#2-quando-usar-e-quando-não)
+3. [Instalação em 60 segundos](#3-instalação-em-60-segundos)
+4. [Seu primeiro projeto em 5 minutos](#4-seu-primeiro-projeto-em-5-minutos)
+5. [Conceitos-chave](#5-conceitos-chave)
+6. [Os 3 jeitos de chamar a mesma ação](#6-os-3-jeitos-de-chamar-a-mesma-ação)
+7. [Hooks — automação invisível](#7-hooks--automação-invisível)
+8. [Próximos passos](#8-próximos-passos)
 
 ---
 
-## 1. Visão Geral
+## 1. O que é mcp-graph?
 
-`mcp-graph` é uma ferramenta de **workflow estruturado para desenvolvimento assistido por IA**. Ela transforma seu PRD (documento de requisitos) em um grafo executável de tasks — e o agente de IA navega esse grafo em vez de improvisar a cada sessão.
+Você já cansou disso?
 
-Resultado: menos alucinação, mais continuidade entre sessões, gates de qualidade entre fases, TDD obrigatório.
+- O agente **esquece** o que você combinou na sessão de ontem
+- O PRD vira parede de texto que ninguém revisita
+- Não dá pra **rastrear** o que o agente fez nem onde ele travou
 
-### Arquitetura simplificada
+mcp-graph resolve esses três problemas juntos: pega seu PRD (Markdown, PDF, HTML), transforma em um **grafo persistente de tasks** com dependências, e o agente passa a navegar esse grafo em vez de improvisar a partir do zero.
 
-Para usar `mcp-graph`, você precisa entender que existem **dois componentes principais** rodando em terminais separados:
+### Como ele se encaixa com sua CLI de IA
 
 ```
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│  Terminal 1 — Servidor          │    │  Terminal 2 — Copilot CLI       │
-│                                 │    │                                 │
-│  $ npx mcp-graph serve          │    │  $ copilot                      │
-│    --port 3000                  │    │  > /graph-analyze [requisito]   │
-│                                 │◀──▶│  > /graph-design [...]          │
-│  (mantenha aberto durante       │MCP │  > /graph-plan [...]            │
-│   toda a sessão)                │    │  > /graph-implement             │
-└─────────────────────────────────┘    └─────────────────────────────────┘
-                                                       │
-                                       ┌───────────────▼───────────────┐
-                                       │  Browser                      │
-                                       │  http://localhost:3000        │
-                                       │  Dashboard visual do graph    │
-                                       └───────────────────────────────┘
+Você (humano)
+ └─ CLI de IA (Claude Code · Copilot CLI · Cursor)        ← agente roda aqui, sem memória
+    ├─ mcp-graph (MCP server, v10.x)                       ← memória estruturada do projeto
+    └─ mg CLI (v11 beta)                                   ← porta de entrada humana + auto-hooks
+                                                           ↓
+                                  workflow-graph/graph.db (a "memória" persistente)
 ```
 
-> 💡 **Dica:** sempre **2 janelas de terminal**: T1 com servidor (long-running), T2 com Copilot CLI onde você executa os comandos de fase.
+**Ganho por camada, em uma frase cada:**
 
-### As 4 fases do ciclo de vida
+- **CLI de IA sozinha:** ótimo agente, **memória zero**. Cada chat começa do nada.
+- **+ mcp-graph (server):** dá **memória estruturada**. PRD vira grafo, lifecycle de 9 fases força disciplina, contexto comprimido entrega só o relevante.
+- **+ mg CLI (v11):** dá **acesso humano direto + automação invisível**. Você roda `mg next` sem gastar tokens, hooks configuram-se sozinhos, skill files reduzem alucinação.
 
-| Fase | O que acontece | Comando no Copilot |
-|---|---|---|
-| **ANALYZE** | Análise de requisitos, criação do PRD, Definition of Ready (7 checks) | `/graph-analyze [requisito]` |
-| **DESIGN** | Decisões de arquitetura, ADRs, revisão humana (strict mode) | `/graph-design [instruções]` |
-| **PLAN** | Decomposição em tasks, validação de gates (7/7), estimativas | `/graph-plan [instruções]` |
-| **IMPLEMENT** | TDD Red→Green→Refactor, Definition of Done (9 checks) | `/graph-implement` |
+### Sem mcp-graph vs. com mcp-graph
+
+| Sem (Claude/Copilot direto) | Com mcp-graph |
+|---|---|
+| "Faz um SaaS pra mim" → caos | PRD → tasks atômicas com critérios de aceitação |
+| Agente esquece entre sessões | Estado persistente em SQLite, contexto comprimido |
+| TDD opcional, depende do humor do agente | Hook bloqueia commit sem teste primeiro |
+| Dois agentes em paralelo brigam | `unified-gate` sincroniza |
+| "Já está pronto?" → adivinhação | `mg status` responde em 200ms |
+
+> **Tudo local.** SQLite no seu projeto, zero LLM ao runtime do mcp-graph, sem chave de API, sem cloud, sem Docker.
 
 ---
 
-## 2. Pré-Requisitos
+## 2. Quando usar (e quando não)
 
-### 2.1 — Node.js ≥ 20
+**Use mcp-graph se:**
 
-Necessário para executar o servidor e a CLI. Baixe a versão LTS:
+- Projeto vai durar mais de uma sessão
+- Você usa múltiplos agentes (Claude Code + Copilot, ou dois Claude em paralelo)
+- Quer rastreabilidade — "o que foi feito, por quê, quando, por quem"
+- Time precisa alinhar — PRD vira fonte da verdade compartilhada
+- Você quer TDD enforced de verdade, não só "tentar lembrar"
+- Mais de 5 tasks na cabeça já é muita coisa
 
-- 🔗 <https://nodejs.org/pt>
-- Instale a LTS (≥ 20.x)
-- Marque "Add to PATH" durante instalação (Windows)
+**Não use se:**
 
-Verificar:
+- Script de 50 linhas que você vai jogar fora amanhã
+- Protótipo de 1 dia, descartável
+- Você prefere "vibe coding" e não quer disciplina (legítimo, só não combina)
 
-```bash
-node -v   # deve mostrar v20.x.x ou superior
-npm -v
-```
-
-### 2.2 — Git
-
-Para versionamento do projeto:
-
-- 🔗 <https://git-scm.com/downloads>
-- Instale com opções padrão
-
-Verificar:
-
-```bash
-git --version
-```
-
-### 2.3 — GitHub Copilot CLI (opcional mas recomendado)
-
-A integração principal do mcp-graph é via Copilot CLI (`/graph-analyze`, `/graph-design` etc.). Você precisa:
-
-- Acesso/assinatura ao GitHub Copilot
-- 🔗 Instalar conforme docs oficiais: <https://docs.github.com/en/copilot/github-copilot-in-the-cli>
-- Autenticar com `gh auth login`
-
-Verificar:
-
-```bash
-copilot --version
-```
-
-> 💡 **Sem Copilot CLI?** Você ainda pode usar mcp-graph diretamente (REPL standalone, comandos non-interactive, dashboard). Mas o fluxo `/graph-*` polido pertence ao Copilot CLI.
-
-### 2.4 — PowerShell 7+ (Windows)
-
-Recomendado no Windows para melhor compatibilidade:
-
-```powershell
-$PSVersionTable.PSVersion
-```
+> Boa hora pra começar: feature de 2-5 dias com pelo menos 4 tasks. Pequeno o suficiente pra você ver o ciclo inteiro, grande o suficiente pra justificar a estrutura.
 
 ---
 
-## 3. Instalação
+## 3. Instalação em 60 segundos
 
-### Passo 1 — Limpar cache npm (opcional)
+**Pré-requisito único:** Node.js ≥ 18 (`node -v`). Sem Docker, sem cloud.
 
-Apenas se você teve problemas de instalação anteriormente:
+### Caminho v11 (recomendado pra projetos novos)
 
 ```bash
-npm cache clean --force
+npm install -g @mcp-graph-workflow/mcp-graph    # MCP server (v10.x — runtime do grafo)
+npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (REPL mg + hooks + skills)
 ```
 
-### Passo 2 — Instalar globalmente
+### Caminho v10 (legado — ainda funciona, sem `mg`)
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-Aguarde a conclusão. O npm baixa o pacote e dependências.
-
-> ⚠️ **Erro de permissão (Linux/Mac)?** Veja [TROUBLESHOOTING.md → Erro de permissão](./TROUBLESHOOTING.md). Recomendado mudar prefixo do npm em vez de usar `sudo`.
-
-### Passo 3 — Verificar a instalação
+### Verificar
 
 ```bash
-mcp-graph -V
-# Deve retornar: 10.2.0 (ou versão mais recente)
+mg --version           # 11.x.x-beta — só aparece se instalou v11
+mcp-graph --version    # 10.x.x — sempre aparece (server é base de tudo)
 ```
 
-> ❓ **Comando não reconhecido?** O diretório global do npm não está no `PATH`. Veja [TROUBLESHOOTING.md → command not found](./TROUBLESHOOTING.md).
+> **v11 é opt-in.** Se você só instalou o server v10, segue tudo funcionando como antes — basta usar `npx mcp-graph` em vez de `mg`. v11 adiciona conveniência (REPL, hooks zero-config, skill files), não troca a fundação.
 
 ---
 
-## 4. Primeiro uso (60 segundos)
+## 4. Seu primeiro projeto em 5 minutos
 
-A maneira **mais rápida** de entender o produto sem precisar entender configuração ainda:
+Vamos criar um projeto novo e fechar o ciclo `init → next → start → finish`. Use uma pasta vazia.
 
-```bash
-# Em uma pasta vazia
-npx -y @mcp-graph-workflow/mcp-graph hello
-```
-
-Isso vai:
-1. Criar um PRD de exemplo (`mcp-graph-sample.md`)
-2. Rodar `init` mínimo (DB local + `.mcp.json` + `.gitignore`)
-3. Importar o PRD para o graph
-4. Renderizar o graph em ASCII no terminal
-5. Abrir o dashboard em `http://localhost:3000`
-
-Se isso funcionou, você está pronto. Se quiser entender o fluxo real para um projeto seu, continue para a Seção 5.
-
----
-
-## 5. Inicialização do Projeto
-
-Navegue até seu projeto (existente ou novo) e inicialize:
+### 4.1 — Inicializar
 
 ```bash
-cd caminho/do/seu/projeto
-npx mcp-graph init
+mkdir meu-projeto && cd meu-projeto
+mg init
 ```
 
-### O que o wizard pergunta
+O wizard detecta o stack (TypeScript, Python, etc.) e cria:
 
-A partir da v10.2.0, o `init` é interativo. Ele detecta o stack e pergunta:
-
-```
-✓ Stack detectado: TypeScript + React + Vitest
-✓ Vou criar:
-   - workflow-graph/graph.db (banco local do graph)
-   - .mcp.json (config para Claude/Cursor)
-   - .gitignore (linhas para não commitar o DB)
-
-? Install Copilot CLI integration? (Y/n)
-   Inclui:
-   - .agents/skills/* (25 skills /graph-*)
-   - .github/copilot-instructions.md
-   - .vscode/mcp.json
-```
-
-**Recomendado:** aceite (`Y`). Sem Copilot integration, você não terá os comandos `/graph-analyze`, `/graph-design` etc.
-
-### Modos não-interativos
-
-```bash
-# CI: aceitar tudo (legacy completo, todos os 9 alvos)
-npx mcp-graph init --yes-all
-
-# Sem integração Copilot (só DB + config base)
-npx mcp-graph init --no-copilot
-```
-
-### O que é criado
-
-| Arquivo/Pasta | Por que |
+| Arquivo / Pasta | Por que |
 |---|---|
-| `workflow-graph/graph.db` | SQLite local, fonte da verdade do graph (gitignored) |
+| `workflow-graph/graph.db` | SQLite local — fonte da verdade do grafo (gitignored) |
 | `.mcp.json` | Config para Claude Code, Cursor, IntelliJ |
-| `.vscode/mcp.json` | Config para VSCode + GitHub Copilot |
-| `.gitignore` (linhas) | Para não commitar o DB local |
-| `.agents/skills/graph-*/` | 25 skills que ativam `/graph-analyze` etc. no Copilot |
-| `.github/copilot-instructions.md` | Instruções base para o Copilot CLI |
+| `.vscode/mcp.json` | Config para Copilot |
+| `.claude/skills/*.md` | Skills `mg` pra usar dentro de Claude Code via slash |
+| `.gitignore` (linhas) | Pra não commitar o DB |
 
----
+### 4.2 — Adicionar tasks (rápido) ou importar PRD (completo)
 
-## 6. Iniciando o Servidor
-
-O servidor mantém o graph em memória + SQLite e processa requisições MCP.
-
-### Passo 1 — Iniciar (Terminal 1)
+**Rápido** — duas tasks pra ver o fluxo:
 
 ```bash
-npx mcp-graph serve --port 3000
+mg add task --title "fix login flow" --priority 2
+mg add task --title "write tests"     --priority 3
 ```
 
-Você verá algo como:
-
-```
-mcp-graph serve
-  project:  /Users/voce/seu-projeto
-  port:     3000
-  db:       workflow-graph/graph.db (47 nodes, 23 edges)
-  dashboard: http://localhost:3000
-listening on http://localhost:3000
-```
-
-> ⚠️ **MANTENHA ESTA JANELA ABERTA** durante todo o uso. Fechar = perder o servidor.
-
-### Passo 2 — Abrir Copilot CLI (Terminal 2)
-
-Em uma **NOVA janela** de terminal:
+**Completo** — partir de um PRD:
 
 ```bash
-copilot
+mg                                # entra no REPL
+> /import_prd ./PRD.md            # transforma o PRD em grafo
+> /plan_sprint                    # decompõe em sprint baseado em DORA velocity
 ```
 
-A partir daqui, todos os comandos `/graph-*` rodam **dentro do Copilot CLI**, não no terminal direto.
+> Não tem PRD ainda? Rode `mg demo` numa pasta separada — cria um sandbox com PRD exemplo e te deixa explorar.
+
+### 4.3 — Fechar o ciclo
+
+```bash
+mg next                                # mostra a próxima task desbloqueada
+# ╭─ NEXT TASK  node_799f48ee8dfb ─╮
+# │ fix login flow                  │
+# │ priority 2 · type: task         │
+# ╰─────────────────────────────────╯
+
+mg start node_799f48ee8dfb             # status → in_progress, render checklist TDD
+# ... escreve teste falhando ...
+# ... implementa o mínimo pra passar ...
+# ... refatora ...
+
+mg finish                              # status → done, sugere próxima
+```
+
+### 4.4 — Visualizar
+
+```bash
+mg ui                                  # abre dashboard em http://localhost:3000
+```
+
+Você vê o grafo, kanban, métricas, knowledge base — tudo no browser. Ctrl+C pra parar.
 
 ---
 
-## 7. Ciclo de Vida em 4 Fases
+## 5. Conceitos-chave
 
-Toda feature passa pelas 4 fases. Cada fase tem um comando, gates de qualidade, e produz artefatos específicos.
+Só os 5 que você precisa pra sobreviver a primeira semana.
 
-### 7.1 — Fase ANALYZE
+### Grafo, Nó, Edge
 
-**Objetivo:** transformar uma ideia em PRD estruturado com cenários de aceitação.
+- **Grafo** — a estrutura inteira do seu projeto. Persistido em `workflow-graph/graph.db`.
+- **Nó** — uma unidade de trabalho. Tipos: `task`, `epic`, `decision`, `risk`, `note`.
+- **Edge** — relação entre nós. Tipos comuns: `blocks`, `depends_on`, `child_of`.
 
-**No Copilot CLI:**
+Termos completos em [GLOSSARY.md](./GLOSSARY.md).
 
-```
-/graph-analyze [descrição do requisito ou feature]
-```
+### As 9 fases do lifecycle
 
-**O que acontece:**
-- Sistema analisa o requisito fornecido
-- Cria um PRD com cenários (Given/When/Then)
-- Roda **Definition of Ready** (7 checks)
-- Salva conhecimento no graph
-- Pode invocar skill especializada `graph-prd`
+Toda feature passa por todas, em ordem:
 
-**Variantes úteis:**
+| Fase | O que acontece |
+|---|---|
+| **ANALYZE** | PRD + cenários Given/When/Then. Definition of Ready (7 checks) |
+| **DESIGN** | ADRs, contratos, decisões arquiteturais |
+| **PLAN** | Decomposição em tasks atômicas, validação de gates (7/7) |
+| **IMPLEMENT** | TDD Red → Green → Refactor |
+| **VALIDATE** | E2E, AC scoring (Definition of Done — 9 checks) |
+| **REVIEW** | Code review, blast radius |
+| **HANDOFF** | PR, documentação |
+| **DEPLOY** | CI/release, post-release validation |
+| **LISTENING** | Feedback, abre próximo ciclo |
 
-```
-/graph-analyze use rubber-duck @docs/prd/meu-prd.md
-```
+> Gates não pulam. Se PLAN→IMPLEMENT travou em 5/7, **fixe a causa raiz** — geralmente: tasks sem AC, ciclo no grafo, stack docs desatualizadas. Não relaxe o gate.
 
-(Ativa revisão crítica + salva notas no PRD existente.)
+### TDD obrigatório (Red → Green → Refactor)
 
-### 7.2 — Fase DESIGN
+Em IMPLEMENT, o pipeline `mg start` renderiza um checklist TDD. Hook bloqueia commit que não tenha teste primeiro. Não dá pra "esquecer". Não é opcional.
 
-**Objetivo:** decisões arquiteturais documentadas (ADRs) baseadas no PRD.
+### Definition of Done — 9 checks
 
-**No Copilot CLI:**
-
-```
-/graph-design [instruções]
-```
-
-**Recomendado: strict mode**
-
-```
-/graph-design use strict mode [...instruções]
-```
-
-Strict mode garante que o PRD humano não é alterado sem sua revisão. Cria arquivos derivados (`-designer`) para você revisar antes de aprovar.
-
-**O que é medido:**
-- ADR quality (A/B/C)
-- Contract coverage (%)
-- Design ready score (0-100)
-
-**Saídas típicas:**
-- `docs/adr/ADR-NNN.md`
-- `docs/contracts/<feature>.contract.md`
-- `docs/prd/<feature>-designer.md` (em strict mode)
-
-### 7.3 — Fase PLAN
-
-**Objetivo:** decompor a feature em tasks pequenas com dependências e estimativas.
-
-**No Copilot CLI:**
-
-```
-/graph-plan [instruções]
-```
-
-**Variante recomendada:**
-
-```
-/graph-plan Decomponha as tasks no menor grau possível. Salve em docs/prd
-```
-
-(4 tasks → tipicamente 20+ subtasks XS após decomposição fina.)
-
-**O que acontece:**
-- Decomposição máxima
-- Criação de sprints baseada em DORA velocity
-- Validação de **7 gates de qualidade**
-- Verificação: sem ciclos no graph, sem nós órfãos, stack docs sincronizadas
-- Alerta de capacidade se sprint sobrecarregado
-
-**Antes de avançar para IMPLEMENT, valide:**
-
-```
-/graph-plan valide se está tudo ok e se podemos passar para a próxima fase.
-```
-
-> ⚠️ Transição para IMPLEMENT só acontece com gate **7/7**. Alertas de capacidade não bloqueiam, mas indicam: ramp down task size.
-
-### 7.4 — Fase IMPLEMENT
-
-**Objetivo:** implementar o código seguindo o plano, com **TDD Red-Green-Refactor**.
-
-**Antes de iniciar, selecione o modelo:**
-
-```
-/model
-```
-
-Escolha conforme o trabalho:
-- **Claude Sonnet 4.6 / Sonnet 4.7** — equilíbrio velocidade/qualidade (recomendado)
-- **Claude Opus 4.7** — qualidade máxima (planejamento, decisões críticas)
-- **Claude Haiku 4.5** — velocidade alta (tarefas mecânicas)
-
-**Inicie:**
-
-```
-/graph-implement
-```
-
-**O que acontece:**
-- Pipeline TDD: Red (teste falha) → Green (mínimo p/ passar) → Refactor (limpeza)
-- Implementação por fatias pequenas, respeitando sprint capacity
-- **9 checks de Definition of Done** após cada task
-- Promoção automática de tasks (`backlog` → `in_progress` → `done`)
+`mg finish` roda os 9 antes de promover task pra `done`. Inclui: testes passando, AC validados, sem regressão, lint clean, etc. Se algum falha, task volta pra `in_progress` com mensagem específica.
 
 ---
 
-## 8. Exemplo Real
+## 6. Os 3 jeitos de chamar a mesma ação
 
-> Sessão real de desenvolvimento de uma feature "Check-In" em app de segurança familiar. Use como **referência**, não como receita rígida.
+Você consegue fazer **a mesma operação** de três formas. A escolha é só **conveniência do contexto**.
 
-### Cenário
+### Tabela rápida
 
-Membro do círculo familiar pode enviar um "Check-In" com um toque para notificar todos que está seguro. Inclui: localização, mensagem opcional, feed de check-ins recentes.
+| Modo | Como | Quando usar | Custo de tokens |
+|---|---|---|---|
+| **Claude direto** | `mcp__mcp-graph__start_task` no chat | já está conversando com o agente, fluxo todo pela IA | sim (agente paga) |
+| **Shell `mg`** | `mg start <id>` no terminal | scripts, CI, "quero ver rápido sem prompt" | zero |
+| **REPL `/cmd`** | `mg` aberto, depois `/start <id>` | sessão interativa humana, descoberta via `/help` | zero |
 
-### Fase ANALYZE
+### Quando cada modo brilha
 
-```
-/graph-analyze Um membro do círculo pode enviar um "Check-In" com um toque
-para notificar todos os membros do grupo de que está seguro.
-Captura localização atual. Mensagem opcional.
-Feed de check-ins recentes visível para todos do círculo.
-```
+**Claude direto** — você está no meio de uma conversa com Claude Code, ele já entende o contexto, faz sentido pedir pro agente disparar a ação. Custa tokens, mas você economiza troca de janela.
 
-**Saída:** PRD criado em `docs/prd/check-in-feature.md` com 4 cenários Given/When/Then. DoR: 7/7.
+**Shell `mg`** — você quer ver rapidinho qual a próxima task, sem perguntar pro agente. Ou está em CI rodando pipelines. Ou quer scriptar `mg list --status=blocked | wc -l`. Zero tokens, zero LLM.
 
-### Fase DESIGN — Strict Mode
+**REPL `/cmd`** — você abriu `mg`, está em sessão interativa. `/help` te mostra a paleta inteira, fuzzy search funciona, history navega com setas. Bom pra explorar o que existe.
 
-```
-/graph-design use strict mode do mcp-graph baseado no prd
-@docs/prd/check-in-feature.md crie um novo arquivo
-intitulado como -designer
-```
-
-**Saídas:**
-- `docs/prd/check-in-feature-designer.md` (revisão humana)
-- `docs/adr/ADR-042-check-in-storage.md`
-- `docs/contracts/check-in.contract.md`
-
-**Resultado:** ADR quality A, contract coverage 100%, design_ready 82/100 (B).
-
-### Fase PLAN — Decomposição Fina
-
-```
-/graph-plan Decomponha as tasks no menor grau possível. Salve em docs/prd
-```
-
-**Resultado:** 4 tasks principais → 20 subtasks XS. Gate ready 7/7. 43 itens planejados. Harness A (95.5).
-
-### Fase IMPLEMENT
-
-```
-/model
-> selecionar Claude Sonnet 4.6
-
-/graph-implement
-```
-
-**Saída:** 20 commits TDD ao longo de 3 sessões. Todas as 9 DoD passaram. Feature merged.
+> Tabela completa de equivalência (todos os 20 comandos `mg` + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
 
 ---
 
-## 9. Dicas e Boas Práticas
+## 7. Hooks — automação invisível
 
-### Controle Humano
+Hook = ação automática que dispara em momentos específicos do Claude Code (start de sessão, antes de uma tool, depois de um edit, etc.). mcp-graph instala hooks pra automatizar a parte chata.
 
-- **Use strict mode no DESIGN** para manter controle sobre decisões
-- **Sempre revise** os arquivos `-designer` antes de aprovar avanços de fase
-- **Salve PRDs e plans** em `docs/prd/` para análise posterior
+### Instalar
 
-### Qualidade
+```bash
+mg hooks install --profile balanced
+```
 
-- **Decomponha tasks no menor grau possível** na fase PLAN
-- **Valide TODOS os gates** antes de avançar (7/7 checks)
-- **Use rubber-duck** para revisão crítica em momentos chave (`/graph-analyze use rubber-duck`)
-- **Monitore alertas de capacidade** no sprint (sinal de subdivisão necessária)
+### Os 3 perfis
 
-### Produtividade
+| Perfil | Hooks | Quando usar |
+|---|---|---|
+| `minimal` | 1 (banner em SessionStart) | sinal de vida, nada mais |
+| `balanced` *(recomendado)* | 5 (banner + pre-MCP-tool + post-edit + post-finish + Stop) | uso diário, defaults opinativos |
+| `aggressive` | 7 (balanced + post-Bash + UserPromptSubmit) | máxima supervisão |
 
-- **Selecione o modelo de IA adequado** com `/model` antes de implementar
-- **Use skills especializadas** quando disponíveis (`@.agents/skills/`)
-- **Salve conhecimento no MCP-Graph frequentemente** (`/graph-design use rubber-duck save notes`)
-- **Mantenha o servidor rodando** durante toda a sessão de trabalho
+### O que `balanced` faz, em ordem
 
-### Organização
+1. **SessionStart** → printa banner com health do projeto (status, harness score, próxima task)
+2. **PreToolUse** (matcher: `mcp__mcp-graph__.*`) → valida lifecycle antes do agente chamar tool mcp-graph
+3. **PostToolUse** (matcher: `Edit|Write|MultiEdit`) → harness scan incremental
+4. **PostToolUse** (matcher: `mcp__mcp-graph__finish_task`) → encadeia `validate(ac)` + `analyze(implement_done)`
+5. **Stop** → snapshot do grafo
 
-- **Abra uma nova janela do Copilot** para cada contexto diferente
-- **Nomeie arquivos de design com sufixo `-designer`** para revisão clara
-- **Mantenha o feed de atividades** do mcp-graph atualizado (dashboard `/activity`)
-- **Commits atômicos** — uma task → um commit
+Tudo silencioso. Logs em `~/.mcp-graph/logs/hooks.jsonl`. Os hooks que você já tinha em Claude Code são preservados.
 
----
+### Desligar
 
-## 10. Troubleshooting & Cheat Sheet
+```bash
+mg hooks uninstall              # remove só os hooks do mg
+MCP_GRAPH_HOOKS_OFF=1 mg ...    # ou desativa pra um comando só
+```
 
-🔧 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — erros comuns e soluções
-🔖 [CHEATSHEET.md](./CHEATSHEET.md) — referência rápida de 1 página
-📖 [GLOSSARY.md](./GLOSSARY.md) — termos explicados em linguagem clara
-
----
-
-## Próximos passos
-
-- 🌐 Abra o dashboard em <http://localhost:3000> para visualizar seu graph
-- 📊 Rode `mcp-graph stats --json` para ver métricas
-- 🔍 Rode `mcp-graph doctor` periodicamente para diagnóstico do ambiente
-- 🤝 Contribuir: <https://github.com/DiegoNogueiraDev/mcp-graph-workflow>
+> Por que perfis e não "tudo ou nada"? Cada hook adiciona um custo (tempo + ruído). `minimal` pra quem só quer um sinal de vida; `aggressive` pra quem quer rastreio completo de cada Bash; `balanced` é o ponto onde 80% das pessoas fica.
 
 ---
 
-**Versão deste guia:** v10.2.0 (DX overhaul)
-**Última atualização:** 2026-04-25
+## 8. Próximos passos
+
+- 🚀 [QUICKSTART.md](./QUICKSTART.md) — versão "60 segundos" deste guia
+- 🔖 [CHEATSHEET.md](./CHEATSHEET.md) — todos os comandos em uma página
+- 📖 [GLOSSARY.md](./GLOSSARY.md) — termos em linguagem clara
+- 🔧 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — quando algo não funciona
+- 🗺️ [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md) — tabela completa MCP ↔ shell ↔ REPL
+- 🌐 Dashboard em <http://localhost:3000> depois de `mg ui`
+- 💬 Dúvidas: <https://github.com/DiegoNogueiraDev/mcp-graph-workflow/discussions>
+
+---
+
+**Próxima ação:** se você ainda não rodou nada, abra um terminal e cole:
+
+```bash
+mkdir mcp-graph-test && cd mcp-graph-test
+mg init && mg add task --title "test the loop" && mg next
+```
+
+Em menos de 30 segundos você tem um grafo, uma task e a próxima ação na tela. A partir daí é só seguir o ciclo.

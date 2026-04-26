@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/actions/workflows/ci.yml"><img src="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/v/%40mcp-graph-workflow%2Fmcp-graph" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@mcp-graph-workflow/cli"><img src="https://img.shields.io/npm/v/%40mcp-graph-workflow%2Fcli/beta?label=cli%20%40beta&color=orange" alt="cli @beta"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/%40mcp-graph-workflow%2Fmcp-graph" alt="Node.js"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
   <a href="COMMERCIAL.md"><img src="https://img.shields.io/badge/Commercial-available-informational" alt="Commercial license available"></a>
@@ -19,29 +20,53 @@
 
 ## What It Does
 
-`mcp-graph` is a local-first tool that converts natural-language requirement documents (PRDs) into persistent, executable task graphs. An AI coding assistant navigates this graph instead of reasoning from scratch each session — reducing hallucination, preserving context, and enforcing discipline across the full development cycle.
+Three problems every AI coding session has:
 
-Operates entirely offline. No external AI/LLM dependency at runtime. All decisions deterministic and reproducible.
+1. **Your agent forgets** — every new chat starts blank, the agent re-invents the plan from scratch.
+2. **PRDs become walls of text** — nobody re-reads them, the agent improvises features.
+3. **No paper trail** — you can't tell what got done, what blocked, or why a decision was made.
 
-## Key Capabilities
+`mcp-graph` fixes that. It turns your PRD into a persistent task graph the agent **navigates** instead of **improvises** — backed by local SQLite. No cloud, no LLM API key.
 
-- **PRD → Task Graph** — `.md`/`.txt`/`.pdf`/`.html` requirement docs parsed into structured task trees with dependencies
-- **Agent-navigable workflow** — 9-phase lifecycle (Analyze → Design → Plan → Implement → Validate → Review → Handoff → Deploy → Listening) with gate checks
-- **Context continuity** — agents request task context from the graph; token-efficient compression included
-- **Knowledge base** — project knowledge indexed and retrievable by semantic similarity
-- **Sprint planning & metrics** — velocity-based planning, progress tracking, delivery metrics
-- **Visual dashboard** — browser-based task board with graph, kanban, and analytics
-- **Multi-agent support** — concurrent agent terminals with conflict prevention
+### How it fits with your AI CLI
+
+```
+You (human)
+ └─ AI CLI (Claude Code · Copilot CLI · Cursor)        ← agent runs here, has no memory
+    ├─ mcp-graph (MCP server, v10.x)                   ← structured memory: PRDs, graph, lifecycle
+    └─ mg CLI (v11 beta)                               ← human entry point, auto-hooks, skill files
+                                                       ↓
+                                  workflow-graph/graph.db (the project's "memory")
+```
+
+| Without mcp-graph | With mcp-graph |
+|---|---|
+| "Build me a SaaS" → chaos | PRD → atomic tasks with acceptance criteria |
+| Agent forgets between sessions | Persistent SQLite, compressed context handoff |
+| TDD optional, depends on the agent's mood | Hooks block commits without a test first |
+| Two parallel agents collide | `unified-gate` keeps them coordinated |
+| "Is it ready?" → guessing | `mg status` answers in 200ms |
+
+### A complete loop in 4 commands
+
+```bash
+mg init                           # bootstrap graph + IDE configs
+mg add task --title "fix login"   # or: import a full PRD with import_prd <file>
+mg start <id>                     # status → in_progress, render TDD checklist
+mg finish                         # status → done, suggest next
+```
+
+Fully offline. Deterministic. Reproducible.
 
 ## Installation
+
+Two paths — pick one. v11 CLI is **opt-in** and **fully backward-compatible**: existing v10 setups keep working unchanged.
+
+### Path 1 — MCP server only (stable, v10.x)
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
-
-**Requirements:** Node.js ≥ 18. No Docker, no external infrastructure.
-
-## Quick Start
 
 Add to `.mcp.json` (Claude Code, Cursor, IntelliJ) or `.vscode/mcp.json` (Copilot):
 
@@ -56,13 +81,37 @@ Add to `.mcp.json` (Claude Code, Cursor, IntelliJ) or `.vscode/mcp.json` (Copilo
 }
 ```
 
-Then in your agent: `init` → `import_prd <file>` → `plan_sprint` → `start_task` / `finish_task`.
+In your agent: `init` → `import_prd <file>` → `plan_sprint` → `start_task` / `finish_task`.
+
+### Path 2 — MCP server + v11 CLI (recommended for new projects)
+
+```bash
+npm install -g @mcp-graph-workflow/mcp-graph
+npm install -g @mcp-graph-workflow/cli@beta
+```
+
+Then in your project:
+
+```bash
+cd your-project
+mg init                                # graph + IDE configs + .claude/skills
+mg hooks install --profile balanced    # Claude Code automation (optional, recommended)
+mg                                     # interactive REPL — type /help to discover
+```
+
+**Requirements:** Node.js ≥ 18. No Docker, no external infra, no LLM API key.
 
 ## Documentation
 
-- **[User Guide](docs/guides/USER-GUIDE.md)** — full reference: install, concepts, workflow, CLI, dashboard
-- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 5-minute setup
-- **[Cheatsheet](docs/getting-started/CHEATSHEET.md)** — common commands
+Start here:
+
+- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 60-second tour with `mg`
+- **[Guide](docs/getting-started/GUIDE.md)** — full walkthrough (Portuguese)
+- **[Cheatsheet](docs/getting-started/CHEATSHEET.md)** — every command on one page
+
+Deep dives:
+
+- **[v10 → v11 Surface Map](docs/guides/v11-cli-surface-map.md)** — three modes side-by-side: Claude tool, `mg` shell, REPL slash
 - **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — fix common issues
 - **[Glossary](docs/getting-started/GLOSSARY.md)** — terminology
 

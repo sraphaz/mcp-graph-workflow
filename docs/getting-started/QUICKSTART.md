@@ -64,18 +64,20 @@ Ctrl-C to stop.
 ## Want zero-intervention workflow?
 
 ```bash
-mg hooks install
+mg hooks install --profile balanced
 ```
 
-Now Claude Code automatically:
-- prints a 1-line health banner at session start
-- runs an incremental harness scan after every Edit/Write
-- chains `validate(ac)` + `analyze(implement_done)` after every `finish_task`
-- snapshots the graph at session stop
+Three profiles, pick one:
 
-Nothing in your shell changes. The hooks fire silently and log to `~/.mcp-graph/logs/hooks.jsonl`.
+| Profile | Hooks installed | When |
+|---|---|---|
+| `minimal` | 1 — `SessionStart` health banner | you want a sign of life, nothing more |
+| `balanced` *(recommended)* | 5 — `SessionStart`, pre-MCP-tool, post-edit harness scan, post-`finish_task` chain, `Stop` snapshot | daily work, opinionated defaults |
+| `aggressive` | 7 — balanced + post-`Bash` + `UserPromptSubmit` | maximum oversight, slightly chattier |
 
-To turn off: `mg hooks uninstall` (idempotent — your other Claude Code hooks are preserved).
+Hooks fire silently and log to `~/.mcp-graph/logs/hooks.jsonl`. Your existing Claude Code hooks are preserved.
+
+To turn off: `mg hooks uninstall` (idempotent). To check what's installed: `mg hooks status`.
 
 ## Want to try it without committing to a project?
 
@@ -84,6 +86,17 @@ mg demo
 ```
 
 Creates an ephemeral sandbox under `~/.mcp-graph/demos/<stamp>/` with a sample PRD already imported. Poke around for as long as you want; clean up later with `mg demo --cleanup` or `rm -rf <path>`.
+
+## Verify what you have installed
+
+Two commands, two answers:
+
+```bash
+mg --version           # 11.x.x-beta — the v11 CLI you just installed
+mcp-graph --version    # 10.x.x — the MCP server (parent runtime mg talks to)
+```
+
+Both should print a version. If `mg --version` works but `mg init` errors with "parent runtime not found", install the server too: `npm install -g @mcp-graph-workflow/mcp-graph`.
 
 ## Three-mode invocation
 
@@ -99,11 +112,10 @@ The Claude skills are auto-installed in your project by `mg init` (under `.claud
 
 ## What's next
 
-- Browse all 15 commands: `mg help`
-- Search the command palette: `mg help <fuzzy-query>` (e.g. `mg help auth`)
-- See the full lifecycle: `docs/getting-started/GUIDE.md`
-- Migrating from v10? `docs/_internal/migration/v10-to-v11-cli.md`
-- Cookbook of common patterns: `docs/getting-started/CHEATSHEET.md`
+- **Cheatsheet** — every command on one page: [CHEATSHEET.md](CHEATSHEET.md)
+- **Full guide** — concepts, lifecycle, three modes side-by-side: [GUIDE.md](GUIDE.md)
+- **Three modes side-by-side** — when to use Claude tool vs `mg` shell vs REPL slash: [v11 surface map](../guides/v11-cli-surface-map.md)
+- **Browse all commands** — `mg help` (or `mg help <fuzzy-query>`, e.g. `mg help auth`)
 
 ## Troubleshooting
 

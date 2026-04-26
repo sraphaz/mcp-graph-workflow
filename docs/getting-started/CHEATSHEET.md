@@ -1,97 +1,133 @@
 # mcp-graph — Cheat Sheet
 
-Todos os comandos principais em uma página. Imprimível em A4.
+Tudo o que você precisa em uma página. Imprimível em A4.
 
-> Convenção: **Terminal** = shell direto • **Copilot** = dentro do `copilot` CLI (com servidor mcp-graph rodando) • **Browser** = navegador
+> **3 modos para a mesma ação** — escolha o que cabe no fluxo:
+> **Claude direto** = `mcp__mcp-graph__X` no chat • **Shell `mg`** = no terminal • **REPL slash** = `mg` aberto, depois `/X`
+
+---
+
+## Equivalência: Claude tool ↔ `mg` shell ↔ REPL slash
+
+| O que você quer fazer | Claude direto (MCP) | Shell `mg` | REPL `/cmd` |
+|---|---|---|---|
+| Inicializar projeto | `mcp__mcp-graph__init` | `mg init` | `/init` |
+| Próxima task disponível | `mcp__mcp-graph__next` | `mg next` | `/next` |
+| Começar uma task | `mcp__mcp-graph__start_task` | `mg start <id>` | `/start <id>` |
+| Finalizar task atual | `mcp__mcp-graph__finish_task` | `mg finish` | `/finish` |
+| Listar tasks | `mcp__mcp-graph__list` | `mg list` | `/list` |
+| Status do projeto | (via dashboard) | `mg status` | `/status` |
+| Adicionar nó | `mcp__mcp-graph__node` (batch) | `mg add task --title "..."` | `/add task --title "..."` |
+| Trocar fase do lifecycle | `mcp__mcp-graph__set_phase` | `mg set-phase <PHASE>` | `/set-phase <PHASE>` |
+| Demo descartável | (não disponível) | `mg demo` | `/demo` |
+| Login GitHub Copilot | (não disponível) | `mg login` | `/login` |
+
+📎 Tabela completa (todos os 20 comandos + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
+
+**Quando usar cada modo:**
+
+| Modo | Quando | Custo de tokens |
+|---|---|---|
+| **Claude direto** | já está conversando com o agente, fluxo inteiro pela IA | sim (agente paga) |
+| **Shell `mg`** | scripts, CI, "quero ver rápido sem prompt" | zero |
+| **REPL `/cmd`** | sessão interativa humana, descoberta via `/help` | zero |
 
 ---
 
 ## Setup (uma vez por máquina)
 
-| Ação | Comando | Onde |
-|---|---|---|
-| Verificar Node ≥ 20 | `node -v` | Terminal |
-| Verificar Git | `git --version` | Terminal |
-| Verificar Copilot CLI | `copilot --version` | Terminal |
-| Limpar cache npm (opcional) | `npm cache clean --force` | Terminal |
-| **Instalar mcp-graph** | `npm install -g @mcp-graph-workflow/mcp-graph` | Terminal |
-| Verificar versão | `mcp-graph -V` | Terminal |
-
-## Primeiro uso (recomendado)
-
-| Ação | Comando | Onde |
-|---|---|---|
-| **Demo guiada (zero config)** | `npx -y @mcp-graph-workflow/mcp-graph hello` | Terminal |
-
-Cria sample PRD, importa, mostra graph e abre dashboard. Bom pra entender o produto em 60s.
+| Ação | Comando |
+|---|---|
+| Verificar Node ≥ 18 | `node -v` |
+| Verificar Git | `git --version` |
+| **Instalar MCP server (v10)** | `npm install -g @mcp-graph-workflow/mcp-graph` |
+| **Instalar v11 CLI (opcional, recomendado)** | `npm install -g @mcp-graph-workflow/cli@beta` |
+| Verificar versões | `mcp-graph --version` e `mg --version` |
 
 ## Setup do projeto (por projeto)
 
-| Ação | Comando | Onde |
+| Ação | Comando |
+|---|---|
+| Inicializar (v11 — recomendado) | `mg init` |
+| Inicializar (v10 legado) | `npx mcp-graph init` |
+| Inicializar sem prompts (CI) | `mg init --force` |
+| Instalar hooks Claude Code | `mg hooks install --profile balanced` |
+| Ver status dos hooks | `mg hooks status` |
+| Remover hooks | `mg hooks uninstall` |
+
+## Hooks — o que cada perfil instala
+
+| Perfil | Hooks | Quando usar |
 |---|---|---|
-| Inicializar | `npx mcp-graph init` | Terminal (no projeto) |
-| Inicializar (CI, sem prompt) | `npx mcp-graph init --yes-all` | Terminal |
-| Inicializar sem skills Copilot | `npx mcp-graph init --no-copilot` | Terminal |
+| `minimal` | 1 (banner em SessionStart) | sinal de vida, nada mais |
+| `balanced` *(recomendado)* | 5 (banner + pre-MCP + post-edit + post-finish + Stop) | uso diário, defaults opinativos |
+| `aggressive` | 7 (balanced + post-Bash + UserPromptSubmit) | máxima supervisão |
 
-## Servidor (sempre aberto durante o uso)
+> Off temporário: `MCP_GRAPH_HOOKS_OFF=1`. Hooks ficam em `.claude/settings.local.json` (project-scoped, nunca global).
 
-| Ação | Comando | Onde |
-|---|---|---|
-| Iniciar servidor (Terminal 1) | `npx mcp-graph serve --port 3000` | Terminal |
-| Servidor em outra porta | `npx mcp-graph serve --port 3001` | Terminal |
-| Encerrar | Ctrl+C na janela do servidor | Terminal |
+## Demo zero-config
 
-## Ciclo de vida (no Copilot CLI — Terminal 2)
+```bash
+mg demo                    # cria sandbox em ~/.mcp-graph/demos/<stamp>/ com PRD exemplo
+mg demo --cleanup          # limpa
+```
 
-| Ação | Comando | Onde |
-|---|---|---|
-| Abrir Copilot | `copilot` | Terminal |
-| **ANALYZE** — analisar requisito | `/graph-analyze [descrição da feature]` | Copilot |
-| **DESIGN** — arquitetura | `/graph-design [instruções]` | Copilot |
-| DESIGN strict (revisão humana) | `/graph-design use strict mode [...]` | Copilot |
-| **PLAN** — decompor em tasks | `/graph-plan [instruções]` | Copilot |
-| Validar passagem de fase | `/graph-plan valide se podemos avançar` | Copilot |
-| Trocar modelo de IA | `/model` | Copilot |
-| **IMPLEMENT** — executar com TDD | `/graph-implement` | Copilot |
+Bom pra entender o produto em 60s sem mexer no seu projeto.
 
 ## Visualização e diagnóstico
 
-| Ação | Comando | Onde |
-|---|---|---|
-| Dashboard web | abrir <http://localhost:3000> | Browser |
-| Status do projeto | `mcp-graph stats --json` | Terminal |
-| Diagnóstico do ambiente | `mcp-graph doctor` | Terminal |
-| Reindexar (knowledge/RAG) | `mcp-graph reindex` | Terminal |
+| Ação | Comando |
+|---|---|
+| Dashboard web | `mg ui` (abre `http://localhost:3000`) |
+| Status compacto | `mg status` |
+| Ver logs estruturados | `mg log` |
+| Diagnóstico (v10) | `mcp-graph doctor` |
+
+## Servidor MCP (v10 — legado, ainda funciona)
+
+Se você está no fluxo two-terminal v10 (sem v11 CLI):
+
+| Ação | Comando |
+|---|---|
+| Iniciar servidor | `npx mcp-graph serve --port 3000` |
+| Em outra porta | `npx mcp-graph serve --port 3001` |
+| Encerrar | Ctrl+C |
 
 ## MCP tool surface (avançado)
 
-| Ação | Comando | Onde |
+Profiles controlam quantas tools o agente vê:
+
+| Profile | Tools | Como ativar |
 |---|---|---|
-| Default (core, ~8 tools) | (nenhum — é o padrão) | — |
-| Habilitar pro (~20 tools) | `MCP_GRAPH_PROFILE=pro mcp-graph mcp` | Terminal/env |
-| Habilitar expert (~50 tools) | `MCP_GRAPH_PROFILE=expert mcp-graph mcp` | Terminal/env |
-| Tudo (legacy compat) | `MCP_GRAPH_PROFILE=all mcp-graph mcp` | Terminal/env |
+| Default (core) | ~8 | (padrão, nenhum env var) |
+| Pro | ~20 | `MCP_GRAPH_PROFILE=pro` |
+| Expert | ~50 | `MCP_GRAPH_PROFILE=expert` |
+| Tudo (legacy) | todos | `MCP_GRAPH_PROFILE=all` |
 
 ## Atualizações
 
-| Ação | Comando | Onde |
-|---|---|---|
-| Atualizar mcp-graph | `npm update -g @mcp-graph-workflow/mcp-graph` | Terminal |
-| Sincronizar config do projeto | `mcp-graph update` | Terminal (no projeto) |
+```bash
+npm update -g @mcp-graph-workflow/mcp-graph    # v10 server
+npm update -g @mcp-graph-workflow/cli@beta     # v11 CLI
+mcp-graph update                                # sync configs do projeto
+```
 
 ---
 
 ## Atalhos mentais
 
-- **2 terminais** sempre: T1 = `serve` rodando, T2 = `copilot` interativo
-- **4 fases**: ANALYZE → DESIGN → PLAN → IMPLEMENT (do contexto até código)
-- **Strict mode** no DESIGN garante revisão humana antes de tocar artefatos
-- **Decomponha tasks** o máximo possível na fase PLAN (4 tasks → 20 subtasks XS)
-- **Gates** são portões de qualidade — não pule, fixe a causa raiz
-- **TDD obrigatório** em IMPLEMENT (Red → Green → Refactor)
+- **3 modos, mesma ação** — Claude direto / shell `mg` / REPL `/cmd`. Escolha pelo contexto, não pela disponibilidade.
+- **9 fases lifecycle**: ANALYZE → DESIGN → PLAN → IMPLEMENT → VALIDATE → REVIEW → HANDOFF → DEPLOY → LISTENING.
+- **Decomponha tasks** o máximo possível na fase PLAN (4 tasks → 20 subtasks XS).
+- **Gates não pulam** — fixe a causa raiz, não o gate.
+- **TDD obrigatório** em IMPLEMENT (Red → Green → Refactor).
+- **Hooks são silenciosos** — se nada apareceu, está tudo OK (logs em `~/.mcp-graph/logs/hooks.jsonl`).
+- **v10 e v11 coexistem** — v11 é opt-in, não força migração.
 
 ---
 
 📚 [GUIDE.md](./GUIDE.md) — guia completo passo a passo
+🚀 [QUICKSTART.md](./QUICKSTART.md) — 60 segundos até o primeiro `mg next`
 🔧 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — erros comuns e soluções
-📖 [GLOSSARY.md](./GLOSSARY.md) — o que é graph, node, epic em linguagem clara
+📖 [GLOSSARY.md](./GLOSSARY.md) — termos em linguagem clara
+🗺️ [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md) — tabela completa de 3-mode parity
