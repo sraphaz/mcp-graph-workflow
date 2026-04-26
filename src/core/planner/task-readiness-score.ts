@@ -52,6 +52,14 @@ export interface TaskReadinessSignals {
   depDepth: { depth: number; score: number };
   /** Subtractive penalty (0–100). */
   issuePatternPenalty: number;
+  /**
+   * Feature-depth score of the primary file the task will touch (0–100),
+   * or null if no baseline was found. Drives the fragile-file bonus —
+   * tasks touching code below the SHALLOW threshold get a small additive
+   * boost so they surface first in next-task ordering. See
+   * src/core/feature-depth/score-file.ts.
+   */
+  featureDepth: { score: number | null; bonus: number };
 }
 
 export interface TaskReadinessScore {
@@ -67,6 +75,13 @@ export interface TaskReadinessOptions {
   harnessScore?: number | null;
   /** Historical occurrences of issue patterns tied to this node's category. */
   patternOccurrences?: number;
+  /**
+   * Feature-depth score (0–100) of the primary file this task will
+   * touch. When provided AND below the SHALLOW threshold (30), a small
+   * additive bonus surfaces the task earlier in next-task ordering —
+   * fragile code wants attention first. Omit / null = no effect.
+   */
+  featureDepthScore?: number | null;
 }
 
 /** Node types whose decisions carry durable architectural impact. */
@@ -132,6 +147,16 @@ export function computeTaskReadinessScore(
   const occurrences = options.patternOccurrences ?? 0;
   const penalty = Math.min(PATTERN_PENALTY_CAP, occurrences * PATTERN_PENALTY_STEP);
 
+  // ── Feature-depth fragile-file bonus (additive, max +10)
+  // Files below SHALLOW (score 30) get a graded boost so the task
+  // surfaces earlier in plan_sprint ordering. Mature files (>=50)
+  // get nothing — they don't need extra attention.
+  const fdScore = options.featureDepthScore ?? null;
+  const featureDepthBonus =
+    fdScore !== null && fdScore < 50
+      ? Math.min(10, Math.round((50 - fdScore) * 0.3))
+      : 0;
+
   // ── Weighted aggregate
   const weighted =
     xpScore * 0.35 +
@@ -139,7 +164,7 @@ export function computeTaskReadinessScore(
     harnessScoreForAggregate * 0.15 +
     depthScore * 0.1 +
     (100 - penalty) * 0.1;
-  const score = Math.max(0, Math.min(100, Math.round(weighted)));
+  const score = Math.max(0, Math.min(100, Math.round(weighted + featureDepthBonus)));
 
   // ── Overrides
   let overridden: TaskReadinessScore["overridden"] = null;
@@ -171,6 +196,10 @@ export function computeTaskReadinessScore(
   if (depth >= 3) rationale.push(`${depth}-deep dependency chain — heavy context`);
   if (penalty > 0) rationale.push(`historical pattern penalty ${penalty}`);
 
+  if (featureDepthBonus > 0) {
+    rationale.push(`fragile-file bonus +${featureDepthBonus} (feature-depth=${fdScore})`);
+  }
+
   return {
     score,
     signals: {
@@ -179,6 +208,7 @@ export function computeTaskReadinessScore(
       harnessLocal,
       depDepth: { depth, score: depthScore },
       issuePatternPenalty: penalty,
+      featureDepth: { score: fdScore, bonus: featureDepthBonus },
     },
     recommendation,
     rationale,

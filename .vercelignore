@@ -1,0 +1,11 @@
+# Vercel só precisa servir presentation/dist/ — tudo o mais é ruído.
+# Esta lista IMPORTA pra performance do upload + previne auto-detect (Vite, etc.)
+
+# Tudo por padrão
+*
+
+# Exceções: o que o Vercel precisa
+!vercel.json
+!presentation/
+!presentation/dist/
+!presentation/dist/**

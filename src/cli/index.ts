@@ -61,6 +61,7 @@ if (isMcpClient) {
   const { indexCommand } = await import("./commands/index-cmd.js");
   const { doctorCommand } = await import("./commands/doctor.js");
   const { installNeuralCommand } = await import("./commands/install-neural.js");
+  const { reviewDepthCommand } = await import("./commands/review-depth.js");
   const { updateCommand } = await import("./commands/update.js");
   const { browserHarnessCommand } = await import("./commands/browser-harness.js");
   // v11 lifecycle + ops wrappers (delegate to @mcp-graph-workflow/cli bundle)
@@ -97,6 +98,7 @@ if (isMcpClient) {
   program.addCommand(indexCommand());
   program.addCommand(doctorCommand());
   program.addCommand(installNeuralCommand());
+  program.addCommand(reviewDepthCommand());
   program.addCommand(updateCommand());
   program.addCommand(browserHarnessCommand());
   // v11 lifecycle + ops (delegated)

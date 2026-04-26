@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": null,
-  "installCommand": null,
-  "outputDirectory": "presentation/dist",
   "framework": null,
+  "outputDirectory": "presentation/dist",
+  "installCommand": "echo 'skip — static site, no install needed'",
+  "buildCommand": "echo 'skip — pre-built static assets in presentation/dist/'",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [

@@ -79,6 +79,7 @@ export const TOOL_TAXONOMY: Record<string, ToolProfile> = {
   davinci: "expert",
   delegate: "expert",
   delete_memory: "expert",
+  feature_depth: "expert",
   forecast: "expert",
   graph_explore_web: "expert",
   graph_health: "expert",

@@ -36,6 +36,7 @@ export type SetPhaseInput = {
   readonly mode?: StrictnessMode;
   readonly codeIntelligence?: "strict" | "advisory" | "off";
   readonly prerequisites?: "strict" | "advisory" | "off";
+  readonly featureDepth?: "strict" | "advisory" | "off";
   readonly teamTask?: boolean;
   readonly wipStrict?: boolean;
   readonly maxInFlight?: number;
@@ -73,6 +74,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     mode,
     codeIntelligence,
     prerequisites,
+    featureDepth,
     teamTask,
     wipStrict,
     maxInFlight,
@@ -104,6 +106,11 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
   if (prerequisites) {
     store.setProjectSetting("tool_prerequisites_mode", prerequisites);
     logger.info("set_phase_core:prerequisites_changed", { prerequisites });
+  }
+
+  if (featureDepth) {
+    store.setProjectSetting("feature_depth_mode", featureDepth);
+    logger.info("set_phase_core:feature_depth_changed", { featureDepth });
   }
 
   if (teamTask !== undefined) {

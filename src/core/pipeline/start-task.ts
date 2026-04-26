@@ -27,6 +27,8 @@ import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
 import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/task-readiness-score.js";
+import { getTouchedFiles } from "../planner/touched-files.js";
+import { getBaseline } from "../feature-depth/baselines-store.js";
 import { buildTaskContext } from "../context/compact-context.js";
 import { assembleContext } from "../context/context-assembler.js";
 import { generateTddHints, generateTddHintsFromTexts } from "../implementer/tdd-checker.js";
@@ -219,10 +221,16 @@ export function startTask(
 
   // 5c. Compute a model-routing hint from the same signals the graph already owns.
   // Pure computation — never throws, cheap (< 1ms for typical graphs).
+  // Feeds the primary touched file's prior feature-depth baseline (if any)
+  // into the readiness aggregator — fragile files surface earlier.
   let modelHint: TaskReadinessScore | undefined;
   try {
+    const touched = getTouchedFiles(taskNode);
+    const primaryFile = touched.length > 0 ? touched[0] : null;
+    const fdBaseline = primaryFile ? getBaseline(store.getDb(), primaryFile) : null;
     modelHint = computeTaskReadinessScore(taskNode, doc, {
       harnessScore: harnessWarning ? harnessWarning.score : null,
+      featureDepthScore: fdBaseline?.score ?? null,
     });
   } catch (err) {
     logger.warn("pipeline:start_task:model_hint_failed", { error: String(err) });

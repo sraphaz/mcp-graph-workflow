@@ -1747,6 +1747,25 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_ttu_err_kind ON tool_token_usage(error_kind);
     `,
   },
+  {
+    version: 65,
+    description: "Feature-depth file-level baselines — per-file score history for finish_task regression gate, plan_sprint risk index, and quadrant-crossing memory entries",
+    sql: `
+      CREATE TABLE IF NOT EXISTS feature_depth_baselines (
+        project_id  TEXT NOT NULL,
+        rel_path    TEXT NOT NULL,
+        module      TEXT NOT NULL,
+        score       REAL NOT NULL,
+        quadrant    TEXT NOT NULL,
+        test_loc    INTEGER NOT NULL,
+        source_loc  INTEGER NOT NULL,
+        stored_at   TEXT NOT NULL,
+        git_commit  TEXT,
+        PRIMARY KEY (project_id, rel_path)
+      );
+      CREATE INDEX IF NOT EXISTS idx_fd_module ON feature_depth_baselines(project_id, module);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
