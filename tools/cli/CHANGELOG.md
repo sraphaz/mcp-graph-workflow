@@ -13,6 +13,17 @@ All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachan
 
 * v12 unification + launch landing + AISE reframe + Vercel deploy ([#257](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/257)) ([9ff85df](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/9ff85df42e9fd467f61f338a5bbaff125e3706e2))
 
+## [13.0.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v12.0.0-beta.0...cli-v13.0.0-beta.0) (2026-04-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* `@mcp-graph-workflow/cli` is no longer published as a separate npm package. Anyone who depended on `@mcp-graph-workflow/cli@beta` directly should switch to `@mcp-graph-workflow/mcp-graph@>=12`. The bundle that used to be at `node_modules/@mcp-graph-workflow/cli/dist/cli.mjs` now ships at `node_modules/@mcp-graph-workflow/mcp-graph/dist/v11-cli.mjs`.
+
+### Features
+
+* v12 unification + launch landing + AISE reframe + Vercel deploy ([#257](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/257)) ([9ff85df](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/9ff85df42e9fd467f61f338a5bbaff125e3706e2))
+
 ## [12.0.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v11.3.0-beta.0...cli-v12.0.0-beta.0) (2026-04-26)
 
 
