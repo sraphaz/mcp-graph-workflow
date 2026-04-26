@@ -2,6 +2,8 @@
 
 **Status:** beta. `@mcp-graph-workflow/cli@11.1.3-beta.0` published 2026-04-25. Install: `npm i -g @mcp-graph-workflow/cli@beta`.
 
+> **Coverage:** v11 CLI exposes lifecycle verbs (`start`, `finish`, `next`, `list`, `status`, `add`, `set-phase`) plus ops (`init`, `hooks`, `ui`, `demo`, `login`, `lang`, `config`, `log`, `harness`, `help`). The other ~45 tools (`analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban`, `import_prd`, `plan_sprint`, etc.) remain **MCP-only** — invoke them from Claude Code, Cursor, or Copilot CLI via the standard `mcp__mcp-graph__<tool>` surface. The migration table below shows only commands that have a `mg` form today.
+
 The v11 CLI exposes lifecycle verbs through a three-mode parity surface (ADR-0053): a slash command for Claude skills, a shell command for terminal/CI, and the same handler routed locally instead of via MCP round-trip. Skills that historically called `mcp__mcp-graph__<tool>` should prefer the slash/shell form when one exists.
 
 ## Migration table

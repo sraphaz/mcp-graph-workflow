@@ -1,34 +1,61 @@
-# Quickstart — 60 seconds to first value
+# Quickstart — 60 segundos até a primeira task
 
-If you can run three commands, you can drive `mg`. Pick `npm` or `curl`, install once, then drive any project.
+Três comandos e você está rodando:
 
-## Prereqs
+```bash
+mg init                          # 1. cria grafo + configs (5s)
+mg add task --title "minha task" # 2. adiciona uma task qualquer
+mg next                          # 3. mostra a próxima — você está dentro do loop
+```
+
+Se isso fez sentido, pula direto pro [tour de 60 segundos](#tour-de-60-segundos) abaixo. Se não, continua lendo.
+
+## Pré-requisitos
 
 - Node.js ≥ 20 (`node --version`)
-- A terminal, a project directory
+- Um terminal e uma pasta de projeto
 
-That's it. No Docker, no cloud account, no sign-up.
+Só isso. Sem Docker, sem cloud, sem cadastro.
 
-## Install
+## Instalação
 
 ```bash
-npm install -g @mcp-graph-workflow/cli
+npm install -g @mcp-graph-workflow/mcp-graph    # servidor MCP (v10.x)
+npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (com o comando `mg`)
 ```
 
-(Or `curl -fsSL https://mcp-graph.dev/install.sh | sh` — same effect, with a friendly Node-detection check.)
+> Você precisa dos **dois pacotes**: o `mcp-graph` é o runtime (mantém o grafo), e o `cli@beta` é a porta `mg`. Sem o primeiro, `mg init` falha com `parent runtime not found`.
 
-## 60-second tour
+(Ou `curl -fsSL https://mcp-graph.dev/install.sh | sh` — mesmo efeito, com check amigável de Node.)
+
+## Tour de 60 segundos
 
 ```bash
-mkdir my-project && cd my-project
+mkdir meu-projeto && cd meu-projeto
 
-mg init                               # 5 sec — bootstrap graph + IDE configs
+mg init
+```
+
+Saída esperada:
+
+```
+✓ Stack detectado: TypeScript + Vitest
+✓ Criado workflow-graph/graph.db
+✓ Escrito .mcp.json (Claude Code, Cursor)
+✓ Escrito .vscode/mcp.json (Copilot)
+✓ Escrito .gitignore (3 linhas)
+✓ Escrito .claude/skills/ (15 skill files)
+```
+
+Agora adicione uma task e veja a próxima:
+
+```bash
 mg add task --title "fix login flow" --priority 2
 mg add task --title "write tests"     --priority 3
-mg next                               # ← see the next-up card
+mg next
 ```
 
-You should see something like:
+Saída esperada do `mg next`:
 
 ```
 ╭──────────────────────────────────────────────────────────────────────────────╮
@@ -36,99 +63,112 @@ You should see something like:
 │                                                                              │
 │ fix login flow                                                               │
 │                                                                              │
-│ type: task  ·  priority: 2                                                   │
+│ tipo: task  ·  prioridade: 2                                                 │
 │                                                                              │
 │ desbloqueada, alta prioridade                                                │
 │                                                                              │
-│ ▸ start it: mg start node_799f48ee8dfb  ·  see all: mg list                  │
+│ ▸ start: mg start node_799f48ee8dfb  ·  ver tudo: mg list                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-That's the whole loop. From here:
+Esse é o ciclo inteiro. A partir daqui:
 
 ```bash
-mg start node_799f48ee8dfb            # status → in_progress, render TDD checklist
-# ... do the work ...
-mg finish                             # status → done, suggest next
+mg start node_799f48ee8dfb            # status → in_progress, mostra checklist TDD
+# ... você implementa ...
+mg finish                             # status → done, sugere a próxima
 ```
 
-## Want the dashboard?
+## Quer importar um PRD em vez de criar tasks soltas?
+
+Use o exemplo do projeto (3 tasks já estruturadas):
+
+```bash
+curl -o PRD.md https://raw.githubusercontent.com/DiegoNogueiraDev/mcp-graph-workflow/master/docs/examples/sample-prd.md
+
+mg                       # entra no REPL
+> /import_prd ./PRD.md   # transforma o PRD em grafo
+> /list                  # vê todas as tasks geradas
+```
+
+## Quer o dashboard?
 
 ```bash
 mg ui
-# opens http://localhost:3000 — graph view, search, kanban
+# abre http://localhost:3000 — graph view, search, kanban
 ```
 
-Ctrl-C to stop.
+Ctrl+C para parar.
 
-## Want zero-intervention workflow?
+## Quer fluxo zero-intervenção?
 
 ```bash
 mg hooks install --profile balanced
 ```
 
-Three profiles, pick one:
+Três perfis, escolha um:
 
-| Profile | Hooks installed | When |
+| Perfil | Hooks instalados | Quando |
 |---|---|---|
-| `minimal` | 1 — `SessionStart` health banner | you want a sign of life, nothing more |
-| `balanced` *(recommended)* | 5 — `SessionStart`, pre-MCP-tool, post-edit harness scan, post-`finish_task` chain, `Stop` snapshot | daily work, opinionated defaults |
-| `aggressive` | 7 — balanced + post-`Bash` + `UserPromptSubmit` | maximum oversight, slightly chattier |
+| `minimal` | 1 — banner em `SessionStart` | você só quer um sinal de vida |
+| `balanced` *(recomendado)* | 5 — `SessionStart`, pre-MCP-tool, post-edit harness scan, post-`finish_task` chain, `Stop` snapshot | uso diário, defaults opinativos |
+| `aggressive` | 7 — balanced + post-`Bash` + `UserPromptSubmit` | supervisão máxima, um pouco mais barulhento |
 
-Hooks fire silently and log to `~/.mcp-graph/logs/hooks.jsonl`. Your existing Claude Code hooks are preserved.
+Hooks rodam em silêncio e logam em `~/.mcp-graph/logs/hooks.jsonl`. Seus hooks existentes do Claude Code são preservados.
 
-To turn off: `mg hooks uninstall` (idempotent). To check what's installed: `mg hooks status`.
+Para desligar: `mg hooks uninstall` (idempotente). Para checar o que está instalado: `mg hooks status`.
 
-## Want to try it without committing to a project?
+## Quer testar sem comprometer um projeto?
 
 ```bash
 mg demo
 ```
 
-Creates an ephemeral sandbox under `~/.mcp-graph/demos/<stamp>/` with a sample PRD already imported. Poke around for as long as you want; clean up later with `mg demo --cleanup` or `rm -rf <path>`.
+Cria um sandbox descartável em `~/.mcp-graph/demos/<stamp>/` com um PRD de exemplo já importado. Brinque o quanto quiser; limpe depois com `mg demo --cleanup` ou `rm -rf <pasta>`.
 
-## Verify what you have installed
+## Verificar o que você tem instalado
 
-Two commands, two answers:
+Dois comandos, duas respostas:
 
 ```bash
-mg --version           # 11.x.x-beta — the v11 CLI you just installed
-mcp-graph --version    # 10.x.x — the MCP server (parent runtime mg talks to)
+mg --version           # 11.x.x-beta — o CLI v11 que você acabou de instalar
+mcp-graph --version    # 10.x.x — o servidor MCP (runtime que o `mg` conversa)
 ```
 
-Both should print a version. If `mg --version` works but `mg init` errors with "parent runtime not found", install the server too: `npm install -g @mcp-graph-workflow/mcp-graph`.
+Os dois precisam responder versão. Se `mg --version` funciona mas `mg init` falha com `parent runtime not found`, instale também o servidor: `npm install -g @mcp-graph-workflow/mcp-graph`.
 
-## Three-mode invocation
+## Três modos de invocação
 
-Every command works three ways — same handler, three entry points:
+Cada comando funciona de três jeitos — mesmo handler, três portas de entrada:
 
-| Mode | How | When to use |
+| Modo | Como | Quando usar |
 |---|---|---|
-| **REPL** | `mg` then `/cmd` | daily interactive work |
-| **Shell** | `mg cmd` | scripts, CI, quick one-shots |
-| **Claude skill** | `/cmd` inside Claude Code | when already in an agent chat |
+| **REPL** | `mg` e depois `/cmd` | trabalho interativo do dia a dia |
+| **Shell** | `mg cmd` | scripts, CI, one-shot rápido |
+| **Skill do Claude** | `/cmd` dentro do Claude Code | quando já está num chat de agente |
 
-The Claude skills are auto-installed in your project by `mg init` (under `.claude/skills/`). Type `/` in Claude Code and you'll see them in the autocomplete list.
+As skills do Claude são auto-instaladas no seu projeto pelo `mg init` (em `.claude/skills/`). Digite `/` no Claude Code e elas aparecem no autocomplete.
 
-## What's next
+## Próximos passos
 
-- **Cheatsheet** — every command on one page: [CHEATSHEET.md](CHEATSHEET.md)
-- **Full guide** — concepts, lifecycle, three modes side-by-side: [GUIDE.md](GUIDE.md)
-- **Three modes side-by-side** — when to use Claude tool vs `mg` shell vs REPL slash: [v11 surface map](../guides/v11-cli-surface-map.md)
-- **Browse all commands** — `mg help` (or `mg help <fuzzy-query>`, e.g. `mg help auth`)
+- **Cheatsheet** — todos os comandos em uma página: [CHEATSHEET.md](CHEATSHEET.md)
+- **Guia completo** — conceitos, lifecycle, três modos lado a lado: [GUIDE.md](GUIDE.md)
+- **Três modos lado a lado** — quando usar tool do Claude vs `mg` shell vs slash do REPL: [mapa de superfície v11](../guides/v11-cli-surface-map.md)
+- **PRD de exemplo** — copie e teste: [sample-prd.md](../examples/sample-prd.md)
+- **Listar todos os comandos** — `mg help` (ou `mg help <busca>`, ex: `mg help auth`)
 
 ## Troubleshooting
 
-If `mg --version` works but `mg init` errors with "parent runtime not found", the parent npm package isn't installed yet:
+Se `mg --version` funciona mas `mg init` dá erro com "parent runtime not found", o pacote do servidor não foi instalado:
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-Or in a monorepo dev setup, build the parent project first (`npm --prefix path/to/parent run build`) and set `MG_PARENT_DIST=/abs/path/to/dist`.
+Ou em setup de monorepo dev: builde o parent primeiro (`npm --prefix path/para/parent run build`) e defina `MG_PARENT_DIST=/abs/path/to/dist`.
 
-For everything else: `docs/getting-started/TROUBLESHOOTING.md` or open an issue at https://github.com/diegonogueira/mcp-graph-workflow/issues.
+Para o resto: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) ou abra issue em https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues.
 
-## License
+## Licença
 
 AGPL-3.0-or-later · Copyright © 2026 Diego Lima Nogueira de Paula

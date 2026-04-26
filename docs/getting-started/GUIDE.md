@@ -46,6 +46,11 @@ Você (humano)
 - **+ mcp-graph (server):** dá **memória estruturada**. PRD vira grafo, lifecycle de 9 fases força disciplina, contexto comprimido entrega só o relevante.
 - **+ mg CLI (v11):** dá **acesso humano direto + automação invisível**. Você roda `mg next` sem gastar tokens, hooks configuram-se sozinhos, skill files reduzem alucinação.
 
+> **As 9 fases do lifecycle** (você não precisa decorar — `mg` te guia):
+> ANALYZE → DESIGN → PLAN → IMPLEMENT → VALIDATE → REVIEW → HANDOFF → DEPLOY → LISTENING.
+
+> **`unified-gate`**: o componente do mcp-graph que sincroniza múltiplos agentes mexendo no mesmo grafo — evita que dois Claude Code em paralelo brigem pela mesma task.
+
 ### Sem mcp-graph vs. com mcp-graph
 
 | Sem (Claude/Copilot direto) | Com mcp-graph |
@@ -142,12 +147,17 @@ mg add task --title "write tests"     --priority 3
 **Completo** — partir de um PRD:
 
 ```bash
+# Não tem PRD ainda? Use o exemplo do projeto:
+cp /caminho/para/mcp-graph-workflow/docs/examples/sample-prd.md ./PRD.md
+# ou baixe direto:
+curl -o PRD.md https://raw.githubusercontent.com/DiegoNogueiraDev/mcp-graph-workflow/master/docs/examples/sample-prd.md
+
 mg                                # entra no REPL
-> /import_prd ./PRD.md            # transforma o PRD em grafo
+> /import_prd ./PRD.md            # transforma o PRD em grafo (1 epic + 3 tasks)
 > /plan_sprint                    # decompõe em sprint baseado em DORA velocity
 ```
 
-> Não tem PRD ainda? Rode `mg demo` numa pasta separada — cria um sandbox com PRD exemplo e te deixa explorar.
+> Quer só explorar sem mexer em arquivo? Rode `mg demo` numa pasta separada — cria um sandbox com PRD exemplo e te deixa brincar.
 
 ### 4.3 — Fechar o ciclo
 
@@ -236,7 +246,9 @@ Você consegue fazer **a mesma operação** de três formas. A escolha é só **
 
 **REPL `/cmd`** — você abriu `mg`, está em sessão interativa. `/help` te mostra a paleta inteira, fuzzy search funciona, history navega com setas. Bom pra explorar o que existe.
 
-> Tabela completa de equivalência (todos os 20 comandos `mg` + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
+> ⚠️ **Cobertura `mg` (v11 beta)**: o CLI cobre o ciclo de vida (`init`, `start`, `finish`, `next`, `list`, `status`, `add`, `set-phase`) e ops (`hooks`, `ui`, `demo`, `login`). As demais ~45 tools (`analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban`, `import_prd`, `plan_sprint` etc.) continuam **só via MCP** — use dentro de Claude Code/Cursor via `mcp__mcp-graph__<nome>`.
+
+> Tabela completa de equivalência (todos os comandos `mg` + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
 
 ---
 

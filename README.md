@@ -5,8 +5,8 @@
 <h1 align="center">mcp-graph</h1>
 
 <p align="center">
-  <strong>Structured execution for AI-driven development workflows.</strong><br/>
-  Transforms requirement documents into persistent, agent-navigable task graphs.
+  <strong>Execução estruturada para workflows de desenvolvimento com IA.</strong><br/>
+  Transforma documentos de requisitos em grafos de tasks persistentes, navegáveis pelo agente.
 </p>
 
 <p align="center">
@@ -18,57 +18,61 @@
   <a href="COMMERCIAL.md"><img src="https://img.shields.io/badge/Commercial-available-informational" alt="Commercial license available"></a>
 </p>
 
-## What It Does
+## O que faz
 
-Three problems every AI coding session has:
+Três problemas que toda sessão de coding com IA tem:
 
-1. **Your agent forgets** — every new chat starts blank, the agent re-invents the plan from scratch.
-2. **PRDs become walls of text** — nobody re-reads them, the agent improvises features.
-3. **No paper trail** — you can't tell what got done, what blocked, or why a decision was made.
+1. **Seu agente esquece** — todo chat novo começa do zero, ele reinventa o plano cada vez.
+2. **PRDs viram paredes de texto** — ninguém relê, o agente improvisa as features.
+3. **Zero rastreabilidade** — você não consegue dizer o que foi feito, o que travou nem por que uma decisão foi tomada.
 
-`mcp-graph` fixes that. It turns your PRD into a persistent task graph the agent **navigates** instead of **improvises** — backed by local SQLite. No cloud, no LLM API key.
+`mcp-graph` resolve isso. Pega seu PRD, transforma num grafo de tasks persistente que o agente **navega** em vez de **improvisar** — tudo guardado em SQLite local. Sem cloud, sem chave de API de LLM.
 
-### How it fits with your AI CLI
+> 💡 **MCP** = Model Context Protocol. É o padrão que faz seu agente de IA (Claude Code, Cursor, Copilot) enxergar ferramentas externas como o mcp-graph. Você não precisa entender o protocolo — só saber que `.mcp.json` é o arquivo onde o agente descobre quais ferramentas estão disponíveis.
+
+### Como ele se encaixa com sua CLI de IA
 
 ```
-You (human)
- └─ AI CLI (Claude Code · Copilot CLI · Cursor)        ← agent runs here, has no memory
-    ├─ mcp-graph (MCP server, v10.x)                   ← structured memory: PRDs, graph, lifecycle
-    └─ mg CLI (v11 beta)                               ← human entry point, auto-hooks, skill files
-                                                       ↓
-                                  workflow-graph/graph.db (the project's "memory")
+Você (humano)
+ └─ CLI de IA (Claude Code · Copilot CLI · Cursor)        ← agente roda aqui, sem memória
+    ├─ mcp-graph (servidor MCP, v10.x)                    ← memória estruturada do projeto
+    └─ mg CLI (v11 beta)                                  ← porta humana + auto-hooks + skills
+                                                          ↓
+                                  workflow-graph/graph.db (a "memória" persistente)
 ```
 
-| Without mcp-graph | With mcp-graph |
+| Sem mcp-graph | Com mcp-graph |
 |---|---|
-| "Build me a SaaS" → chaos | PRD → atomic tasks with acceptance criteria |
-| Agent forgets between sessions | Persistent SQLite, compressed context handoff |
-| TDD optional, depends on the agent's mood | Hooks block commits without a test first |
-| Two parallel agents collide | `unified-gate` keeps them coordinated |
-| "Is it ready?" → guessing | `mg status` answers in 200ms |
+| "Faz um SaaS pra mim" → caos | PRD → tasks atômicas com critérios de aceite |
+| Agente esquece entre sessões | SQLite persistente, contexto comprimido entre sessões |
+| TDD opcional, depende do humor do agente | Hook bloqueia commit sem teste primeiro |
+| Dois agentes em paralelo brigam | `unified-gate` mantém ambos sincronizados |
+| "Tá pronto?" → adivinhação | `mg status` responde em 200ms |
 
-### A complete loop in 4 commands
+### Um ciclo completo em 4 comandos
 
 ```bash
-mg init                           # bootstrap graph + IDE configs
-mg add task --title "fix login"   # or: import a full PRD with import_prd <file>
-mg start <id>                     # status → in_progress, render TDD checklist
-mg finish                         # status → done, suggest next
+mg init                           # cria grafo + configs do IDE
+mg add task --title "fix login"   # ou: importar PRD inteiro com import_prd <arquivo>
+mg start <id>                     # status → in_progress, mostra checklist TDD
+mg finish                         # status → done, sugere a próxima
 ```
 
-Fully offline. Deterministic. Reproducible.
+> Não tem PRD ainda? Use [este exemplo](docs/examples/sample-prd.md) (login básico, ~3 tasks) para testar `import_prd` antes de escrever o seu.
 
-## Installation
+100% offline. Determinístico. Reproduzível.
 
-Two paths — pick one. v11 CLI is **opt-in** and **fully backward-compatible**: existing v10 setups keep working unchanged.
+## Instalação
 
-### Path 1 — MCP server only (stable, v10.x)
+Dois caminhos — escolha um. O CLI v11 é **opt-in** e **totalmente backward-compat**: instalações v10 existentes continuam funcionando sem mudar nada.
+
+### Caminho 1 — só servidor MCP (estável, **sem o CLI `mg`**)
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-Add to `.mcp.json` (Claude Code, Cursor, IntelliJ) or `.vscode/mcp.json` (Copilot):
+Adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (Copilot):
 
 ```json
 {
@@ -81,46 +85,49 @@ Add to `.mcp.json` (Claude Code, Cursor, IntelliJ) or `.vscode/mcp.json` (Copilo
 }
 ```
 
-In your agent: `init` → `import_prd <file>` → `plan_sprint` → `start_task` / `finish_task`.
+Dentro do seu agente: `init` → `import_prd <arquivo>` → `plan_sprint` → `start_task` / `finish_task`.
 
-### Path 2 — MCP server + v11 CLI (recommended for new projects)
+> ⚠️ **Neste caminho, o comando `mg` não é instalado.** Os exemplos `mg init`, `mg next` etc. mostrados acima e nos demais docs **não funcionam aqui** — você usa só as MCP tools dentro do seu agente. Se você quer o REPL `mg` e os hooks automáticos, escolha o **Caminho 2** abaixo.
+
+### Caminho 2 — servidor MCP + CLI `mg` (**recomendado para começar**)
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 npm install -g @mcp-graph-workflow/cli@beta
 ```
 
-Then in your project:
+No seu projeto:
 
 ```bash
-cd your-project
-mg init                                # graph + IDE configs + .claude/skills
-mg hooks install --profile balanced    # Claude Code automation (optional, recommended)
-mg                                     # interactive REPL — type /help to discover
+cd seu-projeto
+mg init                                # grafo + configs do IDE + .claude/skills
+mg hooks install --profile balanced    # automação do Claude Code (opcional, recomendado)
+mg                                     # REPL interativo — digite /help para descobrir
 ```
 
-**Requirements:** Node.js ≥ 18. No Docker, no external infra, no LLM API key.
+**Pré-requisitos:** Node.js ≥ 18. Sem Docker, sem infra externa, sem chave de API de LLM.
 
-## Documentation
+## Documentação
 
-Start here:
+Comece por aqui:
 
-- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 60-second tour with `mg`
-- **[Guide](docs/getting-started/GUIDE.md)** — full walkthrough (Portuguese)
-- **[Cheatsheet](docs/getting-started/CHEATSHEET.md)** — every command on one page
+- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 60 segundos com `mg`
+- **[Guia](docs/getting-started/GUIDE.md)** — passo a passo completo (PT-BR)
+- **[Cheatsheet](docs/getting-started/CHEATSHEET.md)** — todos os comandos em uma página
 
-Deep dives:
+Aprofunde:
 
-- **[v10 → v11 Surface Map](docs/guides/v11-cli-surface-map.md)** — three modes side-by-side: Claude tool, `mg` shell, REPL slash
-- **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — fix common issues
-- **[Glossary](docs/getting-started/GLOSSARY.md)** — terminology
+- **[Mapa de superfície v10 → v11](docs/guides/v11-cli-surface-map.md)** — três modos lado a lado: tool do Claude, shell `mg`, slash do REPL
+- **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — resolva problemas comuns
+- **[Glossário](docs/getting-started/GLOSSARY.md)** — vocabulário em linguagem clara
+- **[PRD de exemplo](docs/examples/sample-prd.md)** — para testar `import_prd` sem precisar escrever um PRD do zero
 
-## Research & Citation
+## Pesquisa & Citação
 
-This project is an active Master's research experiment (UNOPAR). For academic context, citation (BibTeX/ABNT), and the research hypothesis: see [`docs/_internal/RESEARCH.md`](docs/_internal/RESEARCH.md).
+Este projeto é um experimento ativo de pesquisa de Mestrado (UNOPAR). Para contexto acadêmico, citação (BibTeX/ABNT) e a hipótese de pesquisa: veja [`docs/_internal/RESEARCH.md`](docs/_internal/RESEARCH.md).
 
-## License
+## Licença
 
-- **Open Source:** [AGPL v3](LICENSE) — free for open-source and research use
-- **Commercial:** [Commercial license available](COMMERCIAL.md) for proprietary use
-- **Attribution:** [NOTICE.md](NOTICE.md) — original methodologies and required credits
+- **Open Source:** [AGPL v3](LICENSE) — gratuita para uso open-source e de pesquisa
+- **Comercial:** [licença comercial disponível](COMMERCIAL.md) para uso proprietário
+- **Atribuição:** [NOTICE.md](NOTICE.md) — metodologias originais e créditos requeridos

@@ -24,6 +24,8 @@ Tudo o que você precisa em uma página. Imprimível em A4.
 
 📎 Tabela completa (todos os 20 comandos + tools que continuam só MCP) em [v11-cli-surface-map.md](../guides/v11-cli-surface-map.md).
 
+> 📌 **Não está na tabela acima?** Tools como `analyze`, `validate`, `search`, `node`, `edge`, `metrics`, `journey`, `code_intelligence`, `kanban` etc. continuam **só via MCP** — o CLI `mg` não as expõe ainda. Use dentro de Claude Code/Cursor via `mcp__mcp-graph__<nome>`.
+
 **Quando usar cada modo:**
 
 | Modo | Quando | Custo de tokens |
