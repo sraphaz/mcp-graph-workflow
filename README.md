@@ -12,7 +12,6 @@
 <p align="center">
   <a href="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/actions/workflows/ci.yml"><img src="https://github.com/DiegoNogueiraDev/mcp-graph-workflow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.npmjs.com/package/@mcp-graph-workflow/mcp-graph"><img src="https://img.shields.io/npm/v/%40mcp-graph-workflow%2Fmcp-graph" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/@mcp-graph-workflow/cli"><img src="https://img.shields.io/npm/v/%40mcp-graph-workflow%2Fcli/beta?label=cli%20%40beta&color=orange" alt="cli @beta"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/%40mcp-graph-workflow%2Fmcp-graph" alt="Node.js"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
   <a href="COMMERCIAL.md"><img src="https://img.shields.io/badge/Commercial-available-informational" alt="Commercial license available"></a>
@@ -35,8 +34,7 @@ Três problemas que toda sessão de coding com IA tem:
 ```
 Você (humano)
  └─ CLI de IA (Claude Code · Copilot CLI · Cursor)        ← agente roda aqui, sem memória
-    ├─ mcp-graph (servidor MCP, v10.x)                    ← memória estruturada do projeto
-    └─ mcp-graph CLI (v11 beta)                                  ← porta humana + auto-hooks + skills
+    └─ mcp-graph (servidor MCP + CLI unificado, v12)      ← memória + porta humana + hooks + skills
                                                           ↓
                                   workflow-graph/graph.db (a "memória" persistente)
 ```
@@ -64,15 +62,13 @@ mcp-graph finish                         # status → done, sugere a próxima
 
 ## Instalação
 
-Dois caminhos — escolha um. O CLI v11 é **opt-in** e **totalmente backward-compat**: instalações v10 existentes continuam funcionando sem mudar nada.
-
-### Caminho 1 — só servidor MCP (estável, **sem o CLI `mcp-graph`**)
+Um único comando — pacote unificado v12 traz servidor MCP + CLI completo:
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-Adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (Copilot):
+Pra usar como MCP tool dentro do agente, adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (Copilot):
 
 ```json
 {
@@ -85,27 +81,18 @@ Adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (C
 }
 ```
 
-Dentro do seu agente: `init` → `import_prd <arquivo>` → `plan_sprint` → `start_task` / `finish_task`.
-
-> ⚠️ **Neste caminho, o comando `mcp-graph` não é instalado.** Os exemplos `mcp-graph init`, `mcp-graph next` etc. mostrados acima e nos demais docs **não funcionam aqui** — você usa só as MCP tools dentro do seu agente. Se você quer o REPL `mcp-graph` e os hooks automáticos, escolha o **Caminho 2** abaixo.
-
-### Caminho 2 — servidor MCP + CLI `mcp-graph` (**recomendado para começar**)
-
-```bash
-npm install -g @mcp-graph-workflow/mcp-graph
-npm install -g @mcp-graph-workflow/cli@beta
-```
-
-No seu projeto:
+Pra usar via terminal:
 
 ```bash
 cd seu-projeto
 mcp-graph init                                # grafo + configs do IDE + .claude/skills
 mcp-graph hooks install --profile balanced    # automação do Claude Code (opcional, recomendado)
-mcp-graph repl                         # REPL interativo — digite /help para descobrir
+mcp-graph repl                                # REPL interativo — digite /help para descobrir
 ```
 
 **Pré-requisitos:** Node.js ≥ 18. Sem Docker, sem infra externa, sem chave de API de LLM.
+
+> 📦 **Veio de v10.x ou v11.x-beta?** Veja o [guia de migração](docs/migration/mg-to-mcp-graph.md). v12 unifica os dois pacotes (`@mcp-graph-workflow/mcp-graph` e `@mcp-graph-workflow/cli`) sob um único bin `mcp-graph`. O comando `mg` foi removido (conflitava com `/usr/bin/mg` MicroEmacs no macOS).
 
 ## Documentação
 
