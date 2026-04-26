@@ -1,5 +1,21 @@
 # Changelog
 
+## [11.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.3.0...mcp-graph-v11.0.0) (2026-04-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** `mg` bin removed. The `@mcp-graph-workflow/cli` package no longer ships a binary. Migrate scripts/CI/aliases to `mcp-graph` per docs/migration/mg-to-mcp-graph.md.
+
+### Features
+
+* **cli:** unified mcp-graph bin — drop mg, ship v12.0 (PR 3/3) ([#254](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/254)) ([4d5fb1b](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4d5fb1b41b250b4420d8ec186223b30d76ebf048))
+
+
+### Bug Fixes
+
+* **cli:** cross-platform CI compat + remove mg deprecation legacy ([#256](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/256)) ([712fbf6](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/712fbf6e4c61cf0da3a146952788adda1314bf4f))
+
 ## [10.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v10.2.0...mcp-graph-v10.3.0) (2026-04-26)
 
 
