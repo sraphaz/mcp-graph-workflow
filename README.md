@@ -36,7 +36,7 @@ Três problemas que toda sessão de coding com IA tem:
 Você (humano)
  └─ CLI de IA (Claude Code · Copilot CLI · Cursor)        ← agente roda aqui, sem memória
     ├─ mcp-graph (servidor MCP, v10.x)                    ← memória estruturada do projeto
-    └─ mg CLI (v11 beta)                                  ← porta humana + auto-hooks + skills
+    └─ mcp-graph CLI (v11 beta)                                  ← porta humana + auto-hooks + skills
                                                           ↓
                                   workflow-graph/graph.db (a "memória" persistente)
 ```
@@ -47,15 +47,15 @@ Você (humano)
 | Agente esquece entre sessões | SQLite persistente, contexto comprimido entre sessões |
 | TDD opcional, depende do humor do agente | Hook bloqueia commit sem teste primeiro |
 | Dois agentes em paralelo brigam | `unified-gate` mantém ambos sincronizados |
-| "Tá pronto?" → adivinhação | `mg status` responde em 200ms |
+| "Tá pronto?" → adivinhação | `mcp-graph status` responde em 200ms |
 
 ### Um ciclo completo em 4 comandos
 
 ```bash
-mg init                           # cria grafo + configs do IDE
-mg add task --title "fix login"   # ou: importar PRD inteiro com import_prd <arquivo>
-mg start <id>                     # status → in_progress, mostra checklist TDD
-mg finish                         # status → done, sugere a próxima
+mcp-graph init                           # cria grafo + configs do IDE
+mcp-graph add task --title "fix login"   # ou: importar PRD inteiro com import_prd <arquivo>
+mcp-graph start <id>                     # status → in_progress, mostra checklist TDD
+mcp-graph finish                         # status → done, sugere a próxima
 ```
 
 > Não tem PRD ainda? Use [este exemplo](docs/examples/sample-prd.md) (login básico, ~3 tasks) para testar `import_prd` antes de escrever o seu.
@@ -66,7 +66,7 @@ mg finish                         # status → done, sugere a próxima
 
 Dois caminhos — escolha um. O CLI v11 é **opt-in** e **totalmente backward-compat**: instalações v10 existentes continuam funcionando sem mudar nada.
 
-### Caminho 1 — só servidor MCP (estável, **sem o CLI `mg`**)
+### Caminho 1 — só servidor MCP (estável, **sem o CLI `mcp-graph`**)
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
@@ -87,9 +87,9 @@ Adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (C
 
 Dentro do seu agente: `init` → `import_prd <arquivo>` → `plan_sprint` → `start_task` / `finish_task`.
 
-> ⚠️ **Neste caminho, o comando `mg` não é instalado.** Os exemplos `mg init`, `mg next` etc. mostrados acima e nos demais docs **não funcionam aqui** — você usa só as MCP tools dentro do seu agente. Se você quer o REPL `mg` e os hooks automáticos, escolha o **Caminho 2** abaixo.
+> ⚠️ **Neste caminho, o comando `mcp-graph` não é instalado.** Os exemplos `mcp-graph init`, `mcp-graph next` etc. mostrados acima e nos demais docs **não funcionam aqui** — você usa só as MCP tools dentro do seu agente. Se você quer o REPL `mcp-graph` e os hooks automáticos, escolha o **Caminho 2** abaixo.
 
-### Caminho 2 — servidor MCP + CLI `mg` (**recomendado para começar**)
+### Caminho 2 — servidor MCP + CLI `mcp-graph` (**recomendado para começar**)
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
@@ -100,9 +100,9 @@ No seu projeto:
 
 ```bash
 cd seu-projeto
-mg init                                # grafo + configs do IDE + .claude/skills
-mg hooks install --profile balanced    # automação do Claude Code (opcional, recomendado)
-mg                                     # REPL interativo — digite /help para descobrir
+mcp-graph init                                # grafo + configs do IDE + .claude/skills
+mcp-graph hooks install --profile balanced    # automação do Claude Code (opcional, recomendado)
+mcp-graph repl                         # REPL interativo — digite /help para descobrir
 ```
 
 **Pré-requisitos:** Node.js ≥ 18. Sem Docker, sem infra externa, sem chave de API de LLM.
@@ -111,13 +111,13 @@ mg                                     # REPL interativo — digite /help para d
 
 Comece por aqui:
 
-- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 60 segundos com `mg`
+- **[Quickstart](docs/getting-started/QUICKSTART.md)** — 60 segundos com `mcp-graph`
 - **[Guia](docs/getting-started/GUIDE.md)** — passo a passo completo (PT-BR)
 - **[Cheatsheet](docs/getting-started/CHEATSHEET.md)** — todos os comandos em uma página
 
 Aprofunde:
 
-- **[Mapa de superfície v10 → v11](docs/guides/v11-cli-surface-map.md)** — três modos lado a lado: tool do Claude, shell `mg`, slash do REPL
+- **[Mapa de superfície v10 → v11](docs/guides/v11-cli-surface-map.md)** — três modos lado a lado: tool do Claude, shell `mcp-graph`, slash do REPL
 - **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — resolva problemas comuns
 - **[Glossário](docs/getting-started/GLOSSARY.md)** — vocabulário em linguagem clara
 - **[PRD de exemplo](docs/examples/sample-prd.md)** — para testar `import_prd` sem precisar escrever um PRD do zero

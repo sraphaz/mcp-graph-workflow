@@ -60,41 +60,52 @@ npm install -g @mcp-graph-workflow/mcp-graph@latest
 
 ---
 
-## v11 CLI (`mg`)
+## v11 CLI (`mcp-graph`)
 
-### `mg: command not found`
+### `mcp-graph: command not found` (ou `mg: command not found`)
 
-**Causa:** você instalou o MCP server (`@mcp-graph-workflow/mcp-graph`) mas não o CLI v11 (`@mcp-graph-workflow/cli`). São dois pacotes separados.
+**Causa:** você instalou o MCP server (`@mcp-graph-workflow/mcp-graph`) mas não o CLI v11 (`@mcp-graph-workflow/cli`), ou nenhum dos dois.
 
 ```bash
-# Instalar a v11 CLI
+# Instalar os dois pacotes (recomendado)
+npm install -g @mcp-graph-workflow/mcp-graph
 npm install -g @mcp-graph-workflow/cli@beta
 
 # Verificar
-mg --version           # 11.x.x-beta
+mcp-graph --version           # 11.x.x-beta (CLI) ou 10.x.x (server)
 ```
 
-> 💡 v11 é **opt-in**. Se você prefere o fluxo v10 (Copilot CLI two-terminal), o MCP server sozinho é suficiente.
+> 💡 O comando `mcp-graph` é exposto pelos dois pacotes. Quando os dois estão instalados, o último a ser instalado vence (npm sobrescreve o symlink). Em v12.0 isso é resolvido — um único pacote unificado.
+
+### Migrei de `mg` pra `mcp-graph` — algo mudou?
+
+Não. **Mesmo handler, mesmo comportamento, só o nome mudou.**
+
+`mg` está sendo descontinuado em v12.0 porque colide com `/usr/bin/mg` (MicroEmacs) no macOS. Veja o [guia de migração completo](../migration/mg-to-mcp-graph.md) com mapeamento 1-pra-1 dos comandos.
+
+Em v11.3.0-beta, `mg` ainda funciona mas printa banner. Silencie temporariamente com `MG_NO_DEPRECATION_WARNING=1` se precisar (não recomendado — o banner é seu lembrete).
 
 ### Qual versão eu tenho?
 
-Dois pacotes, dois comandos:
-
 ```bash
-mg --version           # CLI v11 (entry point humano: REPL, hooks, skill files)
-mcp-graph --version    # MCP server v10.x (runtime que mantém o grafo)
+mcp-graph --version
+# pode mostrar:
+#   10.x.x         → você está usando o MCP server (commands: serve, import, stats, doctor, etc.)
+#   11.x.x-beta    → você está usando o CLI v11 (commands: start, finish, next, hooks, etc.)
 ```
 
-| Comando | Pacote | Adiciona |
+| Pacote | Bin | Adiciona |
 |---|---|---|
-| `mcp-graph` | `@mcp-graph-workflow/mcp-graph` | grafo persistente, ~54 tools MCP, dashboard |
-| `mg` | `@mcp-graph-workflow/cli@beta` | REPL Ink, hooks zero-config, skill files automáticos |
+| `@mcp-graph-workflow/mcp-graph` | `mcp-graph` | grafo persistente, ~54 tools MCP, dashboard, comandos v10 (serve, import, stats, doctor, etc.) |
+| `@mcp-graph-workflow/cli@beta` | `mcp-graph` (e `mg` legado) | REPL Ink, hooks zero-config, skill files, comandos v11 (start, finish, next, hooks, etc.) |
 
-`mg` precisa do MCP server instalado para funcionar — ele localiza o runtime via env override (`MCP_GRAPH_PATH`) → monorepo sibling → `node_modules` → erro amigável se não achar.
+Como os dois pacotes reivindicam o mesmo bin, `npm install -g` no segundo dá EEXIST. Use `--force` pra sobrescrever (o último vence). Em v12.0, o pacote unificado evita esse conflito.
+
+> O CLI v11 precisa do MCP server instalado pra funcionar — ele localiza o runtime via env override (`MG_PARENT_DIST`) → monorepo sibling → `node_modules` → erro amigável se não achar.
 
 ### Erro: `parent runtime not found`
 
-**Sintoma:** `mg --version` funciona mas `mg init` falha com `parent runtime not found`.
+**Sintoma:** `mcp-graph --version` funciona mas `mcp-graph init` falha com `parent runtime not found`.
 
 **Causa:** o pacote `@mcp-graph-workflow/mcp-graph` (parent runtime) não está instalado.
 
@@ -104,7 +115,7 @@ npm install -g @mcp-graph-workflow/mcp-graph
 
 Em monorepo de dev: build do parent primeiro (`npm --prefix path/to/parent run build`) e setar `MG_PARENT_DIST=/abs/path/to/dist`.
 
-### Aviso "numerical-convergence" no `mg start` (capability gate)
+### Aviso "numerical-convergence" no `mcp-graph start` (capability gate)
 
 **Sintoma:** ao começar uma task, aparece um warning como `capability gate: numerical-convergence`.
 
@@ -113,19 +124,19 @@ Em monorepo de dev: build do parent primeiro (`npm --prefix path/to/parent run b
 **O que fazer:**
 - **Sonnet/Opus**: ignore o aviso, esses modelos lidam bem com o tipo de task.
 - **Haiku**: considere trocar pra Sonnet 4.6+ pra essa task específica, ou aceitar o risco e seguir.
-- **Desligar o aviso por completo**: `mg set-phase IMPLEMENT --code-intel advisory` (vira advisory) ou `--code-intel off`.
+- **Desligar o aviso por completo**: `mcp-graph set-phase IMPLEMENT --code-intel advisory` (vira advisory) ou `--code-intel off`.
 
 > O gate é opcionado em duas dimensões: tipo da task (estrutura/CRUD/REST → "World 1", seguro pra qualquer modelo) e tipo de teste (otimização numérica → "World 2", exige modelo capaz). É o teste que decide o fit do modelo, não o modelo em si.
 
 ### Hooks instalados mas não disparam
 
-**Sintoma:** rodou `mg hooks install --profile balanced` mas Claude Code não exibe o banner em SessionStart, ou os hooks não rodam em edits.
+**Sintoma:** rodou `mcp-graph hooks install --profile balanced` mas Claude Code não exibe o banner em SessionStart, ou os hooks não rodam em edits.
 
 **Diagnóstico em ordem:**
 
 ```bash
 # 1. Confirmar status
-mg hooks status
+mcp-graph hooks status
 
 # 2. Conferir que o arquivo foi escrito
 cat .claude/settings.local.json | grep -A2 SessionStart
@@ -134,17 +145,17 @@ cat .claude/settings.local.json | grep -A2 SessionStart
 echo $MCP_GRAPH_HOOKS_OFF      # se "1", desligado intencionalmente — limpe: unset MCP_GRAPH_HOOKS_OFF
 
 # 4. Logs estruturados
-mg log --tail
+mcp-graph log --tail
 # ou diretamente
 tail -f ~/.mcp-graph/logs/hooks.jsonl
 ```
 
 **Causas comuns:**
 - Claude Code precisa **reabrir** a sessão depois de instalar hooks novos
-- `.claude/settings.local.json` está em `.gitignore` mas escrito em outro pasta — confirme que rodou `mg hooks install` no root do projeto, não em subpasta
+- `.claude/settings.local.json` está em `.gitignore` mas escrito em outro pasta — confirme que rodou `mcp-graph hooks install` no root do projeto, não em subpasta
 - `MCP_GRAPH_HOOKS_OFF=1` está exportado no shell profile (`.zshrc`/`.bashrc`)
 
-**Fix universal:** `mg hooks uninstall && mg hooks install --profile balanced` e reabra Claude Code.
+**Fix universal:** `mcp-graph hooks uninstall && mcp-graph hooks install --profile balanced` e reabra Claude Code.
 
 ---
 

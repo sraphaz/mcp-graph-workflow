@@ -3,9 +3,9 @@
 Três comandos e você está rodando:
 
 ```bash
-mg init                          # 1. cria grafo + configs (5s)
-mg add task --title "minha task" # 2. adiciona uma task qualquer
-mg next                          # 3. mostra a próxima — você está dentro do loop
+mcp-graph init                          # 1. cria grafo + configs (5s)
+mcp-graph add task --title "minha task" # 2. adiciona uma task qualquer
+mcp-graph next                          # 3. mostra a próxima — você está dentro do loop
 ```
 
 Se isso fez sentido, pula direto pro [tour de 60 segundos](#tour-de-60-segundos) abaixo. Se não, continua lendo.
@@ -21,10 +21,10 @@ Só isso. Sem Docker, sem cloud, sem cadastro.
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph    # servidor MCP (v10.x)
-npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (com o comando `mg`)
+npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (com o comando `mcp-graph`)
 ```
 
-> Você precisa dos **dois pacotes**: o `mcp-graph` é o runtime (mantém o grafo), e o `cli@beta` é a porta `mg`. Sem o primeiro, `mg init` falha com `parent runtime not found`.
+> Você precisa dos **dois pacotes**: o `mcp-graph` é o runtime (mantém o grafo), e o `cli@beta` é a porta `mcp-graph`. Sem o primeiro, `mcp-graph init` falha com `parent runtime not found`.
 
 (Ou `curl -fsSL https://mcp-graph.dev/install.sh | sh` — mesmo efeito, com check amigável de Node.)
 
@@ -33,7 +33,7 @@ npm install -g @mcp-graph-workflow/cli@beta     # CLI v11 (com o comando `mg`)
 ```bash
 mkdir meu-projeto && cd meu-projeto
 
-mg init
+mcp-graph init
 ```
 
 Saída esperada:
@@ -50,12 +50,12 @@ Saída esperada:
 Agora adicione uma task e veja a próxima:
 
 ```bash
-mg add task --title "fix login flow" --priority 2
-mg add task --title "write tests"     --priority 3
-mg next
+mcp-graph add task --title "fix login flow" --priority 2
+mcp-graph add task --title "write tests"     --priority 3
+mcp-graph next
 ```
 
-Saída esperada do `mg next`:
+Saída esperada do `mcp-graph next`:
 
 ```
 ╭──────────────────────────────────────────────────────────────────────────────╮
@@ -67,16 +67,16 @@ Saída esperada do `mg next`:
 │                                                                              │
 │ desbloqueada, alta prioridade                                                │
 │                                                                              │
-│ ▸ start: mg start node_799f48ee8dfb  ·  ver tudo: mg list                    │
+│ ▸ start: mcp-graph start node_799f48ee8dfb  ·  ver tudo: mcp-graph list                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Esse é o ciclo inteiro. A partir daqui:
 
 ```bash
-mg start node_799f48ee8dfb            # status → in_progress, mostra checklist TDD
+mcp-graph start node_799f48ee8dfb            # status → in_progress, mostra checklist TDD
 # ... você implementa ...
-mg finish                             # status → done, sugere a próxima
+mcp-graph finish                             # status → done, sugere a próxima
 ```
 
 ## Quer importar um PRD em vez de criar tasks soltas?
@@ -86,7 +86,7 @@ Use o exemplo do projeto (3 tasks já estruturadas):
 ```bash
 curl -o PRD.md https://raw.githubusercontent.com/DiegoNogueiraDev/mcp-graph-workflow/master/docs/examples/sample-prd.md
 
-mg                       # entra no REPL
+mcp-graph repl           # entra no REPL
 > /import_prd ./PRD.md   # transforma o PRD em grafo
 > /list                  # vê todas as tasks geradas
 ```
@@ -94,7 +94,7 @@ mg                       # entra no REPL
 ## Quer o dashboard?
 
 ```bash
-mg ui
+mcp-graph ui
 # abre http://localhost:3000 — graph view, search, kanban
 ```
 
@@ -103,7 +103,7 @@ Ctrl+C para parar.
 ## Quer fluxo zero-intervenção?
 
 ```bash
-mg hooks install --profile balanced
+mcp-graph hooks install --profile balanced
 ```
 
 Três perfis, escolha um:
@@ -116,26 +116,26 @@ Três perfis, escolha um:
 
 Hooks rodam em silêncio e logam em `~/.mcp-graph/logs/hooks.jsonl`. Seus hooks existentes do Claude Code são preservados.
 
-Para desligar: `mg hooks uninstall` (idempotente). Para checar o que está instalado: `mg hooks status`.
+Para desligar: `mcp-graph hooks uninstall` (idempotente). Para checar o que está instalado: `mcp-graph hooks status`.
 
 ## Quer testar sem comprometer um projeto?
 
 ```bash
-mg demo
+mcp-graph demo
 ```
 
-Cria um sandbox descartável em `~/.mcp-graph/demos/<stamp>/` com um PRD de exemplo já importado. Brinque o quanto quiser; limpe depois com `mg demo --cleanup` ou `rm -rf <pasta>`.
+Cria um sandbox descartável em `~/.mcp-graph/demos/<stamp>/` com um PRD de exemplo já importado. Brinque o quanto quiser; limpe depois com `mcp-graph demo --cleanup` ou `rm -rf <pasta>`.
 
 ## Verificar o que você tem instalado
 
 Dois comandos, duas respostas:
 
 ```bash
-mg --version           # 11.x.x-beta — o CLI v11 que você acabou de instalar
-mcp-graph --version    # 10.x.x — o servidor MCP (runtime que o `mg` conversa)
+mcp-graph --version           # 11.x.x-beta — o CLI v11 que você acabou de instalar
+mcp-graph --version    # 10.x.x — o servidor MCP (runtime que o `mcp-graph` conversa)
 ```
 
-Os dois precisam responder versão. Se `mg --version` funciona mas `mg init` falha com `parent runtime not found`, instale também o servidor: `npm install -g @mcp-graph-workflow/mcp-graph`.
+Os dois precisam responder versão. Se `mcp-graph --version` funciona mas `mcp-graph init` falha com `parent runtime not found`, instale também o servidor: `npm install -g @mcp-graph-workflow/mcp-graph`.
 
 ## Três modos de invocação
 
@@ -143,23 +143,23 @@ Cada comando funciona de três jeitos — mesmo handler, três portas de entrada
 
 | Modo | Como | Quando usar |
 |---|---|---|
-| **REPL** | `mg` e depois `/cmd` | trabalho interativo do dia a dia |
-| **Shell** | `mg cmd` | scripts, CI, one-shot rápido |
+| **REPL** | `mcp-graph` e depois `/cmd` | trabalho interativo do dia a dia |
+| **Shell** | `mcp-graph cmd` | scripts, CI, one-shot rápido |
 | **Skill do Claude** | `/cmd` dentro do Claude Code | quando já está num chat de agente |
 
-As skills do Claude são auto-instaladas no seu projeto pelo `mg init` (em `.claude/skills/`). Digite `/` no Claude Code e elas aparecem no autocomplete.
+As skills do Claude são auto-instaladas no seu projeto pelo `mcp-graph init` (em `.claude/skills/`). Digite `/` no Claude Code e elas aparecem no autocomplete.
 
 ## Próximos passos
 
 - **Cheatsheet** — todos os comandos em uma página: [CHEATSHEET.md](CHEATSHEET.md)
 - **Guia completo** — conceitos, lifecycle, três modos lado a lado: [GUIDE.md](GUIDE.md)
-- **Três modos lado a lado** — quando usar tool do Claude vs `mg` shell vs slash do REPL: [mapa de superfície v11](../guides/v11-cli-surface-map.md)
+- **Três modos lado a lado** — quando usar tool do Claude vs `mcp-graph` shell vs slash do REPL: [mapa de superfície v11](../guides/v11-cli-surface-map.md)
 - **PRD de exemplo** — copie e teste: [sample-prd.md](../examples/sample-prd.md)
-- **Listar todos os comandos** — `mg help` (ou `mg help <busca>`, ex: `mg help auth`)
+- **Listar todos os comandos** — `mcp-graph help` (ou `mcp-graph help <busca>`, ex: `mcp-graph help auth`)
 
 ## Troubleshooting
 
-Se `mg --version` funciona mas `mg init` dá erro com "parent runtime not found", o pacote do servidor não foi instalado:
+Se `mcp-graph --version` funciona mas `mcp-graph init` dá erro com "parent runtime not found", o pacote do servidor não foi instalado:
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph

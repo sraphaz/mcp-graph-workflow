@@ -12,6 +12,7 @@
  * `mg --help`         → help flag
  */
 
+import { basename } from "node:path";
 import { render } from "ink";
 import { ReplApp } from "./repl/host.js";
 import { registerBuiltinCommands } from "./commands/builtins.js";
@@ -22,6 +23,36 @@ import {
 import { listCommands } from "./commands/registry.js";
 import { resolveLang, setActiveLang, t } from "./i18n/index.js";
 import { VERSION } from "./meta.js";
+
+/**
+ * Print deprecation banner when invoked via `mg` (vs `mcp-graph`).
+ *
+ * Why: the `mg` bin collides with `/usr/bin/mg` (MicroEmacs) on macOS, and
+ * keeping two bin names for the same binary creates the EEXIST install
+ * conflict with the v10 server package. Both issues go away in v12 when
+ * `mg` is removed. This banner gives users one full minor cycle to migrate.
+ *
+ * Silence with `MG_NO_DEPRECATION_WARNING=1`.
+ */
+function printMgDeprecationBanner(): void {
+  if (process.env.MG_NO_DEPRECATION_WARNING === "1") return;
+  if (!process.stderr.isTTY) return;
+
+  const invokedAs = basename(process.argv[1] ?? "");
+  // Only fire for `mg` invocations. `mcp-graph` users are already on the
+  // canonical bin and don't need the warning.
+  if (invokedAs !== "mg") return;
+
+  const lines = [
+    "",
+    "⚠️  WARNING: `mg` will be removed in v12.0.",
+    "    Migrate to `mcp-graph` — same handlers, single bin, no macOS conflict.",
+    "    See: https://github.com/DiegoNogueiraDev/mcp-graph-workflow/blob/master/docs/migration/mg-to-mcp-graph.md",
+    "    Silence: export MG_NO_DEPRECATION_WARNING=1",
+    "",
+  ];
+  process.stderr.write(lines.join("\n"));
+}
 
 async function runShellCommand(
   argv: string[],
@@ -131,6 +162,7 @@ function runShellHelp(): number {
 }
 
 async function main(): Promise<number> {
+  printMgDeprecationBanner();
   registerBuiltinCommands();
 
   const argv = process.argv.slice(2);
