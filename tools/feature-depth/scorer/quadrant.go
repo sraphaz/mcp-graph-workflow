@@ -74,10 +74,12 @@ func structuralHealth(m ModuleScore) float64 {
 
 	lcomScore := clampQ(100.0-float64(m.Analysis.LCOM.LCOM4-1)*25.0, 0, 100)
 
-	graphScore := 100.0
-	graphScore -= float64(m.Analysis.DepGraph.CycleCount) * 15.0
-	graphScore -= float64(m.Analysis.DepGraph.BidirectionalDeps) * 10.0
-	graphScore = clampQ(graphScore, 0, 100)
+	// Centrality-aware graph health (see scorer/graph_health.go).
+	graphScore := graphHealthScore(
+		m.Analysis.DepGraph.CycleCount,
+		m.Analysis.DepGraph.BidirectionalDeps,
+		m.Analysis.DepGraph.GraphCentrality,
+	)
 
 	return (martinScore + lcomScore + graphScore) / 3.0
 }

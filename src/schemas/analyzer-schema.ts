@@ -56,8 +56,11 @@ export const OrphanNodeSchema = z.object({
 export const CoverageMatrixSchema = z.object({
   requirementsToTasks: z.number().min(0).max(100),
   tasksToAc: z.number().min(0).max(100),
-  orphanRequirements: z.number(),
+  /** §BUG-06-A — count of requirement-type orphan nodes (renamed from orphanRequirements). */
+  orphanRequirementsCount: z.number(),
   orphanTasks: z.number(),
+  /** §BUG-06-A — count of requirements without decision/constraint edges. */
+  traceabilityWarning: z.number(),
 });
 
 export const ScopeAnalysisSchema = z.object({
@@ -66,6 +69,8 @@ export const ScopeAnalysisSchema = z.object({
   coverage: CoverageMatrixSchema,
   conflicts: z.array(z.string()),
   summary: z.string(),
+  /** §BUG-06-A — top-level alias of coverage.orphanRequirements. */
+  orphanRequirementsCount: z.number(),
 });
 
 export type ScopeAnalysis = z.infer<typeof ScopeAnalysisSchema>;

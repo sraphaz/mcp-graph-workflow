@@ -139,8 +139,12 @@ function generateTestMatrix(spec: StateMachineSpec, slug: string): string {
 
   const transitionMap = new Map<string, Map<string, string>>();
   for (const t of spec.transitions) {
-    if (!transitionMap.has(t.from)) transitionMap.set(t.from, new Map());
-    transitionMap.get(t.from)!.set(t.event, t.to);
+    let inner = transitionMap.get(t.from);
+    if (!inner) {
+      inner = new Map();
+      transitionMap.set(t.from, inner);
+    }
+    inner.set(t.event, t.to);
   }
 
   const testCases: string[] = [];

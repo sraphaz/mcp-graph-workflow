@@ -60,7 +60,7 @@ describe("buildTraceabilityMatrix", () => {
     expect(report.matrix).toHaveLength(0);
     // With orphan decision, coverage is less than 100%
     expect(report.coverageRate).toBe(0);
-    expect(report.orphanRequirements).toHaveLength(0);
+    expect(report.uncoveredRequirements).toHaveLength(0);
     expect(report.orphanDecisions).toHaveLength(1);
   });
 
@@ -72,7 +72,7 @@ describe("buildTraceabilityMatrix", () => {
     const report = buildTraceabilityMatrix(doc);
     expect(report.matrix).toHaveLength(1);
     expect(report.matrix[0].coverage).toBe("none");
-    expect(report.orphanRequirements).toContain("req1");
+    expect(report.uncoveredRequirements).toContain("req1");
     expect(report.coverageRate).toBe(0);
   });
 
@@ -173,7 +173,7 @@ describe("buildTraceabilityMatrix", () => {
     // totalItems = 3 reqs + 1 dec = 4, linkedItems = 2 covered reqs + 1 linked dec = 3
     // coverageRate = 3/4 = 75%
     expect(report.coverageRate).toBe(75);
-    expect(report.orphanRequirements).toContain("req3");
+    expect(report.uncoveredRequirements).toContain("req3");
   });
 
   it("should handle graph with no edges", () => {
@@ -184,7 +184,7 @@ describe("buildTraceabilityMatrix", () => {
     ]);
     const report = buildTraceabilityMatrix(doc);
     expect(report.coverageRate).toBe(0);
-    expect(report.orphanRequirements).toHaveLength(2);
+    expect(report.uncoveredRequirements).toHaveLength(2);
     expect(report.orphanDecisions).toHaveLength(1);
   });
 

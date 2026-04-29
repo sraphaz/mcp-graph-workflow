@@ -87,6 +87,22 @@ export function analyzeScope(doc: GraphDocument): ScopeAnalysis {
       nodes.some((n) => n.type === "acceptance_criteria" && n.parentId === t.id),
   );
 
+  // §BUG-06-A — Field renamed: orphanRequirements → orphanRequirementsCount
+  // (number of requirement-type orphans). traceabilityWarning counts
+  // requirements without decision/constraint edges.
+  const orphanRequirementsCount = orphans.filter((o) => REQUIREMENT_TYPES.has(o.type)).length;
+  const decisionConstraintEdgeFroms = new Set(
+    edges
+      .filter((e) => {
+        const tgt = nodes.find((n) => n.id === e.to);
+        return tgt && (tgt.type === "decision" || tgt.type === "constraint");
+      })
+      .map((e) => e.from),
+  );
+  const traceabilityWarning = reqNodes.filter(
+    (r) => !decisionConstraintEdgeFroms.has(r.id),
+  ).length;
+
   const coverage: CoverageMatrix = {
     requirementsToTasks: reqNodes.length > 0
       ? Math.round((reqsWithTasks.length / reqNodes.length) * 100)
@@ -94,8 +110,9 @@ export function analyzeScope(doc: GraphDocument): ScopeAnalysis {
     tasksToAc: tasks.length > 0
       ? Math.round((tasksWithAc.length / tasks.length) * 100)
       : 100,
-    orphanRequirements: orphans.filter((o) => REQUIREMENT_TYPES.has(o.type)).length,
+    orphanRequirementsCount,
     orphanTasks: orphans.filter((o) => TASK_TYPES.has(o.type)).length,
+    traceabilityWarning,
   };
 
   // ── Conflicts (simple keyword contradiction detection) ──
@@ -138,5 +155,5 @@ export function analyzeScope(doc: GraphDocument): ScopeAnalysis {
 
   logger.info("scope-analyzer", { orphans: orphans.length, cycles: cycles.length, conflicts: conflicts.length });
 
-  return { orphans, cycles, coverage, conflicts, summary };
+  return { orphans, cycles, coverage, conflicts, summary, orphanRequirementsCount };
 }

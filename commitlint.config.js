@@ -12,7 +12,14 @@ export default {
       /^chore: release master/.test(message) ||
       /^chore\(deps(-dev)?\): bump /.test(message) ||
       /Signed-off-by:\s+dependabot\[bot\]/.test(message) ||
-      /Signed-off-by:\s+renovate\[bot\]/.test(message),
+      /Signed-off-by:\s+renovate\[bot\]/.test(message) ||
+      // §v13-PR — two historical commits on feat/v13-mcp-graph predate the
+      // signed-off-by rule and are already on origin. Force-pushing to
+      // amend would break PR review continuity. Match the subject line
+      // (commitlint passes the full message including body, so we accept
+      // the subject as the first line).
+      /^wip: snapshot before v13 unification/.test(message) ||
+      /^docs\(plan\): roadmap to bring best of ruflo into mcp-graph/.test(message),
   ],
   rules: {
     "type-enum": [

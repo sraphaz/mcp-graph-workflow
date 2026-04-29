@@ -64,6 +64,7 @@ export async function registerAllTools(
   if (visible("context")) (await import("./context.js")).registerContext(server, store);
   if (visible("search")) (await import("./search.js")).registerSearch(server, store);
   if (visible("analyze")) (await import("./analyze.js")).registerAnalyze(server, store);
+  if (visible("evolve")) (await import("./evolve.js")).registerEvolve(server, store);
   if (visible("graph_lifecycle")) (await import("./graph-lifecycle.js")).registerGraphLifecycle(server, store);
   if (visible("graph_materialize")) (await import("./graph-materialize.js")).registerGraphMaterialize(server, store);
   if (visible("graph_validate_ui")) (await import("./graph-validate-ui.js")).registerGraphValidateUi(server);

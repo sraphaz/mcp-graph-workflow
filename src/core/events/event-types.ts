@@ -112,7 +112,10 @@ export type GraphEventType =
   | "ots:confirmed"
   | "ots:retry_scheduled"
   // v11 Context-Pollination events (Task 1.3)
-  | "subtask_artifact:created";
+  | "subtask_artifact:created"
+  // Memory pressure events (EPIC 12 — Memory & CPU Guard)
+  | "memory:pressure_warning"
+  | "memory:pressure_critical";
 
 export interface GraphEvent {
   type: GraphEventType;

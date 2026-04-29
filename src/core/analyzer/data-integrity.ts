@@ -32,6 +32,14 @@ export interface DataIntegrityReport {
   tables: Array<{ nodeId: string; title: string; valid: boolean; issues: string[] }>;
   totalTables: number;
   validCount: number;
+  /**
+   * Set to `true` when the graph has zero `data_table` nodes — signals the
+   * caller that schema validation cannot run until tables are registered.
+   * Absent (undefined) when at least one `data_table` node exists.
+   */
+  registrationRequired?: boolean;
+  /** Human-readable guidance paired with `registrationRequired`. */
+  message?: string;
 }
 
 interface RowPreview {
@@ -52,6 +60,17 @@ const PROBABILITY_EPSILON = 0.05;
 
 export function analyzeDataIntegrity(doc: GraphDocument): DataIntegrityReport {
   const tableNodes = doc.nodes.filter((n) => n.type === "data_table");
+
+  if (tableNodes.length === 0) {
+    return {
+      tables: [],
+      totalTables: 0,
+      validCount: 0,
+      registrationRequired: true,
+      message:
+        "0 data_table nodes found — add nodes of type 'data_table' with 'columns' in metadata to enable schema validation",
+    };
+  }
 
   const tables: DataIntegrityReport["tables"] = [];
   let validCount = 0;

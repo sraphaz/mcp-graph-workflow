@@ -33,6 +33,36 @@ import { tokenize } from "../search/tokenizer.js";
 import { generateEmbedding } from "./embedding-generator.js";
 import { logger } from "../utils/logger.js";
 
+/** Chunk size for embedding batch processing — configurable via env to tune GC pressure. */
+export const EMBEDDING_BATCH_SIZE: number = (() => {
+  const v = parseInt(process.env["EMBEDDING_BATCH_SIZE"] ?? "", 10);
+  return Number.isFinite(v) && v > 0 ? v : 50;
+})();
+
+/**
+ * Process `items` in chunks of `chunkSize`, calling `fn` on each item.
+ * Yields to the event loop with `setImmediate` between chunks so GC can run
+ * and other MCP requests can progress during large embedding indexing jobs.
+ */
+export async function batchProcess<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  chunkSize: number = EMBEDDING_BATCH_SIZE,
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    for (const item of chunk) {
+      results.push(await fn(item));
+    }
+    // Yield between chunks (not after the last one — no point waiting with nothing queued)
+    if (i + chunkSize < items.length) {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    }
+  }
+  return results;
+}
+
 // ── TF-IDF Vectorizer ───────────────────────────
 
 /**
@@ -307,10 +337,12 @@ export async function indexAllEmbeddings(
   logger.debug("rag:fit+embed:all:tfidf", { vocabSize: vectorizer.vocabSize, indexedNodes, indexedKnowledge, durationMs: tfidfDurationMs });
 
   // ONNX embedding pass — generate 384-dim neural embeddings alongside TF-IDF
+  // Uses batchProcess with EMBEDDING_BATCH_SIZE chunks + setImmediate yield between
+  // chunks to prevent GC stalls and allow other MCP requests to progress.
   const t1 = performance.now();
   let onnxIndexed = 0;
   let onnxFailed = 0;
-  for (const doc of allDocuments) {
+  await batchProcess(allDocuments, async (doc) => {
     try {
       const onnxVec = await generateEmbedding(doc.text);
       const allZero = onnxVec.every(v => v === 0);
@@ -328,7 +360,7 @@ export async function indexAllEmbeddings(
     } catch {
       onnxFailed++;
     }
-  }
+  });
   const onnxDurationMs = Math.round(performance.now() - t1);
   if (onnxFailed > 0 && allDocuments.length > 0 && onnxFailed / allDocuments.length > 0.5) {
     logger.warn("rag:onnx:high-failure-rate", { onnxFailed, total: allDocuments.length, failureRate: Math.round((onnxFailed / allDocuments.length) * 100) });

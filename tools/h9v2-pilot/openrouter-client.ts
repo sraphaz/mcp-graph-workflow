@@ -12,6 +12,16 @@
 
 import { loadApiKey, maskKey } from "./load-key.js";
 
+let _deprecationWarned = false;
+function _warnDeprecated(): void {
+  if (_deprecationWarned) return;
+  _deprecationWarned = true;
+  console.warn(
+    "[h9v2-pilot/openrouter-client] deprecated — use src/core/llm/adapters/openrouter.ts instead",
+  );
+}
+_warnDeprecated();
+
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_TIMEOUT_MS = 120_000;
 

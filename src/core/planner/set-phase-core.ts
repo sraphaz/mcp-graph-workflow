@@ -42,6 +42,7 @@ export type SetPhaseInput = {
   readonly maxInFlight?: number;
   readonly autopilot?: boolean;
   readonly sprintId?: string;
+  readonly caveman?: boolean;
 };
 
 export type SetPhaseSuccess = {
@@ -56,6 +57,7 @@ export type SetPhaseSuccess = {
   readonly phaseSummaryIndexed?: boolean;
   readonly cacheInvalidated?: boolean;
   readonly autopilot?: Record<string, unknown>;
+  readonly caveman?: boolean;
 };
 
 export type SetPhaseBlocked = {
@@ -80,7 +82,13 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     maxInFlight,
     autopilot,
     sprintId,
+    caveman,
   } = input;
+
+  if (caveman !== undefined) {
+    store.setProjectSetting("caveman_mode", caveman ? "on" : "off");
+    logger.info("set_phase_core:caveman_changed", { caveman });
+  }
 
   logger.debug("set_phase_core", {
     phase,
@@ -288,5 +296,6 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     phaseSummaryIndexed,
     ...(cacheInvalidated ? { cacheInvalidated } : {}),
     ...(autopilotResult ? { autopilot: autopilotResult } : {}),
+    ...(caveman !== undefined ? { caveman } : {}),
   };
 }

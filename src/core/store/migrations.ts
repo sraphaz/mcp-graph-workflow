@@ -1766,6 +1766,448 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_fd_module ON feature_depth_baselines(project_id, module);
     `,
   },
+  {
+    version: 66,
+    description: "knowledge_docs_project index — enables efficient per-project FTS5 post-filter; prevents full-table scan in multi-project daemons",
+    sql: `
+      CREATE INDEX IF NOT EXISTS knowledge_docs_project ON knowledge_documents(project_id);
+    `,
+  },
+  {
+    version: 67,
+    description: "embeddings table: add embedding_blob (BLOB) and vector_dim (INT) columns for ONNX dense-vector storage alongside legacy TF-IDF float arrays",
+    sql: `
+      CREATE TABLE IF NOT EXISTS embeddings (
+        id             TEXT PRIMARY KEY,
+        source         TEXT NOT NULL,
+        source_id      TEXT NOT NULL,
+        text           TEXT NOT NULL,
+        embedding      BLOB NOT NULL,
+        embedding_type TEXT NOT NULL DEFAULT 'tfidf',
+        created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+        embedding_blob BLOB,
+        vector_dim     INTEGER
+      );
+    `,
+  },
+  {
+    version: 68,
+    description: "EPIC 5 Self-Learning: agent_performance (per-agent score + decay) and reasoning_trajectories (ReasoningBank) tables",
+    sql: `
+      CREATE TABLE IF NOT EXISTS agent_performance (
+        id           TEXT PRIMARY KEY,
+        project_id   TEXT NOT NULL REFERENCES projects(id),
+        agent_name   TEXT NOT NULL,
+        task_kind    TEXT NOT NULL,
+        harness_score REAL NOT NULL DEFAULT 0,
+        samples      INTEGER NOT NULL DEFAULT 0,
+        last_used_ts TEXT NOT NULL,
+        decay_factor REAL NOT NULL DEFAULT 1.0,
+        created_at   TEXT NOT NULL,
+        updated_at   TEXT NOT NULL,
+        UNIQUE (project_id, agent_name, task_kind)
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_perf_project ON agent_performance(project_id);
+      CREATE INDEX IF NOT EXISTS idx_agent_perf_kind    ON agent_performance(project_id, task_kind);
+
+      CREATE TABLE IF NOT EXISTS reasoning_trajectories (
+        id           TEXT PRIMARY KEY,
+        project_id   TEXT NOT NULL REFERENCES projects(id),
+        node_id      TEXT REFERENCES nodes(id),
+        agent_name   TEXT NOT NULL,
+        task_kind    TEXT NOT NULL,
+        trajectory   TEXT NOT NULL,
+        outcome_score REAL NOT NULL DEFAULT 0,
+        samples      INTEGER NOT NULL DEFAULT 1,
+        last_used_ts TEXT NOT NULL,
+        created_at   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_rt_project ON reasoning_trajectories(project_id);
+      CREATE INDEX IF NOT EXISTS idx_rt_kind    ON reasoning_trajectories(project_id, task_kind);
+      CREATE INDEX IF NOT EXISTS idx_rt_node    ON reasoning_trajectories(node_id);
+    `,
+  },
+  {
+    version: 69,
+    description: "Hooks Sprint 3 — hook_handlers (runtime registrations) + hook_handler_stats (per-handler observability counters)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS hook_handlers (
+        id            TEXT PRIMARY KEY,
+        channel       TEXT NOT NULL,
+        kind          TEXT NOT NULL,           -- 'shell' | 'inline-unsafe' | 'module' (future)
+        command       TEXT,                    -- shell command path
+        command_args  TEXT,                    -- JSON array
+        env           TEXT,                    -- JSON object {KEY:VALUE}
+        timeout_ms    INTEGER NOT NULL DEFAULT 5000,
+        priority      INTEGER NOT NULL DEFAULT 0,
+        enabled       INTEGER NOT NULL DEFAULT 1,
+        description   TEXT,
+        origin        TEXT NOT NULL DEFAULT 'runtime',  -- 'runtime' | 'config' | 'builtin'
+        created_at    TEXT NOT NULL,
+        updated_at    TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_hook_handlers_channel  ON hook_handlers(channel);
+      CREATE INDEX IF NOT EXISTS idx_hook_handlers_origin   ON hook_handlers(origin);
+
+      CREATE TABLE IF NOT EXISTS hook_handler_stats (
+        handler_id    TEXT PRIMARY KEY,
+        call_count    INTEGER NOT NULL DEFAULT 0,
+        p50_duration  REAL,
+        p95_duration  REAL,
+        last_error    TEXT,
+        circuit_state TEXT NOT NULL DEFAULT 'closed',
+        updated_at    TEXT NOT NULL
+      );
+    `,
+  },
+  {
+    version: 70,
+    // §EPIC-16.2 — Creates llm_call_ledger (was referenced by BudgetLedger
+    // and v66 schema-tests but never actually created in any prior migration —
+    // see broken v66 tests). Adds provider_used + fallback_count for failover
+    // observability. Task description named this "v74" but head was v69 at
+    // implementation time; using v70 keeps versions monotonic.
+    description: "EPIC 16 LLM Failover — create llm_call_ledger with provider_used + fallback_count",
+    sql: `
+      CREATE TABLE IF NOT EXISTS llm_call_ledger (
+        id                     TEXT PRIMARY KEY,
+        ts                     INTEGER NOT NULL,
+        project_id             TEXT,
+        cell_id                TEXT,
+        run_id                 TEXT,
+        node_id                TEXT,
+        caller                 TEXT,
+        provider               TEXT NOT NULL,
+        model                  TEXT NOT NULL,
+        input_tokens           INTEGER NOT NULL DEFAULT 0,
+        output_tokens          INTEGER NOT NULL DEFAULT 0,
+        cached_input_tokens    INTEGER,
+        cache_creation_tokens  INTEGER,
+        cost_usd               REAL NOT NULL DEFAULT 0,
+        latency_ms             INTEGER,
+        status                 TEXT NOT NULL,
+        error_kind             TEXT,
+        provider_used          TEXT,
+        fallback_count         INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_llm_ledger_cell ON llm_call_ledger(cell_id);
+      CREATE INDEX IF NOT EXISTS idx_llm_ledger_run  ON llm_call_ledger(run_id);
+      CREATE INDEX IF NOT EXISTS idx_llm_ledger_ts   ON llm_call_ledger(ts);
+    `,
+  },
+  {
+    version: 71,
+    // §EPIC-18.T01 — Evals + Golden Dataset.
+    // eval_golden: persisted (input, expected) pairs per tool with scorer kind.
+    // eval_run: per-row scoring outcome of running a golden through a model,
+    // capturing pass/fail, latency, model_used and cost_usd for empirical
+    // model routing (modelHint feedback loop, AC5).
+    description: "EPIC 18 Evals — create eval_golden + eval_run tables with indexes",
+    sql: `
+      CREATE TABLE IF NOT EXISTS eval_golden (
+        id           TEXT PRIMARY KEY,
+        input        TEXT NOT NULL,
+        expected     TEXT NOT NULL,
+        scorer_kind  TEXT NOT NULL,
+        tool         TEXT NOT NULL,
+        project_id   TEXT,
+        metadata     TEXT,
+        tags         TEXT,
+        created_at   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_eval_golden_tool        ON eval_golden(tool);
+      CREATE INDEX IF NOT EXISTS idx_eval_golden_project     ON eval_golden(project_id);
+      CREATE INDEX IF NOT EXISTS idx_eval_golden_scorer_kind ON eval_golden(scorer_kind);
+
+      CREATE TABLE IF NOT EXISTS eval_run (
+        id          TEXT PRIMARY KEY,
+        run_id      TEXT NOT NULL,
+        golden_id   TEXT NOT NULL,
+        score       REAL NOT NULL,
+        passed      INTEGER NOT NULL,
+        latency_ms  INTEGER,
+        model_used  TEXT,
+        cost_usd    REAL NOT NULL DEFAULT 0,
+        created_at  TEXT NOT NULL,
+        FOREIGN KEY (golden_id) REFERENCES eval_golden(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_eval_run_run_id    ON eval_run(run_id);
+      CREATE INDEX IF NOT EXISTS idx_eval_run_golden_id ON eval_run(golden_id);
+      CREATE INDEX IF NOT EXISTS idx_eval_run_model     ON eval_run(model_used);
+    `,
+  },
+  {
+    version: 72,
+    // §EPIC-19.T01 — Multi-Agent Topologies.
+    // swarm_session: one row per swarm orchestration. swarm_member: one row
+    // per agent participating in the session, with role (queen|worker|judge)
+    // and status (idle|running|done|failed). The skeleton persists state so
+    // a crashed coordinator can be resumed; topology-specific orchestration
+    // (hierarchical/ring/majority) layers on top in T02-T04.
+    description: "EPIC 19 Swarm — create swarm_sessions + swarm_agents tables",
+    sql: `
+      CREATE TABLE IF NOT EXISTS swarm_sessions (
+        id           TEXT PRIMARY KEY,
+        topology     TEXT NOT NULL,
+        consensus    TEXT NOT NULL,
+        status       TEXT NOT NULL,
+        max_agents   INTEGER NOT NULL,
+        strategy     TEXT NOT NULL,
+        created_at   TEXT NOT NULL,
+        updated_at   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_swarm_sessions_status   ON swarm_sessions(status);
+      CREATE INDEX IF NOT EXISTS idx_swarm_sessions_topology ON swarm_sessions(topology);
+
+      CREATE TABLE IF NOT EXISTS swarm_agents (
+        id          TEXT PRIMARY KEY,
+        session_id  TEXT NOT NULL,
+        role        TEXT NOT NULL,
+        status      TEXT NOT NULL,
+        result      TEXT,
+        created_at  TEXT NOT NULL,
+        updated_at  TEXT,
+        FOREIGN KEY (session_id) REFERENCES swarm_sessions(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_swarm_agents_session ON swarm_agents(session_id);
+      CREATE INDEX IF NOT EXISTS idx_swarm_agents_role    ON swarm_agents(role);
+    `,
+  },
+  {
+    version: 73,
+    // §EPIC-20.T02 — A2A Direct Communication mailbox.
+    // Ring-buffer-backed mailbox per recipient agent. Status flow:
+    //   pending → delivered → acked. The mailbox is COURIER, never authoritative —
+    //   real decisions still write to the graph (see §EPIC-20 design notes).
+    description: "EPIC 20 A2A — create a2a_mailbox table for agent-to-agent messages",
+    sql: `
+      CREATE TABLE IF NOT EXISTS a2a_mailbox (
+        id            TEXT PRIMARY KEY,
+        from_agent    TEXT NOT NULL,
+        to_agent      TEXT NOT NULL,
+        body          TEXT NOT NULL,
+        status        TEXT NOT NULL,
+        created_at    TEXT NOT NULL,
+        delivered_at  TEXT,
+        acked_at      TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_a2a_mailbox_to       ON a2a_mailbox(to_agent);
+      CREATE INDEX IF NOT EXISTS idx_a2a_mailbox_status   ON a2a_mailbox(status);
+      CREATE INDEX IF NOT EXISTS idx_a2a_mailbox_to_status ON a2a_mailbox(to_agent, status);
+    `,
+  },
+  {
+    version: 76,
+    // §EPIC-22.A1 — Autonomy 100% retry persistence.
+    // retry_queue persiste falhas para que processo crashes não percam state.
+    // RetryWorker (E22.A2) varre status='pending' AND next_retry_ms <= now,
+    // re-executa com backoff exponencial. EventReactor (E22.A4) enqueue em
+    // task:error. Status flow: pending → done | abandoned (após MAX_ATTEMPTS).
+    description: "EPIC 22 Autonomy — retry_queue table for persistent retry across crashes",
+    sql: `
+      CREATE TABLE IF NOT EXISTS retry_queue (
+        id            TEXT PRIMARY KEY,
+        task_id       TEXT NOT NULL,
+        attempt       INTEGER NOT NULL DEFAULT 0,
+        next_retry_ms INTEGER NOT NULL,
+        last_error    TEXT,
+        status        TEXT NOT NULL,
+        created_at    TEXT NOT NULL,
+        updated_at    TEXT NOT NULL,
+        FOREIGN KEY (task_id) REFERENCES nodes(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_retry_queue_status     ON retry_queue(status);
+      CREATE INDEX IF NOT EXISTS idx_retry_queue_next_retry ON retry_queue(next_retry_ms);
+      CREATE INDEX IF NOT EXISTS idx_retry_queue_task       ON retry_queue(task_id);
+    `,
+  },
+  {
+    version: 77,
+    // §EPIC-22.B1 — error_patterns table for recurring-error tracking.
+    // recordError() hashes error.message + classifies via classifyError, then UPSERTs.
+    // Adaptive retry policy (B2) reads count to decide escalation vs backoff.
+    description: "EPIC 22 Autonomy — error_patterns table for adaptive retry intelligence",
+    sql: `
+      CREATE TABLE IF NOT EXISTS error_patterns (
+        id          TEXT PRIMARY KEY,
+        error_hash  TEXT NOT NULL UNIQUE,
+        category    TEXT NOT NULL,
+        message     TEXT NOT NULL,
+        count       INTEGER NOT NULL DEFAULT 1,
+        first_seen  TEXT NOT NULL,
+        last_seen   TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_error_patterns_hash     ON error_patterns(error_hash);
+      CREATE INDEX IF NOT EXISTS idx_error_patterns_category ON error_patterns(category);
+      CREATE INDEX IF NOT EXISTS idx_error_patterns_count    ON error_patterns(count DESC);
+    `,
+  },
+  {
+    version: 78,
+    // §EPIC-22.B2 — lessons_learned table for adaptive retry escalation memory.
+    // RetryWorker insere lesson quando pattern.count>2 → abandon imediato.
+    // Sprint 4 D5 lerá esta tabela em start_task para injetar no modelHint.
+    description: "EPIC 22 Autonomy — lessons_learned table for adaptive escalation memory",
+    sql: `
+      CREATE TABLE IF NOT EXISTS lessons_learned (
+        id                  TEXT PRIMARY KEY,
+        pattern_hash        TEXT NOT NULL,
+        description         TEXT NOT NULL,
+        recommended_action  TEXT NOT NULL,
+        applied_count       INTEGER NOT NULL DEFAULT 1,
+        confidence          REAL NOT NULL DEFAULT 0.5,
+        created_at          TEXT NOT NULL,
+        updated_at          TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_lessons_pattern ON lessons_learned(pattern_hash);
+      CREATE INDEX IF NOT EXISTS idx_lessons_action  ON lessons_learned(recommended_action);
+    `,
+  },
+  {
+    version: 79,
+    // §EPIC-22.D3 — lessons_learned source provenance + confidence index.
+    // Add 'source' column so D4 lessons-persister sabe se veio de retry-worker
+    // (B2), dream-engine wake (D4), ou outras origens.
+    description: "EPIC 22 Autonomy — lessons_learned source column + confidence index",
+    sql: `
+      ALTER TABLE lessons_learned ADD COLUMN source TEXT NOT NULL DEFAULT 'unknown';
+      CREATE INDEX IF NOT EXISTS idx_lessons_confidence ON lessons_learned(confidence DESC);
+      CREATE INDEX IF NOT EXISTS idx_lessons_source     ON lessons_learned(source);
+    `,
+  },
+  {
+    version: 80,
+    // §EPIC-9.T02 — decide tool dedicated table.
+    // Stores intent + options_json + chosen + reasoning + outcome (success/result/summary).
+    // Distinct from decision_log (v52) which is the confidence-scorer replay log;
+    // here, the user/agent records actionable decisions for stats + audit.
+    description: "EPIC 9 Decision Intelligence — decisions table for record/outcome/stats/audit",
+    sql: `
+      CREATE TABLE IF NOT EXISTS decisions (
+        id              TEXT PRIMARY KEY,
+        intent          TEXT NOT NULL,
+        options_json    TEXT NOT NULL,
+        chosen          TEXT NOT NULL,
+        reasoning       TEXT NOT NULL,
+        node_id         TEXT,
+        success         INTEGER,
+        result_summary  TEXT,
+        outcome_at      TEXT,
+        created_at      TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_decisions_intent  ON decisions(intent);
+      CREATE INDEX IF NOT EXISTS idx_decisions_node    ON decisions(node_id);
+      CREATE INDEX IF NOT EXISTS idx_decisions_success ON decisions(success);
+      CREATE INDEX IF NOT EXISTS idx_decisions_created ON decisions(created_at);
+    `,
+  },
+  {
+    version: 81,
+    // §EPIC-12.T07 — knowledge_documents project scoping index.
+    // Enforces fast WHERE project_id = ? lookups so cross-project FTS queries
+    // are filtered before scanning. Caller (knowledge-store) must pass
+    // projectId on every query — the lint test in src/tests/ enforces this.
+    description: "EPIC 12 Resilience — knowledge_documents project_id index for project-scoped FTS",
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_knowledge_documents_project_id
+        ON knowledge_documents(project_id);
+    `,
+  },
+  {
+    version: 82,
+    // §EPIC-6.T01 — Token Economy: response cache + economy metrics.
+    // Schema versions v76-v81 already taken; bumped to v82. Tables back the
+    // ResponseCache (E6.T04) persistence and the economy reporting query.
+    description:
+      "EPIC 6 Token Economy — llm_response_cache + economy_metrics tables",
+    sql: `
+      CREATE TABLE IF NOT EXISTS llm_response_cache (
+        key             TEXT PRIMARY KEY,
+        value_json      TEXT NOT NULL,
+        schema_version  INTEGER NOT NULL,
+        created_at_ms   INTEGER NOT NULL,
+        ttl_expires_at  INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_llm_response_cache_ttl
+        ON llm_response_cache(ttl_expires_at);
+      CREATE INDEX IF NOT EXISTS idx_llm_response_cache_schema
+        ON llm_response_cache(schema_version);
+
+      CREATE TABLE IF NOT EXISTS economy_metrics (
+        id            TEXT PRIMARY KEY,
+        ts            INTEGER NOT NULL,
+        tier          TEXT NOT NULL,
+        tokens_saved  INTEGER NOT NULL DEFAULT 0,
+        cost_saved    REAL NOT NULL DEFAULT 0,
+        cache_hit     INTEGER NOT NULL DEFAULT 0,
+        node_id       TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_economy_metrics_ts   ON economy_metrics(ts);
+      CREATE INDEX IF NOT EXISTS idx_economy_metrics_tier ON economy_metrics(tier);
+      CREATE INDEX IF NOT EXISTS idx_economy_metrics_node ON economy_metrics(node_id);
+    `,
+  },
+  {
+    version: 83,
+    // §SprintA-cleanup — Swarm consensus rounds + strategy default.
+    // Adds the swarm_consensus_rounds table expected by EPIC-19 consensus
+    // protocols (§EPIC-19.T03) and relaxes swarm_sessions.strategy to allow
+    // legacy callers/tests that pre-date the strategy column. Existing rows
+    // (which already have strategy populated) are unaffected.
+    description: "Swarm consensus rounds + strategy default",
+    sql: `
+      CREATE TABLE IF NOT EXISTS swarm_consensus_rounds (
+        id            TEXT PRIMARY KEY,
+        session_id    TEXT NOT NULL,
+        round_index   INTEGER NOT NULL,
+        outcome       TEXT NOT NULL,
+        decided_at    TEXT NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES swarm_sessions(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_swarm_consensus_rounds_session ON swarm_consensus_rounds(session_id);
+      CREATE INDEX IF NOT EXISTS idx_swarm_consensus_rounds_round   ON swarm_consensus_rounds(round_index);
+
+      CREATE TABLE IF NOT EXISTS swarm_sessions_v83 (
+        id           TEXT PRIMARY KEY,
+        topology     TEXT NOT NULL,
+        consensus    TEXT NOT NULL,
+        status       TEXT NOT NULL,
+        max_agents   INTEGER NOT NULL,
+        strategy     TEXT NOT NULL DEFAULT 'default',
+        created_at   TEXT NOT NULL,
+        updated_at   TEXT NOT NULL
+      );
+      INSERT INTO swarm_sessions_v83 (id, topology, consensus, status, max_agents, strategy, created_at, updated_at)
+        SELECT id, topology, consensus, status, max_agents, strategy, created_at, updated_at FROM swarm_sessions;
+      DROP TABLE swarm_sessions;
+      ALTER TABLE swarm_sessions_v83 RENAME TO swarm_sessions;
+      CREATE INDEX IF NOT EXISTS idx_swarm_sessions_status   ON swarm_sessions(status);
+      CREATE INDEX IF NOT EXISTS idx_swarm_sessions_topology ON swarm_sessions(topology);
+    `,
+  },
+  {
+    version: 84,
+    // §SprintD — Lifecycle health snapshots.
+    // The 9-phase régua (prd-lifecycle-health) computes a passedAll boolean
+    // every call; persisting the snapshot lets analyze(success_rate) report
+    // the rolling pass-rate over a window. Idempotent per (epic_id, taken_on)
+    // day so multiple invocations the same day collapse to one row.
+    description: "Lifecycle health snapshots — persist régua results for trend analysis",
+    sql: `
+      CREATE TABLE IF NOT EXISTS lifecycle_health_snapshots (
+        id            TEXT PRIMARY KEY,
+        epic_id       TEXT,
+        snapshot_json TEXT NOT NULL,
+        passed_all    INTEGER NOT NULL,
+        taken_at      TEXT NOT NULL,
+        taken_on      TEXT NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_lifecycle_health_unique
+        ON lifecycle_health_snapshots(COALESCE(epic_id, ''), taken_on);
+      CREATE INDEX IF NOT EXISTS idx_lifecycle_health_taken_at
+        ON lifecycle_health_snapshots(taken_at);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

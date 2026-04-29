@@ -1,3 +1,14 @@
+---
+name: graph-prd
+description: Phase 0 — transform a vague idea into a structured, import-ready PRD using 7 product methodologies (5W2H, JTBD, Pareto, MoSCoW, INVEST, GWT, Risk Matrix)
+model:
+  prefer: sonnet
+  fallback: opus
+  rationale: "PRD parsing produces structured decomposition from free-form text"
+---
+> 💡 **CLI shell surface available** (`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[cli-surface-map.md](../../../docs/guides/cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
+
+
 # graph-prd
 
 Phase 0 — Transform a vague idea into a structured, import-ready PRD using 7 product methodologies: 5W2H, Jobs-to-be-Done, Pareto 80/20, MoSCoW, INVEST, Given-When-Then, and Risk Matrix.

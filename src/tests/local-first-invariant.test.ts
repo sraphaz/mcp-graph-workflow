@@ -108,6 +108,12 @@ const OPT_IN_FILES: readonly string[] = [
   "src/core/browser-harness/llm-client.ts",
   // Hugging Face model download — only invoked via `mcp-graph install-neural`.
   "src/core/rag/onnx-embeddings.ts",
+  // §SprintA-cleanup — LLM provider adapters (Anthropic / OpenAI / Copilot)
+  // are only reached after the user explicitly configures a non-local
+  // provider via env vars or `llm` MCP tool. Default path stays local.
+  "src/core/llm/adapters/anthropic.ts",
+  "src/core/llm/adapters/copilot.ts",
+  "src/core/llm/adapters/openai.ts",
   // Tools dir is not under src/ but listed for clarity.
 ];
 

@@ -6,7 +6,13 @@ triggers:
 version: 2.0.0
 author: Diego Nogueira
 date: 2026-04-04
+model:
+  prefer: opus
+  fallback: sonnet
+  rationale: "Code review is a primary quality gate — favor stronger reasoning"
 ---
+> 💡 **CLI shell surface available** (`): lifecycle verbs (`start_task`, `finish_task`, `next`, `update_status`, `list`, `add_node`, `set_phase`) referenced below have faster slash/shell equivalents — see **[cli-surface-map.md](../../../docs/guides/cli-surface-map.md)**. Prefer `/start` over `mcp__mcp-graph__start_task` when possible. Other tools (analyze, validate, search, edge, node, metrics, etc.) stay MCP for now.
+
 
 # graph-review
 

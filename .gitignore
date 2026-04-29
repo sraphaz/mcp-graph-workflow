@@ -4,10 +4,13 @@ logs/
 
 # Dependencies
 node_modules/
+docs/_internal/mestrado/
 
 # Build
 dist/
 build/
+# TypeScript incremental build cache — regenerated on every `tsc` run
+*.tsbuildinfo
 # Exception: the static landing site is shipped from presentation/dist/ (Vercel)
 !presentation/dist/
 !presentation/dist/**
@@ -22,6 +25,10 @@ CLAUDE.md
 *~
 .claude/rules
 .claude/*
+# Ship the hook scripts so tests in src/tests/{block-dangerous-git,
+# graph-wip-check}-hook.test.ts can validate them in CI.
+!.claude/hooks
+!.claude/hooks/**
 # Project-level skills that ship with the repo so future maintainers get
 # the same agentic recipes the author relied on. Git requires unignoring
 # parent dirs before files; we then re-ignore everything under skills/
@@ -43,6 +50,7 @@ notas.md
 docs/raw/
 docs/prd/
 docs/_internal/prd/
+docs/_internal/SKILLS-HIVE-INTEGRATION-PRD.md
 docs/architecture/
 docs/reference/
 knowledge-export.json

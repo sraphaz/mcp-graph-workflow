@@ -29,6 +29,11 @@ import { findTransitiveBlockers } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
 import { logger } from "../utils/logger.js";
+import { isCorePath } from "../citations/citation-validator.js";
+import { hasCitation } from "../citations/citation-extractor.js";
+import { getTouchedFiles } from "../planner/touched-files.js";
+import { existsSync, readFileSync } from "node:fs";
+import { join as joinPath, isAbsolute } from "node:path";
 
 const LARGE_XP_THRESHOLD = 4; // L=4, XL=5
 
@@ -175,6 +180,38 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     details: hasEstimate
       ? `Estimativa: ${node.xpSize ? `size=${node.xpSize}` : ""}${node.estimateMinutes ? ` ${node.estimateMinutes}min` : ""}`.trim()
       : "Sem estimativa — recomendado definir xpSize ou estimateMinutes",
+    severity: "recommended",
+  });
+
+  // §EPIC-13.1 — has_citations_in_new_core_files
+  // Verifies that every src/core/* file the task touched contains at least
+  // one §EPIC-/§ADR- citation comment. Recommended severity: a missing
+  // citation deducts from the AC quality score (5pts per file).
+  const touched = getTouchedFiles(node);
+  const coreTouched = touched.filter(isCorePath);
+  let citationViolations = 0;
+  let citationChecked = 0;
+  for (const path of coreTouched) {
+    const abs = isAbsolute(path) ? path : joinPath(process.cwd(), path);
+    if (!existsSync(abs)) continue;
+    citationChecked++;
+    try {
+      const content = readFileSync(abs, "utf8");
+      if (!hasCitation(content)) citationViolations++;
+    } catch {
+      // unreadable — skip, do not block on FS hiccup
+    }
+  }
+  const citationsPass = citationViolations === 0;
+  const citationDetails = coreTouched.length === 0
+    ? "Sem arquivos core/ tocados — check N/A"
+    : citationsPass
+      ? `${citationChecked}/${coreTouched.length} arquivo(s) core com citation §EPIC/§ADR`
+      : `${citationViolations}/${citationChecked} arquivo(s) core sem citation §EPIC/§ADR — adicionar âncora à spec`;
+  checks.push({
+    name: "has_citations_in_new_core_files",
+    passed: citationsPass,
+    details: citationDetails,
     severity: "recommended",
   });
 

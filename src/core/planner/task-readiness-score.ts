@@ -67,7 +67,16 @@ export interface TaskReadinessScore {
   signals: TaskReadinessSignals;
   recommendation: ModelPreference;
   rationale: string[];
-  overridden: "high_stake_type" | "no_testable_ac" | null;
+  overridden: "high_stake_type" | "no_testable_ac" | "empirical" | null;
+}
+
+export interface EmpiricalOverride {
+  /** The model picked from historical eval_run rows. */
+  model: ModelPreference;
+  /** Total samples backing the recommendation. */
+  basedOn: number;
+  /** Pass-rate (0–1) for the chosen model on the relevant tool. */
+  passRate: number;
 }
 
 export interface TaskReadinessOptions {
@@ -82,7 +91,17 @@ export interface TaskReadinessOptions {
    * fragile code wants attention first. Omit / null = no effect.
    */
   featureDepthScore?: number | null;
+  /**
+   * Empirical hint derived from the last N eval_run rows for the
+   * implied tool×model. When provided AND basedOn >= MIN_EMPIRICAL_SAMPLES,
+   * this overrides the heuristic recommendation — actual measured
+   * performance beats heuristic prediction. See empirical-model-hint.ts.
+   */
+  empiricalOverride?: EmpiricalOverride;
 }
+
+/** Minimum samples required for empirical override to take precedence. */
+export const MIN_EMPIRICAL_SAMPLES = 5;
 
 /** Node types whose decisions carry durable architectural impact. */
 const HIGH_STAKE_TYPES: ReadonlySet<NodeType> = new Set<NodeType>([
@@ -174,6 +193,15 @@ export function computeTaskReadinessScore(
     recommendation = "opus";
     overridden = "high_stake_type";
     rationale.push(`node type "${node.type}" is architecturally high-stake → opus`);
+  } else if (
+    options.empiricalOverride &&
+    options.empiricalOverride.basedOn >= MIN_EMPIRICAL_SAMPLES
+  ) {
+    recommendation = options.empiricalOverride.model;
+    overridden = "empirical";
+    rationale.push(
+      `empirical override → ${recommendation} (passRate=${options.empiricalOverride.passRate.toFixed(2)} from ${options.empiricalOverride.basedOn} eval rows)`,
+    );
   } else if (!hasTestableAc) {
     recommendation = score >= 70 ? "sonnet" : "opus";
     overridden = "no_testable_ac";

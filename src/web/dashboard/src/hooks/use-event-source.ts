@@ -28,9 +28,27 @@ interface UseEventSourceOptions {
   autoReconnect?: boolean;
   /** Reconnect delay in ms (default: 3000) */
   reconnectDelay?: number;
-  /** Event types to listen for (default: all) */
+  /**
+   * Event types to listen for. The SSE backend writes `event: <type>` per
+   * message (see api/routes/events-sse.ts), and EventSource only dispatches
+   * named listeners via addEventListener — there is no wildcard. So callers
+   * must enumerate the types they care about. Defaults to the canonical
+   * graph mutation set if omitted.
+   */
   eventTypes?: string[];
 }
+
+const DEFAULT_EVENT_TYPES = [
+  "node:created",
+  "node:updated",
+  "node:deleted",
+  "edge:created",
+  "edge:deleted",
+  "import:completed",
+  "task:claimed",
+  "task:released",
+  "agent:heartbeat",
+] as const;
 
 interface UseEventSourceReturn {
   /** Whether connected to SSE stream */
@@ -76,31 +94,38 @@ export function useEventSource(
       setConnected(true);
     };
 
-    const onGraph = (e: MessageEvent) => {
+    const onMessage = (e: MessageEvent): void => {
       try {
-        const event: GraphSSEEvent = JSON.parse(e.data);
-
-        // Filter by event types if specified
-        if (eventTypes && !eventTypes.some((t) => event.type.startsWith(t))) {
-          return;
-        }
-
-        setLastEvent(event);
-        onEventRef.current(event);
+        const data: unknown = JSON.parse(e.data);
+        const evt: GraphSSEEvent = {
+          type: (e as MessageEvent & { type: string }).type,
+          payload: (data && typeof data === "object" ? data : {}) as Record<string, unknown>,
+          timestamp: new Date().toISOString(),
+        };
+        setLastEvent(evt);
+        onEventRef.current(evt);
       } catch {
         // Invalid JSON — ignore
       }
     };
 
-    source.addEventListener("connected", onConnected);
-    source.addEventListener("graph", onGraph);
+    const subscribed = (eventTypes && eventTypes.length > 0)
+      ? eventTypes
+      : (DEFAULT_EVENT_TYPES as readonly string[]);
 
-    source.onerror = () => {
+    source.addEventListener("connected", onConnected);
+    for (const evtName of subscribed) {
+      source.addEventListener(evtName, onMessage);
+    }
+
+    source.onerror = (): void => {
       setConnected(false);
       source.close();
       sourceRef.current = null;
       source.removeEventListener("connected", onConnected);
-      source.removeEventListener("graph", onGraph);
+      for (const evtName of subscribed) {
+        source.removeEventListener(evtName, onMessage);
+      }
 
       if (autoReconnect && !disposedRef.current) {
         reconnectTimeoutRef.current = window.setTimeout(() => {

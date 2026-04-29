@@ -24,7 +24,6 @@
 import { ContextBuildError, getErrorMessage } from "../utils/errors.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { GraphSnapshotCache } from "../store/graph-snapshot-cache.js";
 import { ResponseCache } from "../rag/response-cache.js";
 import { buildTieredContext, type ContextTier } from "./tiered-context.js";
 import { compressWithBm25 } from "./bm25-compressor.js";
@@ -39,6 +38,12 @@ import type { CitationRef } from "../rag/citation-chain.js";
 import { extractCitationRefs } from "../rag/citation-chain.js";
 import { getAdaptiveBudgetSplit } from "./adaptive-budget.js";
 import { pruneContextSection } from "./context-pruning.js";
+
+/** Max nodes to load per paginated SQLite query in the fallback search path. Configurable via env. */
+export const CONTEXT_CHUNK_SIZE: number = (() => {
+  const v = parseInt(process.env["CONTEXT_CHUNK_SIZE"] ?? "", 10);
+  return Number.isFinite(v) && v > 0 ? v : 100;
+})();
 
 // Module-level cache for assembleContext results (detail path)
 const assemblerCache = new ResponseCache({ ttlMs: 2 * 60 * 1000, maxSize: 50 });
@@ -417,22 +422,15 @@ function findRelevantNodeIds(store: SqliteStore, query: string): string[] {
     logger.debug("FTS search failed in context assembler, falling back to substring", { error: getErrorMessage(err) });
   }
 
-  // Fallback: simple substring match on title/description
+  // Fallback: paginated LIKE query — avoids loading all nodes into memory.
+  // Uses queryNodes({ search, limit }) which issues a single bounded SQL query.
   try {
-    const snapshotCache = new GraphSnapshotCache(store);
-    const allNodes = snapshotCache.getCachedSnapshot().nodes;
-    const lowerQuery = query.toLowerCase();
-    const words = lowerQuery.split(/\s+/).filter((w) => w.length > 2);
+    const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
     if (words.length === 0) return [];
-    return allNodes
-      .filter((n) =>
-        words.some((w) =>
-          n.title.toLowerCase().includes(w) ||
-          (n.description ?? "").toLowerCase().includes(w),
-        ),
-      )
-      .slice(0, 10)
-      .map((n) => n.id);
+    // Use the first meaningful word for the LIKE search (SQLite can only do one LIKE efficiently)
+    const searchTerm = words[0];
+    const { nodes } = store.queryNodes({ search: searchTerm, limit: CONTEXT_CHUNK_SIZE });
+    return nodes.slice(0, 10).map((n) => n.id);
   } catch (err) {
     logger.debug("Substring fallback also failed in context assembler", { error: getErrorMessage(err) });
     return [];

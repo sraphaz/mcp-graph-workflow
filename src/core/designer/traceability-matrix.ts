@@ -77,7 +77,11 @@ export function buildTraceabilityMatrix(doc: GraphDocument): TraceabilityReport 
     };
   });
 
-  const orphanRequirements = matrix
+  // §BUG-06-A — "untracedRequirements" is the canonical name (requirements
+  // with no linked decision/constraint). Distinct from analyze(scope)
+  // "orphan" (structural: no parent edge). The deprecated `orphanRequirements`
+  // field was removed.
+  const uncoveredRequirements = matrix
     .filter((e) => e.coverage === "none")
     .map((e) => e.requirementId);
 
@@ -115,5 +119,13 @@ export function buildTraceabilityMatrix(doc: GraphDocument): TraceabilityReport 
     ? "No requirement nodes found — traceability cannot be evaluated"
     : undefined;
 
-  return { matrix, coverageRate, orphanRequirements, orphanDecisions, warning };
+  return {
+    matrix,
+    coverageRate,
+    uncoveredRequirements,
+    untracedRequirements: uncoveredRequirements,
+    traceabilityWarning: uncoveredRequirements.length,
+    orphanDecisions,
+    warning,
+  };
 }

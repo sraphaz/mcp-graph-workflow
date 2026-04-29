@@ -37,21 +37,44 @@ export interface SprintHealthReport {
     blockedRatio: number;
     tasksWithoutAC: number;
     externalDeps: number;
+    structuralCount: number;
   };
   warnings: string[];
 }
 
 /** Analyze sprint health and return grade with warnings. */
 export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): SprintHealthReport {
-  const tasks = doc.nodes.filter((n) =>
+  const allTaskNodes = doc.nodes.filter((n) =>
     (n.type === "task" || n.type === "subtask") &&
     (sprintFilter ? n.sprint === sprintFilter : true),
+  );
+  // §EPIC-23.SprintA — split structural (PRD scaffolding) from implementable.
+  const structuralCount = allTaskNodes.filter(
+    (n) => n.metadata?.implementable === false,
+  ).length;
+  const tasks = allTaskNodes.filter(
+    (n) => n.metadata?.implementable !== false,
   );
 
   const totalPoints = tasks.reduce((sum, t) => sum + (XP_SIZE_POINTS[t.xpSize ?? "M"] ?? 3), 0);
   const doneCount = tasks.filter((t) => t.status === "done").length;
   const blockedCount = tasks.filter((t) => t.status === "blocked" || t.blocked).length;
-  const tasksWithoutAC = tasks.filter((t) => !t.acceptanceCriteria || t.acceptanceCriteria.length === 0).length;
+
+  // BUG-03: a task may declare its AC inline (`acceptanceCriteria` array) OR
+  // as child nodes of type `acceptance_criteria`. Count both — otherwise tasks
+  // that were decomposed into structured AC nodes are wrongly flagged.
+  const taskHasAC = new Set<string>();
+  for (const t of tasks) {
+    if (t.acceptanceCriteria && t.acceptanceCriteria.length > 0) {
+      taskHasAC.add(t.id);
+    }
+  }
+  for (const n of doc.nodes) {
+    if (n.type === "acceptance_criteria" && n.parentId && !taskHasAC.has(n.parentId)) {
+      taskHasAC.add(n.parentId);
+    }
+  }
+  const tasksWithoutAC = tasks.filter((t) => !taskHasAC.has(t.id)).length;
 
   // External deps: tasks in this sprint that depend on tasks in OTHER sprints
   const sprintTaskIds = new Set(tasks.map((t) => t.id));
@@ -93,7 +116,7 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
   return {
     sprint: sprintFilter ?? null,
     health,
-    metrics: { totalPoints, taskCount: tasks.length, doneCount, blockedCount, burndownRatio, blockedRatio, tasksWithoutAC, externalDeps },
+    metrics: { totalPoints, taskCount: tasks.length, doneCount, blockedCount, burndownRatio, blockedRatio, tasksWithoutAC, externalDeps, structuralCount },
     warnings,
     ...(harnessDelta ? { harnessDelta } : {}),
   };

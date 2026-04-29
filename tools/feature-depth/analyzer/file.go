@@ -66,12 +66,28 @@ func DefaultFileWeights() FileWeights {
 // etc. defined in depth.go), but evaluates them against just that
 // file's content. The result is fully independent of the file's
 // surrounding module.
-func AnalyzeFile(f scanner.File) FileAnalysis {
+//
+// Variadic `coveragePercent` is optional (0-100). When > 0, it overrides
+// the LOC-ratio TestDensity heuristic — real % statements covered is a
+// strictly better signal than test-LOC volume. Passing nothing keeps
+// the legacy behavior (back-compat for callers without a coverage map).
+func AnalyzeFile(f scanner.File, coveragePercent ...float64) FileAnalysis {
 	hasTest := f.TestLOC > 0
 
 	density := 0.0
 	if f.LOC > 0 && f.TestLOC > 0 {
 		density = float64(f.TestLOC) / float64(f.LOC)
+		if density > 1.0 {
+			density = 1.0
+		}
+	}
+
+	// Real coverage overrides the LOC heuristic when provided.
+	// `hasTest` stays driven by TestLOC > 0 because "is there a test
+	// file pointing at this source at all" is independent from "what %
+	// of statements does it exercise" — both are useful signals.
+	if len(coveragePercent) > 0 && coveragePercent[0] > 0 {
+		density = coveragePercent[0] / 100.0
 		if density > 1.0 {
 			density = 1.0
 		}

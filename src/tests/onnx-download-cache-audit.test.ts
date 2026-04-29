@@ -37,7 +37,13 @@ import { OnnxModelNotFoundError } from "../core/utils/errors.js";
 
 const SOURCE_PATH = resolve("src/core/rag/onnx-embeddings.ts");
 function src(): string {
-  return readFileSync(SOURCE_PATH, "utf-8");
+  // §EPIC-17.T01 — download logic moved to model-downloader.ts (delegated).
+  // Audit checks the combined surface of both files.
+  const onnxSource = readFileSync(SOURCE_PATH, "utf-8");
+  const downloaderPath = SOURCE_PATH.replace("onnx-embeddings.ts", "model-downloader.ts");
+  let downloaderSource = "";
+  try { downloaderSource = readFileSync(downloaderPath, "utf-8"); } catch { /* optional */ }
+  return onnxSource + "\n/* --- model-downloader.ts --- */\n" + downloaderSource;
 }
 
 // ── AC1: isOnnxAvailable() graceful when package not installed ────

@@ -98,11 +98,14 @@ func ComputePrecision(a analyzer.ModuleAnalysis, cx analyzer.ComplexityResult, w
 	// Cognitive Complexity: lower avg = better. < 5 = great, > 25 = terrible
 	cognitiveScore := clamp(100.0-a.Cognitive.AvgCognitive*4.0, 0, 100)
 
-	// Graph Health: penalize cycles and bidirectional dependencies
-	graphScore := 100.0
-	graphScore -= float64(a.DepGraph.CycleCount) * 15.0
-	graphScore -= float64(a.DepGraph.BidirectionalDeps) * 10.0
-	graphScore = clamp(graphScore, 0, 100)
+	// Graph Health: penalize cycles and bidirectional dependencies, amplified
+	// by betweenness centrality so issues in hub modules cost more than
+	// issues in leaves. See graph_health.go.
+	graphScore := graphHealthScore(
+		a.DepGraph.CycleCount,
+		a.DepGraph.BidirectionalDeps,
+		a.DepGraph.GraphCentrality,
+	)
 
 	// ── Weighted sum (16 dimensions, total weight = 1.0) ──
 

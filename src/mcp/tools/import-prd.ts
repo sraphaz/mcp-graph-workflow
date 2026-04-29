@@ -27,7 +27,53 @@ import { indexPrdContent } from "../../core/rag/prd-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { diffPrd } from "../../core/parser/prd-diff.js";
 import { logger } from "../../core/utils/logger.js";
+import { generateId } from "../../core/utils/id.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+import type { GraphNode } from "../../core/graph/graph-types.js";
+
+/**
+ * §BUG-04 — Ensure each unique sprint label has a corresponding milestone
+ * node. Idempotent: a label that already has a milestone (matched via
+ * metadata.sprintLabel) is skipped. Returns the number of milestones newly
+ * created. Empty/whitespace labels are ignored.
+ */
+export function ensureSprintMilestones(store: SqliteStore, sprintLabels: ReadonlyArray<string>): number {
+  if (!sprintLabels || sprintLabels.length === 0) return 0;
+  const unique = [...new Set(sprintLabels.filter((s) => typeof s === "string" && s.trim().length > 0))];
+  if (unique.length === 0) return 0;
+
+  const existingLabels = new Set<string>();
+  for (const node of store.getAllNodes()) {
+    if (node.type !== "milestone") continue;
+    const label = (node.metadata as Record<string, unknown> | undefined)?.["sprintLabel"];
+    if (typeof label === "string") existingLabels.add(label);
+  }
+
+  let created = 0;
+  const now = new Date().toISOString();
+  for (const label of unique) {
+    if (existingLabels.has(label)) continue;
+    const node: GraphNode = {
+      id: generateId("node"),
+      type: "milestone",
+      title: label,
+      status: "backlog",
+      priority: 3,
+      blocked: false,
+      acceptanceCriteria: [],
+      tags: ["sprint", "auto-created"],
+      metadata: { sprintLabel: label, autoCreated: true },
+      createdAt: now,
+      updatedAt: now,
+    };
+    store.insertNode(node);
+    created++;
+  }
+  if (created > 0) {
+    logger.info("ensureSprintMilestones:created", { count: created, labels: unique });
+  }
+  return created;
+}
 
 export function registerImportPrd(server: McpServer, store: SqliteStore): void {
   server.tool(
@@ -149,6 +195,16 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       // 6. Bulk insert into SQLite (atomic)
       store.bulkInsert(nodes, edges);
 
+      // 6.5 §BUG-04 — auto-create milestone nodes for any sprint labels
+      // detected on the imported tasks so the pull system has anchors.
+      const sprintLabelsFound = [
+        ...new Set(nodes.map((n) => n.sprint).filter((s): s is string => typeof s === "string" && s.length > 0)),
+      ];
+      const sprintMilestonesCreated = ensureSprintMilestones(store, sprintLabelsFound);
+      if (sprintMilestonesCreated > 0) {
+        logger.info("tool:import_prd:sprint_milestones", { created: sprintMilestonesCreated, labels: sprintLabelsFound });
+      }
+
       // 7. Record import
       store.recordImport(sourceFileName, stats.nodesCreated, stats.edgesCreated);
 
@@ -156,7 +212,18 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       let knowledgeDocsIndexed = 0;
       try {
         const knowledgeStore = new KnowledgeStore(store.getDb());
-        const indexResult = indexPrdContent(knowledgeStore, content, sourceFileName, "ANALYZE");
+        // §BUG-02 — enforce a soft cap on the knowledge store after each
+        // import_prd so that chained imports do not balloon the doc count
+        // (was 178 docs / 69k tokens vs 4k budget = 1732% before).
+        // Override via env MCP_GRAPH_PRD_BUDGET (0 = disabled / legacy).
+        const prdBudget = Number(process.env.MCP_GRAPH_PRD_BUDGET ?? "300");
+        const indexResult = indexPrdContent(
+          knowledgeStore,
+          content,
+          sourceFileName,
+          "ANALYZE",
+          { budget: Number.isFinite(prdBudget) ? prdBudget : 300 },
+        );
         knowledgeDocsIndexed = indexResult.documentsIndexed;
         indexEntitiesForSource(store.getDb(), "prd");
 

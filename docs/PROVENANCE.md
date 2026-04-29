@@ -105,6 +105,17 @@ future releases). Pre-AGPL legacy releases are not OTS-anchored;
 Layer 1 (forward-only signing) and the Brazilian statutory protection
 described in Layer 3 provide their coverage.
 
+### Automation
+
+Stamping runs automatically on every published GitHub Release via
+[`.github/workflows/provenance.yml`](../.github/workflows/provenance.yml).
+The workflow resolves the release tag to its commit SHA, runs
+`ots stamp`, and commits the resulting `.txt` + `.ots` pair under
+`docs/provenance/ots/` with `[skip ci]`.
+
+The `workflow_dispatch` trigger accepts a `tag` input for
+back-stamping a historical release on demand.
+
 ---
 
 ## Layer 3 — Brazilian statutory protection (Lei 9.609/1998)
@@ -158,6 +169,51 @@ the automatic statutory protection, not on INPI registration.
   AGPL-3.0-or-later license published on GitHub and npm. Users and
   licensees derive their rights from the license terms, not from the
   underlying copyright framework.
+
+---
+
+## Layer 4 — Zenodo DOI per release
+
+Each tagged release is archived on Zenodo (CERN-operated, OpenAIRE-indexed)
+and assigned a permanent DOI. This produces an internationally citable
+identifier independent of GitHub availability.
+
+### How it works
+
+GitHub publishes a Release → Zenodo's GitHub integration ingests the source
+tarball → Zenodo mints a DOI and indexes the deposit. The metadata comes
+from [`CITATION.cff`](../CITATION.cff) (title, authors, ORCID, license,
+keywords); no separate `.zenodo.json` is maintained.
+
+### One-time setup (maintainer)
+
+1. Sign in at <https://zenodo.org> with the GitHub account that owns the
+   repository.
+2. Visit <https://zenodo.org/account/settings/github/>, locate
+   `DiegoNogueiraDev/mcp-graph-workflow`, and toggle the integration **on**.
+3. Cut the next GitHub Release (release-please does this automatically on
+   merge to `master`). Zenodo picks up the Release event and mints a DOI
+   within minutes.
+
+### After the first DOI is minted
+
+Update the placeholder DOI fields in:
+
+- `CITATION.cff` — uncomment the `identifiers:` block and the
+  `preferred-citation.doi` line, replacing `XXXXXXX` with the assigned
+  Zenodo record id.
+- `README.md` — add a Zenodo DOI badge near the top of the project header.
+
+Each subsequent release receives its own DOI; Zenodo also issues a
+"concept DOI" that always resolves to the latest version, suitable for
+citing the project as a whole.
+
+### What the DOI proves
+
+- A specific source tarball existed on a specific date, archived by a
+  third-party (CERN) infrastructure with no maintainer write access.
+- The deposit is mirrored across CERN data centers and indexed by
+  OpenAIRE / Google Scholar, providing redundancy independent of GitHub.
 
 ---
 
@@ -215,4 +271,4 @@ signature-level provenance, that tag can be retagged individually; the
   [`NOTICE.md`](../NOTICE.md).
 - Direct maintainer contact: [@DiegoNogueiraDev on GitHub](https://github.com/DiegoNogueiraDev).
 
-*Last updated: 2026-04-19.*
+*Last updated: 2026-04-24.*

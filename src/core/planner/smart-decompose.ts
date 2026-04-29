@@ -269,7 +269,7 @@ export function smartDecomposeWithInvest(
       accepted.push({
         id: childId,
         title: candidate.title,
-        xpSize: candidate.xpSize!,
+        xpSize: candidate.xpSize ?? "S",
         acceptanceCriteria: candidate.acceptanceCriteria,
       });
       edges.push({ from: nodeId, to: childId, relation: "decomposed_into" });

@@ -28,6 +28,8 @@ import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
+import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
+import { getSharedHookBus } from "../hooks/shared-hook-bus.js";
 import { getPhaseBoost, applyPhaseBoost } from "../rag/phase-metadata.js";
 import { PhaseBoostCache } from "../rag/phase-boost-cache.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
@@ -39,6 +41,7 @@ export interface InsertKnowledgeDoc {
   content: string;
   chunkIndex?: number;
   metadata?: Record<string, unknown>;
+  qualityScore?: number;
 }
 
 interface KnowledgeRow {
@@ -96,6 +99,14 @@ export class KnowledgeStore {
     if (doc.content.length > KnowledgeStore.MAX_CONTENT_SIZE) {
       throw new McpGraphError(`Content too large (${doc.content.length} chars, max ${KnowledgeStore.MAX_CONTENT_SIZE}). Chunk the content before indexing.`);
     }
+    // Sprint 1 (S1.5): pre-store handlers may inspect/mutate the doc payload
+    // (e.g. redact secrets) before persistence. Mutation is by-reference; if
+    // future kinds need pre-store blocking semantics, switch to await.
+    void getSharedHookBus().emit({
+      channel: "memory:pre-store",
+      timestamp: new Date().toISOString(),
+      payload: { sourceType: doc.sourceType, sourceId: doc.sourceId, contentLength: doc.content.length },
+    });
     const hash = contentHash(doc.content);
     const id = generateId("kdoc");
     const timestamp = now();
@@ -104,8 +115,8 @@ export class KnowledgeStore {
     // to prevent race condition — no SELECT+INSERT gap where duplicates can sneak in
     const result = this.db.prepare(
       `INSERT OR IGNORE INTO knowledge_documents
-        (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, quality_score, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       id,
       doc.sourceType,
@@ -115,6 +126,7 @@ export class KnowledgeStore {
       hash,
       doc.chunkIndex ?? 0,
       doc.metadata ? JSON.stringify(doc.metadata) : null,
+      doc.qualityScore ?? 0.5,
       timestamp,
       timestamp,
     );
@@ -129,6 +141,11 @@ export class KnowledgeStore {
     }
 
     logger.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
+    void getSharedHookBus().emit({
+      channel: "memory:post-store",
+      timestamp: new Date().toISOString(),
+      payload: { id, sourceType: doc.sourceType, sourceId: doc.sourceId, contentLength: doc.content.length },
+    });
     return this.getById(id) as KnowledgeDocument;
   }
 
@@ -295,6 +312,48 @@ export class KnowledgeStore {
   }
 
   /**
+   * §EPIC-23.SprintA — token-budget telemetry for the import_prd pre-flight.
+   * Returns total tokens stored, configured budget, and the usage percentage
+   * (>100 means over budget).
+   */
+  getBudgetUsage(budget?: number): { totalTokens: number; budget: number; usagePercent: number } {
+    const budgetLimit = budget ?? DEFAULT_TOKEN_BUDGET;
+    const row = this.db
+      .prepare("SELECT COALESCE(SUM(LENGTH(content)), 0) AS chars FROM knowledge_documents")
+      .get() as { chars: number };
+    // ~4 chars ≈ 1 token (heuristic shared with token-estimator)
+    const totalTokens = Math.round(row.chars / 4);
+    const usagePercent = budgetLimit > 0 ? Math.round((totalTokens / budgetLimit) * 100) : 0;
+    return { totalTokens, budget: budgetLimit, usagePercent };
+  }
+
+  /**
+   * §EPIC-23.SprintA — drop low-quality docs of a specific source type.
+   * Treats NULL quality_score as 0.5 (the column default). Returns the
+   * removed ids so the caller can audit/log the pruning decision.
+   */
+  pruneByQuality(
+    sourceType: KnowledgeSourceType,
+    threshold: number,
+  ): { removed: number; removedIds: string[] } {
+    const ids = this.db
+      .prepare(
+        `SELECT id FROM knowledge_documents
+         WHERE source_type = ? AND COALESCE(quality_score, 0.5) < ?`,
+      )
+      .all(sourceType, threshold) as Array<{ id: string }>;
+    if (ids.length === 0) return { removed: 0, removedIds: [] };
+    const stmt = this.db.prepare("DELETE FROM knowledge_documents WHERE id = ?");
+    const tx = this.db.transaction((rows: Array<{ id: string }>) => {
+      for (const r of rows) stmt.run(r.id);
+    });
+    tx(ids);
+    const removedIds = ids.map((r) => r.id);
+    logger.info("Knowledge pruneByQuality", { sourceType, threshold, removed: removedIds.length });
+    return { removed: removedIds.length, removedIds };
+  }
+
+  /**
    * Auto-prune knowledge documents when count exceeds 2x budget.
    * Removes oldest documents (by created_at) until count equals budget.
    * @param budgetLimit - Maximum number of documents to keep
@@ -452,20 +511,24 @@ export class KnowledgeStore {
   searchWithQuality(
     query: string,
     limit: number = 20,
-    options?: { minQuality?: number },
+    options?: { minQuality?: number; projectId?: string },
   ): Array<KnowledgeDocument & { score: number; qualityScore: number }> {
     const minQuality = options?.minQuality ?? 0;
+    const projectFilter = options?.projectId ? " AND kd.project_id = ?" : "";
+    const params: unknown[] = [query, minQuality];
+    if (options?.projectId) params.push(options.projectId);
+    params.push(limit);
     const rows = this.db
       .prepare(
         `SELECT kd.*, bm25(knowledge_fts) AS bm25_score, COALESCE(kd.quality_score, 0.5) AS q_score
          FROM knowledge_fts fts
          JOIN knowledge_documents kd ON kd.rowid = fts.rowid
          WHERE knowledge_fts MATCH ?
-           AND COALESCE(kd.quality_score, 0.5) >= ?
+           AND COALESCE(kd.quality_score, 0.5) >= ?${projectFilter}
          ORDER BY (bm25(knowledge_fts) * COALESCE(kd.quality_score, 0.5))
          LIMIT ?`,
       )
-      .all(query, minQuality, limit) as Array<KnowledgeRow & { bm25_score: number; q_score: number }>;
+      .all(...params) as Array<KnowledgeRow & { bm25_score: number; q_score: number }>;
 
     return rows.map((row) => ({
       ...rowToDoc(row),

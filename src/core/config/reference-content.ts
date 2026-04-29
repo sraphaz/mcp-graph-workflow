@@ -202,7 +202,10 @@ export const ANALYZE_MODES_SECTION = `### Modos do analyze por fase
 | ANY | \`test_coverage\` | Cobertura de testes (module→test file mapping) |
 | ANY | \`observability_check\` | Verificação de observabilidade (logger, structured logs, error handling) |
 | DESIGN | \`adr_challenge\` | Desafia ADRs com alternativas e trade-offs |
-| ANY | \`orphan_tasks\` | Detecta tasks órfãs (sem parent, sem edges) |`;
+| ANY | \`orphan_tasks\` | Detecta tasks órfãs (sem parent, sem edges) |
+| ANALYZE | \`prd_lifecycle_health\` | Régua de 9 fases por epic — passedAll boolean + summary (nodeId obrigatório). Persiste snapshot diário (migration v84) |
+| PLAN | \`capacity_health\` | Calibração de capacidade vs velocity (±10% tolerância) — sprintLabel via nodeId |
+| ANY | \`success_rate\` | Pass-rate rolling sobre os últimos N snapshots de lifecycle_health (\`window\` param, default 10; nodeId escopa para epic) |`;
 
 export const KNOWLEDGE_PIPELINE_SECTION = `### Pipeline de Conhecimento (Knowledge Store + RAG)
 
@@ -723,8 +726,10 @@ const PHASE_ANALYZE_MODES: Record<string, string[]> = {
     "blockers",
     "cycles",
     "critical_path",
+    "prd_lifecycle_health",
+    "success_rate",
   ],
-  PLAN: ["decompose", "sprint_health", "auto_ready"],
+  PLAN: ["decompose", "sprint_health", "auto_ready", "capacity_health"],
   DESIGN: [
     "adr",
     "traceability",

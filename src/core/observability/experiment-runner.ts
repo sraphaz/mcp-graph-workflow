@@ -164,7 +164,7 @@ export class ExperimentRunner {
         if (evaluatorFn) {
           const score = evaluatorFn(actualOutput, expected);
           scores[evaluatorName] = score;
-          allScores[evaluatorName]!.push(score);
+          (allScores[evaluatorName] ??= []).push(score);
         }
       }
 

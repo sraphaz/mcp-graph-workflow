@@ -20,6 +20,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { LockManager } from "../../core/store/lock-manager.js";
 import { startTask } from "../../core/pipeline/start-task.js";
+import { AmbiguityAuditSchema } from "../../core/decisions/ambiguity-audit-types.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
@@ -34,15 +35,17 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
       autoStart: z.boolean().optional().describe("Auto-mark task in_progress (default: true)"),
       agentId: z.string().optional().describe("Agent ID for teamTask mode — enables exclusive task claiming"),
       siblingBudget: z.number().min(0).max(200000).optional().describe("v11 Context-Pollination: token budget cap for siblingContext (default: 4000)"),
+      ambiguityAudit: AmbiguityAuditSchema.optional().describe("§EPIC-13.2 — Pre-execution self-audit classifying ACs as specified/partial/unspecified. Persisted in node.metadata.ambiguityAudit."),
     },
-    async ({ nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget }) => {
-      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget });
+    async ({ nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, ambiguityAudit }) => {
+      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, hasAmbiguityAudit: !!ambiguityAudit });
 
       const result = startTask(store, {
         nodeId, contextDetail, ragBudget, autoStart,
         agentId,
         lockManager,
         siblingBudget,
+        ambiguityAudit,
       });
 
       if (!result) {
@@ -76,6 +79,8 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
         ...(result.modelHint ? { modelHint: result.modelHint } : {}),
         siblingContext: result.siblingContext,
         ...(result.siblingTruncatedCount > 0 ? { siblingTruncatedCount: result.siblingTruncatedCount } : {}),
+        ...(result.domainSkills.length > 0 ? { domainSkills: result.domainSkills } : {}),
+        ...(result.ambiguityAuditWarning ? { ambiguityAuditWarning: result.ambiguityAuditWarning } : {}),
       });
     },
   );

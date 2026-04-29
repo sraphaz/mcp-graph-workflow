@@ -23,6 +23,7 @@ import type { GraphNode, GraphEdge, NodeType, NodeStatus, XpSize } from "../grap
 import { GraphNodeSchema } from "../../schemas/node.schema.js";
 import type { ExtractionResult } from "../parser/extract.js";
 import type { ClassifiedBlock } from "../parser/classify.js";
+import { isStructuralHeading } from "../parser/classify.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
@@ -122,6 +123,12 @@ function createNodeFromBlock(
     metadata: {
       inferred: block.confidence < 0.7,
       origin: "imported",
+      // §EPIC-23.SprintA — flag PRD scaffolding so downstream filters
+      // (auto-ready, sprint-health) don't treat it as implementable work.
+      ...(isStructuralHeading(block.title) &&
+      (nodeType === "task" || nodeType === "subtask" || nodeType === "epic")
+        ? { implementable: false }
+        : {}),
     },
     createdAt: timestamp,
     updatedAt: timestamp,

@@ -131,7 +131,10 @@ export function validateQueryGraphSql(rawSql: string): ValidationResult {
     return { ok: false, reason: "Only SELECT statements are allowed" };
   }
 
+  // §query-graph — FORBIDDEN_KEYWORDS / FORBIDDEN_TABLES are compile-time
+  // const arrays of plain alphanumeric tokens; not user-controlled.
   for (const kw of FORBIDDEN_KEYWORDS) {
+    // eslint-disable-next-line security/detect-non-literal-regexp
     const re = new RegExp(`\\b${kw}\\b`, "i");
     if (re.test(stripped) || re.test(rawSql)) {
       return { ok: false, reason: `Forbidden keyword: ${kw}` };
@@ -139,6 +142,7 @@ export function validateQueryGraphSql(rawSql: string): ValidationResult {
   }
 
   for (const tbl of FORBIDDEN_TABLES) {
+    // eslint-disable-next-line security/detect-non-literal-regexp
     const re = new RegExp(`\\b${tbl}\\b`, "i");
     if (re.test(stripped)) {
       return { ok: false, reason: `Forbidden table: ${tbl}` };

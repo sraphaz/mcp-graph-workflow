@@ -123,6 +123,53 @@ export function isMetadataLine(text: string): boolean {
   return METADATA_PATTERNS.some((p) => p.test(text));
 }
 
+/**
+ * True for headings that are PRD scaffolding (sections, tier groupings,
+ * count summaries) and should NOT be imported as implementable nodes.
+ *
+ * Distinguishes scaffolding ("TIER A —", "Sequenciamento (4 sprints…)",
+ * "Subtarefas extraídas (3 itens)") from real work ("E4.T01 — hook-types",
+ * "Implementar OAuth", "TIER 1 routing logic"). Used by parser-classify
+ * + prd-to-graph + sprint-health to filter structural nodes from
+ * implementable counts.
+ */
+export function isStructuralHeading(title: string): boolean {
+  const t = title.trim();
+  if (t.length === 0) return false;
+
+  // Implementable signals — these always override structural.
+  if (/^E\d+\.T\d+/i.test(t)) return false;
+  if (/^\d+\.T\d+/i.test(t)) return false;
+  if (/^sprint\s+\d+\s*[—–-]\s*\w+/i.test(t)) return false;
+  if (
+    /^(implement|implementar|fix|add|adicionar|criar|create|refactor|refatorar|remove|remover|deletar|delete|atualizar|update)\b/i.test(
+      t,
+    )
+  ) {
+    return false;
+  }
+
+  // Tier groupings: "TIER <LETTER> — ..." (letter, not digit)
+  if (/^TIER\s+[A-Z](?:\s|—|–|-)/i.test(t) && !/^TIER\s+\d/i.test(t)) {
+    // Sanity: letter + boundary char; "TIER 1" already filtered by the second regex.
+    return true;
+  }
+
+  // Parenthetical count suffix: "(N itens|items|sprints|tasks|seções|sections)".
+  if (/\(\d+\s*(itens?|items?|sprints?|tasks?|seções|sections?)\)/i.test(t)) return true;
+
+  // Nominal scaffolding keywords at start of heading.
+  if (
+    /^(Roadmap|Princípios?|Sequenciamento|Arquivos\s+críticos|Resumo\s+executivo|Métricas\s+de\s+sucesso|Riscos|Apêndice|Out\s+of\s+scope|Não-cobre|Contexto|Objetivo)/i.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 const CHECKBOX_PATTERN = /^\[[ x]\]\s/i;
 
 /** Classify a text line into a PRD block type (task, AC, risk, etc.) with confidence score. */

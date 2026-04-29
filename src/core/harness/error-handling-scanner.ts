@@ -142,6 +142,11 @@ function collectPatternViolations(
   violationType: string,
   out: ViolationDetail[],
 ): void {
+  // §HARNESS — pattern is a literal RegExp passed in by the caller (this
+  // module owns the call sites); we re-construct only to get a fresh state
+  // machine for `exec` iteration. Source comes from a RegExp object, not a
+  // string, so detect-non-literal-regexp is the wrong-shape signal here.
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const regex = new RegExp(pattern.source, pattern.flags);
   let match: RegExpExecArray | null;
   while ((match = regex.exec(file.content)) !== null) {

@@ -37,6 +37,7 @@ import {
   Settings,
   Shield,
   Globe,
+  Activity,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -60,7 +61,10 @@ export type TabId =
   | "docs"
   | "harness"
   | "autopilot"
-  | "browser-pilot";
+  | "browser-pilot"
+  | "hooks"
+  | "lifecycle-health"
+  | "agents";
 
 export type NavGroupId = "visualization" | "intelligence" | "tools" | "system";
 
@@ -102,6 +106,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: "skills", label: "Skills", icon: Zap },
       { id: "harness", label: "Harness", icon: Shield },
       { id: "autopilot", label: "Autopilot", icon: Zap },
+      { id: "agents", label: "Agents", icon: Activity, beta: true },
     ],
   },
   {

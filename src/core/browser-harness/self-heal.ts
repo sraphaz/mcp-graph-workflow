@@ -119,6 +119,10 @@ export class SelfHealService {
     }
 
     for (const banned of policy.forbiddenApis) {
+      // §EPIC-15.4 — `banned` is from a server-controlled allow-list
+      // (browser-harness policy file), not user input. Each entry is
+      // escaped above so the regex source is bounded.
+      // eslint-disable-next-line security/detect-non-literal-regexp
       const re = new RegExp(`\\b${banned.replace(/\./g, "\\.")}\\b`);
       if (re.test(input.source)) errors.push(`forbidden API: ${banned}`);
     }

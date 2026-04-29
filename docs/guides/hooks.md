@@ -68,3 +68,49 @@ Set `MCP_GRAPH_HOOKS_OFF=1` to disable the dispatcher without uninstalling. Usef
 - UI: `tools/cli/src/commands/hooks.tsx` (Ink-based `mcp-graph hooks status`)
 - Logs: `~/.mcp-graph/logs/hooks.jsonl` (structured, fail-silent)
 - Config: `.claude/settings.local.json` (project-scoped, never global)
+
+---
+
+## Runtime hook handlers (MCP tool `hooks`)
+
+The CLI surface above (`mcp-graph hooks ...`) installs Claude Code hooks. Separately, the **MCP tool `hooks`** lets agents register **runtime handlers** that fire on the 12 internal lifecycle channels (`task:pre-execute`, `tool:pre-call`, `session:start`, etc. — see [hooks-event-reference.md](./hooks-event-reference.md)).
+
+### Sandbox by default — `kind: "shell"`
+
+Sprint 2 (Hooks Integration PRD) replaced the legacy `new Function()` path with subprocess handlers. Default registration:
+
+```jsonc
+mcp__mcp-graph__hooks({
+  "action": "register",
+  "channel": "tool:pre-call",
+  "kind": "shell",                          // default; can be omitted
+  "command": ".mcp-graph/handlers/block-rm-rf.sh",
+  "commandArgs": ["--strict"],              // optional
+  "timeoutMs": 5000                         // optional, default 5000
+})
+```
+
+Contract for the script:
+
+| Channel | What you get on stdin | What you return |
+|---|---|---|
+| any `*:pre-*` | `{ channel, timestamp, payload }` (one JSON line + EOF) | exit 0 = pass, **exit 2 = block** (stderr → contexto do model), other = warn (logged) |
+| any `*:post-*` | same | exit code is logged but not enforced — post-* is fire-and-forget |
+
+Env in the subprocess is scrubbed to `PATH`, `HOME`, and any `MCP_GRAPH_*` keys plus an explicit `env` block in the registration. Stderr is captured up to 64 KiB and truncated with an explicit marker. Hung processes are SIGKILLed at `timeoutMs`.
+
+### Legacy `kind: "inline-unsafe"` (gated)
+
+The pre-Sprint-2 inline JavaScript path still exists for migration but is disabled by default:
+
+```bash
+MCP_GRAPH_HOOKS_INLINE_UNSAFE=true mcp-graph serve
+```
+
+When enabled, every `register` with `kind: "inline-unsafe"` logs an explicit security warning. The flag will be removed once all built-in handlers migrate to shell.
+
+### Files
+
+- Subprocess runner: `src/core/hooks/shell-handler.ts`
+- MCP tool: `src/mcp/tools/hooks.ts`
+- Tests: `src/tests/shell-handler.test.ts`, `src/tests/shell-handler-security.test.ts`, `src/tests/mcp-tool-hooks.test.ts`

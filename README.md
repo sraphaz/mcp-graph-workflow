@@ -124,6 +124,7 @@ Comece por aqui:
 Aprofunde:
 
 - **[Mapa de superfície](docs/guides/cli-surface-map.md)** — três modos lado a lado: tool do Claude, shell `mcp-graph`, slash do REPL
+- **[Arquitetura local](docs/ARCHITECTURE.md)** — delimitação de AISE, SDD, CDE, stack e camadas do projeto
 - **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — resolva problemas comuns
 - **[Glossário](docs/getting-started/GLOSSARY.md)** — vocabulário em linguagem clara
 - **[PRD de exemplo](docs/examples/sample-prd.md)** — para testar `import_prd` sem precisar escrever um PRD do zero

@@ -41,7 +41,9 @@ export function analyzeAutoReady(doc: GraphDocument): AutoReadyReport {
     (n) =>
       (n.type === "task" || n.type === "subtask") &&
       n.status === "backlog" &&
-      !n.blocked,
+      !n.blocked &&
+      // §EPIC-23.SprintA — exclude scaffolding nodes from auto-promotion
+      n.metadata?.implementable !== false,
   );
 
   const doneIds = new Set(

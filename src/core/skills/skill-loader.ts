@@ -168,3 +168,56 @@ export function parseSkillMarkdown(content: string): SkillMarkdownResult {
 
   return { ok: true, skill: parsed.data };
 }
+
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+
+export interface DirSkillsResult {
+  loaded: CustomSkillInput[];
+  errors: Array<{ file: string; error: string }>;
+}
+
+/**
+ * §EPIC-22.D6 — Recursively load all .md skill files under a directory.
+ * Each successfully parsed skill yields a CustomSkillInput; failures are
+ * collected as {file, error} so the caller can surface them.
+ */
+export function loadSkillsFromDir(dir: string): DirSkillsResult {
+  const result: DirSkillsResult = { loaded: [], errors: [] };
+  walk(dir, result);
+  return result;
+}
+
+function walk(dir: string, acc: DirSkillsResult): void {
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch (err) {
+    acc.errors.push({ file: dir, error: err instanceof Error ? err.message : String(err) });
+    return;
+  }
+  for (const name of entries) {
+    const full = join(dir, name);
+    let st;
+    try {
+      st = statSync(full);
+    } catch {
+      continue;
+    }
+    if (st.isDirectory()) {
+      walk(full, acc);
+      continue;
+    }
+    if (!name.toLowerCase().endsWith(".md")) continue;
+    let content: string;
+    try {
+      content = readFileSync(full, "utf-8");
+    } catch (err) {
+      acc.errors.push({ file: full, error: err instanceof Error ? err.message : String(err) });
+      continue;
+    }
+    const parsed = parseSkillMarkdown(content);
+    if (parsed.ok && parsed.skill) acc.loaded.push(parsed.skill);
+    else acc.errors.push({ file: full, error: parsed.error ?? "unknown parse error" });
+  }
+}

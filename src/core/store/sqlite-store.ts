@@ -39,6 +39,8 @@ import { z } from "zod/v4";
 
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { normalizeNewlines } from "../utils/text.js";
+import { AsyncMutex } from "../utils/async-mutex.js";
+import { timedQuery } from "../utils/slow-query-logger.js";
 
 /** Options for mutation operations (multi-agent support, ADR-10). */
 export interface MutationOptions {
@@ -282,6 +284,8 @@ export class SqliteStore {
   private db: Database.Database;
   private projectId: string | null = null;
   private _eventBus: import("../events/event-bus.js").GraphEventBus | null = null;
+  /** Serializes multi-step write sequences that span async boundaries. */
+  readonly writeMutex = new AsyncMutex();
 
   private constructor(db: Database.Database) {
     this.db = db;
@@ -354,6 +358,17 @@ export class SqliteStore {
   /** Expose the raw database instance for extension modules (e.g. DocsCacheStore). */
   getDb(): Database.Database {
     return this.db;
+  }
+
+  /**
+   * Run `fn` exclusively under the write mutex.
+   * Use this to serialize multi-step write sequences that span async boundaries.
+   * Single-step writes (insertNode, updateNode, etc.) already use SQLite transactions
+   * and are safe without this wrapper; use it when you need to group multiple writes
+   * as an atomic async unit at the application level.
+   */
+  async withWriteLock<T>(fn: () => T | Promise<T>): Promise<T> {
+    return this.writeMutex.run(fn);
   }
 
   close(): void {
@@ -1307,17 +1322,16 @@ export class SqliteStore {
     const pid = this.ensureProject();
 
     // FTS5 match query — escape user input for safety
-    const rows = this.db
-      .prepare(
-        `SELECT n.*, bm25(nodes_fts) AS score
+    const sql = `SELECT n.*, bm25(nodes_fts) AS score
          FROM nodes_fts fts
          JOIN nodes n ON n.rowid = fts.rowid
          WHERE nodes_fts MATCH ?
            AND n.project_id = ?
          ORDER BY score
-         LIMIT ?`,
-      )
-      .all(query, pid, limit) as (NodeRow & { score: number })[];
+         LIMIT ?`;
+    const rows = timedQuery(sql, () =>
+      this.db.prepare(sql).all(query, pid, limit),
+    ) as (NodeRow & { score: number })[];
 
     return rows.map((row) => ({
       ...rowToNode(row),

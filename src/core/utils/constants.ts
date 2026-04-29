@@ -75,6 +75,11 @@ export const READ_ONLY_TOOLS = new Set([
   "list_memories", "read_memory", "manage_skill",
   "stats", "velocity", "dependencies", "plan_sprint", "validate",
   "code_intelligence", "journey",
+  "query_graph", "help", "economy",
+  // "hooks" is technically mutating (register/unregister/invoke) but skipping
+  // it from tool:pre-call/post-call avoids recursion when a tool:* handler is
+  // itself registered via the hooks tool, and hook state is in-memory only.
+  "hooks",
 ]);
 
 // ── Node defaults ──

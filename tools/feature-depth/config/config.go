@@ -20,6 +20,9 @@ type Config struct {
 	Granularity string   // "module" (default) or "file"
 	Growth      bool     // when true, run growth-mode (git-history LOC analysis) instead of scoring
 	Baseline    string   // optional path to a previous file-mode JSON for diff
+	NoCache     bool     // disable the .feature-depth-cache.json read/write (file mode only)
+	Watch       bool     // poll filesystem and re-run on changes (file mode only)
+	WatchInterval int    // poll interval in seconds (default 2)
 }
 
 // Weights for the precision score calculation.
@@ -82,6 +85,9 @@ func ParseFlags() Config {
 	granularity := flag.String("granularity", "module", "report granularity: module (default) or file")
 	growthMode := flag.Bool("growth", false, "run project-growth analysis from git history instead of scoring")
 	baseline := flag.String("baseline", "", "optional path to a previous file-mode JSON for delta comparison")
+	noCache := flag.Bool("no-cache", false, "disable the .feature-depth-cache.json read/write (file mode only)")
+	watch := flag.Bool("watch", false, "poll the filesystem and re-run on .ts/.tsx changes (file mode only)")
+	watchInterval := flag.Int("watch-interval", 2, "polling interval in seconds for --watch")
 
 	flag.Parse()
 
@@ -109,5 +115,8 @@ func ParseFlags() Config {
 		Granularity: *granularity,
 		Growth:      *growthMode,
 		Baseline:    *baseline,
+		NoCache:     *noCache,
+		Watch:       *watch,
+		WatchInterval: *watchInterval,
 	}
 }

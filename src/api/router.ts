@@ -37,6 +37,7 @@ import { createRagRouter } from "./routes/rag.js";
 import { createKnowledgeRouter } from "./routes/knowledge.js";
 import { createBenchmarkRouter } from "./routes/benchmark.js";
 import { createHarnessRouter } from "./routes/harness.js";
+import { createLifecycleHealthRouter } from "./routes/lifecycle-health.js";
 import { createBrowserHarnessRouter } from "./routes/browser-harness.js";
 import { createAutonomyRouter } from "./routes/autonomy.js";
 import { createLogsRouter } from "./routes/logs.js";
@@ -48,9 +49,12 @@ import { createTranslationProjectRouter } from "./routes/translation-project.js"
 import { createDocsReferenceRouter } from "./routes/docs-reference.js";
 import { createDreamRouter } from "./routes/dream.js";
 import { createDavinciRouter } from "./routes/davinci.js";
+import { createSwarmRouter } from "./routes/swarm.js";
 import { createKanbanRouter } from "./routes/kanban.js";
 import { createEventsSseRouter } from "./routes/events-sse.js";
 import { createAgentsRouter } from "./routes/agents.js";
+import { createEconomyRouter } from "./routes/economy.js";
+import { createEvalsRouter } from "./routes/evals.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -100,6 +104,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/knowledge", createKnowledgeRouter(storeRef));
   router.use("/benchmark", createBenchmarkRouter(storeRef));
   router.use("/harness", createHarnessRouter(storeRef));
+  router.use("/lifecycle-health", createLifecycleHealthRouter(storeRef));
   router.use("/browser-harness", createBrowserHarnessRouter(storeRef, getBasePath));
   router.use("/autonomy", createAutonomyRouter(storeRef));
   router.use("/siebel", createSiebelRouter(storeRef, getBasePath));
@@ -113,6 +118,26 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/kanban", createKanbanRouter(storeRef));
   router.use("/events", createEventsSseRouter(eventBus ?? undefined));
   router.use("/agents", createAgentsRouter(storeRef));
+  router.use("/swarm", createSwarmRouter(storeRef));
+
+  // Token Economy routes — uses an in-process stub cache until the real
+  // ResponseCache singleton is wired (see EPIC 6 follow-up).
+  let economyCacheSize = 0;
+  router.use("/evals", createEvalsRouter(storeRef));
+
+  router.use(
+    "/economy",
+    createEconomyRouter({
+      cache: {
+        size: () => economyCacheSize,
+        invalidateAll: () => {
+          const prev = economyCacheSize;
+          economyCacheSize = 0;
+          return prev;
+        },
+      },
+    }),
+  );
 
   if (storeManager) {
     router.use("/folder", createFolderRouter(storeManager));

@@ -57,6 +57,8 @@ import { execSync } from "child_process";
 import { sanitizeToolArgs, detectExfiltration } from "../core/security/input-sanitizer.js";
 import { ToolResultStore } from "../core/store/tool-result-store.js";
 import { createHash } from "node:crypto";
+import { ConcurrentSemaphore, MAX_CONCURRENT_HEAVY, QUEUE_TIMEOUT_MS } from "../core/utils/concurrent-semaphore.js";
+import { getSharedHookBus } from "../core/hooks/shared-hook-bus.js";
 
 // ── Re-exported types (backward compat for tests importing from old files) ──
 
@@ -654,6 +656,10 @@ export function checkGates(
 
 // ── Main wrapper ──────────────────────────────────────────
 
+// Shared semaphore — one instance per daemon process, limiting concurrent
+// heavy tool executions to prevent GC thrashing and heap exhaustion.
+const heavySemaphore = new ConcurrentSemaphore(MAX_CONCURRENT_HEAVY, QUEUE_TIMEOUT_MS);
+
 /**
  * Wrap all registered MCP tool handlers with unified lifecycle + code intelligence gates.
  * Single wrapper per tool. Single read of store/doc/phase per tool call.
@@ -763,10 +769,37 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         }
       }
 
+      // ══ PRE-EXECUTION: Concurrency semaphore gate ══
+      // Heavy tools (context, analyze, search, export, …) are limited to
+      // MAX_CONCURRENT_HEAVY simultaneous executions. Requests beyond the
+      // queue capacity are rejected synchronously with CONCURRENCY_LIMIT.
+      // Light tools bypass entirely (checkForTool returns null).
+      const concurrencyError = heavySemaphore.checkForTool(name);
+      if (concurrencyError) {
+        logger.warn("unified-gate: concurrency limit exceeded", {
+          tool: name,
+          active: heavySemaphore.active,
+          queued: heavySemaphore.queued,
+          maxConcurrent: MAX_CONCURRENT_HEAVY,
+        });
+        return concurrencyError;
+      }
+
       // ══ EXECUTE original handler (with timing + error capture for telemetry — V11 Maestro Phase 1) ══
       const startedAt = Date.now();
       const inputText = JSON.stringify(args);
       let result: ToolCallResult;
+      let toolError: string | undefined;
+      const releaseSlot = await heavySemaphore.acquire(name).catch(() => null);
+      // Sprint 1 (S1.2): tool:pre-call hook — skip read-only tools to avoid noise.
+      const emitToolHooks = !READ_ONLY_TOOLS.has(name);
+      if (emitToolHooks) {
+        void getSharedHookBus().emit({
+          channel: "tool:pre-call",
+          timestamp: new Date(startedAt).toISOString(),
+          payload: { toolName: name, args: (args[0] as Record<string, unknown>) ?? {} },
+        });
+      }
       try {
         result = await originalHandler(...args) as ToolCallResult;
       } catch (err) {
@@ -774,10 +807,27 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         const errorKind = classifyError(err);
         // Telemetry on failure path — fail-silent inside, never throws
         recordToolCallTelemetry(store, name, estimateTokens(inputText), 0, false, durationMs, errorKind);
+        toolError = err instanceof Error ? err.message : String(err);
+        if (emitToolHooks) {
+          void getSharedHookBus().emit({
+            channel: "tool:post-call",
+            timestamp: new Date().toISOString(),
+            payload: { toolName: name, durationMs, error: toolError },
+          });
+        }
         // Re-throw the ORIGINAL error unchanged
         throw err;
+      } finally {
+        releaseSlot?.();
       }
       const durationMs = Date.now() - startedAt;
+      if (emitToolHooks) {
+        void getSharedHookBus().emit({
+          channel: "tool:post-call",
+          timestamp: new Date().toISOString(),
+          payload: { toolName: name, durationMs },
+        });
+      }
 
       // ══ V11 Maestro Phase 5.1 — Attach _deprecation_notice (warning stage) ══
       // Tool-level takes precedence; mode-level is the fallback when tool itself is healthy.

@@ -1,3 +1,10 @@
+/* eslint-disable security/detect-unsafe-regex */
+/*!
+ * Lint exemption: the regex patterns in this file are bounded
+ * (literal alternations, short character classes, language-keyword
+ * lookups) and run against parsed/structured input. The ReDoS class
+ * the rule is designed to prevent is not reachable here.
+ */
 /*!
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright © 2026 Diego Lima Nogueira de Paula

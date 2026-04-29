@@ -354,4 +354,14 @@ Open an issue at [github.com/DiegoNogueiraDev/mcp-graph-workflow/issues](https:/
 
 ---
 
+## LLM Gateway
+
+mcp-graph routes any LLM-backed task (analysis, summarization, plan refinement)
+through a single deterministic gateway — see [llm-gateway.md](./llm-gateway.md)
+for the full reference, default models, budget caps, and the v66 `llm_call_ledger`
+schema. Outbound calls are off by default; you opt in by setting an API key
+and (optionally) overriding `cap_usd_per_cell`.
+
+---
+
 *This guide covers the stable public interface. Internal implementation details are intentionally omitted.*

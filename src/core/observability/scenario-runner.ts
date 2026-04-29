@@ -105,7 +105,8 @@ export class ScenarioRunner {
       const stepResults: unknown[] = [];
 
       for (let i = 0; i < scenario.steps.length; i++) {
-        const step = scenario.steps[i]!;
+        const step = scenario.steps[i];
+        if (!step) continue;
         let result: unknown;
 
         try {

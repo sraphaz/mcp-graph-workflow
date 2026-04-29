@@ -1,0 +1,176 @@
+/*!
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright © 2026 Diego Lima Nogueira de Paula
+ *
+ * §EPIC-5.T07 — MCP `learning` tool actions (pure dispatch).
+ *
+ * 6 actions:
+ *   route   — decide an agent given history + strategy
+ *   record  — append a PerfRecord
+ *   stats   — aggregate (read-only)
+ *   explain — full breakdown for the chosen route (read-only)
+ *   export  — dump all records (read-only)
+ *   import  — replace records atomically
+ *
+ * The MCP tool wrapper validates inputs (Zod) and routes to these actions.
+ * Storage adapter (read/append/replace) is injected so this module stays
+ * pure and testable in-memory.
+ */
+
+import {
+  aggregatePerformance,
+  trimToRecent,
+  type AgentStats,
+  type PerfRecord,
+} from "./performance-tracker.js";
+import { explainRouting, type RouteExplanation } from "./sona-router.js";
+import {
+  decideRoute,
+  isValidStrategy,
+  type DelegateRouteDecision,
+  type RoutingStrategy,
+} from "./routing-strategy.js";
+
+export const LEARNING_ACTIONS = [
+  "route",
+  "record",
+  "stats",
+  "explain",
+  "export",
+  "import",
+] as const;
+export type LearningAction = (typeof LEARNING_ACTIONS)[number];
+
+export const READ_ONLY_ACTIONS: ReadonlySet<LearningAction> = new Set([
+  "route",
+  "stats",
+  "explain",
+  "export",
+]);
+
+export interface LearningStore {
+  readAll(): PerfRecord[];
+  appendRecord(record: PerfRecord): void;
+  replaceAll(records: PerfRecord[]): void;
+}
+
+export function isReadOnlyAction(action: LearningAction): boolean {
+  return READ_ONLY_ACTIONS.has(action);
+}
+
+/** route — returns the routing decision without mutating state. */
+export function actionRoute(
+  store: LearningStore,
+  strategy?: RoutingStrategy,
+): DelegateRouteDecision {
+  if (strategy !== undefined && !isValidStrategy(strategy)) {
+    throw new Error(`learning:route — invalid strategy '${strategy}'`);
+  }
+  return decideRoute({ strategy, records: store.readAll() });
+}
+
+/** record — append a single PerfRecord. Returns the inserted record. */
+export function actionRecord(store: LearningStore, record: PerfRecord): PerfRecord {
+  if (!record.agentId) throw new Error("learning:record — agentId required");
+  if (!record.nodeId) throw new Error("learning:record — nodeId required");
+  if (!Number.isFinite(record.cycleTimeMs) || record.cycleTimeMs < 0) {
+    throw new Error("learning:record — cycleTimeMs must be a non-negative number");
+  }
+  store.appendRecord(record);
+  return record;
+}
+
+export interface StatsResult {
+  totalRecords: number;
+  agents: AgentStats[];
+}
+
+export function actionStats(store: LearningStore): StatsResult {
+  const records = store.readAll();
+  return {
+    totalRecords: records.length,
+    agents: aggregatePerformance(records),
+  };
+}
+
+export function actionExplain(
+  store: LearningStore,
+  strategy?: RoutingStrategy,
+): RouteExplanation & { strategy: RoutingStrategy | "manual" } {
+  const records = store.readAll();
+  const decision = decideRoute({ strategy, records });
+  const baseline = explainRouting(records);
+  return {
+    ...baseline,
+    strategy: decision.strategy,
+  };
+}
+
+export interface ExportPayload {
+  schemaVersion: 1;
+  exportedAt: string;
+  records: PerfRecord[];
+}
+
+export function actionExport(store: LearningStore): ExportPayload {
+  return {
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    records: store.readAll(),
+  };
+}
+
+export interface ImportResult {
+  imported: number;
+  trimmed: number;
+}
+
+/**
+ * Atomic import: validate every record before touching the store, then
+ * replace in one call. The store adapter must implement replaceAll() in a
+ * single transaction; this module guarantees no partial state.
+ */
+export function actionImport(
+  store: LearningStore,
+  payload: ExportPayload,
+  options: { maxPerAgent?: number } = {},
+): ImportResult {
+  if (payload.schemaVersion !== 1) {
+    throw new Error(`learning:import — unsupported schemaVersion ${payload.schemaVersion}`);
+  }
+  if (!Array.isArray(payload.records)) {
+    throw new Error("learning:import — records must be an array");
+  }
+  // Pre-validate so a bad record doesn't half-fill the store.
+  for (const r of payload.records) {
+    if (!r.agentId || !r.nodeId) {
+      throw new Error("learning:import — every record requires agentId and nodeId");
+    }
+    if (!Number.isFinite(r.cycleTimeMs)) {
+      throw new Error("learning:import — cycleTimeMs must be finite");
+    }
+  }
+  const trimmed =
+    options.maxPerAgent !== undefined
+      ? trimToRecent(payload.records, options.maxPerAgent)
+      : payload.records;
+  store.replaceAll(trimmed);
+  return {
+    imported: trimmed.length,
+    trimmed: payload.records.length - trimmed.length,
+  };
+}
+
+/** In-memory adapter useful for testing + advisory uses. */
+export function createMemoryStore(initial: PerfRecord[] = []): LearningStore {
+  let records = [...initial];
+  return {
+    readAll: () => [...records],
+    appendRecord: (r) => {
+      records = [...records, r];
+    },
+    replaceAll: (next) => {
+      records = [...next];
+    },
+  };
+}

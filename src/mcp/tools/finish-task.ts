@@ -118,6 +118,10 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       // v11 Context-Pollination: expose persisted artifact ids for auditoria
       response.artifactIds = result.artifactIds;
 
+      if (result.skillProposal) {
+        response.skillProposal = result.skillProposal;
+      }
+
       // Run optional quality gates (advisory mode — never blocks)
       if (qualityGates && qualityGates.length > 0) {
         const gatesResult = runQualityGates(process.cwd(), qualityGates);

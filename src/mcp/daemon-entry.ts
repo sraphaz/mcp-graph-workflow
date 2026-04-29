@@ -39,6 +39,11 @@ import { acquireLock, releaseLock } from "../core/daemon/daemon-lockfile.js";
 import { startDaemonRunner } from "./daemon/runner.js";
 import { registerDaemon, unregisterDaemon } from "./daemon/daemon-registry.js";
 import { pruneOrphanWorktrees } from "../core/autonomy/shadow-branch.js";
+import {
+  maybeStartDaemonAutonomy,
+  type AnyEventBus,
+} from "../core/autonomy/daemon-autonomy-wiring.js";
+import type { AutonomyHandle } from "../core/autonomy/autonomy-bootstrap.js";
 
 const workspace = process.argv[2] ?? process.cwd();
 const paths = resolveDaemonPaths(workspace);
@@ -95,6 +100,33 @@ logger.info("daemon:ready", {
   idleShutdownMs: idleShutdownMs > 0 ? idleShutdownMs : null,
 });
 
+// §EPIC-23.T04 — Optional autonomy stack. No-op unless MCP_GRAPH_AUTONOMY=on.
+// Adapts the typed GraphEventBus to the AnyEventBus shape (string-keyed
+// channel + opaque payload) the EventReactor expects.
+const autonomyBus: AnyEventBus = {
+  on(event, handler) {
+    eventBus.on(event as never, ((evt: unknown) => handler(evt as unknown)) as never);
+  },
+  emit(event, payload) {
+    eventBus.emit({
+      type: event as never,
+      timestamp: new Date().toISOString(),
+      payload: (payload ?? {}) as never,
+    } as never);
+  },
+};
+let autonomyHandle: AutonomyHandle | undefined;
+try {
+  autonomyHandle = maybeStartDaemonAutonomy({
+    db: store.getDb(),
+    bus: autonomyBus,
+  });
+} catch (err) {
+  logger.error("daemon:autonomy-bootstrap-failed", {
+    error: err instanceof Error ? err.message : String(err),
+  });
+}
+
 let shuttingDown = false;
 async function shutdown(signal: string): Promise<void> {
   if (shuttingDown) return;
@@ -102,6 +134,15 @@ async function shutdown(signal: string): Promise<void> {
   logger.info("daemon:shutdown", { signal });
   try {
     unregisterDaemon();
+    if (autonomyHandle) {
+      try {
+        autonomyHandle.stop();
+      } catch (err) {
+        logger.warn("daemon:autonomy-stop-error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
     await handle.close();
     store.close();
     try { pruneOrphanWorktrees({ cwd: workspace }); } catch { /* GC is best-effort */ }

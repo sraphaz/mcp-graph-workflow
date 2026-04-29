@@ -23,6 +23,7 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { EnhancedNextResult } from "../planner/enhanced-next.js";
+import { getSharedHookBus } from "../hooks/shared-hook-bus.js";
 import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
@@ -32,13 +33,23 @@ import { getBaseline } from "../feature-depth/baselines-store.js";
 import { buildTaskContext } from "../context/compact-context.js";
 import { assembleContext } from "../context/context-assembler.js";
 import { generateTddHints, generateTddHintsFromTexts } from "../implementer/tdd-checker.js";
+import { findRelevantDomainSkills, type DomainSkillMatch } from "../skills/domain-skill-retrieval.js";
+import { join as joinPath } from "node:path";
 import type { TddHint } from "../../schemas/implementer-schema.js";
 import { getHarnessPreflightWarning } from "../harness/harness-preflight.js";
 import type { HarnessPreflightWarning } from "../harness/harness-preflight.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
 import { evaluate as evaluateRemediations } from "../harness/remediation-engine.js";
+import { computeEmpiricalModelHint } from "../evals/empirical-model-hint.js";
+import { EvalRunStore } from "../store/eval-run-store.js";
+import type { ModelPreference } from "../planner/task-readiness-score.js";
 import type { RemediationSuggestion } from "../harness/violation-detail.js";
 import type { LockManager } from "../store/lock-manager.js";
+import {
+  AmbiguityAuditSchema,
+  shouldWarnMissingAudit,
+  type AmbiguityAudit,
+} from "../decisions/ambiguity-audit-types.js";
 import { LockConflictError } from "../utils/errors.js";
 import { enforceWipAndFileGates } from "./wip-gate.js";
 import { assembleSiblingContext } from "./assemble-sibling-context.js";
@@ -72,6 +83,12 @@ export interface StartTaskOptions {
    * windows (e.g. Haiku 200k) or stress-test with forced small budget.
    */
   siblingBudget?: number;
+  /**
+   * §EPIC-13.2 — Ambiguity audit submitted by the agent before execution.
+   * When present, persisted in `node.metadata.ambiguityAudit`. When absent
+   * and the task has ≥3 ACs, surfaces an `ambiguityAuditWarning` in the result.
+   */
+  ambiguityAudit?: AmbiguityAudit;
 }
 
 export interface StartTaskResult {
@@ -107,6 +124,18 @@ export interface StartTaskResult {
   siblingContext: string;
   /** Count of ancestor siblings dropped by the budget cap (0 when no truncation). */
   siblingTruncatedCount: number;
+  /**
+   * Domain skills retrieved by trigger-token match against the task title +
+   * description. Empty array when no triggers matched. Caller can render
+   * `formatDomainSkillsBlock(domainSkills)` into the agent's prompt.
+   */
+  domainSkills: DomainSkillMatch[];
+  /**
+   * §EPIC-13.2 — Advisory warning when the task has ≥3 ACs but no
+   * `ambiguityAudit` was submitted. Null when the audit was provided
+   * or the task has fewer than 3 ACs.
+   */
+  ambiguityAuditWarning: string | null;
 }
 
 /**
@@ -118,7 +147,7 @@ export function startTask(
   options?: StartTaskOptions,
 ): StartTaskResult | null {
   if (!store) return null;
-  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles, siblingBudget } = options ?? {};
+  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles, siblingBudget, ambiguityAudit } = options ?? {};
 
   const doc = store.toGraphDocument();
   if (!doc?.nodes) return null;
@@ -223,14 +252,33 @@ export function startTask(
   // Pure computation — never throws, cheap (< 1ms for typical graphs).
   // Feeds the primary touched file's prior feature-depth baseline (if any)
   // into the readiness aggregator — fragile files surface earlier.
+  // §EPIC-18.AC5 — when prior eval_run rows exist for this tool×model,
+  // empirical pass-rate overrides the heuristic recommendation.
   let modelHint: TaskReadinessScore | undefined;
   try {
     const touched = getTouchedFiles(taskNode);
     const primaryFile = touched.length > 0 ? touched[0] : null;
     const fdBaseline = primaryFile ? getBaseline(store.getDb(), primaryFile) : null;
+
+    let empiricalOverride: { model: ModelPreference; basedOn: number; passRate: number } | undefined;
+    try {
+      const runs = new EvalRunStore(store.getDb());
+      const empirical = computeEmpiricalModelHint(runs, { tool: "start_task", limit: 50 });
+      if (empirical && (empirical.recommended === "haiku" || empirical.recommended === "sonnet" || empirical.recommended === "opus")) {
+        empiricalOverride = {
+          model: empirical.recommended,
+          basedOn: empirical.basedOn,
+          passRate: empirical.passRate,
+        };
+      }
+    } catch (err) {
+      logger.debug("pipeline:start_task:empirical_hint_unavailable", { error: String(err) });
+    }
+
     modelHint = computeTaskReadinessScore(taskNode, doc, {
       harnessScore: harnessWarning ? harnessWarning.score : null,
       featureDepthScore: fdBaseline?.score ?? null,
+      empiricalOverride,
     });
   } catch (err) {
     logger.warn("pipeline:start_task:model_hint_failed", { error: String(err) });
@@ -262,7 +310,22 @@ export function startTask(
         store.updateNodeStatus(taskNode.id, "in_progress");
       }
       startedAt = now();
+      void getSharedHookBus().emit({
+        channel: "task:pre-execute",
+        timestamp: startedAt,
+        payload: { nodeId: taskNode.id, ...(agentId ? { agentId } : {}) },
+      });
     } catch (err) {
+      void getSharedHookBus().emit({
+        channel: "task:error",
+        timestamp: now(),
+        payload: {
+          nodeId: taskNode.id,
+          phase: "start_task",
+          error: err instanceof Error ? err.message : String(err),
+          ...(agentId ? { agentId } : {}),
+        },
+      });
       if (err instanceof LockConflictError) {
         logger.warn("pipeline:start_task:lock_conflict", { nodeId: taskNode.id, agentId, error: String(err) });
         throw err; // Propagate lock conflicts to caller
@@ -342,6 +405,48 @@ export function startTask(
     siblingTruncatedCount,
   });
 
+  let domainSkills: DomainSkillMatch[] = [];
+  try {
+    const taskNode = enhanced?.task?.node;
+    const query = `${taskNode?.title ?? ""} ${taskNode?.description ?? ""}`.trim();
+    if (query.length > 0) {
+      domainSkills = findRelevantDomainSkills(
+        joinPath(process.cwd(), "src", "skills", "domain"),
+        query,
+        { limit: 5 },
+      );
+    }
+  } catch {
+    // Non-fatal — skill retrieval is advisory.
+  }
+
+  // §EPIC-13.2 — persist ambiguityAudit + emit advisory warning
+  let ambiguityAuditWarning: string | null = null;
+  let auditedAudit: AmbiguityAudit | undefined;
+  if (ambiguityAudit !== undefined) {
+    const parsed = AmbiguityAuditSchema.safeParse(ambiguityAudit);
+    if (parsed.success) {
+      auditedAudit = parsed.data;
+      try {
+        const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
+        store.updateNode(taskNode.id, {
+          metadata: { ...existingMeta, ambiguityAudit: auditedAudit },
+        });
+      } catch (err) {
+        logger.warn("pipeline:start_task:ambiguity_audit_persist_failed", { error: String(err) });
+      }
+    } else {
+      logger.warn("pipeline:start_task:ambiguity_audit_invalid", { issues: parsed.error.issues });
+    }
+  }
+  const acCountForAudit = (taskNode.acceptanceCriteria?.length ?? 0)
+    + doc.nodes.filter((n) => n.type === "acceptance_criteria" && n.parentId === taskNode.id).length;
+  if (shouldWarnMissingAudit(acCountForAudit, auditedAudit ?? null)) {
+    ambiguityAuditWarning =
+      `Considere classificar ambiguidades antes de implementar — ${acCountForAudit} ACs sem ambiguityAudit. `
+      + `Submeta { specified, partial, unspecified } em start_task.`;
+  }
+
   return {
     task: enhanced,
     context,
@@ -351,6 +456,8 @@ export function startTask(
     harnessWarning,
     siblingContext,
     siblingTruncatedCount,
+    domainSkills,
+    ambiguityAuditWarning,
     ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
     ...(leaseToken ? { leaseToken } : {}),
     ...(prefetchHit ? { prefetchHit } : {}),

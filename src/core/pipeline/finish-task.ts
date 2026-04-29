@@ -25,6 +25,7 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import type { ImplementDoneReport } from "../../schemas/implementer-schema.js";
 import type { EnhancedNextResult } from "../planner/enhanced-next.js";
 import { checkDefinitionOfDone } from "../implementer/definition-of-done.js";
+import { getSharedHookBus } from "../hooks/shared-hook-bus.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
 import { checkEpicPromotion, autoPromoteEpic, cascadeDownOnDone } from "../utils/epic-promotion.js";
 import type { EpicPromotionResult, AutoPromoteResult, CascadeDownResult } from "../utils/epic-promotion.js";
@@ -46,6 +47,8 @@ import {
   runFeatureDepthCheck,
   type FeatureDepthReport,
 } from "../feature-depth/finish-task-integration.js";
+import { analyzeTrajectory } from "../skills/trajectory-analyzer.js";
+import { proposeSkillFromTrajectory, type SkillProposal } from "../skills/auto-skill-proposer.js";
 import { getTouchedFiles } from "../planner/touched-files.js";
 import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branch.js";
 import { SubtaskArtifactsStore, type ArtifactKind } from "../store/subtask-artifacts-store.js";
@@ -128,6 +131,13 @@ export interface FinishTaskResult {
    * Dedup retorna o id existente (pode aparecer uma vez aqui por entry mesmo sendo dup).
    */
   artifactIds: string[];
+  /**
+   * Auto-generated skill proposal — populated when the trajectory analyzer
+   * detects a heuristic trigger (≥2× retries, ADR mention, or "discovered"
+   * in the rationale). The draft is in-memory only — never written to disk.
+   * Caller decides whether to persist as a real skill.
+   */
+  skillProposal?: SkillProposal | null;
 }
 
 export interface ContractGateResult {
@@ -437,6 +447,26 @@ export async function finishTask(
     logger.info("pipeline:finish_task:blocked", { nodeId, blockers: blockers.length });
   }
 
+  // 2.3a. Emit pipeline hook for completion / failure (Sprint 1 — wiring)
+  if (status === "done") {
+    void getSharedHookBus().emit({
+      channel: "task:post-complete",
+      timestamp: new Date().toISOString(),
+      payload: { nodeId, ...(agentId ? { agentId } : {}) },
+    });
+  } else {
+    void getSharedHookBus().emit({
+      channel: "task:error",
+      timestamp: new Date().toISOString(),
+      payload: {
+        nodeId,
+        phase: "finish_task",
+        error: blockers.join("; ") || "blocked",
+        ...(agentId ? { agentId } : {}),
+      },
+    });
+  }
+
   // 2.3b. Recovery orchestrator: record failure for MTTR-A tracking (Phase C+D)
   if (status === "blocked") {
     try {
@@ -640,6 +670,43 @@ export async function finishTask(
     }
   }
 
+  // 8. Auto-skill proposer — trajectory heuristics → draft markdown for human review.
+  // Never writes to disk. Triggered when reasons.length > 0 (retries / adr / discovered).
+  let skillProposal: SkillProposal | null = null;
+  if (status === "done" && rationale) {
+    try {
+      const node = store.getNodeById(nodeId);
+      const startedAtRaw = (node?.metadata as Record<string, unknown> | undefined)?._taskStartedAt;
+      const startedAt = typeof startedAtRaw === "string" ? Date.parse(startedAtRaw) : Number(startedAtRaw ?? 0);
+      const cycleTimeMs = startedAt > 0 ? Date.now() - startedAt : 0;
+      const adrCreated = /\bADR-\d+\b/i.test(rationale);
+
+      const trajectory = analyzeTrajectory({
+        cycleTimeMs,
+        estimateMinutes: node?.estimateMinutes ?? 0,
+        adrCreated,
+        summary: rationale,
+      });
+
+      if (trajectory.shouldPropose) {
+        skillProposal = proposeSkillFromTrajectory({
+          taskId: nodeId,
+          taskTitle: node?.title ?? nodeId,
+          taskDescription: node?.description ?? "",
+          summary: rationale,
+          reasons: trajectory.reasons,
+        });
+        logger.info("pipeline:finish_task:skill_proposed", {
+          nodeId,
+          domain: skillProposal.domain,
+          reasons: trajectory.reasons,
+        });
+      }
+    } catch (err) {
+      logger.warn("pipeline:finish_task:skill_proposal_failed", { error: String(err) });
+    }
+  }
+
   logger.info("pipeline:finish_task:ok", {
     nodeId,
     status,
@@ -670,5 +737,6 @@ export async function finishTask(
     ...(discoveredTestFiles.length > 0 ? { discoveredTestFiles } : {}),
     syntheticValidation,
     featureDepth: featureDepthReport,
+    skillProposal,
   };
 }

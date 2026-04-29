@@ -110,6 +110,9 @@ function collectFileViolations(
   violationType: string,
   out: ViolationDetail[],
 ): void {
+  // §HARNESS — same pattern as error-handling-scanner: cloning a literal
+  // RegExp for exec-state isolation; source is a RegExp object not a string.
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const regex = new RegExp(pattern.source, pattern.flags);
   let match: RegExpExecArray | null;
   while ((match = regex.exec(file.content)) !== null) {

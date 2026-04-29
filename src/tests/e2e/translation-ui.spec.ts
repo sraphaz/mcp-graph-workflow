@@ -174,6 +174,8 @@ test.describe("Translation Convert — Form Controls", () => {
     await setupConvert(page);
     const main = page.locator("#main-content");
     for (const scope of ["snippet", "function", "module"]) {
+      // E2E test: scope is a literal const string from the array above.
+      // eslint-disable-next-line security/detect-non-literal-regexp
       await expect(main.getByRole("button", { name: new RegExp(`^${scope}$`, "i") })).toBeVisible();
     }
   });

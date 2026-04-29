@@ -41,6 +41,8 @@ import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/life
 import { recommendBuiltInSkills } from "../../core/insights/skill-recommender.js";
 import { CustomSkillInputSchema, TaskTemplateInputSchema } from "../../schemas/skill.schema.js";
 import { parseSkillMarkdown } from "../../core/skills/skill-loader.js";
+import { loadDomainSkills } from "../../core/skills/domain-skill-loader.js";
+import { join } from "node:path";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
@@ -52,7 +54,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
     "Manage skills: list built-in skills, enable/disable, CRUD custom skills.",
     {
       action: z
-        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates", "recommend", "import"])
+        .enum(["list", "enable", "disable", "create", "update", "delete", "list_custom", "get_preferences", "create_template", "list_templates", "recommend", "import", "list_domain"])
         .describe("Action to perform"),
       skillName: z
         .string()
@@ -248,6 +250,29 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             indexEntitiesForSource(db, "skill");
             logger.info("tool:manage_skill:imported", { id: imported.id, name: imported.name, filePath });
             return mcpText({ ok: true, action: "import", skill: imported });
+          }
+
+          case "list_domain": {
+            const rootDir = join(process.cwd(), "src", "skills", "domain");
+            const result = loadDomainSkills(rootDir);
+            logger.info("tool:manage_skill:list_domain", {
+              count: result.skills.length,
+              errors: result.errors.length,
+            });
+            return mcpText({
+              ok: true,
+              total: result.skills.length,
+              skills: result.skills.map((s) => ({
+                domain: s.domain,
+                topic: s.topic,
+                triggers: s.triggers,
+                source_task: s.source_task,
+                confidence: s.confidence,
+                discovered_at: s.discovered_at,
+                path: s.path,
+              })),
+              errors: result.errors,
+            });
           }
 
           case "recommend": {

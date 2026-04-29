@@ -256,21 +256,21 @@ describe("checkDefinitionOfDone", () => {
     expect(report.title).toBe("My Task");
   });
 
-  it("should have 9 checks total", () => {
+  it("should have 10 checks total (incl. has_citations_in_new_core_files §EPIC-13.1)", () => {
     const doc = makeDoc([
       { id: "t1", type: "task", status: "in_progress", acceptanceCriteria: ["AC"] },
     ]);
     const report = checkDefinitionOfDone(doc, "t1");
-    expect(report.checks).toHaveLength(9);
+    expect(report.checks).toHaveLength(10);
   });
 
-  it("should have 4 required and 5 recommended checks", () => {
+  it("should have 4 required and 6 recommended checks", () => {
     const doc = makeDoc([
       { id: "t1", type: "task", status: "in_progress", acceptanceCriteria: ["AC"] },
     ]);
     const report = checkDefinitionOfDone(doc, "t1");
     expect(report.checks.filter((c) => c.severity === "required")).toHaveLength(4);
-    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(5);
+    expect(report.checks.filter((c) => c.severity === "recommended")).toHaveLength(6);
   });
 
   it("should handle non-existent nodeId gracefully", () => {

@@ -49,6 +49,9 @@ const DocsTab = lazy(() => import("@/components/tabs/docs-tab").then((m) => ({ d
 const DavinciTab = lazy(() => import("@/components/davinci/davinci-tab").then((m) => ({ default: m.DavinciTab })));
 const HarnessTab = lazy(() => import("@/components/tabs/harness-tab").then((m) => ({ default: m.HarnessTab })));
 const BrowserPilotTab = lazy(() => import("@/components/tabs/browser-pilot-tab").then((m) => ({ default: m.BrowserPilotTab })));
+const HooksTab = lazy(() => import("@/components/tabs/hooks-tab").then((m) => ({ default: m.HooksTab })));
+const LifecycleHealthTab = lazy(() => import("@/components/tabs/lifecycle-health-tab").then((m) => ({ default: m.LifecycleHealthTab })));
+const AgentsTab = lazy(() => import("@/components/tabs/agents-tab").then((m) => ({ default: m.AgentsTab })));
 
 const TAB_LABELS: Record<TabId, string> = {
   overview: "Overview",
@@ -71,6 +74,9 @@ const TAB_LABELS: Record<TabId, string> = {
   harness: "Harness",
   autopilot: "Autopilot",
   "browser-pilot": "Browser Pilot",
+  hooks: "Hooks",
+  "lifecycle-health": "Lifecycle Health",
+  agents: "Agents",
 };
 
 const CHUNK_RETRY_KEY = "chunk_retry_attempted";
@@ -247,6 +253,9 @@ function AppContent(): React.JSX.Element {
                   {activeTab === "harness" && <HarnessTab />}
                   {activeTab === "autopilot" && <AutopilotTab />}
                   {activeTab === "browser-pilot" && <BrowserPilotTab />}
+                  {activeTab === "hooks" && <HooksTab />}
+                  {activeTab === "lifecycle-health" && <LifecycleHealthTab />}
+                  {activeTab === "agents" && <AgentsTab />}
                 </Suspense>
               </ErrorBoundary>
             )}

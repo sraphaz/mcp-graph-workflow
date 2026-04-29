@@ -35,6 +35,8 @@ export const KnowledgeSourceTypeSchema = z.enum([
   "harness_scan",
   // Challenge engine types (v7)
   "challenge_report",
+  // Agent indexing (E1.T04)
+  "agent",
 ]);
 
 export const KnowledgeDocumentSchema = z.object({

@@ -55,7 +55,7 @@ describe("analyze mode: implement_done (integration)", () => {
     expect(report.nodeId).toBe(task.id);
     expect(report.ready).toBe(true);
     expect(report.score).toBeGreaterThanOrEqual(75);
-    expect(report.checks).toHaveLength(9);
+    expect(report.checks).toHaveLength(10);
   });
 
   it("should fail DoD for task with unresolved blocker in store", () => {

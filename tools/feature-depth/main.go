@@ -2,15 +2,20 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"feature-depth/analyzer"
+	"feature-depth/cache"
 	"feature-depth/config"
+	"feature-depth/covreport"
 	"feature-depth/growth"
 	"feature-depth/reporter"
 	"feature-depth/scanner"
 	"feature-depth/scorer"
+	"feature-depth/watch"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -24,6 +29,10 @@ func main() {
 		return
 	}
 	if cfg.Granularity == "file" {
+		if cfg.Watch {
+			runFileWatch(cfg)
+			return
+		}
 		runFileGranularity(cfg)
 		return
 	}
@@ -166,6 +175,43 @@ func runGrowth(cfg config.Config) {
 	}
 }
 
+// runFileWatch enters a poll loop. First run is a normal file-mode
+// scan; subsequent iterations check mtimes every cfg.WatchInterval
+// seconds and re-run only when something under cfg.CorePath changed.
+// Cache makes the re-run near-instant for unchanged files.
+func runFileWatch(cfg config.Config) {
+	scanRoot := filepath.Join(cfg.Dir, cfg.CorePath)
+	interval := time.Duration(cfg.WatchInterval) * time.Second
+	if interval < time.Second {
+		interval = time.Second
+	}
+	fmt.Fprintf(os.Stderr, "Watching %s every %s — Ctrl-C to stop.\n", scanRoot, interval)
+
+	// Initial run.
+	runFileGranularity(cfg)
+	prev, err := watch.SnapshotMTimes(scanRoot)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "watch: initial snapshot: %v\n", err)
+		os.Exit(1)
+	}
+
+	for {
+		time.Sleep(interval)
+		snap, err := watch.SnapshotMTimes(scanRoot)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "watch: snapshot: %v\n", err)
+			continue
+		}
+		changed := watch.Diff(prev, snap)
+		if len(changed) == 0 {
+			continue
+		}
+		fmt.Fprintf(os.Stderr, "\n→ %d file(s) changed, re-running...\n", len(changed))
+		runFileGranularity(cfg)
+		prev = snap
+	}
+}
+
 // runFileGranularity is the file-mode entry point. It walks core/, scores
 // each .ts file independently using AnalyzeFile (analyzer/file.go), and
 // emits a top/bottom table plus an "untested files" worklist. This is
@@ -182,9 +228,35 @@ func runFileGranularity(cfg config.Config) {
 		fmt.Fprintf(os.Stderr, "No files found in %s/%s\n", cfg.Dir, cfg.CorePath)
 		os.Exit(1)
 	}
+	// Auto-detect coverage report and pre-load percentages. Real coverage
+	// overrides the LOC-ratio TestDensity heuristic in AnalyzeFile when
+	// present — strictly better signal. Silent fallback when absent.
+	covMap := map[string]float64{}
+	if covPath := covreport.AutoDetectCoveragePath(cfg.Dir); covPath != "" {
+		if loaded, err := covreport.LoadCoverage(covPath, cfg.Dir); err == nil {
+			covMap = loaded
+			fmt.Fprintf(os.Stderr, "  Coverage report loaded: %d files\n", len(covMap))
+		} else {
+			fmt.Fprintf(os.Stderr, "  Coverage report present but unreadable: %v\n", err)
+		}
+	}
+
+	// Incremental cache: SHA-256 of file content + analyzer version as key.
+	// Re-runs after touching only a few files become near-instant. Cache
+	// auto-invalidates on version bump (any scoring-logic change).
+	const analyzerVersion = "file-v2-centrality-coverage"
+	cachePath := filepath.Join(cfg.Dir, ".feature-depth-cache.json")
+	fileCache := cache.NewCache(cachePath, analyzerVersion)
+	if !cfg.NoCache {
+		if err := fileCache.Load(); err != nil {
+			fmt.Fprintf(os.Stderr, "  Cache load skipped: %v\n", err)
+		}
+	}
+
 	fmt.Fprintf(os.Stderr, "Analyzing %d files (granularity=file)...\n", len(files))
 
 	results := make([]analyzer.FileAnalysis, len(files))
+	var cacheMu sync.Mutex
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 8)
 	for i, f := range files {
@@ -193,10 +265,44 @@ func runFileGranularity(cfg config.Config) {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			results[idx] = analyzer.AnalyzeFile(file)
+			pct := covMap[file.RelPath] // 0 if absent → AnalyzeFile keeps LOC heuristic
+
+			// Cache key incorporates content + test content + coverage % so
+			// a change to any of those invalidates the entry.
+			key := cache.HashFileContent(
+				file.Content + "\x00" + file.RelPath +
+					"\x00" + fmt.Sprintf("test=%d|cov=%.2f", file.TestLOC, pct),
+			)
+			if !cfg.NoCache {
+				if cached, ok := fileCache.Get(key); ok {
+					var fa analyzer.FileAnalysis
+					if err := json.Unmarshal(cached, &fa); err == nil {
+						results[idx] = fa
+						return
+					}
+				}
+			}
+
+			fa := analyzer.AnalyzeFile(file, pct)
+			results[idx] = fa
+			if !cfg.NoCache {
+				if payload, err := json.Marshal(fa); err == nil {
+					cacheMu.Lock()
+					fileCache.Put(key, payload)
+					cacheMu.Unlock()
+				}
+			}
 		}(i, f)
 	}
 	wg.Wait()
+
+	if !cfg.NoCache {
+		hits, misses := fileCache.Stats()
+		fmt.Fprintf(os.Stderr, "  Cache: %d hits, %d misses (%d entries)\n", hits, misses, fileCache.Size())
+		if err := fileCache.Save(); err != nil {
+			fmt.Fprintf(os.Stderr, "  Cache save failed: %v\n", err)
+		}
+	}
 
 	avg := 0.0
 	for _, r := range results {

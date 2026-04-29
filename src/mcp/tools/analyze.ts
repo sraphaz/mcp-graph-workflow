@@ -44,6 +44,7 @@ import { checkHandoffReadiness } from "../../core/handoff/delivery-checklist.js"
 import { checkDocCompleteness } from "../../core/handoff/doc-completeness.js";
 import { checkDeployReadiness } from "../../core/deployer/deploy-readiness.js";
 import { checkListeningReadiness } from "../../core/listener/feedback-readiness.js";
+import { checkApproval } from "../../core/approval/approval-checker.js";
 import { analyzeBacklogHealth } from "../../core/listener/backlog-health.js";
 import { analyzeSprintHealth } from "../../core/planner/sprint-health.js";
 import { analyzeAutoReady } from "../../core/planner/auto-ready.js";
@@ -65,6 +66,9 @@ import { checkTddAdherence } from "../../core/implementer/tdd-checker.js";
 import { calculateSprintProgress } from "../../core/implementer/sprint-progress.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+import { buildMemoryHealthReport } from "../../core/utils/memory-telemetry.js";
+import { wrapDesignPhaseAdvisory } from "../../core/analyzer/out-of-phase-advisory.js";
+import { validateFilesCitations } from "../../core/citations/citation-validator.js";
 
 const ANALYZE_MODES = z.enum([
   "prd_quality",
@@ -120,6 +124,12 @@ const ANALYZE_MODES = z.enum([
   "harness_remediate",
   "adr_challenge",
   "orphan_tasks",
+  "memory_health",
+  "citation_groundedness",
+  "approval_check",
+  "prd_lifecycle_health",
+  "capacity_health",
+  "success_rate",
 ]);
 
 function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean {
@@ -129,12 +139,13 @@ function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
-    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk, economy_simulation (gold inflow vs outflow inflation detector — pass JSON params via nodeId: {playerCount, avgSessionHours, avgLevel}), harness_scan (compute Harnessability Score across 4 dimensions: type coverage, test coverage, docs coverage, architecture fitness — returns score, grade A–D, breakdown, details, timestamp), harness_trend (show harness score evolution — returns last 10 snapshots with trend direction: improving/degrading/stable/no_data and delta), harness_advice (per-dimension remediation — returns file-level improvement suggestions for dimensions scoring < 70).",
+    "Analyze the project graph. Modes: prd_quality, scope, ready, risk, blockers, cycles, critical_path, contract_coverage, data_integrity, decompose, adr, formula_consistency, traceability, coupling, interfaces, tech_risk, design_ready (DESIGN→PLAN gate), implement_done, tdd_check, performance_budget, progress, state_completeness, validate_ready (IMPLEMENT→VALIDATE gate), done_integrity, status_flow, review_ready (VALIDATE→REVIEW gate), handoff_ready (REVIEW→HANDOFF gate), doc_completeness, deploy_ready (HANDOFF→DEPLOY gate), release_check, listening_ready (DEPLOY→LISTENING gate), backlog_health, sprint_health (sprint metrics + health grade), auto_ready (identify backlog tasks promotable to ready), scenario_coverage, asset_blockers, config_coverage, metric_coverage, concurrency_risk, economy_simulation (gold inflow vs outflow inflation detector — pass JSON params via nodeId: {playerCount, avgSessionHours, avgLevel}), harness_scan (compute Harnessability Score across 4 dimensions: type coverage, test coverage, docs coverage, architecture fitness — returns score, grade A–D, breakdown, details, timestamp), harness_trend (show harness score evolution — returns last 10 snapshots with trend direction: improving/degrading/stable/no_data and delta), harness_advice (per-dimension remediation — returns file-level improvement suggestions for dimensions scoring < 70), prd_lifecycle_health (9-phase régua per epic — passedAll boolean + summary; nodeId required), capacity_health (PLAN-phase calibration delta vs velocity ±10% tolerance — sprintLabel via nodeId), success_rate (rolling pass-rate over the most recent N lifecycle_health snapshots — `window` param, default 10; nodeId scopes to a specific epic).",
     {
       mode: ANALYZE_MODES.describe("Analysis mode"),
       nodeId: z.string().optional().describe("Node ID (required for 'blockers'/'implement_done', optional for 'decompose'/'tdd_check'. For 'progress' mode, used as sprint name filter)"),
+      window: z.number().int().positive().optional().describe("Window size for 'success_rate' mode — defaults to 10."),
     },
-    async ({ mode, nodeId }) => {
+    async ({ mode, nodeId, window }) => {
       logger.debug("tool:analyze", { mode, nodeId });
       const doc = store.toGraphDocument();
 
@@ -210,45 +221,35 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const phase = detectCurrentPhase(doc);
           const traceReport = buildTraceabilityMatrix(doc);
           logger.info("tool:analyze:traceability:ok", { coverageRate: traceReport.coverageRate });
-          const response: Record<string, unknown> = { ok: true, mode, ...traceReport };
-          if (phase !== "DESIGN") response._info = `Modo traceability é específico da fase DESIGN (fase atual: ${phase})`;
-          return mcpText(response);
+          return mcpText(wrapDesignPhaseAdvisory(phase, mode, traceReport as unknown as Record<string, unknown>));
         }
 
         case "coupling": {
           const phase = detectCurrentPhase(doc);
           const couplingReport = analyzeCoupling(doc);
           logger.info("tool:analyze:coupling:ok", { highCoupling: couplingReport.highCouplingNodes.length });
-          const response: Record<string, unknown> = { ok: true, mode, ...couplingReport };
-          if (phase !== "DESIGN") response._info = `Modo coupling é específico da fase DESIGN (fase atual: ${phase})`;
-          return mcpText(response);
+          return mcpText(wrapDesignPhaseAdvisory(phase, mode, couplingReport as unknown as Record<string, unknown>));
         }
 
         case "interfaces": {
           const phase = detectCurrentPhase(doc);
           const ifReport = checkInterfaces(doc);
           logger.info("tool:analyze:interfaces:ok", { overallScore: ifReport.overallScore });
-          const response: Record<string, unknown> = { ok: true, mode, ...ifReport };
-          if (phase !== "DESIGN") response._info = `Modo interfaces é específico da fase DESIGN (fase atual: ${phase})`;
-          return mcpText(response);
+          return mcpText(wrapDesignPhaseAdvisory(phase, mode, ifReport as unknown as Record<string, unknown>));
         }
 
         case "tech_risk": {
           const phase = detectCurrentPhase(doc);
           const techRiskReport = assessTechRisks(doc);
           logger.info("tool:analyze:tech_risk:ok", { riskScore: techRiskReport.riskScore });
-          const response: Record<string, unknown> = { ok: true, mode, ...techRiskReport };
-          if (phase !== "DESIGN") response._info = `Modo tech_risk é específico da fase DESIGN (fase atual: ${phase})`;
-          return mcpText(response);
+          return mcpText(wrapDesignPhaseAdvisory(phase, mode, techRiskReport as unknown as Record<string, unknown>));
         }
 
         case "design_ready": {
           const phase = detectCurrentPhase(doc);
           const readinessReport = checkDesignReadiness(doc);
           logger.info("tool:analyze:design_ready:ok", { ready: readinessReport.ready, grade: readinessReport.grade });
-          const response: Record<string, unknown> = { ok: true, mode, ...readinessReport };
-          if (phase !== "DESIGN") response._info = `Modo design_ready é específico da fase DESIGN (fase atual: ${phase})`;
-          return mcpText(response);
+          return mcpText(wrapDesignPhaseAdvisory(phase, mode, readinessReport as unknown as Record<string, unknown>));
         }
 
         case "implement_done": {
@@ -704,6 +705,153 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
               ? "Review these tasks — they may already be implemented. Use update_status to mark them done."
               : "No orphan tasks detected.",
           });
+        }
+
+        case "memory_health": {
+          const agentCount = (store as unknown as { connections?: { size: number } }).connections?.size ?? 0;
+          const report = buildMemoryHealthReport({ agentCount });
+          logger.info("tool:analyze:memory_health:ok", { level: report.heap.level, heapUsedMb: report.heap.heapUsedMb });
+          return mcpText(JSON.stringify(report, null, 2));
+        }
+
+        case "citation_groundedness": {
+          if (!nodeId) {
+            return mcpError("nodeId is required for 'citation_groundedness' mode");
+          }
+          const node = doc.nodes.find((n) => n.id === nodeId);
+          if (!node) {
+            return mcpError(`Node ${nodeId} not found`);
+          }
+          const meta = (node.metadata ?? {}) as Record<string, unknown>;
+          const observed = Array.isArray(meta.touchedFilesObserved) ? (meta.touchedFilesObserved as string[]) : [];
+          const declared = Array.isArray(meta.touchedFiles) ? (meta.touchedFiles as string[]) : [];
+          const paths = [...new Set([...observed, ...declared])];
+          const cwd = process.cwd();
+          const files: { path: string; content: string }[] = [];
+          for (const p of paths) {
+            try {
+              const full = p.startsWith("/") ? p : `${cwd}/${p}`;
+              const fs = await import("node:fs");
+              if (fs.existsSync(full) && fs.statSync(full).isFile()) {
+                files.push({ path: p, content: fs.readFileSync(full, "utf-8") });
+              }
+            } catch {
+              // skip unreadable files
+            }
+          }
+          const result = validateFilesCitations(files);
+          logger.info("tool:analyze:citation_groundedness:ok", {
+            nodeId,
+            checked: result.checkedCount,
+            violations: result.violations.length,
+          });
+          return mcpText({
+            ok: true,
+            mode,
+            nodeId,
+            checkedCount: result.checkedCount,
+            violationCount: result.violations.length,
+            violations: result.violations,
+          });
+        }
+
+        case "approval_check": {
+          // §EPIC-15.2 — nodeId carries a JSON payload {tool, input}
+          // (mirrors the economy_simulation convention).
+          if (!nodeId) {
+            return mcpError("approval_check requires JSON payload via nodeId field: {\"tool\":\"Bash\",\"input\":{\"command\":\"…\"}}");
+          }
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(nodeId);
+          } catch {
+            return mcpError("approval_check nodeId must be valid JSON");
+          }
+          if (typeof parsed !== "object" || parsed === null) {
+            return mcpError("approval_check payload must be an object {tool, input}");
+          }
+          const { tool, input } = parsed as { tool?: unknown; input?: unknown };
+          if (typeof tool !== "string") {
+            return mcpError("approval_check payload.tool must be a string");
+          }
+          const result = checkApproval({
+            tool,
+            input: (input && typeof input === "object") ? (input as Record<string, unknown>) : null,
+          });
+          logger.info("tool:analyze:approval_check:ok", {
+            tool,
+            requires_approval: result.requires_approval,
+            severity: result.severity,
+            matched: result.matchedPatterns,
+          });
+          return mcpText({ ok: true, mode, ...result });
+        }
+
+        case "prd_lifecycle_health": {
+          if (!nodeId) {
+            return mcpError("nodeId is required for 'prd_lifecycle_health' mode");
+          }
+          const { computePrdLifecycleHealth } = await import(
+            "../../core/analyzer/prd-lifecycle-health.js"
+          );
+          const { computeCapacityHealth } = await import(
+            "../../core/analyzer/capacity-health.js"
+          );
+          const { sweepStaleDecisions } = await import(
+            "../../core/autonomy/listening-sweep.js"
+          );
+          const cap = computeCapacityHealth(doc);
+          const sweep = sweepStaleDecisions(store.getDb());
+          const report = computePrdLifecycleHealth(doc, nodeId, {
+            capacityCalibrationDelta: cap.deltaPct,
+            decisionOutcomeClosureRate: sweep.closureRate,
+          });
+          // §SprintD — persist snapshot for analyze(success_rate) trend.
+          try {
+            const { recordSnapshot } = await import(
+              "../../core/analyzer/lifecycle-health-snapshots.js"
+            );
+            recordSnapshot(store.getDb(), report);
+          } catch (err) {
+            logger.warn("tool:analyze:prd_lifecycle_health:snapshot_failed", {
+              error: String(err),
+            });
+          }
+          logger.info("tool:analyze:prd_lifecycle_health:ok", {
+            nodeId,
+            passedAll: report.passedAll,
+            passedCount: report.passedCount,
+          });
+          return mcpText({ ok: true, mode, ...report });
+        }
+
+        case "success_rate": {
+          const { computeSuccessRate } = await import(
+            "../../core/analyzer/lifecycle-health-snapshots.js"
+          );
+          const result = computeSuccessRate(store.getDb(), {
+            window: window ?? 10,
+            epicId: nodeId ?? null,
+          });
+          logger.info("tool:analyze:success_rate:ok", {
+            samples: result.samples,
+            passed: result.passed,
+            successRate: result.successRate,
+          });
+          return mcpText({ ok: true, mode, ...result });
+        }
+
+        case "capacity_health": {
+          const { computeCapacityHealth } = await import(
+            "../../core/analyzer/capacity-health.js"
+          );
+          const sprintLabel = nodeId; // optional sprint filter via nodeId param
+          const result = computeCapacityHealth(doc, sprintLabel);
+          logger.info("tool:analyze:capacity_health:ok", {
+            sprintLabel: result.sprintLabel,
+            withinTolerance: result.withinTolerance,
+          });
+          return mcpText({ ok: true, mode, ...result });
         }
 
         default: {

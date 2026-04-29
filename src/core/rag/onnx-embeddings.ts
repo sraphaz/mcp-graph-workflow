@@ -25,10 +25,12 @@
  * Fallback: Returns null when onnxruntime-node is not installed.
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, statSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { logger } from '../utils/logger.js';
 import { OnnxModelNotFoundError } from '../utils/errors.js';
+import { TensorBufferPool } from './tensor-buffer-pool.js';
+import { downloadFileWithVerify, ChecksumMismatchError, DownloadError } from './model-downloader.js';
 
 // ── Types ──
 
@@ -148,30 +150,26 @@ export function ensureOnnxModelDir(modelsDir: string): void {
 // ── Model download ──
 
 async function downloadFile(url: string, destPath: string): Promise<void> {
-  logger.info('onnx:download', { url, dest: destPath });
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
-
-  let response: Response;
+  // §EPIC-17.T01 — delegated to model-downloader. expectedSha256 is omitted
+  // for now (pinned hashes will be set in T05 once first canonical download
+  // is captured); mismatch detection is still active when caller passes one.
   try {
-    response = await fetch(url, { signal: controller.signal });
+    const result = await downloadFileWithVerify(url, destPath);
+    logger.info('onnx:download:ok', {
+      dest: destPath,
+      sizeBytes: result.sizeBytes,
+      sha256: result.sha256,
+      verified: result.verified,
+    });
   } catch (err) {
-    if (controller.signal.aborted) {
-      throw new OnnxModelNotFoundError(`Download timeout for: ${url} (${DOWNLOAD_TIMEOUT_MS}ms)`);
+    if (err instanceof ChecksumMismatchError) {
+      throw new OnnxModelNotFoundError(`Checksum mismatch for ${url}: ${err.message}`);
+    }
+    if (err instanceof DownloadError) {
+      throw new OnnxModelNotFoundError(`Failed to download: ${url} — ${err.message}`);
     }
     throw err;
-  } finally {
-    clearTimeout(timeoutId);
   }
-
-  if (!response.ok) {
-    throw new OnnxModelNotFoundError(`Failed to download: ${url} (${response.status})`);
-  }
-
-  const buffer = Buffer.from(await response.arrayBuffer());
-  writeFileSync(destPath, buffer);
-  logger.info('onnx:download:ok', { dest: destPath, sizeBytes: buffer.length });
 }
 
 async function ensureModelFiles(modelsDir: string): Promise<{ modelPath: string; tokenizerPath: string }> {
@@ -265,6 +263,7 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
 
   private session: unknown = null;
   private vocab: Record<string, number> = {};
+  private readonly bufferPool = new TensorBufferPool(4);
 
   constructor(
     private readonly modelPath: string,
@@ -294,33 +293,37 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
 
     const ort = await import('onnxruntime-node');
     const tokenIds = tokenize(text, this.vocab);
-    const attentionMask = tokenIds.map(() => 1);
-    const tokenTypeIds = tokenIds.map(() => 0);
+    const validTokenCount = tokenIds.length;
 
-    while (tokenIds.length < MAX_SEQUENCE_LENGTH) {
-      tokenIds.push(0);
-      attentionMask.push(0);
-      tokenTypeIds.push(0);
+    const { slot, release } = await this.bufferPool.acquire();
+    try {
+      // Fill pre-allocated buffers in-place — zero heap alloc per call
+      for (let i = 0; i < MAX_SEQUENCE_LENGTH; i++) {
+        slot.inputIds[i] = BigInt(tokenIds[i] ?? 0);
+        slot.attentionMask[i] = i < validTokenCount ? 1n : 0n;
+        slot.tokenTypeIds[i] = 0n;
+      }
+
+      const inputIdsTensor = new ort.Tensor('int64', slot.inputIds, [1, MAX_SEQUENCE_LENGTH]);
+      const attentionTensor = new ort.Tensor('int64', slot.attentionMask, [1, MAX_SEQUENCE_LENGTH]);
+      const typeIdsTensor = new ort.Tensor('int64', slot.tokenTypeIds, [1, MAX_SEQUENCE_LENGTH]);
+
+      const results = await session.run({
+        input_ids: inputIdsTensor,
+        attention_mask: attentionTensor,
+        token_type_ids: typeIdsTensor,
+      });
+
+      const lastHidden = results['last_hidden_state'] ?? results['output'];
+      if (!lastHidden?.data) {
+        throw new OnnxModelNotFoundError('Model output missing last_hidden_state');
+      }
+
+      const data = lastHidden.data as Float32Array;
+      return meanPoolAndNormalize(data, validTokenCount, EMBEDDING_DIM);
+    } finally {
+      release();
     }
-
-    const inputIds = new ort.Tensor('int64', BigInt64Array.from(tokenIds.map(BigInt)), [1, MAX_SEQUENCE_LENGTH]);
-    const attention = new ort.Tensor('int64', BigInt64Array.from(attentionMask.map(BigInt)), [1, MAX_SEQUENCE_LENGTH]);
-    const typeIds = new ort.Tensor('int64', BigInt64Array.from(tokenTypeIds.map(BigInt)), [1, MAX_SEQUENCE_LENGTH]);
-
-    const results = await session.run({
-      input_ids: inputIds,
-      attention_mask: attention,
-      token_type_ids: typeIds,
-    });
-
-    const lastHidden = results['last_hidden_state'] ?? results['output'];
-    if (!lastHidden?.data) {
-      throw new OnnxModelNotFoundError('Model output missing last_hidden_state');
-    }
-
-    const data = lastHidden.data as Float32Array;
-    const validTokens = attentionMask.filter(m => m === 1).length;
-    return meanPoolAndNormalize(data, validTokens, EMBEDDING_DIM);
   }
 
   async generateBatch(texts: string[]): Promise<number[][]> {

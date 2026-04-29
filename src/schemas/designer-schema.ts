@@ -59,7 +59,16 @@ export const TraceabilityEntrySchema = z.object({
 export const TraceabilityReportSchema = z.object({
   matrix: z.array(TraceabilityEntrySchema),
   coverageRate: z.number().min(0).max(100),
-  orphanRequirements: z.array(z.string()),
+  /**
+   * §BUG-06 — Canonical: requirements with no linked decision/constraint
+   * (coverage='none'). Distinct from analyze(scope) `orphanRequirements`
+   * which counts structural orphans (no parent edge).
+   */
+  uncoveredRequirements: z.array(z.string()),
+  /** §BUG-06-A — canonical name (deprecated alias `orphanRequirements` removed). */
+  untracedRequirements: z.array(z.string()),
+  /** §BUG-06-A — count of uncovered requirements (== uncoveredRequirements.length). */
+  traceabilityWarning: z.number(),
   orphanDecisions: z.array(z.string()),
   /** Bug #009: warning when no requirement nodes exist */
   warning: z.string().optional(),
