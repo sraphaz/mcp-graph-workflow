@@ -2,6 +2,13 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [13.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v13.0.0-beta.0...cli-v13.0.0) (2026-04-29)
+
+
+### Features
+
+* release v13.0.0 with self-hosting régua + auto-merge + agent monitor ([1bbb560](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/1bbb5604edf83f65aba4bc0dec9ceae62bb21f0f))
+
 ## [13.0.0-beta.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v12.0.0-beta.0...cli-v13.0.0-beta.0) (2026-04-26)
 
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.3...mcp-graph-v13.0.0) (2026-04-29)
+
+
+### Features
+
+* release v13.0.0 with self-hosting régua + auto-merge + agent monitor ([1bbb560](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/1bbb5604edf83f65aba4bc0dec9ceae62bb21f0f))
+* **release:** v13 — self-hosting régua + auto-merge cycle + agent monitor ([4c22f8c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4c22f8cfdb69da3cedb3ab4793941899d8e7f67d))
+
 ## [12.1.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.2...mcp-graph-v12.1.3) (2026-04-29)
 
 
