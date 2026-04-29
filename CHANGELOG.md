@@ -1,5 +1,13 @@
 # Changelog
 
+## [12.1.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.2...mcp-graph-v12.1.3) (2026-04-29)
+
+
+### Bug Fixes
+
+* **ci:** allowlist Claude + bot pattern in CLA check ([1c2fca5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/1c2fca5324b360a5e74af61425d8e24b05567fe3))
+* **ci:** CLA allowlist — lowercase 'claude' (GitHub login is case-sensitive) ([6e7e19c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/6e7e19c598ea8c1c0454e57d5f237dba30e88331))
+
 ## [12.1.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.1...mcp-graph-v12.1.2) (2026-04-26)
 
 
