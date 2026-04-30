@@ -17,20 +17,23 @@
 
 import { describe, it, expect, vi } from "vitest";
 
-// Mock pdf-parse before importing the module
-vi.mock("pdf-parse", () => ({
-  default: vi.fn(async (buffer: Buffer) => {
-    const text = buffer.toString("utf-8");
+// Mock pdf-parse v2 (PDFParse class) before importing the module
+const lastCallArgs: { data?: Uint8Array }[] = [];
+class FakePDFParse {
+  constructor(opts: { data: Uint8Array }) {
+    lastCallArgs.push(opts);
+    this.data = opts.data;
+  }
+  private data: Uint8Array;
+  async getText(): Promise<{ text: string; total: number }> {
+    const text = new TextDecoder().decode(this.data);
     if (text.includes("CORRUPT_PDF")) {
       throw new Error("Invalid PDF structure");
     }
-    return {
-      text: `parsed: ${text}`,
-      numpages: 1,
-      info: {},
-    };
-  }),
-}));
+    return { text: `parsed: ${text}`, total: 1 };
+  }
+}
+vi.mock("pdf-parse", () => ({ PDFParse: FakePDFParse }));
 
 import { readPdfBuffer } from "../core/parser/read-pdf.js";
 
@@ -44,14 +47,14 @@ describe("readPdfBuffer", () => {
     expect(result.pages).toBe(1);
   });
 
-  it("should pass buffer to pdf-parse", async () => {
-    const pdfParse = (await import("pdf-parse")).default as ReturnType<typeof vi.fn>;
-    pdfParse.mockClear();
-
+  it("should pass buffer to PDFParse constructor", async () => {
+    lastCallArgs.length = 0;
     const buffer = Buffer.from("test content");
     await readPdfBuffer(buffer);
 
-    expect(pdfParse).toHaveBeenCalledWith(buffer);
+    expect(lastCallArgs).toHaveLength(1);
+    const passed = lastCallArgs[0]!.data!;
+    expect(new TextDecoder().decode(passed)).toBe("test content");
   });
 
   it("should propagate errors from pdf-parse", async () => {

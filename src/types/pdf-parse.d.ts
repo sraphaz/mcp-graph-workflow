@@ -1,13 +1,20 @@
+/** Type stub for pdf-parse v2+ (class-based API). */
 declare module "pdf-parse" {
-  interface PdfData {
-    numpages: number;
-    numrender: number;
-    info: Record<string, unknown>;
-    metadata: Record<string, unknown> | null;
+  export interface PageTextResult {
+    num: number;
     text: string;
-    version: string;
   }
 
-  function pdfParse(dataBuffer: Buffer): Promise<PdfData>;
-  export default pdfParse;
+  export class TextResult {
+    pages: Array<PageTextResult>;
+    text: string;
+    total: number;
+    getPageText(num: number): string;
+  }
+
+  export class PDFParse {
+    constructor(options: { data: Uint8Array | Buffer });
+    getText(): Promise<TextResult>;
+    destroy(): Promise<void>;
+  }
 }

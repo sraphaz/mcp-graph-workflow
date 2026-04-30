@@ -40,6 +40,14 @@ export function attachCdpTranslator(
   const { targetId } = opts;
   const now = opts.now ?? (() => Date.now());
 
+  // Defensive: lightweight callers (integration tests, smoke harnesses)
+  // may pass a stub CDP without `.on()`. Skip CDP-event attachment in that
+  // case — bus-level dispatching from chat-runner (navigation/page.blank)
+  // still works.
+  if (typeof (cdp as { on?: unknown }).on !== "function") {
+    return () => undefined;
+  }
+
   const off1 = cdp.on("Page.javascriptDialogOpening", (params) => {
     const dialogType = String(params.type ?? "alert");
     const message = String(params.message ?? "");

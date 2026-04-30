@@ -42,21 +42,19 @@ describe("Shell handler — security contract", () => {
   });
 
   it("truncates stderr at 64KiB and adds explicit marker", async () => {
-    // Spew ~80KB to stderr — must not OOM the host and must surface the marker.
-    // §pacify-ci — Linux pipe buffer is ~64KB, so on Linux runners small
-    // chunks (1024 each) fill the buffer exactly and no single chunk
-    // overflows MAX_STDERR_BYTES. The handler at b52562f flags truncation
-    // when the buffer hits cap (not only when chunk.length > remaining),
-    // which makes this test reliable across macOS dev + Linux CI. If this
-    // test fails on Linux, check src/core/hooks/shell-handler.ts:84-95
-    // before assuming flake.
+    // §post-13.2.0 — Spew ~200KB to stderr with backpressure-aware writes.
+    // The previous implementation (sync `for` loop writing 80KB) was unreliable
+    // on Linux runners: the child sometimes exited before enough data drained
+    // through the pipe to trip the MAX_STDERR_BYTES (64KB) cap in the parent.
+    // 200KB of data + drain handling guarantees the parent observes ≥64KB
+    // regardless of pipe-buffer timing on macOS or Linux.
     const result = await runShellHandler(
       {
         id: "stderr-flood",
         command: "node",
         args: [
           "-e",
-          "const block='X'.repeat(1024); for(let i=0;i<80;i++){process.stderr.write(block)} process.exit(2)",
+          "const block='X'.repeat(1024);let written=0;function w(){if(written>=200){process.exit(2);return}written++;if(process.stderr.write(block))setImmediate(w);else process.stderr.once('drain',w)}w();",
         ],
       },
       event,

@@ -23,26 +23,29 @@ interface PdfReadResult {
 }
 
 /**
- * Extract text content from a PDF buffer using pdf-parse.
+ * Extract text content from a PDF buffer using pdf-parse v2 (PDFParse class).
  */
 export async function readPdfBuffer(buffer: Buffer): Promise<PdfReadResult> {
-  // Dynamic import — pdf-parse is CJS, lazy-load to avoid startup cost
-  const pdfParse = (await import("pdf-parse")).default;
+  // Dynamic import — pdf-parse v2 is class-based, lazy-load to avoid startup cost.
+  // Types resolved via src/types/pdf-parse.d.ts (always-on stub, robust to
+  // CI environments that may prune node_modules between jobs).
+  const { PDFParse } = await import("pdf-parse");
 
   logger.info("Parsing PDF buffer", { sizeBytes: buffer.length });
 
   const PDF_TIMEOUT_MS = 30_000;
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
   const result = await Promise.race([
-    pdfParse(buffer),
+    parser.getText(),
     new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`PDF parsing timed out after ${PDF_TIMEOUT_MS / 1000}s`)), PDF_TIMEOUT_MS),
     ),
   ]);
 
-  logger.info("PDF parsed", { pages: result.numpages, textLength: result.text.length });
+  logger.info("PDF parsed", { pages: result.total, textLength: result.text.length });
 
   return {
     text: result.text,
-    pages: result.numpages,
+    pages: result.total,
   };
 }
