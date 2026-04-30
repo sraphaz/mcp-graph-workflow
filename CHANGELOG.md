@@ -1,5 +1,16 @@
 # Changelog
 
+## [13.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.1.0...mcp-graph-v13.2.0) (2026-04-30)
+
+
+### Features
+
+* **browser-harness:** event-driven watchdogs ([#289](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/289)) ([d814506](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d814506b1200ea231b9dd0cea517af265880514b))
+* extracta completion — close 3 residual integration lacunas ([#293](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/293)) ([6fa651f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/6fa651f36dc297fa9d0dc60e618b7c908b1fdbb2))
+* **llm:** session budget + soft-cap auto-fallback ([#288](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/288)) ([36468ac](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/36468ac993c11aff3d72e332bfefdf0540c4dc8a))
+* **skills:** browser auto-skill proposer + 3 domain knowledge files (ml, systems, crypto) ([#290](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/290)) ([003baa6](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/003baa6fa24ee0c7a85cf720782083dcd8288793))
+* wire extracta watchdogs + browser-skill auto-proposer ([#292](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/292)) ([5a40d22](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/5a40d22e821c9cd845078cb9e34c934209379ade))
+
 ## [13.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.0.0...mcp-graph-v13.1.0) (2026-04-30)
 
 
