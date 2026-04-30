@@ -45,6 +45,7 @@ describe("migrations v66 — llm_call_ledger schema", () => {
         "provider",
         "provider_used",
         "run_id",
+        "session_id",
         "status",
         "ts",
       ].sort(),

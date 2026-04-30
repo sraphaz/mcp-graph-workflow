@@ -2223,6 +2223,19 @@ const migrations: Migration[] = [
         ON nodes(evolution_count) WHERE evolution_count > 0;
     `,
   },
+  {
+    version: 86,
+    // §extracta-cost-observability — session_id on llm_call_ledger.
+    // Enables aggregating cost across an entire agent session (across
+    // many cells and runs) so we can enforce a session-level budget cap
+    // and trigger auto-fallback to a cheaper model at the soft-cap.
+    description: "session_id on llm_call_ledger — session-scoped cost aggregation",
+    sql: `
+      ALTER TABLE llm_call_ledger ADD COLUMN session_id TEXT;
+      CREATE INDEX IF NOT EXISTS idx_llm_ledger_session
+        ON llm_call_ledger(session_id) WHERE session_id IS NOT NULL;
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

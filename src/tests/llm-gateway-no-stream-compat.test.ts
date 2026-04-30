@@ -24,6 +24,8 @@ function makeGateway(): LlmGateway {
     guard() { /* no-op */ },
     record(row: LedgerRow) { rows.push(row); },
     aggregate(_scope: BudgetScopeRef) { return { totalUsd: 0, callCount: rows.length, byProvider: {} }; },
+    isSessionSoftCapped() { return false; },
+
   } as unknown as BudgetLedger;
   return new LlmGateway({
     registry: new ModelRegistry(DEFAULT_MODEL_SEED),

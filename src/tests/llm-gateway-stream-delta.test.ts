@@ -18,6 +18,7 @@ function makeStubLedger(): { ledger: BudgetLedger; rows: LedgerRow[] } {
     aggregate(_scope: BudgetScopeRef): BudgetAggregate {
       return { totalUsd: 0, callCount: rows.length, byProvider: {} };
     },
+    isSessionSoftCapped() { return false; },
   } as unknown as BudgetLedger;
   return { ledger, rows };
 }

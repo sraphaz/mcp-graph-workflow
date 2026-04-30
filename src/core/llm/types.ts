@@ -61,6 +61,8 @@ export const CallContextSchema = z.object({
   cellId: z.string().optional(),
   runId: z.string().optional(),
   projectId: z.string().optional(),
+  /** §extracta-cost-observability — session-scoped budget aggregation. */
+  sessionId: z.string().optional(),
 });
 export type CallContext = z.infer<typeof CallContextSchema>;
 
@@ -86,7 +88,7 @@ export const LlmResponseSchema = z.object({
 export type LlmResponse = z.infer<typeof LlmResponseSchema>;
 
 export const BudgetScopeSchema = z.object({
-  scope: z.enum(["cell", "run", "project"]),
+  scope: z.enum(["cell", "run", "project", "session"]),
   scopeId: z.string().optional(),
   currentUsd: z.number().nonnegative(),
   capUsd: z.number().nonnegative(),

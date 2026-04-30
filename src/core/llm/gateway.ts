@@ -70,7 +70,7 @@ export class LlmGateway {
     }
 
     const effectiveCaps = caps ?? this.defaultCaps;
-    const scope: BudgetScopeRef = { cellId: ctx.cellId, runId: ctx.runId };
+    const scope: BudgetScopeRef = { cellId: ctx.cellId, runId: ctx.runId, sessionId: ctx.sessionId };
     // Pre-flight estimate: assume worst-case output (req.maxTokens or default 1024)
     // priced at the model's output rate. Real usage replaces this in the post-call record.
     const estimateOutput = req.maxTokens ?? 1024;
@@ -91,6 +91,7 @@ export class LlmGateway {
         status: "ok",
         cellId: ctx.cellId,
         runId: ctx.runId,
+        sessionId: ctx.sessionId,
       });
       return response;
     } catch (err) {
@@ -105,6 +106,7 @@ export class LlmGateway {
         errorKind: err instanceof Error ? err.name : "unknown",
         cellId: ctx.cellId,
         runId: ctx.runId,
+        sessionId: ctx.sessionId,
       });
       throw err;
     }
@@ -124,13 +126,28 @@ export class LlmGateway {
     ctx: CallContext,
     opts: { streamDelta?: (chunk: string | null) => void; caps?: BudgetCaps } = {},
   ): Promise<LlmResponse> {
-    const attempts: Array<{ provider: string; model: string }> = [
-      { provider: this.registry.lookupModel(req.model).provider, model: req.model },
-    ];
+    const primaryProvider = this.registry.lookupModel(req.model).provider;
+    const effectiveCaps = opts.caps ?? this.defaultCaps;
+    const scope: BudgetScopeRef = { cellId: ctx.cellId, runId: ctx.runId, sessionId: ctx.sessionId };
+
+    // §extracta-cost-observability — when session spend has crossed the
+    // soft-cap, skip the (potentially expensive) primary and start the
+    // attempt sequence from the failover chain (presumed cheaper).
+    const softCapped = this.budget.isSessionSoftCapped(scope, effectiveCaps);
+
+    const attempts: Array<{ provider: string; model: string }> = [];
+    if (!softCapped) {
+      attempts.push({ provider: primaryProvider, model: req.model });
+    }
     for (const entry of this.failoverChain) {
-      // Skip a chain entry that points at the same model as the primary
-      if (entry.provider === attempts[0].provider && entry.model === req.model) continue;
+      if (entry.provider === primaryProvider && entry.model === req.model) continue;
       attempts.push({ provider: entry.provider, model: entry.model });
+    }
+    if (attempts.length === 0) {
+      // No failover entries to fall back to even when soft-capped — fall
+      // through to primary, which will throw via budget.guard if hard cap
+      // is also exceeded.
+      attempts.push({ provider: primaryProvider, model: req.model });
     }
 
     let lastErr: unknown = null;
@@ -188,7 +205,7 @@ export class LlmGateway {
       throw new LlmModelUnknown(`${req.model} (no adapter registered for provider=${spec.provider})`);
     }
     const effectiveCaps = caps ?? this.defaultCaps;
-    const scope: BudgetScopeRef = { cellId: ctx.cellId, runId: ctx.runId };
+    const scope: BudgetScopeRef = { cellId: ctx.cellId, runId: ctx.runId, sessionId: ctx.sessionId };
     const estimateOutput = req.maxTokens ?? 1024;
     const estimateUsd = (estimateOutput / 1_000_000) * spec.pricing.outputPerMtok;
     this.budget.guard(scope, estimateUsd, effectiveCaps);
@@ -207,6 +224,7 @@ export class LlmGateway {
         status: "ok",
         cellId: ctx.cellId,
         runId: ctx.runId,
+        sessionId: ctx.sessionId,
         providerUsed: provenance.providerUsed,
         fallbackCount: provenance.fallbackCount,
       });
@@ -223,6 +241,7 @@ export class LlmGateway {
         errorKind: err instanceof Error ? err.name : "unknown",
         cellId: ctx.cellId,
         runId: ctx.runId,
+        sessionId: ctx.sessionId,
         providerUsed: spec.provider,
         fallbackCount: provenance.fallbackCount,
       });
