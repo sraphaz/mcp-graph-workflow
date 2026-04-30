@@ -64,15 +64,25 @@ async function processFile(path, block, { apply }) {
 async function main() {
   const mode = process.argv[2];
   if (mode !== '--check' && mode !== '--apply') {
-    console.error('usage: node scripts/license/headers.mjs [--check|--apply]');
+    console.error('usage: node scripts/license/headers.mjs [--check|--apply] [file1 file2 ...]');
     process.exit(2);
   }
 
   const template = await readFile(TEMPLATE_PATH, 'utf8');
   const block = buildBlockComment(template);
 
-  await stat(SRC_DIR);
-  const files = await walk(SRC_DIR);
+  // When extra args are passed (lint-staged invocation), only scan those.
+  // Otherwise walk the whole src/ tree.
+  const explicitFiles = process.argv.slice(3).filter((a) => !a.startsWith('-'));
+  let files;
+  if (explicitFiles.length > 0) {
+    files = explicitFiles
+      .map((f) => resolve(REPO_ROOT, f))
+      .filter((f) => TARGET_EXT.test(f) && !SKIP_SUFFIX.test(f));
+  } else {
+    await stat(SRC_DIR);
+    files = await walk(SRC_DIR);
+  }
 
   const apply = mode === '--apply';
   const missing = [];

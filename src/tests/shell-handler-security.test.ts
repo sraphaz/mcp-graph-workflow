@@ -43,6 +43,13 @@ describe("Shell handler — security contract", () => {
 
   it("truncates stderr at 64KiB and adds explicit marker", async () => {
     // Spew ~80KB to stderr — must not OOM the host and must surface the marker.
+    // §pacify-ci — Linux pipe buffer is ~64KB, so on Linux runners small
+    // chunks (1024 each) fill the buffer exactly and no single chunk
+    // overflows MAX_STDERR_BYTES. The handler at b52562f flags truncation
+    // when the buffer hits cap (not only when chunk.length > remaining),
+    // which makes this test reliable across macOS dev + Linux CI. If this
+    // test fails on Linux, check src/core/hooks/shell-handler.ts:84-95
+    // before assuming flake.
     const result = await runShellHandler(
       {
         id: "stderr-flood",

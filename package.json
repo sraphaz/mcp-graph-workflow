@@ -41,6 +41,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/ --max-warnings 20",
     "lint:fix": "eslint src/ --fix",
+    "preflight": "node scripts/preflight.mjs",
+    "spdx:check": "node scripts/license/headers.mjs --check",
+    "spdx:apply": "node scripts/license/headers.mjs --apply",
     "setup:mcp": "bash scripts/setup-mcp.sh",
     "harness:scan": "tsx scripts/harness-scan-run.js",
     "benchmark:daemon-rss": "node scripts/benchmark-daemon-rss.mjs",
@@ -166,9 +169,11 @@
   },
   "lint-staged": {
     "src/**/*.ts": [
+      "node scripts/license/headers.mjs --apply",
       "eslint --no-warn-ignored --max-warnings 9"
     ],
     "src/**/*.tsx": [
+      "node scripts/license/headers.mjs --apply",
       "eslint --no-warn-ignored --max-warnings 9"
     ]
   }

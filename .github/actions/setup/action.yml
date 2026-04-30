@@ -29,15 +29,31 @@ runs:
         node-version: 22
         cache: npm
 
+    # §pacify-ci — runner network flakes (ECONNRESET, EAI_AGAIN) hit ~1 in
+    # ~50 runs of `npm ci` on GitHub-hosted runners. We retry up to 3 times
+    # with a short backoff before giving up. --prefer-offline drains from
+    # the npm cache when reachable so the retry is fast in the happy case.
     - name: Install dependencies (ignore scripts)
       if: inputs.ignore-scripts == 'true'
       shell: bash
-      run: npm ci --ignore-scripts
+      run: |
+        for attempt in 1 2 3; do
+          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund && exit 0
+          echo "::warning::npm ci attempt $attempt failed, retrying in 5s..."
+          sleep 5
+        done
+        exit 1
 
     - name: Install dependencies
       if: inputs.ignore-scripts != 'true'
       shell: bash
-      run: npm ci
+      run: |
+        for attempt in 1 2 3; do
+          npm ci --prefer-offline --no-audit --no-fund && exit 0
+          echo "::warning::npm ci attempt $attempt failed, retrying in 5s..."
+          sleep 5
+        done
+        exit 1
 
     # Dashboard deps are installed by the root `npm ci` above via npm
     # workspaces (root package.json declares `src/web/dashboard` as a
