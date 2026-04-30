@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.0.0...mcp-graph-v13.1.0) (2026-04-30)
+
+
+### Features
+
+* extracta sweep PR1 — evolution audit + platform-aware skills + 4 ported skills ([#287](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/287)) ([c18d63a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c18d63a2d4435725560e0f9a945a93693387bf07))
+
 ## [13.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v12.1.3...mcp-graph-v13.0.0) (2026-04-29)
 
 
