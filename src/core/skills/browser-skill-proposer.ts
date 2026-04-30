@@ -9,6 +9,9 @@
  * browser-use's domain-skill auto-contribution.
  */
 
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+
 export interface BrowserStep {
   action: string;
   selector?: string;
@@ -123,4 +126,67 @@ ${input.outcome}
     suggestedPath: `src/skills/domain/browser/${site}/${topic}.md`,
     confidence,
   };
+}
+
+/**
+ * §extracta-wire-followups — write a proposal to disk, but only when:
+ *   1. `MCP_GRAPH_AUTO_BROWSER_SKILL=1` is set in the environment
+ *   2. the target file does not already exist (no overwrites)
+ * Returns the path written, or `null` when skipped (env off, file
+ * exists, or outcome != success).
+ */
+export interface WriteBrowserSkillResult {
+  written: boolean;
+  path: string;
+  reason: "ok" | "env_off" | "already_exists" | "low_confidence";
+}
+
+export function writeBrowserSkillIfAbsent(
+  proposal: BrowserSkillProposal,
+  options: { rootDir?: string; env?: NodeJS.ProcessEnv } = {},
+): WriteBrowserSkillResult {
+  const env = options.env ?? process.env;
+  const rootDir = options.rootDir ?? process.cwd();
+  const fullPath = `${rootDir}/${proposal.suggestedPath}`;
+
+  if (env.MCP_GRAPH_AUTO_BROWSER_SKILL !== "1") {
+    return { written: false, path: fullPath, reason: "env_off" };
+  }
+  if (proposal.confidence < 0.5) {
+    return { written: false, path: fullPath, reason: "low_confidence" };
+  }
+  if (existsSync(fullPath)) {
+    return { written: false, path: fullPath, reason: "already_exists" };
+  }
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, proposal.draft, "utf-8");
+  return { written: true, path: fullPath, reason: "ok" };
+}
+
+/**
+ * §extracta-wire-followups — finish_task hook. Reads the node's
+ * metadata.browserSkillInput (populated by the browser-harness when a
+ * run completes), generates a proposal, and writes it under the env
+ * gate. Returns the result so callers can log/audit. Returns
+ * `{ written: false, reason: "no_metadata" }` when the node has no
+ * browser evidence — the common case for non-browser tasks.
+ */
+export interface BrowserHookOutcome {
+  written: boolean;
+  path?: string;
+  reason: "ok" | "env_off" | "already_exists" | "low_confidence" | "no_metadata";
+}
+
+export function proposeBrowserSkillFromNode(
+  node: { metadata?: Record<string, unknown> | null } | null | undefined,
+  options: { rootDir?: string; env?: NodeJS.ProcessEnv } = {},
+): BrowserHookOutcome {
+  const meta = node?.metadata;
+  const raw = meta && typeof meta === "object" ? (meta as Record<string, unknown>).browserSkillInput : undefined;
+  if (!raw || typeof raw !== "object") {
+    return { written: false, reason: "no_metadata" };
+  }
+  const proposal = proposeBrowserSkill(raw as BrowserSkillInput);
+  const result = writeBrowserSkillIfAbsent(proposal, options);
+  return { written: result.written, path: result.path, reason: result.reason };
 }

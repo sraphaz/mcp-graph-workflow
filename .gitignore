@@ -64,6 +64,8 @@ browser-*
 !src/tests/browser-use-runtime.test.ts
 !src/tests/browser-watchdogs.test.ts
 !src/core/skills/browser-skill-proposer.ts
+!src/tests/browser-harness-bus-integration.test.ts
+!src/tests/finish-task-browser-skill.test.ts
 hermes-agent*
 
 # MCP / Local Tools

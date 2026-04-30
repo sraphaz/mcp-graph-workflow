@@ -22,6 +22,7 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
+import { proposeBrowserSkillFromNode } from "../skills/browser-skill-proposer.js";
 import type { ImplementDoneReport } from "../../schemas/implementer-schema.js";
 import type { EnhancedNextResult } from "../planner/enhanced-next.js";
 import { checkDefinitionOfDone } from "../implementer/definition-of-done.js";
@@ -378,6 +379,19 @@ export async function finishTask(
     try {
       store.updateNodeStatus(nodeId, "done");
       status = "done";
+
+      // §extracta-wire-followups — auto-write a browser skill when the
+      // node carries metadata.browserSkillInput AND the env gate is on.
+      // Failures are logged but never block finish_task.
+      try {
+        const node = store.getNodeById(nodeId);
+        const outcome = proposeBrowserSkillFromNode(node);
+        if (outcome.written) {
+          logger.info("pipeline:finish_task:browser_skill_written", { nodeId, path: outcome.path });
+        }
+      } catch (err) {
+        logger.warn("pipeline:finish_task:browser_skill_failed", { nodeId, error: String(err) });
+      }
 
       // Release task lock in teamTask mode
       if (lockManager && leaseToken) {

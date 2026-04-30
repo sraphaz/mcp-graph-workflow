@@ -24,6 +24,7 @@ import { isDomainAllowed } from "./guardrail-loader.js";
 import { HarnessSafetyViolation } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import type { LlmPlanner } from "./llm-planner.js";
+import type { BrowserEventBus, BrowserEvent, WatchdogVerdict } from "./event-bus.js";
 
 export type StepEvent =
   | { type: "plan"; steps: PlannedStep[] }
@@ -51,6 +52,13 @@ export class ChatRunner {
     private readonly runs: RunsStore,
     private readonly selfHeal: SelfHealService,
     private readonly listeners: Set<StepEventListener> = new Set(),
+    /**
+     * §extracta-wire-followups — optional event bus. When provided, the
+     * runner dispatches BrowserEvents to registered watchdogs around
+     * step boundaries (navigation, blank-page detection). Verdicts with
+     * level="block" mark the current step as failed.
+     */
+    private readonly eventBus: BrowserEventBus | null = null,
   ) {}
 
   /** Hot-swap the LLM planner. `null` reverts to the regex fallback. */
@@ -106,6 +114,8 @@ export class ChatRunner {
           if (!isDomainAllowed(url, input.guardrail)) {
             throw new HarnessSafetyViolation("domain_not_allowed", url);
           }
+          // §extracta-wire-followups — dispatch cross-origin nav + blank-page events
+          await this.dispatchNavigationEvents(input.sessionId, url);
         }
         const value = await this.runtime.invoke(input.cdp, step.helper, step.args);
         const v = value as { ok?: boolean; error?: string; base64?: string };
@@ -213,6 +223,42 @@ export class ChatRunner {
     for (const fn of this.listeners) {
       try { fn(event); } catch (err) {
         logger.warn("bh:chat:emit:error", { error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+  }
+
+  /**
+   * §extracta-wire-followups — dispatch navigation + blank-page events
+   * to registered watchdogs. Throws HarnessSafetyViolation when a
+   * watchdog returns a `level: "block"` verdict so the surrounding
+   * try/catch marks the step as failed.
+   */
+  private async dispatchNavigationEvents(sessionId: string, url: string): Promise<void> {
+    if (!this.eventBus) return;
+    const ts = Date.now();
+
+    const events: BrowserEvent[] = [];
+    if (url === "" || url === "about:blank") {
+      events.push({ kind: "page.blank", targetId: sessionId, ts });
+    } else {
+      events.push({
+        kind: "navigation.cross_origin",
+        targetId: sessionId,
+        fromOrigin: "",
+        toOrigin: url,
+        ts,
+      });
+    }
+
+    for (const event of events) {
+      const verdicts: WatchdogVerdict[] = await this.eventBus.dispatch(event);
+      for (const v of verdicts) {
+        if (v.level === "block") {
+          throw new HarnessSafetyViolation("watchdog_blocked", `${v.watchdog}: ${v.message}`);
+        }
+        if (v.level === "warn") {
+          logger.warn("bh:watchdog:warn", { watchdog: v.watchdog, message: v.message });
+        }
       }
     }
   }
