@@ -40,11 +40,20 @@ export const SkillTriggerSchema = z.object({
 });
 export type SkillTrigger = z.infer<typeof SkillTriggerSchema>;
 
+/**
+ * §extracta-sweep-1 — platform filter (hermes-agent inspiration).
+ * `darwin`, `linux`, `win32` mirror Node's `process.platform`. Skills with a
+ * non-empty list are filtered to only load when current platform matches.
+ * Empty / absent = available on all platforms.
+ */
+export const SkillPlatformEnum = z.enum(["darwin", "linux", "win32"]);
+
 export const CustomSkillInputSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(LONG_TEXT_MAX),
   category: z.string().max(ID_MAX).default("know-me"),
   phases: z.array(LifecyclePhaseEnum).max(ARRAY_MAX),
+  platforms: z.array(SkillPlatformEnum).max(3).optional().describe("§extracta — restrict skill to specific OS platforms (process.platform). Empty/absent = all platforms."),
   instructions: z.string().min(1).max(LONG_TEXT_MAX),
   toolchain: z.array(z.string().max(ID_MAX)).max(ARRAY_MAX).optional().describe("Ordered list of tool names this skill uses"),
   triggers: z.array(SkillTriggerSchema).max(ARRAY_MAX).optional().describe("Events that auto-activate this skill"),

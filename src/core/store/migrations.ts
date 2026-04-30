@@ -2208,6 +2208,21 @@ const migrations: Migration[] = [
         ON lifecycle_health_snapshots(taken_at);
     `,
   },
+  {
+    version: 85,
+    // §extracta — evolution_reason on nodes (Hive auto-merge inspiration).
+    // When the orchestrator regenerates a node (failure recovery, cost
+    // overrun, user nudge), we want the *why* preserved alongside the new
+    // metadata so analyze(evolution_audit) can surface top regenerated
+    // nodes + reasons. Nullable so existing rows are unaffected.
+    description: "evolution_reason on nodes — audit trail for node regeneration",
+    sql: `
+      ALTER TABLE nodes ADD COLUMN evolution_reason TEXT;
+      ALTER TABLE nodes ADD COLUMN evolution_count INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_nodes_evolution_count
+        ON nodes(evolution_count) WHERE evolution_count > 0;
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

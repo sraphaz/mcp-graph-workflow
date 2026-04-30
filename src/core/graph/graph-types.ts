@@ -92,6 +92,17 @@ export interface GraphNode {
     origin?: string;
     [key: string]: unknown;
   };
+  /**
+   * §extracta — Why this node was last regenerated. Null/undefined for
+   * nodes that have never been regenerated. Set by `node update` when the
+   * caller passes `evolutionReason`. Drives analyze(evolution_audit).
+   */
+  evolutionReason?: string | null;
+  /**
+   * §extracta — Cumulative count of regenerations. Incremented every time
+   * `node update` is called with a non-null `evolutionReason`.
+   */
+  evolutionCount?: number;
   createdAt: string;
   updatedAt: string;
 }

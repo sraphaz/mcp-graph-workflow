@@ -152,6 +152,8 @@ export function parseSkillMarkdown(content: string): SkillMarkdownResult {
     description: frontmatter.description,
     category: frontmatter.category ?? "know-me",
     phases: frontmatter.phases,
+    // §extracta-sweep-1 — optional `platforms:` array; absent = all OSes.
+    platforms: frontmatter.platforms,
     instructions: bodyText,
     toolchain: frontmatter.toolchain,
     triggers: frontmatter.triggers,

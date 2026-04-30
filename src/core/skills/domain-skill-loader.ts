@@ -22,6 +22,12 @@ import { join, basename, extname } from "node:path";
 import { z } from "zod/v4";
 import { logger } from "../utils/logger.js";
 
+/**
+ * §extracta-sweep-1 — supported `process.platform` values that a domain
+ * skill can declare. Empty/missing means the skill applies to all OSes.
+ */
+const PLATFORM_VALUES = ["darwin", "linux", "win32"] as const;
+
 export const DomainSkillFrontmatterSchema = z.object({
   domain: z.string().min(1),
   topic: z.string().min(1),
@@ -29,6 +35,7 @@ export const DomainSkillFrontmatterSchema = z.object({
   discovered_at: z.string().min(1),
   source_task: z.string().min(1),
   confidence: z.number().min(0).max(1),
+  platforms: z.array(z.enum(PLATFORM_VALUES)).max(3).optional(),
 });
 
 export type DomainSkillFrontmatter = z.infer<typeof DomainSkillFrontmatterSchema>;
@@ -101,9 +108,22 @@ export function parseDomainSkillMarkdown(content: string, path: string): ParseDo
   };
 }
 
-export function loadDomainSkills(rootDir: string): LoadDomainSkillsResult {
+export interface LoadDomainSkillsOptions {
+  /**
+   * §extracta-sweep-1 — current platform for filtering. Defaults to
+   * `process.platform`. Skills declaring a non-empty `platforms` array
+   * that does not include this value are skipped.
+   */
+  platform?: NodeJS.Platform;
+}
+
+export function loadDomainSkills(
+  rootDir: string,
+  options: LoadDomainSkillsOptions = {},
+): LoadDomainSkillsResult {
   const skills: DomainSkill[] = [];
   const errors: Array<{ path: string; error: string }> = [];
+  const currentPlatform = options.platform ?? process.platform;
 
   if (!existsSync(rootDir)) {
     return { skills, errors };
@@ -138,6 +158,10 @@ export function loadDomainSkills(rootDir: string): LoadDomainSkillsResult {
         const content = readFileSync(fullPath, "utf-8");
         const result = parseDomainSkillMarkdown(content, relPath);
         if (result.ok && result.skill) {
+          const platforms = result.skill.platforms;
+          if (platforms && platforms.length > 0 && !platforms.includes(currentPlatform as typeof PLATFORM_VALUES[number])) {
+            continue;
+          }
           skills.push(result.skill);
         } else {
           errors.push({ path: relPath, error: result.error ?? "unknown error" });

@@ -30,17 +30,21 @@ const SKILLS_ROOT = join(__dirname, "..", "skills");
 // The original 20-name proposal evolved during EPIC 8.2 implementation; the
 // canonical surface is the on-disk catalog plus domain/* knowledge skills.
 const EXPECTED_SKILLS = [
+  "analyze/ambiguity-audit.md",
   "analyze/decompose-prd.md",
   "analyze/grill-me.md",
+  "analyze/to-prd.md",
   "design/design-an-interface.md",
   "design/seam-audit.md",
   "plan/budget-aware-picking.md",
   "plan/plan-sprint.md",
+  "plan/to-issues.md",
   "implement/anti-hallucination.md",
   "implement/pure-decision-pattern.md",
   "implement/tracer-bullet-tdd.md",
   "review/citation-coverage-review.md",
   "review/deep-module-review.md",
+  "review/zoom-out.md",
   "validate/dod-checklist.md",
   "validate/harness-regression-check.md",
   "any/code-detachment.md",

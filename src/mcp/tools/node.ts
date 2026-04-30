@@ -59,6 +59,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
       blocked: z.boolean().optional().describe("Whether the node is blocked (add)"),
       autoSequence: z.boolean().optional().describe("Auto-create depends_on edge to previous sibling when parentId is set (add only)"),
       metadata: z.record(z.string(), z.unknown()).optional().describe("Custom metadata (add)"),
+      evolutionReason: z.string().nullable().optional().describe("§extracta — Why this node was regenerated (update only). Increments evolution_count. Pass null to clear. Drives analyze(evolution_audit)."),
       // update/delete params
       id: z.string().min(1).optional().describe("Node ID — required for update/delete"),
       // batch_add params
@@ -78,7 +79,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         metadata: z.record(z.string(), z.unknown()).optional(),
       })).max(50).optional().describe("Array of nodes for batch_add (max 50)"),
     },
-    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, testFiles, blocked, autoSequence, metadata, nodes }, extra) => {
+    async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, testFiles, blocked, autoSequence, metadata, nodes, evolutionReason }, extra) => {
       const agentId = extractAgentId(extra);
       logger.debug("tool:node", { action, id, type, title, agentId });
 
@@ -201,6 +202,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         if (mergedAC !== undefined) fields.acceptanceCriteria = mergedAC;
         if (testFiles !== undefined) fields.testFiles = testFiles;
         if (metadata !== undefined) fields.metadata = metadata;
+        if (evolutionReason !== undefined) fields.evolutionReason = evolutionReason;
 
         // Bug #036: reject self-parenting and circularity in update action
         const circError = checkCircularity(store, id, parentId);

@@ -130,6 +130,7 @@ const ANALYZE_MODES = z.enum([
   "prd_lifecycle_health",
   "capacity_health",
   "success_rate",
+  "evolution_audit",
 ]);
 
 function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean {
@@ -850,6 +851,18 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           logger.info("tool:analyze:capacity_health:ok", {
             sprintLabel: result.sprintLabel,
             withinTolerance: result.withinTolerance,
+          });
+          return mcpText({ ok: true, mode, ...result });
+        }
+
+        case "evolution_audit": {
+          const { analyzeEvolutionAudit } = await import(
+            "../../core/analyzer/evolution-audit.js"
+          );
+          const result = analyzeEvolutionAudit(doc);
+          logger.info("tool:analyze:evolution_audit:ok", {
+            totalRegenerated: result.totalRegenerated,
+            totalRegenerations: result.totalRegenerations,
           });
           return mcpText({ ok: true, mode, ...result });
         }

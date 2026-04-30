@@ -79,6 +79,8 @@ interface NodeRow {
   test_files: string | null;
   blocked: number;
   metadata: string | null;
+  evolution_reason: string | null;
+  evolution_count: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -146,6 +148,8 @@ function nodeToRow(node: GraphNode, projectId: string): NodeRow {
     test_files: safeJsonStringify(node.testFiles, "testFiles", node.id),
     blocked: node.blocked ? 1 : 0,
     metadata: safeJsonStringify(node.metadata, "metadata", node.id),
+    evolution_reason: node.evolutionReason ?? null,
+    evolution_count: node.evolutionCount ?? 0,
     created_at: node.createdAt,
     updated_at: node.updatedAt,
   };
@@ -191,6 +195,10 @@ function rowToNode(row: NodeRow): GraphNode {
       logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "metadata" });
       node.metadata = {};
     }
+  }
+  if (row.evolution_reason) node.evolutionReason = row.evolution_reason;
+  if (row.evolution_count !== null && row.evolution_count !== undefined && row.evolution_count > 0) {
+    node.evolutionCount = row.evolution_count;
   }
 
   if (row.source_file) {
@@ -561,12 +569,16 @@ export class SqliteStore {
             (id, project_id, type, title, description, status, priority,
              xp_size, estimate_minutes, tags, parent_id, sprint,
              source_file, source_start_line, source_end_line, source_confidence,
-             acceptance_criteria, test_files, blocked, metadata, created_at, updated_at, modified_by)
+             acceptance_criteria, test_files, blocked, metadata,
+             evolution_reason, evolution_count,
+             created_at, updated_at, modified_by)
            VALUES
             (@id, @project_id, @type, @title, @description, @status, @priority,
              @xp_size, @estimate_minutes, @tags, @parent_id, @sprint,
              @source_file, @source_start_line, @source_end_line, @source_confidence,
-             @acceptance_criteria, @test_files, @blocked, @metadata, @created_at, @updated_at, @modified_by)`,
+             @acceptance_criteria, @test_files, @blocked, @metadata,
+             @evolution_reason, @evolution_count,
+             @created_at, @updated_at, @modified_by)`,
         )
         .run({ ...row, modified_by: options?.agentId ?? null });
     })();
@@ -741,6 +753,7 @@ export class SqliteStore {
         | "acceptanceCriteria"
         | "testFiles"
         | "metadata"
+        | "evolutionReason"
       >
     >,
     options?: MutationOptions,
@@ -820,6 +833,17 @@ export class SqliteStore {
       setClauses.push("metadata = ?");
       params.push(fields.metadata ? JSON.stringify(fields.metadata) : null);
     }
+    if (fields.evolutionReason !== undefined) {
+      // §extracta — atomic increment of evolution_count alongside the
+      // reason set. Setting reason → null clears both fields.
+      setClauses.push("evolution_reason = ?");
+      params.push(fields.evolutionReason);
+      if (fields.evolutionReason !== null) {
+        setClauses.push("evolution_count = COALESCE(evolution_count, 0) + 1");
+      } else {
+        setClauses.push("evolution_count = 0");
+      }
+    }
 
     if (setClauses.length === 0) return existing;
 
@@ -857,6 +881,7 @@ export class SqliteStore {
       acceptanceCriteria: (n) => n.acceptanceCriteria,
       testFiles: (n) => n.testFiles,
       metadata: (n) => n.metadata,
+      evolutionReason: (n) => n.evolutionReason,
     };
 
     this.db.transaction(() => {
