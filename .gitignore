@@ -5,6 +5,7 @@ logs/
 # Dependencies
 node_modules/
 docs/_internal/mestrado/
+karpathy-skills/
 
 # Build
 dist/
@@ -62,6 +63,7 @@ browser-*
 !src/mcp/tools/browser-pilot.ts
 !src/tests/browser-use-runtime.test.ts
 !src/tests/browser-watchdogs.test.ts
+!src/core/skills/browser-skill-proposer.ts
 hermes-agent*
 
 # MCP / Local Tools
