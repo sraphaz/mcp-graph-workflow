@@ -190,3 +190,92 @@ export function proposeBrowserSkillFromNode(
   const result = writeBrowserSkillIfAbsent(proposal, options);
   return { written: result.written, path: result.path, reason: result.reason };
 }
+
+/**
+ * §extracta-completion — derive a BrowserSkillInput from a HarnessRun.
+ * Inputs needed shape (we don't import schemas here to keep this module
+ * dependency-free):
+ *   - taskId, taskTitle (caller-provided since they sit on the graph node)
+ *   - prompt (the user's instruction — used as fallback title)
+ *   - plan: array of `{ helper, args }` describing the steps
+ *   - verdict: "pass" | "fail" | "error"
+ * Returns null when the run was not a clean success or the plan is empty.
+ */
+export interface RunPlanLike {
+  helper: string;
+  args?: Record<string, unknown>;
+}
+
+export interface DeriveOptions {
+  taskId: string;
+  taskTitle: string;
+  prompt: string;
+  plan: ReadonlyArray<RunPlanLike>;
+  verdict: "pass" | "fail" | "error";
+}
+
+export function deriveBrowserSkillInput(opts: DeriveOptions): BrowserSkillInput | null {
+  if (opts.verdict !== "pass") return null;
+  if (opts.plan.length === 0) return null;
+  const navigateStep = opts.plan.find((s) => s.helper === "navigate");
+  const startUrl = navigateStep && typeof navigateStep.args?.url === "string"
+    ? (navigateStep.args.url as string)
+    : "";
+  if (!startUrl) return null;
+  const steps: BrowserStep[] = opts.plan.map((s) => ({
+    action: s.helper,
+    selector: typeof s.args?.selector === "string" ? (s.args.selector as string) : undefined,
+    url: typeof s.args?.url === "string" ? (s.args.url as string) : undefined,
+  }));
+  return {
+    taskId: opts.taskId,
+    taskTitle: opts.taskTitle || opts.prompt.slice(0, 80),
+    startUrl,
+    steps,
+    outcome: "success",
+  };
+}
+
+/**
+ * §extracta-completion — minimal store surface used by
+ * persistBrowserSkillInput. Defined narrowly so tests can pass a
+ * lightweight stub instead of constructing a SqliteStore.
+ */
+export interface BrowserSkillStoreLike {
+  getNodeById(id: string): { metadata?: Record<string, unknown> | null; title?: string } | null;
+  updateNode(id: string, fields: { metadata: Record<string, unknown> }): unknown;
+}
+
+export interface PersistBrowserSkillInputArgs {
+  nodeId: string;
+  prompt: string;
+  run: { plan: ReadonlyArray<RunPlanLike>; verdict: "pass" | "fail" | "error" };
+}
+
+/**
+ * §extracta-completion — extracted so the api/browser-harness route
+ * stays thin and the persistence behavior can be unit-tested without
+ * running through SSE / CDP.
+ *
+ * Returns the BrowserSkillInput that was persisted, or null when
+ * nothing was written (verdict != pass, no startUrl, etc.).
+ */
+export function persistBrowserSkillInput(
+  store: BrowserSkillStoreLike,
+  args: PersistBrowserSkillInputArgs,
+): BrowserSkillInput | null {
+  const node = store.getNodeById(args.nodeId);
+  const skillInput = deriveBrowserSkillInput({
+    taskId: args.nodeId,
+    taskTitle: node?.title ?? args.prompt,
+    prompt: args.prompt,
+    plan: args.run.plan,
+    verdict: args.run.verdict,
+  });
+  if (!skillInput) return null;
+  const meta = (node?.metadata as Record<string, unknown>) ?? {};
+  store.updateNode(args.nodeId, {
+    metadata: { ...meta, browserSkillInput: skillInput },
+  });
+  return skillInput;
+}

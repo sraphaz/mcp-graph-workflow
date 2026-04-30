@@ -26,6 +26,7 @@ import {
   seedBuiltInHelpers,
 } from "../../core/browser-harness/index.js";
 import { ChatRunner } from "../../core/browser-harness/chat-runner.js";
+import { persistBrowserSkillInput } from "../../core/skills/browser-skill-proposer.js";
 import { RunsStore } from "../../core/browser-harness/runs-store.js";
 import {
   buildHtmlReport,
@@ -135,6 +136,20 @@ export function createBrowserHarnessRouter(
           guardrail,
           nodeId: req.body?.nodeId ?? null,
         });
+        // §extracta-completion — persist browserSkillInput on the node so
+        // finish_task's hook can auto-write a domain skill later.
+        const nodeId = req.body?.nodeId;
+        if (nodeId && run.verdict === "pass") {
+          try {
+            persistBrowserSkillInput(storeRef.current, {
+              nodeId: String(nodeId),
+              prompt,
+              run,
+            });
+          } catch (err) {
+            logger.warn("api:bh:chat:skill_input_persist_failed", { error: String(err) });
+          }
+        }
         send({ type: "done", runId: run.id });
       } catch (err) {
         send({ type: "error", error: err instanceof Error ? err.message : String(err) });

@@ -66,6 +66,9 @@ browser-*
 !src/core/skills/browser-skill-proposer.ts
 !src/tests/browser-harness-bus-integration.test.ts
 !src/tests/finish-task-browser-skill.test.ts
+!src/tests/browser-skill-derive.test.ts
+!src/tests/browser-event-translator.test.ts
+!src/tests/extracta-tdd-integration.test.ts
 hermes-agent*
 
 # MCP / Local Tools

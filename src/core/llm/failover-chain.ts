@@ -27,3 +27,28 @@ export function parseFailoverChain(raw: string | undefined): FailoverEntry[] {
   }
   return out;
 }
+
+/**
+ * §extracta-completion — sensible default fallback chain. Emits cheap
+ * Anthropic + OpenAI mid-tier models so a freshly-initialized gateway
+ * has SOMETHING to fall back to when the soft-cap trips. Callers can
+ * still override entirely via LLM_FAILOVER_CHAIN env var.
+ */
+export function defaultFailoverChain(): FailoverEntry[] {
+  return [
+    { provider: "anthropic", model: "anthropic/claude-haiku-4-5" },
+    { provider: "openai", model: "openai/gpt-4o-mini" },
+  ];
+}
+
+/**
+ * §extracta-completion — resolve the chain to use at gateway construction:
+ * env var if provided, otherwise the default. Returns [] only when the
+ * caller explicitly sets LLM_FAILOVER_CHAIN="" (opt-out).
+ */
+export function resolveFailoverChain(env: NodeJS.ProcessEnv = process.env): FailoverEntry[] {
+  const raw = env.LLM_FAILOVER_CHAIN;
+  if (raw === undefined) return defaultFailoverChain();
+  if (raw.trim() === "") return [];
+  return parseFailoverChain(raw);
+}

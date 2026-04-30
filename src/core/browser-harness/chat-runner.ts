@@ -25,6 +25,7 @@ import { HarnessSafetyViolation } from "../utils/errors.js";
 import { logger } from "../utils/logger.js";
 import type { LlmPlanner } from "./llm-planner.js";
 import type { BrowserEventBus, BrowserEvent, WatchdogVerdict } from "./event-bus.js";
+import { attachCdpTranslator } from "./event-translator.js";
 
 export type StepEvent =
   | { type: "plan"; steps: PlannedStep[] }
@@ -95,6 +96,11 @@ export class ChatRunner {
 
   async run(input: RunChatInput): Promise<HarnessRun> {
     const start = Date.now();
+    // §extracta-completion — attach CDP→BrowserEvent translator for the
+    // duration of the run so dialog/download/DOM watchdogs fire live.
+    const detach = this.eventBus
+      ? attachCdpTranslator(input.cdp as unknown as { on: (e: string, h: (p: Record<string, unknown>) => void) => () => void }, this.eventBus, { targetId: input.sessionId })
+      : null;
     const plan = input.explicitPlan ?? (await this.buildPlan(input));
     this.emit({ type: "plan", steps: plan });
 
@@ -204,6 +210,7 @@ export class ChatRunner {
     this.runs.updateResults(run.id, updatedResults);
 
     this.emit({ type: "verdict", ok: overallOk, verdict, runId: run.id, durationMs: run.durationMs });
+    detach?.();
     return { ...run, results: updatedResults };
   }
 
