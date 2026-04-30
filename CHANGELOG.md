@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.2.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.2.0...mcp-graph-v13.2.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* pipeline issues — pdf-parse v2 migration + shell-handler test stability ([#296](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/296)) ([b490f35](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b490f3531bda92a1002b57fca68680c819dc08e3))
+
 ## [13.2.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.1.0...mcp-graph-v13.2.0) (2026-04-30)
 
 
