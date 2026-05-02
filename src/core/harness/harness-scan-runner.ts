@@ -28,6 +28,7 @@ import { scanNamingClarity } from "./naming-clarity-scanner.js";
 import { scanErrorHandling } from "./error-handling-scanner.js";
 import { scanContextDensity } from "./context-density-scanner.js";
 import { scanProvenance } from "./provenance-scanner.js";
+import { distributeViolationsFairly } from "./violation-distribution.js";
 import { computeHarnessabilityScore, type HarnessabilityResult } from "./harnessability-score.js";
 import {
   checkDependencyDirection,
@@ -195,7 +196,11 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
       }
     }
 
-    mergedViolations = all.slice(0, maxViolations);
+    // §autonomous-iter-1 — Fair distribution: smaller dimensions first
+    // so a dominant dimension cannot push tiny ones (errors, fitness,
+    // context) out of the cap entirely. Replaces naive `slice(0, max)`
+    // which lost whole dimensions when earlier ones filled the budget.
+    mergedViolations = distributeViolationsFairly(all, maxViolations);
   }
 
   // 12. Rule suggestions from steering loop
