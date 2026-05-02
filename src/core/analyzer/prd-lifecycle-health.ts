@@ -16,6 +16,7 @@ import type { GraphDocument, GraphNode, NodeType } from "../graph/graph-types.js
 import { validateAcQuality } from "./ac-validator.js";
 import { buildTraceabilityMatrix } from "../designer/traceability-matrix.js";
 import { checkDefinitionOfDone } from "../implementer/definition-of-done.js";
+import { OperationError } from "../utils/errors.js";
 
 export const LIFECYCLE_PHASES = [
   "ANALYZE",
@@ -130,7 +131,7 @@ export function computePrdLifecycleHealth(
 ): LifecycleHealthReport {
   const epic = doc.nodes.find((n) => n.id === epicId);
   if (!epic) {
-    throw new Error(`Epic node not found: ${epicId}`);
+    throw new OperationError(`Epic node not found: ${epicId}`);
   }
   const descendants = descendantsOf(doc, epicId);
   const taskTypes: NodeType[] = ["task", "subtask"];

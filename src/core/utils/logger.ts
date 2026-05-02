@@ -68,27 +68,31 @@ function formatCtx(ctx?: Record<string, unknown>): string {
   );
 }
 
+function writeStderr(line: string): void {
+  process.stderr.write(`${line}\n`);
+}
+
 export const logger = {
   info(msg: string, ctx?: Record<string, unknown>): void {
     appendToBuffer("info", msg, ctx);
-    console.error(`[INFO] ${msg}${formatCtx(ctx)}`);
+    writeStderr(`[INFO] ${msg}${formatCtx(ctx)}`);
   },
   warn(msg: string, ctx?: Record<string, unknown>): void {
     appendToBuffer("warn", msg, ctx);
-    console.error(`[WARN] ${msg}${formatCtx(ctx)}`);
+    writeStderr(`[WARN] ${msg}${formatCtx(ctx)}`);
   },
   error(msg: string, ctx?: Record<string, unknown>): void {
     appendToBuffer("error", msg, ctx);
-    console.error(`[ERROR] ${msg}${formatCtx(ctx)}`);
+    writeStderr(`[ERROR] ${msg}${formatCtx(ctx)}`);
   },
   success(msg: string, ctx?: Record<string, unknown>): void {
     appendToBuffer("success", msg, ctx);
-    console.error(`[OK] ${msg}${formatCtx(ctx)}`);
+    writeStderr(`[OK] ${msg}${formatCtx(ctx)}`);
   },
   debug(msg: string, ctx?: Record<string, unknown>): void {
     if (process.env.MCP_GRAPH_DEBUG) {
       appendToBuffer("debug", msg, ctx);
-      console.error(`[DEBUG] ${msg}${formatCtx(ctx)}`);
+      writeStderr(`[DEBUG] ${msg}${formatCtx(ctx)}`);
     }
   },
 };

@@ -323,3 +323,21 @@ export class RateLimitExceededError extends McpGraphError {
     this.name = "RateLimitExceededError";
   }
 }
+
+// ── Generic argument / operation errors ──
+
+/** Thrown when a function argument fails a runtime invariant check. */
+export class InvalidArgumentError extends McpGraphError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidArgumentError";
+  }
+}
+
+/** Thrown when an operation cannot proceed (env/state/precondition issue). */
+export class OperationError extends McpGraphError {
+  constructor(message: string) {
+    super(message);
+    this.name = "OperationError";
+  }
+}

@@ -37,6 +37,7 @@ import {
 } from "../../core/planner/lifecycle-phase.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+import { OperationError } from "../../core/utils/errors.js";
 
 export type AnalyzeRunner = (mode: AnalyzeMode) => Promise<unknown>;
 
@@ -142,7 +143,7 @@ function makeDefaultAnalyzeRunner(server: McpServer): AnalyzeRunner {
     })._registeredTools;
     const analyzeHandle = registry?.["analyze"];
     if (!analyzeHandle) {
-      throw new Error("analyze tool is not registered on the server");
+      throw new OperationError("analyze tool is not registered on the server");
     }
     // McpServer tool handlers receive the args dict as the first argument.
     return await analyzeHandle.callback({ mode });

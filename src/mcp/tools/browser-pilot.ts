@@ -45,6 +45,7 @@ import {
 import { BridgeClient } from "../../core/browser-pilot/bridge-client.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { logger } from "../../core/utils/logger.js";
+import { OperationError } from "../../core/utils/errors.js";
 
 const DEFAULT_BRIDGE_URL = "http://127.0.0.1:9876/v1";
 const DEFAULT_MODEL = "claude-3.5-sonnet";
@@ -86,7 +87,7 @@ export function buildBrowserPilotDeps(
     overrides.resolveWsEndpoint ??
     (async (arg: string | undefined, _sessionId: string | undefined) => {
       if (arg && arg.length > 0) return arg;
-      throw new Error(
+      throw new OperationError(
         "no CDP WebSocket endpoint — pass wsEndpoint or configure default.",
       );
     });

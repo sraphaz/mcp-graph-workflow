@@ -8,6 +8,7 @@
  */
 
 import { logger } from "../utils/logger.js";
+import { OperationError } from "../utils/errors.js";
 
 export type LlmProvider = "anthropic" | "copilot";
 
@@ -64,7 +65,7 @@ export class LlmClient {
   constructor(private readonly options: LlmClientOptions) {
     this.fetch = options.fetchImpl ?? globalThis.fetch;
     if (!this.fetch) {
-      throw new Error("fetch is not available — pass fetchImpl or upgrade Node.js");
+      throw new OperationError("fetch is not available — pass fetchImpl or upgrade Node.js");
     }
     this.retry = options.retry ?? DEFAULT_RETRY;
   }

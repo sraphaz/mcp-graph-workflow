@@ -12,6 +12,7 @@
 
 import { z } from "zod/v4";
 import type { LlmRequest, LlmResponse } from "../llm/types.js";
+import { OperationError } from "../utils/errors.js";
 
 // ── OpenAI request schema (subset we honor) ────────────────────
 
@@ -54,7 +55,7 @@ export interface OpenAiChatCompletionResponse {
 
 export function toLlmRequest(body: OpenAiChatCompletionRequest): LlmRequest {
   if (body.stream === true) {
-    throw new Error("streaming not supported in v1 (ADR-proxy-04)");
+    throw new OperationError("streaming not supported in v1 (ADR-proxy-04)");
   }
   // OpenAI's "tool" role is not in the internal ChatMessage enum (system/user/
   // assistant only). Downgrade tool messages to "user" with a [tool] prefix so

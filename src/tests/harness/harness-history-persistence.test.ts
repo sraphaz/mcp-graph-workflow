@@ -46,6 +46,14 @@ describe("Task 3.2 — harness history persistence and regression detection", ()
     expect(typeof rows[0].breakdown).toBe("string");
   });
 
+  it("persists under the projectId option when supplied (defaults to proj_local)", () => {
+    runHarnessScan(ROOT, db, undefined, { projectId: "proj_custom" });
+    const row = db
+      .prepare("SELECT project_id FROM harness_history ORDER BY timestamp DESC LIMIT 1")
+      .get() as { project_id: string };
+    expect(row.project_id).toBe("proj_custom");
+  });
+
   it("does NOT persist when db is omitted", () => {
     // Should not throw
     const result = runHarnessScan(ROOT);

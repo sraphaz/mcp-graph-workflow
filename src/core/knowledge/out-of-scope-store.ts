@@ -19,6 +19,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
+import { InvalidArgumentError } from "../utils/errors.js";
 
 export const OUT_OF_SCOPE_DIR = ".out-of-scope";
 export const DEFAULT_MATCH_THRESHOLD = 0.7;
@@ -73,11 +74,11 @@ export function recordOutOfScope(
   dir: string = OUT_OF_SCOPE_DIR,
   date: Date = new Date(),
 ): OutOfScopeEntry {
-  if (!concept.trim()) throw new Error("out-of-scope:record — concept required");
-  if (!reason.trim()) throw new Error("out-of-scope:record — reason required");
+  if (!concept.trim()) throw new InvalidArgumentError("out-of-scope:record — concept required");
+  if (!reason.trim()) throw new InvalidArgumentError("out-of-scope:record — reason required");
   ensureDir(dir);
   const slug = slugifyConcept(concept);
-  if (!slug) throw new Error("out-of-scope:record — slug empty after normalization");
+  if (!slug) throw new InvalidArgumentError("out-of-scope:record — slug empty after normalization");
   const isoDate = date.toISOString().slice(0, 10);
   const path = join(dir, `${slug}.md`);
   writeFileSync(path, buildBody(concept, reason, isoDate), "utf-8");

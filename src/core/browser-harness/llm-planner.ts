@@ -9,6 +9,7 @@
 import { z } from "zod/v4";
 import { PlannedStepSchema, type PlannedStep } from "../../schemas/browser-harness.schema.js";
 import { logger } from "../utils/logger.js";
+import { OperationError } from "../utils/errors.js";
 
 export interface LlmLike {
   generate(messages: ReadonlyArray<{ role: "system" | "user" | "assistant"; content: string }>): Promise<{ text: string }>;
@@ -86,7 +87,7 @@ export class LlmPlanner {
         const knownNames = new Set(this.options.helpers.map((h) => h.name));
         for (const s of safe.steps) {
           if (!knownNames.has(s.helper)) {
-            throw new Error(`plan references unknown helper "${s.helper}"`);
+            throw new OperationError(`plan references unknown helper "${s.helper}"`);
           }
         }
         return safe.steps.map((s, i) =>

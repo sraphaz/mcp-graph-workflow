@@ -7,6 +7,7 @@
  */
 
 import type Database from "better-sqlite3";
+import { InvalidArgumentError } from "../utils/errors.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -65,10 +66,10 @@ function rowToDecision(row: Record<string, unknown>): DecisionRow {
 /** Validates AC: chosen must be one of options, options must be non-empty. */
 export function recordDecision(db: Database.Database, input: DecisionInput): string {
   if (input.options.length === 0) {
-    throw new Error("decisions:record — options[] must be non-empty");
+    throw new InvalidArgumentError("decisions:record — options[] must be non-empty");
   }
   if (!input.options.includes(input.chosen)) {
-    throw new Error("decisions:record — chosen must be present in options[]");
+    throw new InvalidArgumentError("decisions:record — chosen must be present in options[]");
   }
   const id = `dec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const now = new Date().toISOString();

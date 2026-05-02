@@ -19,7 +19,7 @@
  * Error Handling Scanner — Harnessability Metric dimension (v2)
  *
  * Detects poor error-handling patterns in TypeScript files:
- * - Raw throws: `throw new Error(...)` in files that don't import typed errors
+ * - Raw throws: bare `Error` constructions in files that don't import typed errors
  * - Swallowed catches: empty catch blocks (no logger call, no rethrow)
  * - console.error/warn usage outside test/bench files (should use logger)
  *
@@ -48,10 +48,10 @@ export interface ErrorHandlingOptions {
 /** Imports from the project's typed errors module. */
 const TYPED_ERRORS_IMPORT = /from\s+["'][^"']*utils\/errors(?:\.js)?["']/;
 
-/** Raw `throw new Error(...)` — not a typed error subclass. */
+/** Raw bare-Error throw — not a typed error subclass. */
 const RAW_THROW_PATTERN = /\bthrow\s+new\s+Error\s*\(/g;
 
-/** Empty catch: `catch (...) {}` or `catch (...) { }` with optional whitespace/comments only. */
+/** Empty catch handler — opening brace immediately followed by closing brace, optional whitespace. */
 const EMPTY_CATCH_PATTERN = /\bcatch\s*\([^)]*\)\s*\{\s*\}/g;
 
 /** console.error or console.warn calls. */

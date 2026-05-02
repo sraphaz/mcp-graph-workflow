@@ -16,6 +16,7 @@ import { defaultRegistry } from "../registry.js";
 import { withRetry, type RetryConfig, DEFAULT_RETRY } from "../retry.js";
 import type { LlmRequest, LlmResponse, ModelSpec } from "../types.js";
 import type { ProviderAdapter } from "./base.js";
+import { OperationError } from "../../utils/errors.js";
 
 const COPILOT_DEFAULT_URL = "https://api.githubcopilot.com/chat/completions";
 export const COPILOT_EDITOR_VERSION = "mcp-graph/1";
@@ -60,7 +61,7 @@ export class CopilotAdapter implements ProviderAdapter {
   constructor(private readonly options: CopilotAdapterOptions) {
     this.fetch = options.fetchImpl ?? globalThis.fetch;
     if (!this.fetch) {
-      throw new Error("fetch is not available — pass fetchImpl or upgrade Node.js");
+      throw new OperationError("fetch is not available — pass fetchImpl or upgrade Node.js");
     }
     this.retry = options.retry ?? DEFAULT_RETRY;
   }

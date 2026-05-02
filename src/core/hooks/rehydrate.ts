@@ -11,6 +11,7 @@ import { loadHookConfig, type LoadHookConfigOptions } from "./config-loader.js";
 import { HookHandlersStore } from "./hook-handlers-store.js";
 import { runShellHandler } from "./shell-handler.js";
 import { logger } from "../utils/logger.js";
+import { OperationError } from "../utils/errors.js";
 
 /**
  * Convert a persisted/configured HookHandlerConfig into a runtime
@@ -40,7 +41,7 @@ export function configToHandler(config: HookHandlerConfig): HookHandler | null {
       event,
     );
     if (result.decision === "block") {
-      throw new Error(result.stderr || `hook "${config.id}" blocked`);
+      throw new OperationError(result.stderr || `hook "${config.id}" blocked`);
     }
     if (result.decision === "warn") {
       logger.warn("hooks:rehydrated:warn", { id: config.id, exitCode: result.exitCode, timedOut: result.timedOut });

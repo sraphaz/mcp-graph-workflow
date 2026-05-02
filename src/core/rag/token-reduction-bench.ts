@@ -12,6 +12,8 @@
  * lives in the script that calls this helper.
  */
 
+import { InvalidArgumentError } from "../utils/errors.js";
+
 export interface TokenReductionSample {
   /** Tokens before applying the new context-assembly path. */
   before: number;
@@ -32,7 +34,7 @@ export interface TokenReductionStats {
 
 export function percentile(values: readonly number[], q: number): number {
   if (values.length === 0) {
-    throw new Error("percentile: empty array");
+    throw new InvalidArgumentError("percentile: empty array");
   }
   const clamped = Math.max(0, Math.min(1, q));
   const sorted = [...values].sort((a, b) => a - b);

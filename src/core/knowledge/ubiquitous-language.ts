@@ -8,6 +8,8 @@
  * not persist). Caller is `knowledge(action:'ubiquitous_language')` MCP tool.
  */
 
+import { InvalidArgumentError } from "../utils/errors.js";
+
 export const VOCAB_HEADER = "## Vocabulário Canonical";
 
 export interface VocabTerm {
@@ -90,7 +92,7 @@ export function mergeVocab(existing: VocabTerm[], incoming: VocabTerm[]): VocabT
       existing_t.definition.trim() &&
       incoming_t.definition.trim() !== existing_t.definition.trim()
     ) {
-      throw new Error(
+      throw new InvalidArgumentError(
         `ubiquitous-language:conflict — term '${incoming_t.term}' has divergent definition`,
       );
     }

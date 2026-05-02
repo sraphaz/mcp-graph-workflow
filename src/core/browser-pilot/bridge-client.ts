@@ -30,6 +30,7 @@
  */
 
 import { logger } from "../utils/logger.js";
+import { OperationError } from "../utils/errors.js";
 
 export interface BridgeHealth {
   ok: boolean;
@@ -104,7 +105,7 @@ export class BridgeClient {
     const url = joinUrl(this.bridgeUrl, "/health");
     const res = await this.fetchImpl(url, { method: "GET" });
     if (!res.ok) {
-      throw new Error(`bridge health ${res.status} at ${url}`);
+      throw new OperationError(`bridge health ${res.status} at ${url}`);
     }
     const body = (await res.json()) as Partial<BridgeHealth>;
     return {
@@ -138,6 +139,6 @@ export class BridgeClient {
       }
     }
     const reason = lastErr instanceof Error ? lastErr.message : String(lastErr);
-    throw new Error(`bridge_unreachable after ${schedule.length} attempts: ${reason}`);
+    throw new OperationError(`bridge_unreachable after ${schedule.length} attempts: ${reason}`);
   }
 }

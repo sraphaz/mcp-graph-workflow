@@ -4,7 +4,7 @@
  *
  * §EPIC-6.T05c — Booster transform: add-error-handling.
  *
- * Pure: detects raw `throw new Error(...)` and rewrites to
+ * Pure: detects raw `throw new Error` calls and rewrites to
  * `throw new McpGraphError(...)` (project's typed error class). When at
  * least one rewrite happens and the import is missing, auto-imports
  * McpGraphError. Skips lines already inside try/catch blocks (best-effort

@@ -7,6 +7,8 @@
  * — the bound is only useful when applied selectively.
  */
 
+import { InvalidArgumentError } from "./errors.js";
+
 /**
  * Bounded-concurrency semaphore with a FIFO queue and per-acquire timeout.
  * Prevents heavy tool calls from running unbounded in parallel and blowing
@@ -50,7 +52,7 @@ export class Semaphore {
 
   constructor(options: SemaphoreOptions) {
     if (!Number.isInteger(options.max) || options.max < 1) {
-      throw new Error("Semaphore: max must be a positive integer");
+      throw new InvalidArgumentError("Semaphore: max must be a positive integer");
     }
     this.max = options.max;
     this.defaultTimeoutMs = options.defaultTimeoutMs;

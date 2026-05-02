@@ -30,6 +30,7 @@ import {
   type DelegateRouteDecision,
   type RoutingStrategy,
 } from "./routing-strategy.js";
+import { InvalidArgumentError } from "../utils/errors.js";
 
 export const LEARNING_ACTIONS = [
   "route",
@@ -64,17 +65,17 @@ export function actionRoute(
   strategy?: RoutingStrategy,
 ): DelegateRouteDecision {
   if (strategy !== undefined && !isValidStrategy(strategy)) {
-    throw new Error(`learning:route — invalid strategy '${strategy}'`);
+    throw new InvalidArgumentError(`learning:route — invalid strategy '${strategy}'`);
   }
   return decideRoute({ strategy, records: store.readAll() });
 }
 
 /** record — append a single PerfRecord. Returns the inserted record. */
 export function actionRecord(store: LearningStore, record: PerfRecord): PerfRecord {
-  if (!record.agentId) throw new Error("learning:record — agentId required");
-  if (!record.nodeId) throw new Error("learning:record — nodeId required");
+  if (!record.agentId) throw new InvalidArgumentError("learning:record — agentId required");
+  if (!record.nodeId) throw new InvalidArgumentError("learning:record — nodeId required");
   if (!Number.isFinite(record.cycleTimeMs) || record.cycleTimeMs < 0) {
-    throw new Error("learning:record — cycleTimeMs must be a non-negative number");
+    throw new InvalidArgumentError("learning:record — cycleTimeMs must be a non-negative number");
   }
   store.appendRecord(record);
   return record;
@@ -136,18 +137,18 @@ export function actionImport(
   options: { maxPerAgent?: number } = {},
 ): ImportResult {
   if (payload.schemaVersion !== 1) {
-    throw new Error(`learning:import — unsupported schemaVersion ${payload.schemaVersion}`);
+    throw new InvalidArgumentError(`learning:import — unsupported schemaVersion ${payload.schemaVersion}`);
   }
   if (!Array.isArray(payload.records)) {
-    throw new Error("learning:import — records must be an array");
+    throw new InvalidArgumentError("learning:import — records must be an array");
   }
   // Pre-validate so a bad record doesn't half-fill the store.
   for (const r of payload.records) {
     if (!r.agentId || !r.nodeId) {
-      throw new Error("learning:import — every record requires agentId and nodeId");
+      throw new InvalidArgumentError("learning:import — every record requires agentId and nodeId");
     }
     if (!Number.isFinite(r.cycleTimeMs)) {
-      throw new Error("learning:import — cycleTimeMs must be finite");
+      throw new InvalidArgumentError("learning:import — cycleTimeMs must be finite");
     }
   }
   const trimmed =

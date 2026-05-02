@@ -131,6 +131,8 @@ const ANALYZE_MODES = z.enum([
   "capacity_health",
   "success_rate",
   "evolution_audit",
+  "feature_depth",
+  "harness_savings",
 ]);
 
 function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean {
@@ -537,7 +539,10 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "harness_scan": {
           const { runHarnessScan } = await import("../../core/harness/harness-scan-runner.js");
-          const report = runHarnessScan(process.cwd(), store.getDb());
+          const activeProject = store.getActiveProject();
+          const report = runHarnessScan(process.cwd(), store.getDb(), undefined, {
+            projectId: activeProject?.id,
+          });
           logger.info("tool:analyze:harness_scan:ok", { score: report.score, grade: report.grade });
 
           // Index scan result in KnowledgeStore for RAG retrieval (non-blocking)
@@ -865,6 +870,62 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             totalRegenerations: result.totalRegenerations,
           });
           return mcpText({ ok: true, mode, ...result });
+        }
+
+        case "harness_savings": {
+          const { aggregateSavings } = await import(
+            "../../core/harness/savings-ledger.js"
+          );
+          const project = store.getActiveProject();
+          const projectId = project?.id ?? "default";
+          const summary = aggregateSavings(store.getDb(), projectId);
+          logger.info("tool:analyze:harness_savings:ok", {
+            totalBlocks: summary.totalBlocks,
+            totalSavingsTokens: summary.totalSavingsTokens,
+          });
+          return mcpText({ ok: true, mode, ...summary });
+        }
+
+        case "feature_depth": {
+          const { join: joinPath } = await import("node:path");
+          const { isGoAvailable, runFeatureDepthGo } = await import(
+            "../../core/feature-depth/runner.js"
+          );
+          const { parseFeatureDepthAudit } = await import(
+            "../../core/analyzer/feature-depth-mode.js"
+          );
+          if (!(await isGoAvailable())) {
+            return mcpText({
+              ok: false,
+              mode,
+              error: "go_not_available",
+              hint: "Install Go ≥ 1.22 (https://go.dev/dl/) to run feature_depth",
+            });
+          }
+          const cwd = process.cwd();
+          const goResult = await runFeatureDepthGo({
+            cwd,
+            toolPath: joinPath(cwd, "tools/feature-depth"),
+            args: ["-granularity=file", "-output=json", `-dir=${cwd}`],
+          });
+          if (!goResult.ok) {
+            logger.warn("tool:analyze:feature_depth:go_failed", {
+              exitCode: goResult.exitCode,
+            });
+            return mcpText({
+              ok: false,
+              mode,
+              error: "go_run_failed",
+              exitCode: goResult.exitCode,
+              stderr: goResult.stderr.slice(0, 500),
+            });
+          }
+          const parsed = parseFeatureDepthAudit(goResult.stdout);
+          logger.info("tool:analyze:feature_depth:ok", {
+            totalFiles: parsed.totalFiles,
+            avgScore: parsed.avgScore,
+          });
+          return mcpText({ ok: true, mode, ...parsed });
         }
 
         default: {

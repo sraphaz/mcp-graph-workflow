@@ -10,6 +10,7 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { InvalidArgumentError } from "../utils/errors.js";
 
 export const SKILL_CATEGORIES = [
   "analyze",
@@ -96,12 +97,12 @@ export function scaffoldSkill(
   opts: ScaffoldOptions = {},
 ): ScaffoldResult {
   if (!isValidSkillName(input.name)) {
-    throw new Error(
+    throw new InvalidArgumentError(
       `skill-scaffolder:invalid-name — name must match ${NAME_RE} (lowercase, alphanumeric, hyphens)`,
     );
   }
   if (!isValidCategory(input.category)) {
-    throw new Error(
+    throw new InvalidArgumentError(
       `skill-scaffolder:invalid-category — '${input.category}' not in [${SKILL_CATEGORIES.join(", ")}]`,
     );
   }

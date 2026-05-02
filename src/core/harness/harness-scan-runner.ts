@@ -53,6 +53,13 @@ export interface HarnessScanOptions {
   collectViolations?: boolean;
   /** Maximum violations to return (default: 500) */
   maxViolations?: number;
+  /**
+   * Project ID under which to persist + look up history rows. Default
+   * "proj_local" preserved for back-compat; the analyze MCP wrapper
+   * passes the active project's actual id so trends survive
+   * project-scoped lookups.
+   */
+  projectId?: string;
 }
 
 /** Run a full 7-dimension harnessability scan on the project. */
@@ -218,7 +225,7 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
   };
 
   if (db) {
-    const projectId = "proj_local";
+    const projectId = options?.projectId ?? "proj_local";
     const lastRow = db
       .prepare(
         "SELECT score FROM harness_history WHERE project_id = ? ORDER BY timestamp DESC LIMIT 1",

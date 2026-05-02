@@ -19,6 +19,8 @@
  *   opencode-stop-2
  */
 
+import { InvalidArgumentError } from "../utils/errors.js";
+
 const ID_RE = /^([a-z][a-z0-9]+)-([a-z][a-z0-9-]+?)-(\d+)(?:-(\d+))?$/;
 
 export interface HookIdParts {
@@ -30,19 +32,19 @@ export interface HookIdParts {
 
 export function makeHookId(parts: HookIdParts): string {
   if (!/^[a-z][a-z0-9]+$/.test(parts.cli)) {
-    throw new Error(`hook-id:invalid-cli — '${parts.cli}'`);
+    throw new InvalidArgumentError(`hook-id:invalid-cli — '${parts.cli}'`);
   }
   if (!/^[a-z][a-z0-9-]+$/.test(parts.event)) {
-    throw new Error(`hook-id:invalid-event — '${parts.event}'`);
+    throw new InvalidArgumentError(`hook-id:invalid-event — '${parts.event}'`);
   }
   if (!Number.isInteger(parts.groupIndex) || parts.groupIndex < 0) {
-    throw new Error(`hook-id:invalid-groupIndex — ${parts.groupIndex}`);
+    throw new InvalidArgumentError(`hook-id:invalid-groupIndex — ${parts.groupIndex}`);
   }
   if (
     parts.hookIndex !== undefined &&
     (!Number.isInteger(parts.hookIndex) || parts.hookIndex < 0)
   ) {
-    throw new Error(`hook-id:invalid-hookIndex — ${parts.hookIndex}`);
+    throw new InvalidArgumentError(`hook-id:invalid-hookIndex — ${parts.hookIndex}`);
   }
   const tail = parts.hookIndex !== undefined ? `-${parts.hookIndex}` : "";
   return `${parts.cli}-${parts.event}-${parts.groupIndex}${tail}`;

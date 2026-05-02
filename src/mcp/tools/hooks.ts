@@ -41,6 +41,7 @@ import { importClineSettings } from "../../core/hooks/providers/cline.js";
 import type { HookStatsStore } from "../../core/hooks/hook-stats-store.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+import { OperationError } from "../../core/utils/errors.js";
 
 export const HookHandlerKindSchema = z.enum(["shell", "inline-unsafe", "mjs-module"]);
 export type HookHandlerKind = z.infer<typeof HookHandlerKindSchema>;
@@ -169,7 +170,7 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
               const result = await runShellHandler(shellConfig, event);
               if (result.decision === "block") {
                 logger.warn("hooks:shell:block", { id, channel: event.channel, stderr: result.stderr });
-                throw new Error(result.stderr || `hook "${id}" blocked`);
+                throw new OperationError(result.stderr || `hook "${id}" blocked`);
               }
               if (result.decision === "warn") {
                 logger.warn("hooks:shell:warn", { id, exitCode: result.exitCode, timedOut: result.timedOut, stderr: result.stderr });

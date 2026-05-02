@@ -16,6 +16,7 @@ import { countInProgressForAgent, getWipCap } from "./wip-cap-guard.js";
 import { isBudgetLow } from "./agent-budget-precheck.js";
 import { ApprovalTimeoutTracker, getApprovalTimeoutMs } from "./approval-timeout.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
+import { OperationError } from "../utils/errors.js";
 
 export const builtinHandlerIds = [
   "builtin:audit-log",
@@ -106,7 +107,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
         reason: verdict.reason,
       });
       recordDestructiveAttempt(store, "task:pre-execute", verdict.matchedPattern, prompt);
-      throw new Error(verdict.reason ?? "destructive-db-guard: blocked");
+      throw new OperationError(verdict.reason ?? "destructive-db-guard: blocked");
     }
   });
 
@@ -123,7 +124,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
         reason: verdict.reason,
       });
       recordDestructiveAttempt(store, "tool:pre-call:Bash", verdict.matchedPattern, cmd);
-      throw new Error(verdict.reason ?? "destructive-db-guard: blocked");
+      throw new OperationError(verdict.reason ?? "destructive-db-guard: blocked");
     }
   });
 

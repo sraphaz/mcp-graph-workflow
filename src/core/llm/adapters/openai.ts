@@ -11,6 +11,7 @@ import { defaultRegistry } from "../registry.js";
 import { withRetry, type RetryConfig, DEFAULT_RETRY } from "../retry.js";
 import type { LlmRequest, LlmResponse, ModelSpec } from "../types.js";
 import type { ProviderAdapter } from "./base.js";
+import { OperationError } from "../../utils/errors.js";
 
 const OPENAI_DEFAULT_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -53,7 +54,7 @@ export class OpenAIAdapter implements ProviderAdapter {
   constructor(private readonly options: OpenAIAdapterOptions) {
     this.fetch = options.fetchImpl ?? globalThis.fetch;
     if (!this.fetch) {
-      throw new Error("fetch is not available — pass fetchImpl or upgrade Node.js");
+      throw new OperationError("fetch is not available — pass fetchImpl or upgrade Node.js");
     }
     this.retry = options.retry ?? DEFAULT_RETRY;
   }
@@ -140,7 +141,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       throw err;
     }
 
-    if (!res.body) throw new Error("openai stream: empty response body");
+    if (!res.body) throw new OperationError("openai stream: empty response body");
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";

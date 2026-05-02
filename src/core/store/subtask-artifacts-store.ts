@@ -15,6 +15,7 @@
 import type { SqliteStore } from "./sqlite-store.js";
 import { generateId } from "../utils/id.js";
 import { computeContentHash } from "../canonicalization/ts.js";
+import { OperationError } from "../utils/errors.js";
 
 export type ArtifactKind = "diff" | "file" | "interface" | "decision" | "note";
 
@@ -76,7 +77,7 @@ export class SubtaskArtifactsStore {
       .prepare("SELECT id FROM projects LIMIT 1")
       .get() as { id: string } | undefined;
     if (!projectRow) {
-      throw new Error("subtask_artifacts:no_project — call initProject() first");
+      throw new OperationError("subtask_artifacts:no_project — call initProject() first");
     }
 
     const contentHash = computeContentHash(input.content);

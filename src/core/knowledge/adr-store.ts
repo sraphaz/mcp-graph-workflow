@@ -12,6 +12,7 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { InvalidArgumentError } from "../utils/errors.js";
 
 export const DEFAULT_ADR_DIR = "docs/adr";
 
@@ -100,8 +101,8 @@ export interface AdrCreateResult {
 }
 
 export function adrCreate(input: AdrInput, dir: string = DEFAULT_ADR_DIR): AdrCreateResult {
-  if (!input.title.trim()) throw new Error("adr-store:create — title required");
-  if (!input.decision.trim()) throw new Error("adr-store:create — decision required");
+  if (!input.title.trim()) throw new InvalidArgumentError("adr-store:create — title required");
+  if (!input.decision.trim()) throw new InvalidArgumentError("adr-store:create — decision required");
 
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const existing = readdirSync(dir).filter((f) => f.endsWith(".md"));

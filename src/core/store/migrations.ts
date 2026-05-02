@@ -2236,6 +2236,42 @@ const migrations: Migration[] = [
         ON llm_call_ledger(session_id) WHERE session_id IS NOT NULL;
     `,
   },
+  {
+    version: 87,
+    // §harness-savings-ledger (Eduardo, 2026-04-30) — every harness block
+    // persists a row with REAL token-savings metrics so the graph can
+    // quantify how much hallucination/quality/context-loss cost was
+    // avoided. Grounded in Hu et al. 2026 "Memory in the Age of AI Agents"
+    // §4 (factual + experiential memory).
+    description:
+      "harness_savings_ledger — token savings on each harness block (Eduardo spec)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS harness_savings_ledger (
+        id                       TEXT PRIMARY KEY,
+        project_id               TEXT NOT NULL,
+        block_type               TEXT NOT NULL,
+        blocker_module           TEXT NOT NULL,
+        node_id                  TEXT,
+        session_id               TEXT,
+        tokens_consumed          INTEGER NOT NULL DEFAULT 0,
+        baseline_continuation    INTEGER NOT NULL DEFAULT 0,
+        baseline_n               INTEGER NOT NULL DEFAULT 0,
+        savings_tokens           INTEGER NOT NULL DEFAULT 0,
+        confidence               REAL NOT NULL DEFAULT 0,
+        source                   TEXT NOT NULL,
+        evidence_json            TEXT,
+        timestamp                TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_harness_savings_project_time
+        ON harness_savings_ledger(project_id, timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_harness_savings_block_type
+        ON harness_savings_ledger(block_type);
+      CREATE INDEX IF NOT EXISTS idx_harness_savings_node
+        ON harness_savings_ledger(node_id) WHERE node_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_harness_savings_session
+        ON harness_savings_ledger(session_id) WHERE session_id IS NOT NULL;
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

@@ -25,6 +25,7 @@ import type {
 } from "../store/subtask-artifacts-store.js";
 import { estimateTokens } from "../context/token-estimator.js";
 import { logger } from "../utils/logger.js";
+import { OperationError } from "../utils/errors.js";
 
 export interface AssembleSiblingContextOptions {
   epicId: string;
@@ -244,7 +245,7 @@ export function assembleSiblingContext(
     .map((id) => {
       const node = ancestorNodes.find((n) => n.id === id);
       if (!node) {
-        throw new Error(`assembleSiblingContext: ordered id ${id} not in ancestorNodes (invariant violation)`);
+        throw new OperationError(`assembleSiblingContext: ordered id ${id} not in ancestorNodes (invariant violation)`);
       }
       const artifacts = artifactsStore.listByNode(id);
       return {

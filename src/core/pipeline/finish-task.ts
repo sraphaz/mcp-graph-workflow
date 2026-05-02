@@ -622,6 +622,37 @@ export async function finishTask(
             delta: harnessGate.delta,
             mode: gateMode,
           });
+          // §harness-savings (Eduardo) — every block writes a real-metrics row
+          // so the graph can quantify avoided cost. Best-effort; never throws.
+          try {
+            const { recordBlock, getSessionTokensConsumed, getBaselineContinuation } = await import(
+              "../harness/savings-ledger.js"
+            );
+            const db = store.getDb();
+            const project = store.getActiveProject();
+            const projectId = project?.id ?? "default";
+            const sessionId = agentId;
+            const tokensConsumed = sessionId ? getSessionTokensConsumed(db, sessionId) : 0;
+            const baseline = getBaselineContinuation(db, "harness_regression_gate");
+            recordBlock(db, {
+              projectId,
+              blockType: "harness_regression_gate",
+              blockerModule: "finish_task",
+              nodeId,
+              sessionId,
+              tokensConsumed,
+              baselineContinuation: baseline.avg,
+              baselineN: baseline.n,
+              evidence: {
+                startScore: baselineScore,
+                endScore: scanResult.score,
+                delta: harnessGate.delta,
+                mode: gateMode,
+              },
+            });
+          } catch (err) {
+            logger.warn("pipeline:finish_task:savings_record_failed", { error: String(err) });
+          }
         } else if (harnessGate.delta < -5) {
           logger.warn("pipeline:finish_task:harness_gate_advisory", {
             nodeId,

@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import type { HookHandlerConfig, AgentSource } from "./config-loader.js";
 import type { HookChannel } from "./hook-types.js";
+import { OperationError } from "../utils/errors.js";
 
 /**
  * Multi-CLI PRD Sprint M0 — shared importer primitives.
@@ -64,7 +65,7 @@ function parseRaw<T>(raw: string, parser: SettingsParser): T {
   if (parser === "json") return JSON.parse(raw) as T;
   if (parser === "yaml") return parseYaml(raw) as T;
   if (parser === "toml") return parseToml(raw) as T;
-  throw new Error(`unsupported parser: ${String(parser)}`);
+  throw new OperationError(`unsupported parser: ${String(parser)}`);
 }
 
 /**

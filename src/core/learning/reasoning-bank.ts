@@ -13,6 +13,7 @@
  */
 
 import { z } from "zod/v4";
+import { InvalidArgumentError } from "../utils/errors.js";
 
 export const OUTCOME_SCORE_MIN = 0;
 export const OUTCOME_SCORE_MAX = 1;
@@ -56,7 +57,7 @@ export function storeTrajectory(
 ): Trajectory {
   const parsed = TrajectorySchema.safeParse(payload);
   if (!parsed.success) {
-    throw new Error(
+    throw new InvalidArgumentError(
       `reasoning-bank:invalid-trajectory — ${parsed.error.issues.map((i) => i.message).join("; ")}`,
     );
   }
