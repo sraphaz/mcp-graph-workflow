@@ -16,6 +16,12 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
+// Barrel re-exports for harness fitness check (siblings under src/cli/).
+// These are not consumed externally — index.ts is the CLI entry point —
+// but the harness barrel-integrity scanner requires every sibling .ts file
+// to be referenced by index.ts.
+export { openStoreOrFail } from "./open-store.js";
+
 export {};
 
 import { createRequire } from "node:module";

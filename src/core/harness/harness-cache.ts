@@ -94,6 +94,15 @@ export function runHarnessScanCached(
     });
     return resultValue;
   } catch (err) {
+    // Silently skip on rootDir that has no src/ directory — common when an
+    // MCP client invokes mcp-graph from a non-source-tree project. Without
+    // this guard the warning floods every tool call. B17 in v13.3.1
+    // bug-hunt notebook (node_4e5847d6d9ac).
+    const e = err as NodeJS.ErrnoException;
+    if (e.code === "ENOENT" && /[/\\]src(?:[/\\]|$)/.test(e.path ?? "")) {
+      logger.debug("harness:cache:no-src-dir", { rootDir });
+      return null;
+    }
     logger.warn("harness:cache:scan_failed", { error: String(err) });
     return null;
   }

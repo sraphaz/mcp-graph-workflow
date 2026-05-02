@@ -16,7 +16,7 @@
  */
 
 import { Command } from "commander";
-import { SqliteStore } from "../../core/store/sqlite-store.js";
+import { openStoreOrFail } from "../open-store.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
 import { logger } from "../../core/utils/logger.js";
 
@@ -31,7 +31,7 @@ export function statsCommand(): Command {
     .option("-d, --dir <dir>", "Project directory", process.cwd())
     .option("--json", "Output as JSON")
     .action((opts: { dir: string; json: boolean }) => {
-      const store = SqliteStore.open(opts.dir);
+      const store = openStoreOrFail(opts.dir);
 
       try {
         const stats = store.getStats();

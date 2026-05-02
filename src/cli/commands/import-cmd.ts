@@ -17,7 +17,7 @@
 
 import { Command } from "commander";
 import path from "node:path";
-import { SqliteStore } from "../../core/store/sqlite-store.js";
+import { openStoreOrFail } from "../open-store.js";
 import { readFileContent } from "../../core/parser/file-reader.js";
 import { extractEntities } from "../../core/parser/extract.js";
 import { convertToGraph } from "../../core/importer/prd-to-graph.js";
@@ -36,7 +36,7 @@ export function importCommand(): Command {
     .option("-d, --dir <dir>", "Project directory", process.cwd())
     .action(async (file: string, opts: { dir: string }) => {
       const filePath = path.resolve(file);
-      const store = SqliteStore.open(opts.dir);
+      const store = openStoreOrFail(opts.dir);
 
       if (!store.getProject()) {
         store.initProject(path.basename(opts.dir));

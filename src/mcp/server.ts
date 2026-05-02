@@ -197,5 +197,18 @@ httpServer = app.listen(PORT, () => {
   emitSessionStart();
 });
 
+// Surface bind errors (EADDRINUSE etc.) with a friendly message instead of
+// letting the process die silently after the misleading "listening" log.
+// B10 in v13.3.1 bug-hunt notebook (node_71959460a80e).
+httpServer.on("error", (err) => {
+  const e = err as NodeJS.ErrnoException;
+  if (e.code === "EADDRINUSE") {
+    logger.error(`Port ${PORT} already in use. Stop the conflicting process or set MCP_PORT=<other>.`);
+    process.exit(1);
+  }
+  logger.error(`server:listen-error: ${e.code ?? "UNKNOWN"} ${e.message}`);
+  process.exit(1);
+});
+
 // Belt-and-suspenders: also catch SIGHUP / beforeExit beyond the cleanup() path
 installSessionEndHandlers();
