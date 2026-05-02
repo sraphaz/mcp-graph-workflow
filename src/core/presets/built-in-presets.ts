@@ -67,6 +67,8 @@ const strictTddPreset: PresetDefinition = {
       has_testable_ac: true,
       has_estimate: true,
       has_test_files: true,
+      complexity_budget_pass: true,
+      surgical_scope_pass: true,
     },
   },
 };
@@ -114,6 +116,8 @@ const enterprisePreset: PresetDefinition = {
       has_estimate: true,
       has_test_files: true,
       constitution_check: true,
+      complexity_budget_pass: true,
+      surgical_scope_pass: true,
     },
   },
 };

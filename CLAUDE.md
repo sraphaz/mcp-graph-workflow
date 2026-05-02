@@ -162,6 +162,7 @@ Detailed rules per directory are in `.claude/rules/`:
 | `core.md` | `src/core/**/*.ts` — pure functions, typed errors |
 | `schemas.md` | `src/schemas/**/*.ts` — Zod v4 patterns |
 | `tests.md` | `tests/**/*.test.ts` — Vitest, arrange-act-assert |
+| `karpathy.md` | global — behavioral guidelines (think / simplicity / surgical / goal-driven) |
 
 ## XP Anti-Vibe-Coding Workflow
 
@@ -250,7 +251,7 @@ Antes de mudar de fase, rodar o analyze mode correspondente:
 | HANDOFF → DEPLOY | `handoff_ready` + `doc_completeness` | Snapshot + memories salvos |
 | DEPLOY → LISTENING | `deploy_ready` + `release_check` | Release validado + harness ≥ 70 |
 
-### Definition of Done (8 Checks)
+### Definition of Done (12 Checks)
 
 Rodar `analyze(mode: "implement_done", nodeId)` antes de `update_status(done)`:
 
@@ -264,6 +265,10 @@ Rodar `analyze(mode: "implement_done", nodeId)` antes de `update_status(done)`:
 | 6 | `not_oversized` | recomendado | Sem L/XL sem subtasks |
 | 7 | `has_testable_ac` | recomendado | ≥1 AC testável |
 | 8 | `has_test_files` | recomendado | testFiles preenchido |
+| 9 | `has_estimate` | recomendado | xpSize ou estimateMinutes definido |
+| 10 | `has_citations_in_new_core_files` | recomendado | §EPIC/§ADR em arquivos core/ tocados |
+| 11 | `complexity_budget_pass` | recomendado | Karpathy §2 — file > 200 LOC sem subtasks ou impl:test > 5:1 |
+| 12 | `surgical_scope_pass` | recomendado | Karpathy §3 — > 30% dos arquivos modificados fora do `metadata.declaredFiles` |
 
 ### Definition of Ready (7 Checks — Gate ANALYZE → DESIGN)
 

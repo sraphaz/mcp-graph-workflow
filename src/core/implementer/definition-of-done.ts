@@ -32,6 +32,8 @@ import { logger } from "../utils/logger.js";
 import { isCorePath } from "../citations/citation-validator.js";
 import { hasCitation } from "../citations/citation-extractor.js";
 import { getTouchedFiles } from "../planner/touched-files.js";
+import { evaluateComplexityBudget } from "./complexity-budget.js";
+import { evaluateSurgicalScope } from "./surgical-scope.js";
 import { existsSync, readFileSync } from "node:fs";
 import { join as joinPath, isAbsolute } from "node:path";
 
@@ -212,6 +214,40 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     name: "has_citations_in_new_core_files",
     passed: citationsPass,
     details: citationDetails,
+    severity: "recommended",
+  });
+
+  // §KARPATHY-2 — complexity_budget_pass
+  // Karpathy principle 2 (Simplicity First). Heuristic: file > 200 LOC without
+  // subtasks, or impl:test LOC ratio > 5:1. Recommended severity. Skips
+  // gracefully when no implementation files are declared.
+  const implFiles = touched.map((p) => (isAbsolute(p) ? p : joinPath(process.cwd(), p)));
+  const testFilesAbs = (node.testFiles ?? []).map((p) => (isAbsolute(p) ? p : joinPath(process.cwd(), p)));
+  const complexityResult = evaluateComplexityBudget({
+    implementationFiles: implFiles,
+    testFiles: testFilesAbs,
+    hasChildren,
+  });
+  checks.push({
+    name: "complexity_budget_pass",
+    passed: complexityResult.passed,
+    details: complexityResult.details,
+    severity: "recommended",
+  });
+
+  // §KARPATHY-3 — surgical_scope_pass
+  // Karpathy principle 3 (Surgical Changes). Compares declared scope
+  // (metadata.declaredFiles) against actual touched files. Skips gracefully
+  // when no declared scope exists on the node — avoids false positives.
+  const declaredFiles = ((node.metadata as Record<string, unknown> | undefined)?.declaredFiles ?? []) as string[];
+  const surgicalResult = evaluateSurgicalScope({
+    declaredFiles: Array.isArray(declaredFiles) ? declaredFiles : [],
+    modifiedFiles: touched,
+  });
+  checks.push({
+    name: "surgical_scope_pass",
+    passed: surgicalResult.passed,
+    details: surgicalResult.details,
     severity: "recommended",
   });
 

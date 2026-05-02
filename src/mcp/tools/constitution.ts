@@ -27,6 +27,7 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexConstitution } from "../../core/rag/constitution-indexer.js";
 import { ConstitutionChecker } from "../../core/constitution/constitution-checker.js";
+import { getBuiltinConstitution, listBuiltinConstitutions } from "../../core/constitution/built-in-constitutions.js";
 import { generateId } from "../../core/utils/id.js";
 import { logger } from "../../core/utils/logger.js";
 import { McpGraphError } from "../../core/utils/errors.js";
@@ -118,6 +119,73 @@ export function handleConstitutionCreate(
     nodeId,
     principlesIndexed: indexResult.documentsIndexed,
     constitutionVersion: version,
+  };
+}
+
+/**
+ * Install a built-in constitution bundle (e.g. karpathy-baseline).
+ * Idempotent: if a constitution with the same builtinName already exists,
+ * returns the existing nodeId without re-creating.
+ */
+export function handleConstitutionInstallBuiltin(
+  store: SqliteStore,
+  params: { name: string },
+): { ok: boolean; nodeId: string; builtinName: string; principlesIndexed: number; alreadyInstalled: boolean; constitutionVersion: string } {
+  const bundle = getBuiltinConstitution(params.name);
+  if (!bundle) {
+    const available = listBuiltinConstitutions().map((b) => b.name).join(", ");
+    throw new McpGraphError(`Unknown built-in constitution: "${params.name}". Available: ${available}`);
+  }
+
+  const project = store.getActiveProject();
+  if (!project) throw new McpGraphError("No active project");
+
+  const existing = store.getDb().prepare(
+    "SELECT id, metadata FROM nodes WHERE project_id = ? AND type = 'constitution'",
+  ).all(project.id) as Array<{ id: string; metadata: string }>;
+
+  for (const row of existing) {
+    let meta: { builtinName?: string; constitutionVersion?: string } = {};
+    try { meta = JSON.parse(row.metadata) as { builtinName?: string; constitutionVersion?: string }; } catch { /* skip */ }
+    if (meta.builtinName === bundle.name) {
+      return {
+        ok: true,
+        nodeId: row.id,
+        builtinName: bundle.name,
+        principlesIndexed: bundle.principles.length,
+        alreadyInstalled: true,
+        constitutionVersion: meta.constitutionVersion ?? "1.0.0",
+      };
+    }
+  }
+
+  const created = handleConstitutionCreate(store, {
+    principles: bundle.principles,
+    scope: "global",
+    rationale: `Built-in: ${bundle.description}` + (bundle.upstream ? ` (upstream: ${bundle.upstream})` : ""),
+  });
+
+  // Tag the created node with the builtinName for idempotency on future installs.
+  const now = new Date().toISOString();
+  const node = store.getNodeById(created.nodeId);
+  const existingMeta = (node?.metadata ?? {}) as Record<string, unknown>;
+  store.getDb().prepare(
+    "UPDATE nodes SET metadata = ?, updated_at = ? WHERE id = ?",
+  ).run(
+    JSON.stringify({ ...existingMeta, builtinName: bundle.name }),
+    now,
+    created.nodeId,
+  );
+
+  logger.info("Built-in constitution installed", { name: bundle.name, nodeId: created.nodeId });
+
+  return {
+    ok: true,
+    nodeId: created.nodeId,
+    builtinName: bundle.name,
+    principlesIndexed: created.principlesIndexed,
+    alreadyInstalled: false,
+    constitutionVersion: created.constitutionVersion,
   };
 }
 
@@ -248,9 +316,10 @@ export function handleConstitutionCheck(
 export function registerConstitution(server: McpServer, store: SqliteStore): void {
   server.tool(
     "constitution",
-    "Manage project governing principles. Actions: create, update, list, check.",
+    "Manage project governing principles. Actions: create, update, list, check, install_builtin.",
     {
-      action: z.enum(["create", "update", "list", "check"]).describe("Action to perform"),
+      action: z.enum(["create", "update", "list", "check", "install_builtin"]).describe("Action to perform"),
+      name: z.string().optional().describe("Built-in bundle name (install_builtin)"),
       principles: z.array(z.object({
         id: z.string(),
         title: z.string(),
@@ -287,6 +356,10 @@ export function registerConstitution(server: McpServer, store: SqliteStore): voi
 
           case "check":
             return mcpText(handleConstitutionCheck(store, { nodeId: params.nodeId }));
+
+          case "install_builtin":
+            if (!params.name) return mcpError("name required for install_builtin");
+            return mcpText(handleConstitutionInstallBuiltin(store, { name: params.name }));
 
           default:
             return mcpError(`Unknown action: ${params.action}`);
