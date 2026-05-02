@@ -93,6 +93,20 @@ if (
     typeof HTMLCanvasElement.prototype.getContext;
 }
 
+// Sigma checks `WebGL2RenderingContext` at module-eval time (sigma's
+// dist/index-*.cjs.dev.js line 144) to detect WebGL2 support. jsdom doesn't
+// ship the global, so importing any sigma-using component throws
+// `ReferenceError: WebGL2RenderingContext is not defined`. A bare class
+// stub is enough — sigma's runtime check is `typeof X !== "undefined"`.
+if (typeof globalThis.WebGL2RenderingContext === "undefined") {
+  globalThis.WebGL2RenderingContext =
+    class WebGL2RenderingContextMock {} as unknown as typeof WebGL2RenderingContext;
+}
+if (typeof globalThis.WebGLRenderingContext === "undefined") {
+  globalThis.WebGLRenderingContext =
+    class WebGLRenderingContextMock {} as unknown as typeof WebGLRenderingContext;
+}
+
 // requestAnimationFrame / cancelAnimationFrame are needed by some animation
 // hooks; jsdom provides them but workers may not.
 if (typeof globalThis.requestAnimationFrame === "undefined") {
