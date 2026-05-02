@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.3.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.1...mcp-graph-v13.3.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* **cli:** bug-hunt batch 1 — corrupt DB friendly error, port collision, harness scan noise ([#308](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/308)) ([8ced33c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/8ced33c227f1f04d25b3d4dd3c5347a5349fbb17))
+* **release:** v13.3.1 papercuts — serverInfo version, git stderr, lint ([#307](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/307)) ([6c68c72](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/6c68c727dd56e81e060968e9922ea0dd7b0c2e40))
+
 ## [13.3.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.0...mcp-graph-v13.3.1) (2026-05-02)
 
 

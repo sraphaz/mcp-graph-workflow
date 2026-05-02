@@ -2,6 +2,13 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [13.0.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v13.0.0...cli-v13.0.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **release:** v13.3.1 papercuts — serverInfo version, git stderr, lint ([#307](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/307)) ([6c68c72](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/6c68c727dd56e81e060968e9922ea0dd7b0c2e40))
+
 ## [13.0.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v13.0.0-beta.0...cli-v13.0.0) (2026-04-29)
 
 
