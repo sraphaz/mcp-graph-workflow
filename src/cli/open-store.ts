@@ -15,17 +15,38 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { logger } from "../core/utils/logger.js";
 
+export interface OpenStoreOptions {
+  /**
+   * When true, fail before SqliteStore.open() touches the filesystem if
+   * `<dir>/workflow-graph/graph.db` does not exist. Use for read-only CLI
+   * commands (stats, list, doctor) so they do not silently materialize an
+   * empty workflow-graph/ directory in the user's cwd. B15 in the v13.3.1
+   * bug-hunt notebook (node_1cfe2d825862).
+   */
+  requireExisting?: boolean;
+}
+
 /**
  * Open a SqliteStore for a CLI command, presenting a friendly error and
- * exiting non-zero if the database file is corrupt. Without this wrapper,
- * `SqliteStore.open()` propagates the raw better-sqlite3 SqliteError with
- * its full stack trace and node_modules paths to end users (B11 in the
- * v13.3.1 bug-hunt notebook, node_57264fd72793).
+ * exiting non-zero if the database file is corrupt or (when
+ * `requireExisting`) absent. Without this wrapper, `SqliteStore.open()`
+ * either dumps the raw better-sqlite3 SqliteError stack trace (B11,
+ * node_57264fd72793) or silently auto-creates a fresh workflow-graph/
+ * directory at any cwd (B15, node_1cfe2d825862).
  */
-export function openStoreOrFail(dir: string): SqliteStore {
+export function openStoreOrFail(dir: string, opts: OpenStoreOptions = {}): SqliteStore {
+  if (opts.requireExisting === true) {
+    const dbPath = join(dir, "workflow-graph", "graph.db");
+    if (!existsSync(dbPath)) {
+      logger.error(`No mcp-graph project at ${dir}. Run 'mcp-graph init' to create one.`);
+      process.exit(1);
+    }
+  }
   try {
     return SqliteStore.open(dir);
   } catch (err) {

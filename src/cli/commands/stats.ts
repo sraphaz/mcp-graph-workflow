@@ -31,7 +31,7 @@ export function statsCommand(): Command {
     .option("-d, --dir <dir>", "Project directory", process.cwd())
     .option("--json", "Output as JSON")
     .action((opts: { dir: string; json: boolean }) => {
-      const store = openStoreOrFail(opts.dir);
+      const store = openStoreOrFail(opts.dir, { requireExisting: true });
 
       try {
         const stats = store.getStats();

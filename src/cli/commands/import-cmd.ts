@@ -34,7 +34,9 @@ export function importCommand(): Command {
     .description("Import a PRD file into the graph")
     .argument("<file>", "Path to PRD file (.md, .txt, .pdf, .html)")
     .option("-d, --dir <dir>", "Project directory", process.cwd())
-    .action(async (file: string, opts: { dir: string }) => {
+    .option("--force", "Re-import even if the source file was already imported (creates duplicate nodes)", false)
+    .option("--allow-empty", "Exit 0 even when the file produces zero nodes (default: exit 1 with hint)", false)
+    .action(async (file: string, opts: { dir: string; force: boolean; allowEmpty: boolean }) => {
       const filePath = path.resolve(file);
       const store = openStoreOrFail(opts.dir);
 
@@ -43,16 +45,36 @@ export function importCommand(): Command {
         logger.info("Project initialized", { name: path.basename(opts.dir) });
       }
 
+      // B14 (node_6b7d86d7238a): refuse to re-import the same source file by
+      // default. Without this guard a CI loop or accidental double-invoke
+      // doubled every node and edge in the graph.
+      if (!opts.force && store.hasImport(filePath)) {
+        logger.error(`Source already imported: ${filePath}. Pass --force to re-import (will create duplicate nodes).`);
+        store.close();
+        process.exit(1);
+      }
+
       try {
         const resultValue = await readFileContent(filePath);
         const entities = extractEntities(resultValue.text);
         const graph = convertToGraph(entities, filePath);
 
         store.bulkInsert(graph.nodes, graph.edges);
+        store.recordImport(filePath, graph.nodes.length, graph.edges.length);
         store.createSnapshot();
 
         output(`Imported: ${graph.nodes.length} nodes, ${graph.edges.length} edges`);
         output(`Source: ${filePath}`);
+
+        // B12+B13 (node_bc09db1f30f6): a non-empty file that yields 0 nodes is
+        // almost always an accident — wrong file (binary), wrong format, or a
+        // parser miss. Exit 1 with a hint unless the caller opted in via
+        // --allow-empty. Empty files (size 0) still pass through silently.
+        if (graph.nodes.length === 0 && resultValue.text.length > 0 && !opts.allowEmpty) {
+          logger.error(`No entities extracted from ${filePath} (text length ${resultValue.text.length}). Pass --allow-empty if this is intentional.`);
+          store.close();
+          process.exit(1);
+        }
       } catch (err) {
         logger.error(`Import failed: ${getErrorMessage(err)}`);
         // Bug #056: close store before exit to prevent connection leak
