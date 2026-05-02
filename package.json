@@ -1,6 +1,6 @@
 {
   "name": "@mcp-graph-workflow/mcp-graph",
-  "version": "13.2.1",
+  "version": "13.3.0",
   "workspaces": [
     "tools/cli",
     "src/web/dashboard"
@@ -46,7 +46,6 @@
     "spdx:apply": "node scripts/license/headers.mjs --apply",
     "setup:mcp": "bash scripts/setup-mcp.sh",
     "harness:scan": "tsx scripts/harness-scan-run.js",
-    "harness:provenance:backfill": "tsx scripts/provenance-backfill-run.ts",
     "benchmark:daemon-rss": "node scripts/benchmark-daemon-rss.mjs",
     "prepare": "node scripts/prepare-husky.mjs"
   },

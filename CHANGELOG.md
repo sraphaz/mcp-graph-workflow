@@ -1,5 +1,17 @@
 # Changelog
 
+## [13.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.2.1...mcp-graph-v13.3.0) (2026-05-02)
+
+
+### Features
+
+* **constitution:** karpathy-baseline built-in + 2 DoD checks (simplicity, surgical) ([#291](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/291)) ([bf1ca2c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/bf1ca2cf0223928b90ab6d9ba1fb2f422743ce4c))
+
+
+### Bug Fixes
+
+* **harness:** distribute violation cap fairly across dimensions ([#298](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/298)) ([c61e5fb](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c61e5fbe02ae7ba4c791b9499e4db964f73740d9))
+
 ## [13.2.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.2.0...mcp-graph-v13.2.1) (2026-04-30)
 
 
