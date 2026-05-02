@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dagrejs/dagre": "^1.1.4",
+    "@dagrejs/dagre": "^3.0.0",
     "@react-sigma/core": "^5.0.6",
     "@tanstack/react-virtual": "^3.13.23",
     "@xyflow/react": "^12.8.2",
