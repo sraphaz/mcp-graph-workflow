@@ -50,6 +50,7 @@ function getCurrentGitHash(rootDir: string): string | null {
       cwd: rootDir,
       encoding: "utf-8",
       timeout: 5000,
+      stdio: ["ignore", "pipe", "ignore"],
     }).trim();
   } catch {
     return null;

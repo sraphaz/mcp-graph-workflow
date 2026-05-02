@@ -16,6 +16,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAllTools } from "./tools/index.js";
 import { ProfileFilterSchema } from "./tools/taxonomy.js";
@@ -66,8 +67,9 @@ try {
 }
 
 // ── MCP Server ───────────────────────────────────────────
+const pkg = createRequire(import.meta.url)("../../package.json") as { version: string };
 const mcp = new McpServer(
-  { name: "mcp-graph", version: "1.0.0" },
+  { name: "mcp-graph", version: pkg.version },
   { capabilities: { tools: {} } },
 );
 

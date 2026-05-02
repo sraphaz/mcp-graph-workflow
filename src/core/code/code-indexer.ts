@@ -36,7 +36,12 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 
 function getGitHash(basePath: string): string | null {
   try {
-    return execSync("git rev-parse HEAD", { cwd: basePath, encoding: "utf-8", timeout: 5000 }).trim();
+    return execSync("git rev-parse HEAD", {
+      cwd: basePath,
+      encoding: "utf-8",
+      timeout: 5000,
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
   } catch {
     return null;
   }

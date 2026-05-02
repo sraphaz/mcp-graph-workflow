@@ -71,7 +71,6 @@ async function loadWebTreeSitter(): Promise<TreeSitterModule | null> {
   initAttempted = true;
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mod = (await import("web-tree-sitter")) as Record<string, unknown> & { default?: unknown };
     // web-tree-sitter exports { Parser, Language, ... } — init() is on Parser
     const ParserClass = (mod.Parser ?? mod.default) as { init: () => Promise<void> };

@@ -16,6 +16,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SqliteStore } from "../core/store/sqlite-store.js";
@@ -45,8 +46,9 @@ const eventBus = new GraphEventBus();
 store.eventBus = eventBus;
 
 // ── MCP Server ───────────────────────────────────────────
+const pkg = createRequire(import.meta.url)("../../package.json") as { version: string };
 const mcp = new McpServer(
-  { name: "mcp-graph", version: "1.0.0" },
+  { name: "mcp-graph", version: pkg.version },
   { capabilities: { tools: {} } },
 );
 
