@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.3.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.0...mcp-graph-v13.3.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **hooks:** restore block-dangerous-git.sh; unwire from settings instead ([#305](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/305)) ([33a8255](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/33a8255b62c2259df8935e4efe9e42aa16e3eb2d))
+
 ## [13.3.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.2.1...mcp-graph-v13.3.0) (2026-05-02)
 
 
