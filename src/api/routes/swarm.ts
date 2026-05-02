@@ -26,6 +26,7 @@ import { McpGraphError } from "../../core/utils/errors.js";
 
 const ScaleBodySchema = z.object({ maxAgents: z.number().int().min(1).max(32) });
 
+/** createSwarmRouter — auto-generated description placeholder. */
 export function createSwarmRouter(storeRef: StoreRef): Router {
   const router = Router();
 
@@ -131,9 +132,9 @@ export function createSwarmRouter(storeRef: StoreRef): Router {
   // GET /sessions/:id/health — JudgeMonitor on-demand health check
   router.get("/sessions/:id/health", (req, res, next) => {
     try {
-      const result = judge().checkHealth(req.params["id"] ?? "");
-      const statusCode = result.status === "not_found" ? 404 : 200;
-      res.status(statusCode).json(result);
+      const resultValue = judge().checkHealth(req.params["id"] ?? "");
+      const statusCode = resultValue.status === "not_found" ? 404 : 200;
+      res.status(statusCode).json(resultValue);
     } catch (err) {
       next(err);
     }

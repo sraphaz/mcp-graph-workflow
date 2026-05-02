@@ -55,24 +55,24 @@ export async function runValidation(
 
   const primary = await captureWebPage(url, options);
 
-  const result: ValidateResult = {
+  const resultValue: ValidateResult = {
     primary,
     timestamp: new Date().toISOString(),
   };
 
   if (options?.compareUrl) {
     const comparison = await captureWebPage(options.compareUrl, options);
-    result.comparison = comparison;
-    result.diff = computeDiff(primary, comparison);
+    resultValue.comparison = comparison;
+    resultValue.diff = computeDiff(primary, comparison);
   }
 
   logger.info("Validation complete", {
     url,
     wordCount: primary.wordCount,
-    hasDiff: !!result.diff,
+    hasDiff: !!resultValue.diff,
   });
 
-  return result;
+  return resultValue;
 }
 
 /**

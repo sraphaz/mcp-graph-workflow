@@ -124,11 +124,11 @@ export class ChatRunner {
           await this.dispatchNavigationEvents(input.sessionId, url);
         }
         const value = await this.runtime.invoke(input.cdp, step.helper, step.args);
-        const v = value as { ok?: boolean; error?: string; base64?: string };
-        ok = v?.ok !== false;
-        if (!ok) error = v?.error ?? "step failed";
-        if (step.helper === "screenshot" && v?.base64) {
-          pngBytes = Buffer.from(v.base64, "base64");
+        const vVar = value as { ok?: boolean; error?: string; base64?: string };
+        ok = vVar?.ok !== false;
+        if (!ok) error = vVar?.error ?? "step failed";
+        if (step.helper === "screenshot" && vVar?.base64) {
+          pngBytes = Buffer.from(vVar.base64, "base64");
         } else {
           // Always also capture a screenshot for the report (best-effort)
           try {
@@ -145,7 +145,7 @@ export class ChatRunner {
       }
 
       const durationMs = Date.now() - stepStart;
-      const result: StepResult = {
+      const resultValue: StepResult = {
         index: step.index,
         helper: step.helper,
         ok,
@@ -153,7 +153,7 @@ export class ChatRunner {
         screenshotPath: null,
         error,
       };
-      results.push(result);
+      results.push(resultValue);
       if (!ok) overallOk = false;
 
       this.emit({
@@ -167,7 +167,7 @@ export class ChatRunner {
       });
 
       // We hold pngBytes until the run is created so we know the final id
-      (result as StepResult & { _png?: Buffer | null })._png = pngBytes;
+      (resultValue as StepResult & { _png?: Buffer | null })._png = pngBytes;
     }
 
     const verdict: HarnessRun["verdict"] = overallOk
@@ -188,23 +188,23 @@ export class ChatRunner {
 
     // Persist screenshots now that we have the real run id
     const updatedResults: StepResult[] = [];
-    for (const r of results) {
-      const png = (r as StepResult & { _png?: Buffer | null })._png;
+    for (const rVar of results) {
+      const png = (rVar as StepResult & { _png?: Buffer | null })._png;
       let screenshotPath: string | null = null;
       if (png) {
         try {
-          screenshotPath = this.runs.saveScreenshot(run.id, r.index, png);
+          screenshotPath = this.runs.saveScreenshot(run.id, rVar.index, png);
         } catch (err) {
           logger.warn("bh:chat:screenshot:save:fail", { error: err instanceof Error ? err.message : String(err) });
         }
       }
       updatedResults.push({
-        index: r.index,
-        helper: r.helper,
-        ok: r.ok,
-        durationMs: r.durationMs,
+        index: rVar.index,
+        helper: rVar.helper,
+        ok: rVar.ok,
+        durationMs: rVar.durationMs,
         screenshotPath,
-        error: r.error,
+        error: rVar.error,
       });
     }
     this.runs.updateResults(run.id, updatedResults);
@@ -259,12 +259,12 @@ export class ChatRunner {
 
     for (const event of events) {
       const verdicts: WatchdogVerdict[] = await this.eventBus.dispatch(event);
-      for (const v of verdicts) {
-        if (v.level === "block") {
-          throw new HarnessSafetyViolation("watchdog_blocked", `${v.watchdog}: ${v.message}`);
+      for (const vVar of verdicts) {
+        if (vVar.level === "block") {
+          throw new HarnessSafetyViolation("watchdog_blocked", `${vVar.watchdog}: ${vVar.message}`);
         }
-        if (v.level === "warn") {
-          logger.warn("bh:watchdog:warn", { watchdog: v.watchdog, message: v.message });
+        if (vVar.level === "warn") {
+          logger.warn("bh:watchdog:warn", { watchdog: vVar.watchdog, message: vVar.message });
         }
       }
     }

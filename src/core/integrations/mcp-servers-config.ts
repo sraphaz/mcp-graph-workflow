@@ -77,6 +77,7 @@ export interface BuildMcpServersConfigOptions {
   allowlist?: AllowlistOptions;
 }
 
+/** buildMcpServersConfig — auto-generated description placeholder. */
 export function buildMcpServersConfig(
   existing?: Partial<McpServersConfig>,
   options: BuildMcpServersConfigOptions = {},

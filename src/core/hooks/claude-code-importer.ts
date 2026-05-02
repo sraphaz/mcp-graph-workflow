@@ -54,6 +54,7 @@ export interface ImportOptions {
   source?: string;
 }
 
+/** importClaudeCodeSettings — auto-generated description placeholder. */
 export function importClaudeCodeSettings(options: ImportOptions = {}): ImportResult {
   const source = options.source ?? join(homedir(), ".claude", "settings.json");
   const file = readSettingsFile<ClaudeSettings>(source, "json");

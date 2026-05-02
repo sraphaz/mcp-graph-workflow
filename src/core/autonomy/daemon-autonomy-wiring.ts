@@ -44,6 +44,7 @@ export interface DaemonAutonomyOptions {
   env?: NodeJS.ProcessEnv;
 }
 
+/** isAutonomyEnabled — auto-generated description placeholder. */
 export function isAutonomyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_AUTONOMY === "on";
 }

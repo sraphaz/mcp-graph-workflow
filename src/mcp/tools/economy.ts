@@ -55,6 +55,7 @@ const BOOSTER_REGISTRY: Record<string, BoosterFn> = {
   "remove-console": (s) => removeConsole(s),
 };
 
+/** buildEconomyHandler — auto-generated description placeholder. */
 export function buildEconomyHandler(
   deps: EconomyToolDeps,
 ): (params: EconomyToolInput) => Promise<McpToolResponse> {
@@ -73,17 +74,17 @@ export function buildEconomyHandler(
 }
 
 function handleStats(deps: EconomyToolDeps): McpToolResponse {
-  const data = {
+  const dataValue = {
     cache: { size: deps.cache.size() },
     boosters: { count: deps.boosterNames.length, names: deps.boosterNames },
   };
-  return { ...mcpText(data), structuredContent: data };
+  return { ...mcpText(dataValue), structuredContent: dataValue };
 }
 
 function handleCacheClear(deps: EconomyToolDeps): McpToolResponse {
   const cleared = deps.cache.invalidateAll();
-  const data = { cleared };
-  return { ...mcpText(data), structuredContent: data };
+  const dataValue = { cleared };
+  return { ...mcpText(dataValue), structuredContent: dataValue };
 }
 
 function handleRouterExplain(params: EconomyToolInput): McpToolResponse {
@@ -110,7 +111,7 @@ function handleBoosterRun(params: EconomyToolInput): McpToolResponse {
       `economy.booster_run: unknown booster '${params.boosterName}' — known: ${Object.keys(BOOSTER_REGISTRY).join(", ")}`,
     );
   }
-  const result = fn(params.source);
-  const data = { booster: params.boosterName, output: result.output };
-  return { ...mcpText(data), structuredContent: data };
+  const resultValue = fn(params.source);
+  const dataValue = { booster: params.boosterName, output: resultValue.output };
+  return { ...mcpText(dataValue), structuredContent: dataValue };
 }

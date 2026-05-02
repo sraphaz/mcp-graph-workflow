@@ -80,9 +80,9 @@ export function spillover(message: ChatMessage, opts: SpilloverInput): Spillover
  * undefined when the message isn't a placeholder or the file is missing.
  */
 export function loadSpillover(content: string): string | undefined {
-  const m = PLACEHOLDER_RE.exec(content);
-  if (!m) return undefined;
-  const path = m[1];
+  const mVar = PLACEHOLDER_RE.exec(content);
+  if (!mVar) return undefined;
+  const path = mVar[1];
   try {
     return readFileSync(path, "utf-8");
   } catch {

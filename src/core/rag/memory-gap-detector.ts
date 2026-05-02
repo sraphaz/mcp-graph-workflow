@@ -40,29 +40,29 @@ export function extractKeyTerms(text: string, topK: number = TOP_K_TERMS): strin
   const allCapsRe = /\b[A-Z]{2,}(?:[_-][A-Z0-9]+)+\b/g;
   const capPhraseRe = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b/g;
 
-  for (const m of text.matchAll(camelCaseRe)) proper.add(m[0]);
-  for (const m of text.matchAll(allCapsRe)) {
-    if (m[0].length > 1) proper.add(m[0]);
+  for (const mVar of text.matchAll(camelCaseRe)) proper.add(mVar[0]);
+  for (const mVar of text.matchAll(allCapsRe)) {
+    if (mVar[0].length > 1) proper.add(mVar[0]);
   }
-  for (const m of text.matchAll(capPhraseRe)) proper.add(m[0]);
+  for (const mVar of text.matchAll(capPhraseRe)) proper.add(mVar[0]);
 
   const properList = [...proper];
   if (properList.length >= topK) return properList.slice(0, topK);
 
   const freq = new Map<string, number>();
   const tokens = text.toLowerCase().match(/\b[a-z][a-z0-9_-]{3,}\b/g) ?? [];
-  for (const t of tokens) {
-    if (STOPWORDS.has(t)) continue;
-    freq.set(t, (freq.get(t) ?? 0) + 1);
+  for (const tVar of tokens) {
+    if (STOPWORDS.has(tVar)) continue;
+    freq.set(tVar, (freq.get(tVar) ?? 0) + 1);
   }
   const ranked = [...freq.entries()]
     .sort((a, b) => b[1] - a[1])
     .map((e) => e[0]);
 
   const out = [...properList];
-  for (const t of ranked) {
+  for (const tVar of ranked) {
     if (out.length >= topK) break;
-    if (!out.some((existing) => existing.toLowerCase() === t)) out.push(t);
+    if (!out.some((existing) => existing.toLowerCase() === tVar)) out.push(tVar);
   }
   return out.slice(0, topK);
 }

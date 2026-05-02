@@ -22,8 +22,8 @@ export function withToolHooks(toolName: string, handler: AnyHandler, hookBus: Ho
     let error: string | undefined;
 
     try {
-      const result = await handler(args);
-      return result;
+      const resultValue = await handler(args);
+      return resultValue;
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
       throw err;

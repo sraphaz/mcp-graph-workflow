@@ -191,9 +191,9 @@ function buildStateDiagram(nodes: GraphNode[], _edges: GraphEdge[]): string {
     }
 
     // Transitions
-    for (const t of transitions) {
-      const label = t.trigger ? ` : ${t.trigger}` : "";
-      lines.push(`    ${sanitizeStateName(t.from)} --> ${sanitizeStateName(t.to)}${label}`);
+    for (const tVar of transitions) {
+      const label = tVar.trigger ? ` : ${tVar.trigger}` : "";
+      lines.push(`    ${sanitizeStateName(tVar.from)} --> ${sanitizeStateName(tVar.to)}${label}`);
     }
 
     lines.push("");

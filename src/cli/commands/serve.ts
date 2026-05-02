@@ -18,6 +18,7 @@
 import { Command } from "commander";
 import { logger } from "../../core/utils/logger.js";
 
+/** serveCommand — auto-generated description placeholder. */
 export function serveCommand(): Command {
   return new Command("serve")
     .description("Start the mcp-graph dashboard + API server")

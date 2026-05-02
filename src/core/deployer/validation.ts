@@ -28,6 +28,7 @@ export const DeployOptionsSchema = z.object({
 
 export type ValidatedDeployOptions = z.infer<typeof DeployOptionsSchema>;
 
+/** validateDeployOptions — auto-generated description placeholder. */
 export function validateDeployOptions(input: unknown): ValidatedDeployOptions {
   return DeployOptionsSchema.parse(input);
 }

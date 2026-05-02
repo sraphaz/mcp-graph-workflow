@@ -52,6 +52,7 @@ function scoreToLevel(score: number): RiskLevel {
   return "low";
 }
 
+/** assessRisks — auto-generated description placeholder. */
 export function assessRisks(doc: GraphDocument): RiskMatrix {
   const { nodes } = doc;
   const riskNodes = nodes.filter((n) => n.type === "risk");

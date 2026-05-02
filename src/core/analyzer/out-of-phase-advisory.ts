@@ -27,6 +27,7 @@ export interface AdvisoryWrapped<TMode extends string = string> {
   [key: string]: unknown;
 }
 
+/** wrapDesignPhaseAdvisory — auto-generated description placeholder. */
 export function wrapDesignPhaseAdvisory<TMode extends string>(
   phase: LifecyclePhase,
   mode: TMode,

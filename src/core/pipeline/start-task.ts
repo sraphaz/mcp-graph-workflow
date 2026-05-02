@@ -58,6 +58,8 @@ import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollba
 import { createShadowBranch } from "../autonomy/shadow-branch.js";
 import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
+import { extractOfferedDocIds } from "../rag/rag-feedback.js";
+import { maybeRunMemoryDynamicsTick, type DynamicsTickResult } from "../rag/memory-dynamics-tick.js";
 
 // Module-level singleton for task context prefetching (CPU pipeline pattern)
 export const taskPrefetcher = new TaskPrefetcher({ ttlMs: 5 * 60 * 1000 });
@@ -136,6 +138,14 @@ export interface StartTaskResult {
    * or the task has fewer than 3 ACs.
    */
   ambiguityAuditWarning: string | null;
+  /**
+   * Auto-cadence memory dynamics tick (Hu et al. 2026 — auto-learning loop).
+   * Set when start_task fired the opportunistic decay/consolidate/forget
+   * pass. `ran: false, reason: "rate_limited"` when the previous tick was
+   * within the interval window. Caller-side telemetry only — no behavior
+   * depends on this field.
+   */
+  memoryDynamicsTick?: import("../rag/memory-dynamics-tick.js").DynamicsTickResult;
 }
 
 /**
@@ -176,6 +186,20 @@ export function startTask(
     return null;
   }
 
+  // 0. Auto-cadence memory-dynamics tick (Hu et al. 2026 — across-session
+  //    auto-learning). Self-rate-limited via project_settings; closes the
+  //    cadence gap where signals accumulate but policy update was gated on
+  //    a manual knowledge(reindex) call. Failure is logged and never blocks.
+  let memoryDynamicsTick: DynamicsTickResult | undefined;
+  try {
+    memoryDynamicsTick = maybeRunMemoryDynamicsTick(store);
+    if (memoryDynamicsTick.ran) {
+      logger.info("pipeline:start_task:memory_dynamics_tick", { ...memoryDynamicsTick });
+    }
+  } catch (err) {
+    logger.warn("pipeline:start_task:memory_dynamics_tick_failed", { error: String(err) });
+  }
+
   const taskNode = enhanced.task.node;
 
   // 2. Build task context
@@ -212,6 +236,21 @@ export function startTask(
       });
     } catch (err) {
       logger.warn("pipeline:start_task:rag_failed", { error: String(err) });
+    }
+  }
+
+  // 3b. Persist the docIds the RAG context surfaced so finish_task can score
+  //     them later (paper §7.3 — RAG-citation → quality feedback loop).
+  if (ragContext?.sections?.length) {
+    try {
+      const ragOffered = extractOfferedDocIds(ragContext.sections);
+      if (ragOffered.length > 0) {
+        const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
+        store.updateNode(taskNode.id, { metadata: { ...existingMeta, ragOffered } });
+        logger.debug("pipeline:start_task:rag_offered_persisted", { nodeId: taskNode.id, count: ragOffered.length });
+      }
+    } catch (err) {
+      logger.warn("pipeline:start_task:rag_offered_failed", { error: String(err) });
     }
   }
 
@@ -458,6 +497,7 @@ export function startTask(
     siblingTruncatedCount,
     domainSkills,
     ambiguityAuditWarning,
+    ...(memoryDynamicsTick ? { memoryDynamicsTick } : {}),
     ...(topRemediations && topRemediations.length > 0 ? { topRemediations } : {}),
     ...(leaseToken ? { leaseToken } : {}),
     ...(prefetchHit ? { prefetchHit } : {}),

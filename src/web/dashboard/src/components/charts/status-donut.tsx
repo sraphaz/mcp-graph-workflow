@@ -26,6 +26,7 @@ interface StatusDonutProps {
   activeStatus?: NodeStatus | null;
 }
 
+/** StatusDonut — auto-generated description placeholder. */
 export function StatusDonut({ data, className, onSliceClick, activeStatus }: StatusDonutProps): React.JSX.Element {
   const filtered = data.filter((d) => d.count > 0);
 

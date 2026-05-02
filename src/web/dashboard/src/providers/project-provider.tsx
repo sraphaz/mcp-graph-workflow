@@ -46,6 +46,7 @@ interface ProjectProviderProps {
   onProjectChange?: (() => void) | (() => Promise<void>);
 }
 
+/** ProjectProvider — auto-generated description placeholder. */
 export function ProjectProvider({ children, onProjectChange }: ProjectProviderProps): React.JSX.Element {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProject, setActiveProject] = useState<Project | null>(null);

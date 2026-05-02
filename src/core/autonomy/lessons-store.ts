@@ -91,14 +91,14 @@ export function persistLessonsFromPatterns(
   threshold: number = PATTERN_TO_LESSON_THRESHOLD,
 ): LessonRow[] {
   const out: LessonRow[] = [];
-  for (const p of patterns) {
-    if (p.count < threshold) continue;
+  for (const pVar of patterns) {
+    if (pVar.count < threshold) continue;
     out.push(
       persistLesson(db, {
-        patternHash: p.patternHash,
-        description: p.description,
-        recommendedAction: p.recommendedAction ?? "investigate",
-        confidence: Math.min(0.5 + p.count * 0.1, 0.95),
+        patternHash: pVar.patternHash,
+        description: pVar.description,
+        recommendedAction: pVar.recommendedAction ?? "investigate",
+        confidence: Math.min(0.5 + pVar.count * 0.1, 0.95),
         source,
       }),
     );
@@ -120,6 +120,7 @@ function rowToLesson(row: Record<string, unknown>): LessonRow {
   };
 }
 
+/** getLessonByHash — auto-generated description placeholder. */
 export function getLessonByHash(
   db: Database.Database,
   patternHash: string,
@@ -160,6 +161,7 @@ export function consultLessons(
   return rows.map(rowToLesson);
 }
 
+/** isLessonsConsultantDisabled — auto-generated description placeholder. */
 export function isLessonsConsultantDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_LESSONS_CONSULTANT === "off";
 }

@@ -34,9 +34,7 @@ import { logger } from "../core/utils/logger.js";
 import { loadConfig } from "../core/config/config-loader.js";
 import { createApp } from "./app-factory.js";
 import { StoreManager } from "../core/store/store-manager.js";
-import { CodeStore } from "../core/code/code-store.js";
-import { CodeIndexer } from "../core/code/code-indexer.js";
-import { createAnalyzers } from "../core/code/analyzer-factory.js";
+import { reindexCodeForProject } from "../core/code/code-indexer.js";
 import { logEmbeddingModeOnBoot } from "../core/rag/onnx-embeddings.js";
 import { MemoryTelemetry } from "../core/utils/memory-telemetry.js";
 
@@ -125,14 +123,11 @@ async function runCodeGraphReindex(label: string): Promise<void> {
     const project = storeManager.store.getProject();
     if (!project) return;
     const basePath = storeManager.basePath;
-    const codeStore = new CodeStore(storeManager.store.getDb());
-    const analyzers = await createAnalyzers(basePath);
-    const indexer = new CodeIndexer(codeStore, project.id, analyzers);
-    const result = await indexer.indexDirectory(basePath, basePath);
+    const resultValue = await reindexCodeForProject(storeManager.store, basePath);
     logger.info(`code-graph:${label}`, {
-      files: result.fileCount,
-      symbols: result.symbolCount,
-      relations: result.relationCount,
+      files: resultValue.fileCount,
+      symbols: resultValue.symbolCount,
+      relations: resultValue.relationCount,
     });
   } catch (err) {
     logger.warn(`code-graph:${label}:failed`, {

@@ -30,6 +30,7 @@ import { DelegationTaskSchema } from "../../schemas/delegation.schema.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
+/** registerDelegate — auto-generated description placeholder. */
 export function registerDelegate(server: McpServer, store: SqliteStore): void {
   server.tool(
     "delegate",

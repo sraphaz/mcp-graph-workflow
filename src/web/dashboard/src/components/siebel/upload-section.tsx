@@ -29,6 +29,7 @@ interface UploadSectionProps {
   onUploaded: () => void;
 }
 
+/** UploadSection — auto-generated description placeholder. */
 export function UploadSection({ onUploaded }: UploadSectionProps): React.JSX.Element {
   const [docsStatus, setDocsStatus] = useState<string | null>(null);
   const [sifDragging, setSifDragging] = useState(false);

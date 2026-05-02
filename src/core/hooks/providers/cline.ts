@@ -33,6 +33,7 @@ export interface ClineImportResult extends ImportEnvelope {
   mcpServers: string[];
 }
 
+/** importClineSettings — auto-generated description placeholder. */
 export function importClineSettings(opts: ClineImportOptions = {}): ClineImportResult {
   const source = opts.source ?? defaultVsCodeSettingsPath();
   const skipReason = "Cline has no hook lifecycle — tool calls covered via MCP path (Sprint 1.2)";

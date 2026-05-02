@@ -28,13 +28,14 @@ export interface BearerStore {
 export function generateBearer(now: number = Date.now(), ttlMs?: number): BearerToken {
   const buf = randomBytes(BEARER_BYTES);
   const token = `${BEARER_PREFIX}${buf.toString("base64url")}`;
-  const result: BearerToken = { token, createdAtMs: now };
+  const resultValue: BearerToken = { token, createdAtMs: now };
   if (ttlMs !== undefined && ttlMs > 0) {
-    result.expiresAtMs = now + ttlMs;
+    resultValue.expiresAtMs = now + ttlMs;
   }
-  return result;
+  return resultValue;
 }
 
+/** isExpired — auto-generated description placeholder. */
 export function isExpired(token: BearerToken, now: number = Date.now()): boolean {
   if (token.expiresAtMs === undefined) return false;
   return now >= token.expiresAtMs;

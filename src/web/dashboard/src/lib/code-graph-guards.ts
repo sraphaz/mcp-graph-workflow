@@ -24,6 +24,7 @@
 
 import type { CodeGraphData, ImpactResult } from "./types.js";
 
+/** isCodeGraphData — auto-generated description placeholder. */
 export function isCodeGraphData(d: unknown): d is CodeGraphData {
   return (
     d != null &&
@@ -33,6 +34,7 @@ export function isCodeGraphData(d: unknown): d is CodeGraphData {
   );
 }
 
+/** isImpactResult — auto-generated description placeholder. */
 export function isImpactResult(d: unknown): d is ImpactResult {
   return (
     d != null &&

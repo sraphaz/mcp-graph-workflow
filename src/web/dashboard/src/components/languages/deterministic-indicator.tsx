@@ -62,6 +62,7 @@ function getColorClasses(pct: number): { border: string; bg: string; text: strin
   return { border: "border-red-500/30", bg: "bg-red-500/5", text: "text-red-500", bar: "bg-red-500" };
 }
 
+/** DeterministicIndicator — auto-generated description placeholder. */
 export function DeterministicIndicator({
   analysis,
   deterministicPct,

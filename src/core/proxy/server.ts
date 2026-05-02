@@ -49,6 +49,7 @@ export interface ProxyServerHandle {
 
 const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MiB — generous for chat payloads
 
+/** startProxyServer — auto-generated description placeholder. */
 export async function startProxyServer(opts: ProxyServerOptions): Promise<ProxyServerHandle> {
   const host = opts.host ?? "127.0.0.1";
   const server = createServer((req, res) => {

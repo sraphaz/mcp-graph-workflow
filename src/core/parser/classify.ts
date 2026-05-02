@@ -134,34 +134,34 @@ export function isMetadataLine(text: string): boolean {
  * implementable counts.
  */
 export function isStructuralHeading(title: string): boolean {
-  const t = title.trim();
-  if (t.length === 0) return false;
+  const tVar = title.trim();
+  if (tVar.length === 0) return false;
 
   // Implementable signals — these always override structural.
-  if (/^E\d+\.T\d+/i.test(t)) return false;
-  if (/^\d+\.T\d+/i.test(t)) return false;
-  if (/^sprint\s+\d+\s*[—–-]\s*\w+/i.test(t)) return false;
+  if (/^E\d+\.T\d+/i.test(tVar)) return false;
+  if (/^\d+\.T\d+/i.test(tVar)) return false;
+  if (/^sprint\s+\d+\s*[—–-]\s*\w+/i.test(tVar)) return false;
   if (
     /^(implement|implementar|fix|add|adicionar|criar|create|refactor|refatorar|remove|remover|deletar|delete|atualizar|update)\b/i.test(
-      t,
+      tVar,
     )
   ) {
     return false;
   }
 
   // Tier groupings: "TIER <LETTER> — ..." (letter, not digit)
-  if (/^TIER\s+[A-Z](?:\s|—|–|-)/i.test(t) && !/^TIER\s+\d/i.test(t)) {
+  if (/^TIER\s+[A-Z](?:\s|—|–|-)/i.test(tVar) && !/^TIER\s+\d/i.test(tVar)) {
     // Sanity: letter + boundary char; "TIER 1" already filtered by the second regex.
     return true;
   }
 
   // Parenthetical count suffix: "(N itens|items|sprints|tasks|seções|sections)".
-  if (/\(\d+\s*(itens?|items?|sprints?|tasks?|seções|sections?)\)/i.test(t)) return true;
+  if (/\(\d+\s*(itens?|items?|sprints?|tasks?|seções|sections?)\)/i.test(tVar)) return true;
 
   // Nominal scaffolding keywords at start of heading.
   if (
     /^(Roadmap|Princípios?|Sequenciamento|Arquivos\s+críticos|Resumo\s+executivo|Métricas\s+de\s+sucesso|Riscos|Apêndice|Out\s+of\s+scope|Não-cobre|Contexto|Objetivo)/i.test(
-      t,
+      tVar,
     )
   ) {
     return true;

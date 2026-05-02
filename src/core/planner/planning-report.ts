@@ -117,18 +117,18 @@ export function generatePlanningReport(
     const withinCapacity: typeof recommendedOrder = [];
     const overflowItems: PlanningReport["overflow"] = [];
 
-    for (const item of recommendedOrder) {
-      const points = XP_SIZE_POINTS[item.xpSize] ?? 3;
+    for (const itemValue of recommendedOrder) {
+      const points = XP_SIZE_POINTS[itemValue.xpSize] ?? 3;
       if (cumulative + points <= capacityPoints) {
         cumulative += points;
-        withinCapacity.push(item);
+        withinCapacity.push(itemValue);
       } else {
         overflowItems.push({
-          id: item.id,
-          title: item.title,
-          type: item.type,
-          priority: item.priority,
-          xpSize: item.xpSize,
+          id: itemValue.id,
+          title: itemValue.title,
+          type: itemValue.type,
+          priority: itemValue.priority,
+          xpSize: itemValue.xpSize,
           points,
         });
       }
@@ -205,7 +205,7 @@ function buildRecommendedOrder(
   // Bug #087: increased cap from 20 to 100 to handle larger graphs
   const MAX_ITERATIONS = Math.min(remaining.size, 100);
   for (let i = 0; i < MAX_ITERATIONS && remaining.size > 0; i++) {
-    const result = findNextTask({
+    const resultValue = findNextTask({
       ...doc,
       nodes: doc.nodes.map((n) => {
         if (simulatedDone.has(n.id)) return { ...n, status: "done" as const };
@@ -213,19 +213,19 @@ function buildRecommendedOrder(
       }),
     });
 
-    if (!result || !remaining.has(result.node.id)) break;
+    if (!resultValue || !remaining.has(resultValue.node.id)) break;
 
     order.push({
-      id: result.node.id,
-      title: result.node.title,
-      type: result.node.type,
-      priority: result.node.priority,
-      xpSize: result.node.xpSize ?? "M",
-      reason: result.reason,
+      id: resultValue.node.id,
+      title: resultValue.node.title,
+      type: resultValue.node.type,
+      priority: resultValue.node.priority,
+      xpSize: resultValue.node.xpSize ?? "M",
+      reason: resultValue.reason,
     });
 
-    simulatedDone.add(result.node.id);
-    remaining.delete(result.node.id);
+    simulatedDone.add(resultValue.node.id);
+    remaining.delete(resultValue.node.id);
   }
 
   return order;

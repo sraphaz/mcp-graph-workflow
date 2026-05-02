@@ -32,6 +32,7 @@ export interface ParseOptions {
 
 // ── Main Entry Point ──────────────────────────────────────────────────
 
+/** parseDaVinciCode — auto-generated description placeholder. */
 export function parseDaVinciCode(
   code: string,
   options: ParseOptions = {},

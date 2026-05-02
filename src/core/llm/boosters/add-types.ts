@@ -40,6 +40,7 @@ function inferLiteralType(rhs: string): "number" | "string" | "boolean" | null {
 const PARAM_DEFAULT_RE =
   /\b([a-zA-Z_$][\w$]*)\s*=\s*(-?\d+(?:\.\d+)?|"[^"]*"|'[^']*'|`[^`]*`|true|false)(?=\s*[,)])/g;
 
+/** addTypes — auto-generated description placeholder. */
 export function addTypes(source: string): AddTypesResult {
   if (JSDOC_HINT_RE.test(source)) {
     return { output: source, added: 0, alreadyTyped: false, skippedJsdoc: true };
@@ -53,10 +54,10 @@ export function addTypes(source: string): AddTypesResult {
 
   let added = 0;
   const output = source.replace(PARAM_DEFAULT_RE, (match, name: string, value: string) => {
-    const t = inferLiteralType(value);
-    if (!t) return match;
+    const tVar = inferLiteralType(value);
+    if (!tVar) return match;
     added++;
-    return `${name}: ${t} = ${value}`;
+    return `${name}: ${tVar} = ${value}`;
   });
 
   return { output, added, alreadyTyped: false, skippedJsdoc: false };

@@ -36,6 +36,7 @@ export interface ScenarioCoverageReport {
   coveragePercent: number;
 }
 
+/** analyzeScenarioCoverage — auto-generated description placeholder. */
 export function analyzeScenarioCoverage(doc: GraphDocument): ScenarioCoverageReport {
   const scenarios = doc.nodes.filter((n) => n.type === "scenario");
 

@@ -33,6 +33,7 @@ export interface RegressionResult {
   readonly threshold: number;
 }
 
+/** checkFeatureDepthRegression — auto-generated description placeholder. */
 export function checkFeatureDepthRegression(
   input: RegressionInput,
 ): RegressionResult {

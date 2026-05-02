@@ -40,6 +40,7 @@ export interface AiderImportOptions {
   source?: string;
 }
 
+/** importAiderSettings — auto-generated description placeholder. */
 export function importAiderSettings(opts: AiderImportOptions = {}): ImportEnvelope {
   const source = opts.source ?? join(process.cwd(), ".aider.conf.yml");
   const file = readSettingsFile<AiderConfig>(source, "yaml");
@@ -120,15 +121,16 @@ export interface InstallAiderBridgeResult {
   dryRun: boolean;
 }
 
+/** installAiderBridge — auto-generated description placeholder. */
 export function installAiderBridge(opts: InstallAiderBridgeOptions): InstallAiderBridgeResult {
   const dryRun = !opts.apply;
   const hooksDir = join(opts.basePath, ".git", "hooks");
   const hookNames = opts.hooks ?? (Object.keys(HOOK_SNIPPETS) as Array<keyof typeof HOOK_SNIPPETS>);
-  const result: InstallAiderBridgeResult = { applied: !dryRun, changes: [], dryRun };
+  const resultValue: InstallAiderBridgeResult = { applied: !dryRun, changes: [], dryRun };
 
   if (!existsSync(join(opts.basePath, ".git"))) {
     logger.warn("hooks:aider:no-git", { basePath: opts.basePath });
-    return result;
+    return resultValue;
   }
   if (!dryRun) mkdirSync(hooksDir, { recursive: true });
 
@@ -138,13 +140,13 @@ export function installAiderBridge(opts: InstallAiderBridgeOptions): InstallAide
     const existing = existsSync(hookPath) ? readFileSync(hookPath, "utf-8") : "";
 
     if (existing.includes(MARKER_BEGIN)) {
-      result.changes.push({ hookPath, action: "skip-already-installed" });
+      resultValue.changes.push({ hookPath, action: "skip-already-installed" });
       continue;
     }
 
     if (dryRun) {
       const action: "create" | "append" = existing.length === 0 ? "create" : "append";
-      result.changes.push({ hookPath, action });
+      resultValue.changes.push({ hookPath, action });
       logger.info("hooks:aider:dry-run", { hookPath, action, snippet });
       continue;
     }
@@ -160,14 +162,14 @@ export function installAiderBridge(opts: InstallAiderBridgeOptions): InstallAide
       : appendWithChain(existing, snippet);
     writeFileSync(hookPath, next, "utf-8");
     chmodSync(hookPath, 0o755);
-    result.changes.push({
+    resultValue.changes.push({
       hookPath,
       action: existing.length === 0 ? "create" : "append",
       backupPath,
     });
   }
 
-  return result;
+  return resultValue;
 }
 
 function appendWithChain(existing: string, snippet: string): string {

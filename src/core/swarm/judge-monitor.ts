@@ -72,22 +72,22 @@ export class JudgeMonitor {
     const checkedAt = Date.now();
 
     if (!row) {
-      const result: HealthCheckResult = { sessionId, status: "not_found", checkedAt };
-      this.recordResult(result);
-      return result;
+      const resultValue: HealthCheckResult = { sessionId, status: "not_found", checkedAt };
+      this.recordResult(resultValue);
+      return resultValue;
     }
 
     if (row.status === "stopped" || row.status === "pending") {
-      const result: HealthCheckResult = { sessionId, status: "inactive", checkedAt };
-      this.recordResult(result);
-      return result;
+      const resultValue: HealthCheckResult = { sessionId, status: "inactive", checkedAt };
+      this.recordResult(resultValue);
+      return resultValue;
     }
 
     const lastUpdatedAt = new Date(row.updated_at).getTime();
     const stallDurationMs = checkedAt - lastUpdatedAt;
 
     if (stallDurationMs > this.stallThresholdMs) {
-      const result: HealthCheckResult = {
+      const resultValue: HealthCheckResult = {
         sessionId,
         status: "stalled",
         checkedAt,
@@ -96,13 +96,13 @@ export class JudgeMonitor {
         message: `Session has not updated in ${Math.round(stallDurationMs / 1000)}s`,
       };
       logger.warn("judge:stall_detected", { sessionId, stallDurationMs });
-      this.recordResult(result);
-      return result;
+      this.recordResult(resultValue);
+      return resultValue;
     }
 
-    const result: HealthCheckResult = { sessionId, status: "healthy", checkedAt, lastUpdatedAt };
-    this.recordResult(result);
-    return result;
+    const resultValue: HealthCheckResult = { sessionId, status: "healthy", checkedAt, lastUpdatedAt };
+    this.recordResult(resultValue);
+    return resultValue;
   }
 
   /** Returns the accumulated report for all checks performed so far. */

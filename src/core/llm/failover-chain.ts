@@ -12,6 +12,7 @@ export interface FailoverEntry {
   model: string;
 }
 
+/** parseFailoverChain — auto-generated description placeholder. */
 export function parseFailoverChain(raw: string | undefined): FailoverEntry[] {
   if (!raw) return [];
   const out: FailoverEntry[] = [];

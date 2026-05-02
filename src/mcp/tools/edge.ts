@@ -27,6 +27,7 @@ import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { sequenceSubtasks } from "../../core/graph/auto-sequence.js";
 
+/** registerEdge — auto-generated description placeholder. */
 export function registerEdge(server: McpServer, store: SqliteStore): void {
   server.tool(
     "edge",
@@ -79,7 +80,7 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
 
         // Bug #045: atomic check-and-insert to prevent duplicate edges under concurrency
         const db = store.getDb();
-        const result = db.transaction(() => {
+        const resultValue = db.transaction(() => {
           const existingEdges = store.getEdgesFrom(from);
           const duplicate = existingEdges.find(
             (e) => e.to === to && e.relationType === (relationType as RelationType),
@@ -101,12 +102,12 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
           return { existing: false as const, edge };
         })();
 
-        if (result.existing) {
-          logger.info("tool:edge:ok", { action: "existing", edgeId: result.edge.id, from, to, relationType });
-          return mcpText({ ok: true, edge: result.edge, existing: true });
+        if (resultValue.existing) {
+          logger.info("tool:edge:ok", { action: "existing", edgeId: resultValue.edge.id, from, to, relationType });
+          return mcpText({ ok: true, edge: resultValue.edge, existing: true });
         }
 
-        const edge = result.edge;
+        const edge = resultValue.edge;
 
         logger.info("tool:edge:ok", { action: "add", edgeId: edge.id, from, to, relationType });
         return mcpText({ ok: true, edge });
@@ -190,9 +191,9 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
           return mcpError(new NodeNotFoundError(parentId));
         }
 
-        const result = sequenceSubtasks(store, parentId);
-        logger.info("tool:edge:sequence:ok", { parentId, edgesCreated: result.edgesCreated });
-        return mcpText({ ok: true, ...result });
+        const resultValue = sequenceSubtasks(store, parentId);
+        logger.info("tool:edge:sequence:ok", { parentId, edgesCreated: resultValue.edgesCreated });
+        return mcpText({ ok: true, ...resultValue });
       }
 
       if (action === "delete") {

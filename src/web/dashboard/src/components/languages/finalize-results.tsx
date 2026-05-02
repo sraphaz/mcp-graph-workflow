@@ -40,6 +40,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   low: "bg-blue-500/10 text-blue-500",
 };
 
+/** FinalizeResults — auto-generated description placeholder. */
 export function FinalizeResults({ result }: FinalizeResultsProps): React.JSX.Element | null {
   if (!result) return null;
 

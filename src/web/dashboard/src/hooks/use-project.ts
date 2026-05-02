@@ -18,6 +18,7 @@
 import { useContext } from "react";
 import { ProjectContext, type ProjectContextValue } from "@/providers/project-provider";
 
+/** useProject — auto-generated description placeholder. */
 export function useProject(): ProjectContextValue {
   return useContext(ProjectContext);
 }

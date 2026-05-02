@@ -305,15 +305,15 @@ function splitByCodeBoundaries(text: string): string[] {
  * Build overlap sentences from the tail of the current sentence list.
  */
 function buildOverlap(sentences: string[], overlapTokens: number): string[] {
-  const result: string[] = [];
+  const resultValue: string[] = [];
   let tokens = 0;
 
   for (let i = sentences.length - 1; i >= 0; i--) {
     const sentTokens = estimateTokens(sentences[i]);
-    if (tokens + sentTokens > overlapTokens && result.length > 0) break;
-    result.unshift(sentences[i]);
+    if (tokens + sentTokens > overlapTokens && resultValue.length > 0) break;
+    resultValue.unshift(sentences[i]);
     tokens += sentTokens;
   }
 
-  return result;
+  return resultValue;
 }

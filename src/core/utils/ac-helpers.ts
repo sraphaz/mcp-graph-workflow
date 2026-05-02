@@ -36,11 +36,11 @@ function ensureAcIndex(doc: GraphDocument): void {
   _cachedDocRef = new WeakRef(doc);
   _nodeMap = new Map(doc.nodes.map((n) => [n.id, n]));
   _acByParent = new Map();
-  for (const n of doc.nodes) {
-    if (n.type === "acceptance_criteria" && n.parentId) {
-      const list = _acByParent.get(n.parentId) ?? [];
-      list.push(n.title);
-      _acByParent.set(n.parentId, list);
+  for (const nVar of doc.nodes) {
+    if (nVar.type === "acceptance_criteria" && nVar.parentId) {
+      const list = _acByParent.get(nVar.parentId) ?? [];
+      list.push(nVar.title);
+      _acByParent.set(nVar.parentId, list);
     }
   }
 }

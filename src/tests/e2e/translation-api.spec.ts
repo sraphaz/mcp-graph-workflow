@@ -1083,7 +1083,7 @@ class InventoryManager {
   getStockLevel(sku: string): number {
     const entries = this.stock.get(sku);
     if (!entries) return 0;
-    return entries.reduce((sum: number, e: any) => sum + e.quantity, 0);
+    return entries.reduce((sum: number, e: { quantity: number }) => sum + e.quantity, 0);
   }
 }`;
 

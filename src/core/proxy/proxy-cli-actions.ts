@@ -157,6 +157,7 @@ export function startActionStub(): SimpleActionResult {
   };
 }
 
+/** stopActionStub — auto-generated description placeholder. */
 export function stopActionStub(): SimpleActionResult {
   return {
     action: "stop",

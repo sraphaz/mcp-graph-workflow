@@ -24,6 +24,7 @@ interface ZipUploadZoneProps {
   disabled?: boolean;
 }
 
+/** ZipUploadZone — auto-generated description placeholder. */
 export function ZipUploadZone({ onUpload, loading, disabled }: ZipUploadZoneProps) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);

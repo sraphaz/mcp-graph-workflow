@@ -143,16 +143,16 @@ export function diffSifObjects(
   targetObjects: readonly SiebelObject[],
 ): SifDiffResult {
   const baseIndex = new Map<string, SiebelObject>();
-  for (const obj of baseObjects) {
-    if (!obj.parentName) {
-      baseIndex.set(objectKey(obj), obj);
+  for (const objValue of baseObjects) {
+    if (!objValue.parentName) {
+      baseIndex.set(objectKey(objValue), objValue);
     }
   }
 
   const targetIndex = new Map<string, SiebelObject>();
-  for (const obj of targetObjects) {
-    if (!obj.parentName) {
-      targetIndex.set(objectKey(obj), obj);
+  for (const objValue of targetObjects) {
+    if (!objValue.parentName) {
+      targetIndex.set(objectKey(objValue), objValue);
     }
   }
 
@@ -196,7 +196,7 @@ export function diffSifObjects(
     }
   }
 
-  const result: SifDiffResult = {
+  const resultValue: SifDiffResult = {
     added,
     removed,
     modified,
@@ -218,7 +218,7 @@ export function diffSifObjects(
     unchanged: String(unchanged),
   });
 
-  return result;
+  return resultValue;
 }
 
 // --- Markdown Formatter ---
@@ -236,8 +236,8 @@ export function formatDiffMarkdown(diff: SifDiffResult): string {
   // Added
   if (diff.added.length > 0) {
     lines.push("## Added Objects");
-    for (const obj of diff.added) {
-      lines.push(`- **${obj.type}**: \`${obj.name}\``);
+    for (const objValue of diff.added) {
+      lines.push(`- **${objValue.type}**: \`${objValue.name}\``);
     }
     lines.push("");
   }
@@ -245,8 +245,8 @@ export function formatDiffMarkdown(diff: SifDiffResult): string {
   // Removed
   if (diff.removed.length > 0) {
     lines.push("## Removed Objects");
-    for (const obj of diff.removed) {
-      lines.push(`- **${obj.type}**: \`${obj.name}\``);
+    for (const objValue of diff.removed) {
+      lines.push(`- **${objValue.type}**: \`${objValue.name}\``);
     }
     lines.push("");
   }
@@ -277,9 +277,9 @@ export function formatDiffMarkdown(diff: SifDiffResult): string {
       const cc = mod.childChanges;
       if (cc.added.length > 0 || cc.removed.length > 0 || cc.modified.length > 0) {
         lines.push("**Child Changes:**");
-        for (const c of cc.added) lines.push(`  - (+) ${c.type}: \`${c.name}\``);
-        for (const c of cc.removed) lines.push(`  - (-) ${c.type}: \`${c.name}\``);
-        for (const c of cc.modified) lines.push(`  - (~) ${c.type}: \`${c.name}\` (${c.propertyChanges.length} property changes)`);
+        for (const cVar of cc.added) lines.push(`  - (+) ${cVar.type}: \`${cVar.name}\``);
+        for (const cVar of cc.removed) lines.push(`  - (-) ${cVar.type}: \`${cVar.name}\``);
+        for (const cVar of cc.modified) lines.push(`  - (~) ${cVar.type}: \`${cVar.name}\` (${cVar.propertyChanges.length} property changes)`);
       }
 
       lines.push("");

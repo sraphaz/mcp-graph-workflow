@@ -40,10 +40,12 @@ export interface ConsensusEventPayload {
   };
 }
 
+/** isSwarmAutoPromoteDisabled — auto-generated description placeholder. */
 export function isSwarmAutoPromoteDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_SWARM_AUTO_PROMOTE === "off";
 }
 
+/** computeMajorityConsensus — auto-generated description placeholder. */
 export function computeMajorityConsensus(input: ConsensusInput): ConsensusResult {
   const ratio = input.majorityRatio ?? CONSENSUS_MAJORITY_RATIO;
   const entries = Object.entries(input.votes);

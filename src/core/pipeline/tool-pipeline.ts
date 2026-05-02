@@ -73,22 +73,22 @@ export class ToolPipeline {
           ? { ...step.args, _previousResult: previousResult }
           : step.args;
 
-        const result = await handler(args);
+        const resultValue = await handler(args);
 
         const durationMs = Math.round(performance.now() - stepStart);
 
         // Extract field for next step if specified
-        if (step.extractField && result && typeof result === "object") {
-          previousResult = (result as Record<string, unknown>)[step.extractField];
+        if (step.extractField && resultValue && typeof resultValue === "object") {
+          previousResult = (resultValue as Record<string, unknown>)[step.extractField];
         } else {
-          previousResult = result;
+          previousResult = resultValue;
         }
 
         stepResults.push({
           stepIndex: i,
           tool: step.tool,
           status: "success",
-          result,
+          result: resultValue,
           durationMs,
         });
 

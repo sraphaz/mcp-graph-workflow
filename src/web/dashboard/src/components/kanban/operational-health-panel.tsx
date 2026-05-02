@@ -70,6 +70,7 @@ export interface OperationalHealthPanelProps {
 const AT_RISK_WINDOW_MS = 5 * 60 * 1000;   // 5 minutes
 const THROUGHPUT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+/** computeHealthMetrics — auto-generated description placeholder. */
 export function computeHealthMetrics(tasks: HealthTask[]): HealthMetrics {
   if (tasks.length === 0) {
     return {
@@ -134,6 +135,7 @@ function MetricBadge({ label, value, warn }: { label: string; value: number; war
   );
 }
 
+/** OperationalHealthPanel — auto-generated description placeholder. */
 export function OperationalHealthPanel({ tasks = [] }: OperationalHealthPanelProps): React.ReactElement {
   const metrics = computeHealthMetrics(tasks);
 

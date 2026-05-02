@@ -61,6 +61,7 @@ export interface GraphUpdateResult {
   skipped?: string;
 }
 
+/** updateGraphFromReport — auto-generated description placeholder. */
 export function updateGraphFromReport(
   store: SqliteStore,
   nodeId: string,

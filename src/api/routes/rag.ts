@@ -33,6 +33,7 @@ const RagQuerySchema = z.object({
   limit: z.number().int().positive().optional(),
 });
 
+/** createRagRouter — auto-generated description placeholder. */
 export function createRagRouter(storeRef: StoreRef): Router {
   const router = Router();
 
@@ -64,9 +65,9 @@ export function createRagRouter(storeRef: StoreRef): Router {
 
       // Lazy index on first query — indexes nodes + knowledge docs
       if (!indexed) {
-        const result = await indexAllEmbeddings(storeRef.current, embeddingStore);
-        indexed = (result.nodes + result.knowledge) > 0;
-        logger.info("RAG index built on first query", { nodes: result.nodes, knowledge: result.knowledge });
+        const resultValue = await indexAllEmbeddings(storeRef.current, embeddingStore);
+        indexed = (resultValue.nodes + resultValue.knowledge) > 0;
+        logger.info("RAG index built on first query", { nodes: resultValue.nodes, knowledge: resultValue.knowledge });
       }
 
       const results = await semanticSearch(embeddingStore, query, limit ?? 10);
@@ -91,10 +92,10 @@ export function createRagRouter(storeRef: StoreRef): Router {
     try {
       const embeddingStore = getEmbeddingStore();
       embeddingStore.clear();
-      const result = await indexAllEmbeddings(storeRef.current, embeddingStore);
-      indexed = (result.nodes + result.knowledge) > 0;
+      const resultValue = await indexAllEmbeddings(storeRef.current, embeddingStore);
+      indexed = (resultValue.nodes + resultValue.knowledge) > 0;
 
-      res.json({ ok: true, indexed: result.nodes + result.knowledge, nodes: result.nodes, knowledge: result.knowledge });
+      res.json({ ok: true, indexed: resultValue.nodes + resultValue.knowledge, nodes: resultValue.nodes, knowledge: resultValue.knowledge });
     } catch (err) {
       next(err);
     }

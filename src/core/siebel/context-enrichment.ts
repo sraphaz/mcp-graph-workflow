@@ -51,11 +51,11 @@ function buildSummary(objects: readonly SiebelObject[]): string {
   const typeCounts = new Map<string, number>();
   const entityNames = new Set<string>();
 
-  for (const obj of objects) {
-    typeCounts.set(obj.type, (typeCounts.get(obj.type) ?? 0) + 1);
+  for (const objValue of objects) {
+    typeCounts.set(objValue.type, (typeCounts.get(objValue.type) ?? 0) + 1);
 
     // Extract entity name (strip prefix and type suffix)
-    const entity = obj.name
+    const entity = objValue.name
       .replace(/^[A-Z]{2,4}[_ ]\s*/i, "")
       .replace(/\s*(BC|Applet|View|Screen|BO|IO|List|Form)$/gi, "")
       .trim();
@@ -91,9 +91,9 @@ function findDependsOn(
   }
 
   // Also check BUS_COMP references in applets
-  for (const obj of objects) {
-    if (obj.type === "applet") {
-      const busComp = obj.properties.find((p) => p.name === "BUS_COMP")?.value;
+  for (const objValue of objects) {
+    if (objValue.type === "applet") {
+      const busComp = objValue.properties.find((p) => p.name === "BUS_COMP")?.value;
       if (busComp) {
         const key = `business_component:${busComp}`;
         if (!objectKeys.has(key) && !seen.has(key)) {
@@ -130,6 +130,7 @@ function findUsedBy(
 
 // --- Main function ---
 
+/** enrichSifContext — auto-generated description placeholder. */
 export function enrichSifContext(request: EnrichmentRequest): EnrichmentResult {
   const { objects, dependencies } = request;
 

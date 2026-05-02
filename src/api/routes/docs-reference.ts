@@ -161,6 +161,7 @@ function discoverDocs(basePath: string): DocEntry[] {
 
 // ── Router ──────────────────────────────────────────
 
+/** createDocsReferenceRouter — auto-generated description placeholder. */
 export function createDocsReferenceRouter(getBasePath: () => string): Router {
   const router = Router();
 

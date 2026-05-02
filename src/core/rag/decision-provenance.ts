@@ -50,6 +50,7 @@ export interface CreateProvenanceInput {
 
 const SOURCE_ID_PREFIX = "decision_provenance";
 
+/** createProvenance — auto-generated description placeholder. */
 export function createProvenance(
   store: KnowledgeStore,
   input: CreateProvenanceInput,
@@ -81,6 +82,7 @@ export function createProvenance(
   return doc.id;
 }
 
+/** queryProvenance — auto-generated description placeholder. */
 export function queryProvenance(
   store: KnowledgeStore,
   nodeId: string,
@@ -95,6 +97,7 @@ export function queryProvenance(
     .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 }
 
+/** getProvenanceChain — auto-generated description placeholder. */
 export function getProvenanceChain(
   store: KnowledgeStore,
   nodeId: string,

@@ -39,6 +39,7 @@ export function shouldEngageCostFallback(input: CostFallbackInput): CostFallback
   return { engage: false, ratio, reason: "below_threshold" };
 }
 
+/** isCostFallbackDisabled — auto-generated description placeholder. */
 export function isCostFallbackDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_COST_FALLBACK === "off";
 }

@@ -91,6 +91,7 @@ export interface BenchmarkData {
   formulas: Record<string, string>;
 }
 
+/** useBenchmark — auto-generated description placeholder. */
 export function useBenchmark() {
   const [data, setData] = useState<BenchmarkData | null>(null);
   const [loading, setLoading] = useState(true);

@@ -106,7 +106,7 @@ function safeJsonStringify(value: unknown, field: string, nodeId: string): strin
   if (value === null || value === undefined) return null;
   let hadNonFinite = false;
   try {
-    const result = JSON.stringify(value, (_key, v) => {
+    const resultValue = JSON.stringify(value, (_key, v) => {
       if (typeof v === "number" && !Number.isFinite(v)) {
         hadNonFinite = true;
         return null;
@@ -116,7 +116,7 @@ function safeJsonStringify(value: unknown, field: string, nodeId: string): strin
     if (hadNonFinite) {
       logger.warn("Non-finite number sanitized to null in node field", { nodeId, field });
     }
-    return result;
+    return resultValue;
   } catch (err) {
     logger.warn("Failed to serialize node field", { nodeId, field, error: String(err) });
     throw new ValidationError(
@@ -699,13 +699,13 @@ export class SqliteStore {
       params.push(agentId);
     }
 
-    const result = this.db
+    const resultValue = this.db
       .prepare(
         `UPDATE nodes SET ${setClauses.join(", ")} WHERE id = ? AND project_id = ?`,
       )
       .run(...params, id, pid);
 
-    if (result.changes === 0) return null;
+    if (resultValue.changes === 0) return null;
 
     // Record status change in changelog with agent identity
     if (oldStatus !== status) {
@@ -980,10 +980,10 @@ export class SqliteStore {
           )
           .run(pid, ...toDelete, ...toDelete);
 
-        const result = this.db
+        const resultValue = this.db
           .prepare(`DELETE FROM nodes WHERE project_id = ? AND id IN (${placeholders})`)
           .run(pid, ...toDelete);
-        if (result.changes > 0) {
+        if (resultValue.changes > 0) {
           deletedNodeIds.push(...toDelete);
         }
       }
@@ -1003,10 +1003,10 @@ export class SqliteStore {
 
   deleteEdge(id: string): boolean {
     const pid = this.ensureProject();
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM edges WHERE id = ? AND project_id = ?")
       .run(id, pid);
-    const deleted = result.changes > 0;
+    const deleted = resultValue.changes > 0;
     if (deleted) this._eventBus?.emitTyped("edge:deleted", { edgeId: id });
     return deleted;
   }
@@ -1109,12 +1109,12 @@ export class SqliteStore {
       let edgesDeleted = 0;
 
       for (const { id } of nodeIds) {
-        const result = this.db
+        const resultValue = this.db
           .prepare(
             "DELETE FROM edges WHERE project_id = ? AND (from_node = ? OR to_node = ?)",
           )
           .run(pid, id, id);
-        edgesDeleted += result.changes;
+        edgesDeleted += resultValue.changes;
       }
 
       const nodesResult = this.db
@@ -1202,7 +1202,7 @@ export class SqliteStore {
     this.db.transaction(() => {
       for (const node of nodes) {
         const row = nodeToRow(node, pid);
-        const result = this.db
+        const resultValue = this.db
           .prepare(
             `INSERT OR IGNORE INTO nodes
               (id, project_id, type, title, description, status, priority,
@@ -1216,7 +1216,7 @@ export class SqliteStore {
                @acceptance_criteria, @blocked, @metadata, @created_at, @updated_at)`,
           )
           .run(row);
-        nodesInserted += result.changes;
+        nodesInserted += resultValue.changes;
       }
       // Bug #E4-T02: validate node existence inside transaction before edge insert
       const nodeExistsStmt = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?");
@@ -1228,7 +1228,7 @@ export class SqliteStore {
           continue;
         }
         const row = edgeToRow(edge, pid);
-        const result = this.db
+        const resultValue = this.db
           .prepare(
             `INSERT OR IGNORE INTO edges
               (id, project_id, from_node, to_node, relation_type, weight, reason, metadata, created_at)
@@ -1236,7 +1236,7 @@ export class SqliteStore {
               (@id, @project_id, @from_node, @to_node, @relation_type, @weight, @reason, @metadata, @created_at)`,
           )
           .run(row);
-        edgesInserted += result.changes;
+        edgesInserted += resultValue.changes;
       }
     })();
 
@@ -1250,12 +1250,12 @@ export class SqliteStore {
   createSnapshot(): number {
     const pid = this.ensureProject();
     const doc = this.toGraphDocument();
-    const result = this.db
+    const resultValue = this.db
       .prepare(
         "INSERT INTO snapshots (project_id, data, created_at) VALUES (?, ?, ?)",
       )
       .run(pid, JSON.stringify(doc), now());
-    return result.lastInsertRowid as number;
+    return resultValue.lastInsertRowid as number;
   }
 
   // ── Import history ───────────────────────────────
@@ -1302,7 +1302,7 @@ export class SqliteStore {
         "SELECT type, COUNT(*) as c FROM nodes WHERE project_id = ? GROUP BY type",
       )
       .all(pid) as { type: string; c: number }[];
-    for (const r of typeRows) byType[r.type] = r.c;
+    for (const rVar of typeRows) byType[rVar.type] = rVar.c;
 
     const byStatus: Record<string, number> = {};
     const statusRows = this.db
@@ -1310,7 +1310,7 @@ export class SqliteStore {
         "SELECT status, COUNT(*) as c FROM nodes WHERE project_id = ? GROUP BY status",
       )
       .all(pid) as { status: string; c: number }[];
-    for (const r of statusRows) byStatus[r.status] = r.c;
+    for (const rVar of statusRows) byStatus[rVar.status] = rVar.c;
 
     return { totalNodes, totalEdges, byType, byStatus };
   }
@@ -1374,8 +1374,8 @@ export class SqliteStore {
 
     this.db.transaction(() => {
       for (const id of ids) {
-        const result = this.updateNodeStatus(id, status);
-        if (result) {
+        const resultValue = this.updateNodeStatus(id, status);
+        if (resultValue) {
           updated.push(id);
         } else {
           notFound.push(id);
@@ -1415,15 +1415,15 @@ export class SqliteStore {
     const validNodes: GraphNode[] = [];
     let nodesInvalid = 0;
     for (const node of doc.nodes) {
-      const result = GraphNodeSchema.safeParse(node);
-      if (result.success) {
-        validNodes.push(result.data as GraphNode);
+      const resultValue = GraphNodeSchema.safeParse(node);
+      if (resultValue.success) {
+        validNodes.push(resultValue.data as GraphNode);
       } else {
         nodesInvalid++;
         logger.warn("Invalid node in snapshot — skipped", {
           snapshotId,
           nodeId: (node as unknown as Record<string, unknown>).id ?? "unknown",
-          issues: result.error.issues.map((i) => i.message).join("; "),
+          issues: resultValue.error.issues.map((i) => i.message).join("; "),
         });
       }
     }
@@ -1434,7 +1434,7 @@ export class SqliteStore {
       this.db.prepare("DELETE FROM nodes WHERE project_id = ?").run(pid);
 
       for (const node of validNodes) {
-        const r = nodeToRow(node, pid);
+        const rVar = nodeToRow(node, pid);
         this.db
           .prepare(
             `INSERT INTO nodes
@@ -1448,10 +1448,10 @@ export class SqliteStore {
                @source_file, @source_start_line, @source_end_line, @source_confidence,
                @acceptance_criteria, @blocked, @metadata, @created_at, @updated_at)`,
           )
-          .run(r);
+          .run(rVar);
       }
       for (const edge of doc.edges) {
-        const r = edgeToRow(edge, pid);
+        const rVar = edgeToRow(edge, pid);
         this.db
           .prepare(
             `INSERT INTO edges
@@ -1459,7 +1459,7 @@ export class SqliteStore {
              VALUES
               (@id, @project_id, @from_node, @to_node, @relation_type, @weight, @reason, @metadata, @created_at)`,
           )
-          .run(r);
+          .run(rVar);
         edgesRestored++;
       }
     })();

@@ -52,6 +52,7 @@ export interface ErdResult {
 
 // --- Implementation ---
 
+/** generateSiebelErd — auto-generated description placeholder. */
 export function generateSiebelErd(
   objects: readonly SiebelObject[],
   projectFilter?: string,

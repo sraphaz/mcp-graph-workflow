@@ -162,8 +162,8 @@ function hasNewFeedbackNodes(
   doneTasks: GraphDocument["nodes"],
 ): boolean {
   const lastDoneTime = doneTasks.reduce((max, n) => {
-    const t = n.updatedAt ?? n.createdAt;
-    return t > max ? t : max;
+    const tVar = n.updatedAt ?? n.createdAt;
+    return tVar > max ? tVar : max;
   }, "");
 
   if (!lastDoneTime) return false;

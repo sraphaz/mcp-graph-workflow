@@ -191,12 +191,12 @@ export function compressKeys(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
   if (Array.isArray(obj)) return obj.map(compressKeys);
   if (typeof obj === "object") {
-    const result: Record<string, unknown> = {};
+    const resultValue: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       const newKey = KEY_MAP[key] ?? key;
-      result[newKey] = (typeof value === "object" && value !== null) ? compressKeys(value) : value;
+      resultValue[newKey] = (typeof value === "object" && value !== null) ? compressKeys(value) : value;
     }
-    return result;
+    return resultValue;
   }
   return obj;
 }
@@ -209,15 +209,15 @@ export function omitDefaults(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
   if (Array.isArray(obj)) return obj.map(omitDefaults);
   if (typeof obj === "object") {
-    const result: Record<string, unknown> = {};
+    const resultValue: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       if (key === "priority" && value === 3) continue;
       if (key === "status" && value === "backlog") continue;
       if (key === "inferred" && value === false) continue;
       if (key === "resolved" && value === false) continue;
-      result[key] = (typeof value === "object" && value !== null) ? omitDefaults(value) : value;
+      resultValue[key] = (typeof value === "object" && value !== null) ? omitDefaults(value) : value;
     }
-    return result;
+    return resultValue;
   }
   return obj;
 }
@@ -259,8 +259,8 @@ export function buildTaskContext(
   let childNodes: GraphNode[];
   if (snapshot) {
     childNodes = [];
-    for (const n of snapshot.nodes) {
-      if (n.parentId === nodeId) childNodes.push(n);
+    for (const nVar of snapshot.nodes) {
+      if (nVar.parentId === nodeId) childNodes.push(nVar);
     }
   } else {
     childNodes = store.getChildNodes(nodeId);

@@ -36,14 +36,17 @@ export interface DocCheckResult {
   ageDays: number;
 }
 
+/** isDocSyncDisabled — auto-generated description placeholder. */
 export function isDocSyncDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_DOC_SYNC === "off";
 }
 
+/** hashDocContent — auto-generated description placeholder. */
 export function hashDocContent(content: string): string {
   return createHash("sha1").update(content).digest("hex").slice(0, 16);
 }
 
+/** detectDocDrift — auto-generated description placeholder. */
 export function detectDocDrift(input: DocCheckInput): DocCheckResult {
   const now = input.nowMs ?? Date.now();
   const currentHash = hashDocContent(input.currentContent);

@@ -36,10 +36,11 @@ export function handleSpecSyncSync(
   specStore: SpecStore,
   params: { specId: string; content: string },
 ): { ok: boolean; changed: boolean; newVersion?: number; message: string } {
-  const result = syncSpecToGraph(specStore, params.specId, params.content);
-  return { ok: true, changed: result.changed, newVersion: result.newVersion, message: result.message };
+  const resultValue = syncSpecToGraph(specStore, params.specId, params.content);
+  return { ok: true, changed: resultValue.changed, newVersion: resultValue.newVersion, message: resultValue.message };
 }
 
+/** handleSpecSyncStatus — auto-generated description placeholder. */
 export function handleSpecSyncStatus(
   specStore: SpecStore,
   params: { specId: string },
@@ -58,6 +59,7 @@ export function handleSpecSyncStatus(
   };
 }
 
+/** handleSpecSyncHistory — auto-generated description placeholder. */
 export function handleSpecSyncHistory(
   specStore: SpecStore,
   params: { specId: string },
@@ -78,6 +80,7 @@ export function handleSpecSyncHistory(
   };
 }
 
+/** handleSpecSyncLink — auto-generated description placeholder. */
 export function handleSpecSyncLink(
   specStore: SpecStore,
   params: { specId: string; nodeId: string; sectionTitle: string; linkType: string },

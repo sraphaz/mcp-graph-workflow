@@ -14,6 +14,7 @@ export interface SecurityWatchdogOptions {
   allowedOrigins?: string[];
 }
 
+/** registerSecurityWatchdog — auto-generated description placeholder. */
 export function registerSecurityWatchdog(bus: BrowserEventBus, opts: SecurityWatchdogOptions = {}): void {
   const allowed = (opts.allowedOrigins ?? []).map((s) => s.toLowerCase());
 

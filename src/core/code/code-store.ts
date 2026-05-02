@@ -159,23 +159,23 @@ export class CodeStore {
     );
 
     const insertMany = this.db.transaction((syms: typeof symbols) => {
-      for (const s of syms) {
+      for (const sVar of syms) {
         stmt.run(
           generateId("csym"),
-          s.projectId,
-          s.name,
-          s.kind,
-          s.file,
-          s.startLine,
-          s.endLine,
-          s.exported ? 1 : 0,
-          s.modulePath ?? null,
-          s.signature ?? null,
-          s.metadata ? JSON.stringify(s.metadata) : null,
-          s.language ?? null,
-          s.docstring ?? null,
-          s.sourceSnippet ?? null,
-          s.visibility ?? "public",
+          sVar.projectId,
+          sVar.name,
+          sVar.kind,
+          sVar.file,
+          sVar.startLine,
+          sVar.endLine,
+          sVar.exported ? 1 : 0,
+          sVar.modulePath ?? null,
+          sVar.signature ?? null,
+          sVar.metadata ? JSON.stringify(sVar.metadata) : null,
+          sVar.language ?? null,
+          sVar.docstring ?? null,
+          sVar.sourceSnippet ?? null,
+          sVar.visibility ?? "public",
           indexedAt,
         );
       }
@@ -258,11 +258,11 @@ export class CodeStore {
       .prepare(`DELETE FROM code_relations WHERE from_symbol IN (${placeholders}) OR to_symbol IN (${placeholders})`)
       .run(...ids, ...ids);
 
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM code_symbols WHERE file = ? AND project_id = ?")
       .run(file, projectId);
 
-    return result.changes;
+    return resultValue.changes;
   }
 
   deleteAllSymbols(projectId: string): void {
@@ -304,16 +304,16 @@ export class CodeStore {
     );
 
     const insertMany = this.db.transaction((rels: typeof relations) => {
-      for (const r of rels) {
+      for (const rVar of rels) {
         stmt.run(
           generateId("crel"),
-          r.projectId,
-          r.fromSymbol,
-          r.toSymbol,
-          r.type,
-          r.file ?? null,
-          r.line ?? null,
-          r.metadata ? JSON.stringify(r.metadata) : null,
+          rVar.projectId,
+          rVar.fromSymbol,
+          rVar.toSymbol,
+          rVar.type,
+          rVar.file ?? null,
+          rVar.line ?? null,
+          rVar.metadata ? JSON.stringify(rVar.metadata) : null,
           indexedAt,
         );
       }

@@ -52,15 +52,15 @@ export class TfIdfEmbeddingCache {
 
   get(query: string): number[] | undefined {
     const key = normalizeKey(query);
-    const result = this.cache.get(key);
+    const resultValue = this.cache.get(key);
 
-    if (result === undefined) {
+    if (resultValue === undefined) {
       this.misses++;
       return undefined;
     }
 
     this.hits++;
-    return result;
+    return resultValue;
   }
 
   set(query: string, vector: number[]): void {

@@ -184,8 +184,8 @@ export function searchNodes(
 
   // Stage 2: TF-IDF reranking — build lookup map only when needed
   const resultMap = new Map<string, GraphNode>();
-  for (const r of ftsResults) {
-    const { score: _score, ...node } = r;
+  for (const rVar of ftsResults) {
+    const { score: _score, ...node } = rVar;
     resultMap.set(node.id, node as GraphNode);
   }
 

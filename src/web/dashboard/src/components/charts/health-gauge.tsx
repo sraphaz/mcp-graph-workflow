@@ -28,6 +28,7 @@ function getColor(score: number): string {
   return "#22c55e";
 }
 
+/** HealthGauge — auto-generated description placeholder. */
 export function HealthGauge({ score, className }: HealthGaugeProps): React.JSX.Element {
   const color = getColor(score);
   const data = [{ value: score, fill: color }];

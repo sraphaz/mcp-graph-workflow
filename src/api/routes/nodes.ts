@@ -45,6 +45,7 @@ const UpdateNodeBodySchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
+/** createNodesRouter — auto-generated description placeholder. */
 export function createNodesRouter(storeRef: StoreRef): Router {
   const router = Router();
 

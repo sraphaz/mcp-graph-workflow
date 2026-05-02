@@ -158,10 +158,10 @@ export function buildSifXml(objects: SifTemplateObject[]): string {
 
   // Group objects by project
   const byProject = new Map<string, SifTemplateObject[]>();
-  for (const obj of objects) {
-    const projName = obj.projectName || "Generated Project";
+  for (const objValue of objects) {
+    const projName = objValue.projectName || "Generated Project";
     const existing = byProject.get(projName) ?? [];
-    existing.push(obj);
+    existing.push(objValue);
     byProject.set(projName, existing);
   }
 
@@ -175,27 +175,27 @@ export function buildSifXml(objects: SifTemplateObject[]): string {
     };
 
     // Group objects by XML tag
-    for (const obj of projObjects) {
-      const tag = TYPE_TO_TAG[obj.type];
+    for (const objValue of projObjects) {
+      const tag = TYPE_TO_TAG[objValue.type];
       if (!tag) {
-        logger.debug("Skipping object with unknown type", { type: obj.type, name: obj.name });
+        logger.debug("Skipping object with unknown type", { type: objValue.type, name: objValue.name });
         continue;
       }
 
       const element: Record<string, unknown> = {
-        "@_NAME": escapeXmlValue(obj.name),
+        "@_NAME": escapeXmlValue(objValue.name),
       };
 
       // Add attributes
-      if (obj.attributes) {
-        for (const [key, value] of Object.entries(obj.attributes)) {
+      if (objValue.attributes) {
+        for (const [key, value] of Object.entries(objValue.attributes)) {
           element[`@_${key}`] = escapeXmlValue(value);
         }
       }
 
       // Add children
-      if (obj.children && obj.children.length > 0) {
-        for (const child of obj.children) {
+      if (objValue.children && objValue.children.length > 0) {
+        for (const child of objValue.children) {
           const childElement: Record<string, unknown> = {};
           for (const [key, value] of Object.entries(child.attributes)) {
             childElement[`@_${key}`] = escapeXmlValue(value);

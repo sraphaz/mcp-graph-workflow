@@ -11,6 +11,7 @@
 
 import { useLifecycleSnapshots, useLifecycleTrend } from "@/hooks/use-lifecycle-health";
 
+/** LifecycleHealthTab — auto-generated description placeholder. */
 export function LifecycleHealthTab(): React.JSX.Element {
   const { data: trend, loading: trendLoading } = useLifecycleTrend(10);
   const { data: snapshots, loading: snapsLoading } = useLifecycleSnapshots(undefined, 20);

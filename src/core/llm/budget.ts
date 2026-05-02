@@ -208,10 +208,10 @@ export class BudgetLedger {
     const byProvider: Record<string, number> = {};
     let totalUsd = 0;
     let callCount = 0;
-    for (const r of rows) {
-      byProvider[r.provider] = r.total;
-      totalUsd += r.total;
-      callCount += r.calls;
+    for (const rVar of rows) {
+      byProvider[rVar.provider] = rVar.total;
+      totalUsd += rVar.total;
+      callCount += rVar.calls;
     }
     return { totalUsd, callCount, byProvider };
   }

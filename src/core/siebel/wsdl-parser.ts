@@ -229,8 +229,8 @@ function extractMessages(definitions: Record<string, unknown>): WsdlMessage[] {
     const partElements = getArray(msgObj, "part") ?? getArray(msgObj, "wsdl:part");
     const parts: WsdlMessagePart[] = [];
 
-    for (const p of partElements) {
-      const pObj = p as Record<string, unknown>;
+    for (const pVar of partElements) {
+      const pObj = pVar as Record<string, unknown>;
       const partName = getAttr(pObj, "name") ?? "parameters";
       const partType = getAttr(pObj, "type") ?? getAttr(pObj, "element") ?? "";
       parts.push({ name: partName, type: partType });
@@ -271,8 +271,8 @@ function extractOperations(definitions: Record<string, unknown>): WsdlOperation[
 
   // Enrich with soapAction from binding
   const bindings = getArray(definitions, "binding") ?? getArray(definitions, "wsdl:binding");
-  for (const b of bindings) {
-    const bObj = b as Record<string, unknown>;
+  for (const bVar of bindings) {
+    const bObj = bVar as Record<string, unknown>;
     const bindOps = getArray(bObj, "operation") ?? getArray(bObj, "wsdl:operation");
     for (const bo of bindOps) {
       const boObj = bo as Record<string, unknown>;
@@ -303,8 +303,8 @@ function extractServices(definitions: Record<string, unknown>): WsdlService[] {
     const portElements = getArray(svcObj, "port") ?? getArray(svcObj, "wsdl:port");
     const ports: WsdlPort[] = [];
 
-    for (const p of portElements) {
-      const pObj = p as Record<string, unknown>;
+    for (const pVar of portElements) {
+      const pObj = pVar as Record<string, unknown>;
       const portName = getAttr(pObj, "name") ?? "";
       const binding = stripNamespace(getAttr(pObj, "binding") ?? "");
       const soapAddr = findKey(pObj, ["soap:address", "soap12:address"]) as Record<string, unknown> | undefined;
@@ -322,14 +322,14 @@ function extractServices(definitions: Record<string, unknown>): WsdlService[] {
 // ---- Utility helpers ----
 
 function getAttr(obj: Record<string, unknown>, name: string): string | undefined {
-  const val = obj[`@_${name}`];
-  return val != null ? String(val) : undefined;
+  const valValue = obj[`@_${name}`];
+  return valValue != null ? String(valValue) : undefined;
 }
 
 function getArray(obj: Record<string, unknown>, key: string): unknown[] {
-  const val = obj[key];
-  if (Array.isArray(val)) return val;
-  if (val != null) return [val];
+  const valValue = obj[key];
+  if (Array.isArray(valValue)) return valValue;
+  if (valValue != null) return [valValue];
   return [];
 }
 

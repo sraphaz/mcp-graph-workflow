@@ -69,8 +69,8 @@ export function buildMappingPrompt(ctx: PromptContext): string {
       sections.push(
         `- **${amb.canonicalName ?? amb.constructId}** (${amb.ambiguityType}): ${amb.candidates.length} candidates`,
       );
-      for (const c of amb.candidates) {
-        sections.push(`  - ${c.tradeoff} (confidence: ${c.confidence})`);
+      for (const cVar of amb.candidates) {
+        sections.push(`  - ${cVar.tradeoff} (confidence: ${cVar.confidence})`);
       }
       if (amb.recommendation) {
         sections.push(`  → Recommendation: ${amb.recommendation}`);
@@ -170,8 +170,8 @@ export function buildTranslationPrompt(ctx: PromptContext): string {
   );
 
   // Check token budget — if over, truncate source code block
-  let result = sections.join("\n");
-  if (estimateTokens(result) > maxTokens) {
+  let resultValue = sections.join("\n");
+  if (estimateTokens(resultValue) > maxTokens) {
     // Binary search for max lines that fit within budget
     let lo = 1;
     let hi = sourceLines.length;
@@ -191,14 +191,14 @@ export function buildTranslationPrompt(ctx: PromptContext): string {
       + `\n... [truncated — showing first ${lo} lines of ${sourceLines.length} total]`;
     sections[4] = sourceBlock;
     truncated = true;
-    result = sections.join("\n");
+    resultValue = sections.join("\n");
   }
 
   if (truncated) {
-    result += `\n<!-- truncated: true -->`;
+    resultValue += `\n<!-- truncated: true -->`;
   }
 
-  return result;
+  return resultValue;
 }
 
 /**
@@ -263,8 +263,8 @@ export function buildSemanticRepairPrompt(
 function formatScoresTable(scores: TranslationScore[]): string {
   if (scores.length === 0) return "_No constructs detected._";
   const lines = ["| Construct | Confidence | AI Assist |", "|-----------|------------|-----------|"];
-  for (const s of scores) {
-    lines.push(`| ${s.constructId} | ${s.finalConfidence.toFixed(2)} | ${s.needsAiAssist ? "Yes" : "No"} |`);
+  for (const sVar of scores) {
+    lines.push(`| ${sVar.constructId} | ${sVar.finalConfidence.toFixed(2)} | ${sVar.needsAiAssist ? "Yes" : "No"} |`);
   }
   return lines.join("\n");
 }

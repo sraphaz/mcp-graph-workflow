@@ -30,6 +30,7 @@ interface ObjectsSectionProps {
 const ROW_HEIGHT = 36;
 const VISIBLE_ROWS = 15;
 
+/** ObjectsSection — auto-generated description placeholder. */
 export function ObjectsSection({ objects }: ObjectsSectionProps): React.JSX.Element {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set());

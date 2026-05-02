@@ -127,8 +127,8 @@ export function extractCsharpAttributes(node: CsSyntaxNodeLike): string[] {
     const innerNames: string[] = [];
     for (const attr of child.namedChildren ?? []) {
       if (attr.type === ATTRIBUTE_TYPE) {
-        const t = (attr.text ?? "").trim();
-        if (t) innerNames.push(t);
+        const tVar = (attr.text ?? "").trim();
+        if (tVar) innerNames.push(tVar);
       }
     }
     if (innerNames.length > 0) {

@@ -49,6 +49,7 @@ const DefinitionSchema = z.object({
   edgeDefinitions: z.array(EdgeDefinitionSchema).optional(),
 });
 
+/** registerTemplate — auto-generated description placeholder. */
 export function registerTemplate(server: McpServer, store: SqliteStore): void {
   server.tool(
     "template",
@@ -149,22 +150,22 @@ export function registerTemplate(server: McpServer, store: SqliteStore): void {
             if (!parentNode) return mcpError(`Parent node not found: ${parentId}`);
           }
 
-          const result = store.getDb().transaction(() => {
+          const resultValue = store.getDb().transaction(() => {
             return instantiateTemplate(store, templateDef, variables ?? {}, parentId);
           })();
 
           logger.info("tool:template:applied", {
             templateId,
-            nodes: result.nodesCreated.length,
-            edges: result.edgesCreated.length,
-            errors: result.errors.length,
+            nodes: resultValue.nodesCreated.length,
+            edges: resultValue.edgesCreated.length,
+            errors: resultValue.errors.length,
           });
 
           return mcpText({
             ok: true,
             templateId,
             templateName: templateDef.name,
-            ...result,
+            ...resultValue,
           });
         }
 

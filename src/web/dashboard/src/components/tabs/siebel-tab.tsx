@@ -79,6 +79,7 @@ const SUB_TABS: Array<{ id: SiebelSubTab; label: string }> = [
   { id: "environments", label: "Environments" },
 ];
 
+/** SiebelTab — auto-generated description placeholder. */
 export function SiebelTab(): React.JSX.Element {
   const [subTab, setSubTab] = useState<SiebelSubTab>("repository");
   const [objects, setObjects] = useState<SiebelObject[]>([]);

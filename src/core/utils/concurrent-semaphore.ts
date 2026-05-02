@@ -22,8 +22,8 @@ interface ConcurrencyLimitResult {
 
 /** MAX_CONCURRENT_HEAVY — configurable via env, default 2. */
 export const MAX_CONCURRENT_HEAVY: number = (() => {
-  const v = parseInt(process.env["MAX_CONCURRENT_HEAVY"] ?? "", 10);
-  return Number.isFinite(v) && v > 0 ? v : 2;
+  const vVar = parseInt(process.env["MAX_CONCURRENT_HEAVY"] ?? "", 10);
+  return Number.isFinite(vVar) && vVar > 0 ? vVar : 2;
 })();
 
 /** QUEUE_TIMEOUT_MS — max wait time in the concurrency queue before rejection. */

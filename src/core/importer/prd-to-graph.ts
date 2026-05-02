@@ -77,12 +77,12 @@ function extractPriority(description: string | undefined): 1 | 2 | 3 | 4 | 5 | u
   if (!description) return undefined;
   const match = description.match(PRIORITY_PATTERN);
   if (!match) return undefined;
-  const val = match[1].toLowerCase();
-  if (val === "high" || val === "alta" || val === "critical" || val === "crítica" || val === "critica" || val === "1") return 1;
-  if (val === "2") return 2;
-  if (val === "medium" || val === "média" || val === "media" || val === "3") return 3;
-  if (val === "4") return 4;
-  if (val === "low" || val === "baixa" || val === "5") return 5;
+  const valValue = match[1].toLowerCase();
+  if (valValue === "high" || valValue === "alta" || valValue === "critical" || valValue === "crítica" || valValue === "critica" || valValue === "1") return 1;
+  if (valValue === "2") return 2;
+  if (valValue === "medium" || valValue === "média" || valValue === "media" || valValue === "3") return 3;
+  if (valValue === "4") return 4;
+  if (valValue === "low" || valValue === "baixa" || valValue === "5") return 5;
   return undefined;
 }
 
@@ -236,8 +236,8 @@ function findNodeByRef(nodes: GraphNode[], ref: string, excludeId: string): Grap
     const taskNum = taskNumMatch[1];
     const byNum = nodes.find((n) => {
       if (n.id === excludeId) return false;
-      const m = n.title.match(/^task\s+([\d.]+)/i);
-      return m ? m[1] === taskNum : false;
+      const mVar = n.title.match(/^task\s+([\d.]+)/i);
+      return mVar ? mVar[1] === taskNum : false;
     });
     if (byNum) return byNum;
   }
@@ -286,26 +286,26 @@ export function convertToGraph(
 
     // Pass 2: Create child nodes from block items
     const childTaskNodes: GraphNode[] = [];
-    for (const item of block.items) {
-      const itemType = mapBlockTypeToNodeType(item.type);
+    for (const itemValue of block.items) {
+      const itemType = mapBlockTypeToNodeType(itemValue.type);
       if (!itemType) continue;
 
       const timestamp = now();
       const childNode: GraphNode = {
         id: generateId("node"),
         type: itemType,
-        title: item.text,
+        title: itemValue.text,
         status: "backlog",
         priority: defaultPriorityForType(itemType),
         parentId: node.id,
         sourceRef: {
           file: sourceFile,
-          startLine: item.line,
-          endLine: item.line,
-          confidence: item.confidence,
+          startLine: itemValue.line,
+          endLine: itemValue.line,
+          confidence: itemValue.confidence,
         },
         metadata: {
-          inferred: item.confidence < 0.7,
+          inferred: itemValue.confidence < 0.7,
           origin: "imported",
         },
         createdAt: timestamp,

@@ -57,8 +57,8 @@ export function simulateChange(
   proposal: ChangeProposal,
 ): SimulationResult {
   const objectIndex = new Map<string, SiebelObject>();
-  for (const obj of objects) {
-    objectIndex.set(`${obj.type}:${obj.name}`, obj);
+  for (const objValue of objects) {
+    objectIndex.set(`${objValue.type}:${objValue.name}`, objValue);
   }
 
   const target = objectIndex.get(`${proposal.targetObject.type}:${proposal.targetObject.name}`);
@@ -143,7 +143,7 @@ function findDependents(
   target: SiebelObjectRef,
   dependencies: SiebelDependency[],
 ): DepRef[] {
-  const result: DepRef[] = [];
+  const resultValue: DepRef[] = [];
   const visited = new Set<string>();
   const queue: DepRef[] = [];
 
@@ -158,7 +158,7 @@ function findDependents(
       if (!visited.has(fromKey)) {
         visited.add(fromKey);
         const ref: DepRef = { ref: dep.from, depth: 1 };
-        result.push(ref);
+        resultValue.push(ref);
         queue.push(ref);
       }
     }
@@ -176,21 +176,21 @@ function findDependents(
         if (!visited.has(fromKey)) {
           visited.add(fromKey);
           const ref: DepRef = { ref: dep.from, depth: current.depth + 1 };
-          result.push(ref);
+          resultValue.push(ref);
           queue.push(ref);
         }
       }
     }
   }
 
-  return result;
+  return resultValue;
 }
 
 function computeRiskScore(affected: AffectedObject[]): number {
   let score = 0;
-  for (const a of affected) {
-    if (a.severity === "breaking") score += 30;
-    else if (a.severity === "warning") score += 10;
+  for (const aVar of affected) {
+    if (aVar.severity === "breaking") score += 30;
+    else if (aVar.severity === "warning") score += 10;
     else score += 2;
   }
   return score;

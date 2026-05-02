@@ -95,6 +95,7 @@ function errorOf(
   };
 }
 
+/** executeBrowserPilot — auto-generated description placeholder. */
 export async function executeBrowserPilot(
   input: BrowserPilotInput,
   deps: BrowserPilotRunDeps,

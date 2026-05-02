@@ -30,9 +30,9 @@ export function ebbinghausWeight(ageMs: number, opts: DecayOptions = {}): number
   const tau = opts.tauMs ?? DEFAULT_TAU_MS;
   if (tau <= 0) return ageMs <= 0 ? 1 : 0;
   if (ageMs < 0) return 1;
-  const w = Math.exp(-ageMs / tau);
-  if (opts.floor !== undefined && w < opts.floor) return 0;
-  return w;
+  const wVar = Math.exp(-ageMs / tau);
+  if (opts.floor !== undefined && wVar < opts.floor) return 0;
+  return wVar;
 }
 
 /** Weight at a specific timestamp relative to `now`. */
@@ -54,9 +54,9 @@ export function tauFromConstitution(
   constitution: Record<string, unknown> | undefined,
 ): number {
   if (!constitution) return DEFAULT_TAU_MS;
-  const v = constitution["learning.decay_tau_days"];
-  if (typeof v === "number" && Number.isFinite(v) && v > 0) {
-    return v * DAY_MS;
+  const vVar = constitution["learning.decay_tau_days"];
+  if (typeof vVar === "number" && Number.isFinite(vVar) && vVar > 0) {
+    return vVar * DAY_MS;
   }
   return DEFAULT_TAU_MS;
 }

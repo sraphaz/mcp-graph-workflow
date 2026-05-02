@@ -26,6 +26,7 @@ import { logger } from "../../core/utils/logger.js";
 import { checkCircularity } from "../../core/utils/circularity.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
+/** registerMoveNode — auto-generated description placeholder. */
 export function registerMoveNode(server: McpServer, store: SqliteStore): void {
   server.tool(
     "move_node",

@@ -69,11 +69,11 @@ const GRADE_ORDER: Record<GradeLetter, number> = { A: 4, B: 3, C: 2, D: 1 };
 
 function descendantsOf(doc: GraphDocument, rootId: string): GraphNode[] {
   const byParent = new Map<string, GraphNode[]>();
-  for (const n of doc.nodes) {
-    if (n.parentId) {
-      const arr = byParent.get(n.parentId) ?? [];
-      arr.push(n);
-      byParent.set(n.parentId, arr);
+  for (const nVar of doc.nodes) {
+    if (nVar.parentId) {
+      const arr = byParent.get(nVar.parentId) ?? [];
+      arr.push(nVar);
+      byParent.set(nVar.parentId, arr);
     }
   }
   const out: GraphNode[] = [];
@@ -82,9 +82,9 @@ function descendantsOf(doc: GraphDocument, rootId: string): GraphNode[] {
     const id = stack.pop();
     if (id === undefined) break;
     const children = byParent.get(id) ?? [];
-    for (const c of children) {
-      out.push(c);
-      stack.push(c.id);
+    for (const cVar of children) {
+      out.push(cVar);
+      stack.push(cVar.id);
     }
   }
   return out;
@@ -115,8 +115,8 @@ function tddPassRate(descendants: GraphNode[]): number {
 function epicDodGrade(doc: GraphDocument, epicId: string): GradeLetter {
   const report = checkDefinitionOfDone(doc, epicId);
   // checkDefinitionOfDone returns "A"|"B"|"C"|"D"|"F"; map F→D conservatively.
-  const g = report.grade;
-  if (g === "A" || g === "B" || g === "C" || g === "D") return g;
+  const gVar = report.grade;
+  if (gVar === "A" || gVar === "B" || gVar === "C" || gVar === "D") return gVar;
   return "D";
 }
 
@@ -124,6 +124,7 @@ function gradeAtLeast(actual: GradeLetter, threshold: GradeLetter): boolean {
   return GRADE_ORDER[actual] >= GRADE_ORDER[threshold];
 }
 
+/** computePrdLifecycleHealth — auto-generated description placeholder. */
 export function computePrdLifecycleHealth(
   doc: GraphDocument,
   epicId: string,

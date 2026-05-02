@@ -21,6 +21,7 @@ export interface ProposeAsGoldenInput {
   metadata?: Record<string, unknown>;
 }
 
+/** proposeAsGolden — auto-generated description placeholder. */
 export function proposeAsGolden(
   store: GoldenStore,
   input: ProposeAsGoldenInput,

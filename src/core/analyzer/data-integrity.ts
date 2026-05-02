@@ -58,6 +58,7 @@ function getRowsPreview(value: unknown): RowPreview[] {
 
 const PROBABILITY_EPSILON = 0.05;
 
+/** analyzeDataIntegrity — auto-generated description placeholder. */
 export function analyzeDataIntegrity(doc: GraphDocument): DataIntegrityReport {
   const tableNodes = doc.nodes.filter((n) => n.type === "data_table");
 
@@ -110,9 +111,9 @@ export function analyzeDataIntegrity(doc: GraphDocument): DataIntegrityReport {
           .map((r) => r[costCol])
           .filter((v): v is number => typeof v === "number");
 
-        for (const val of values) {
-          if (val <= 0) {
-            issues.push(`Cost column '${costCol}' has non-positive value: ${val}`);
+        for (const valValue of values) {
+          if (valValue <= 0) {
+            issues.push(`Cost column '${costCol}' has non-positive value: ${valValue}`);
             break; // Report once per column
           }
         }

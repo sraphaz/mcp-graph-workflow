@@ -70,10 +70,10 @@ function extractObjectNames(text: string, objects: readonly SiebelObject[]): Sie
   const found: SiebelObjectRef[] = [];
   const seen = new Set<string>();
 
-  for (const obj of objects) {
-    if (text.includes(obj.name) && !seen.has(obj.name)) {
-      seen.add(obj.name);
-      found.push({ name: obj.name, type: obj.type });
+  for (const objValue of objects) {
+    if (text.includes(objValue.name) && !seen.has(objValue.name)) {
+      seen.add(objValue.name);
+      found.push({ name: objValue.name, type: objValue.type });
     }
   }
 
@@ -86,11 +86,11 @@ function findRelatedScripts(
 ): RelatedScript[] {
   const scripts: RelatedScript[] = [];
 
-  for (const obj of objects) {
+  for (const objValue of objects) {
     // Check if object itself is related or if its name appears in error
-    const isRelated = relatedNames.has(obj.name);
+    const isRelated = relatedNames.has(objValue.name);
 
-    for (const child of obj.children) {
+    for (const child of objValue.children) {
       if (child.type !== "escript") continue;
       const code = child.properties.find((p) => p.name === "SOURCE_CODE")?.value ?? "";
       if (!code.trim()) continue;
@@ -99,7 +99,7 @@ function findRelatedScripts(
       const referencesRelated = [...relatedNames].some((name) => code.includes(name));
       if (isRelated || referencesRelated) {
         scripts.push({
-          parentObject: obj.name,
+          parentObject: objValue.name,
           methodName: child.name,
           snippet: code.substring(0, 200),
         });
@@ -159,16 +159,16 @@ function checkConfigIssues(
 ): ConfigIssue[] {
   const issues: ConfigIssue[] = [];
 
-  for (const obj of objects) {
-    if (!relatedNames.has(obj.name)) continue;
+  for (const objValue of objects) {
+    if (!relatedNames.has(objValue.name)) continue;
 
     // Check for empty User Properties
-    const userProps = obj.children.filter((c) => c.type === "user_property");
+    const userProps = objValue.children.filter((c) => c.type === "user_property");
     for (const up of userProps) {
       const value = up.properties.find((p) => p.name === "VALUE")?.value;
       if (value !== undefined && value.trim() === "") {
         issues.push({
-          objectName: obj.name,
+          objectName: objValue.name,
           issueType: "empty_user_property",
           detail: `User Property "${up.name}" has empty value`,
         });
@@ -176,11 +176,11 @@ function checkConfigIssues(
     }
 
     // Check for missing BUS_COMP in applets
-    if (obj.type === "applet") {
-      const busComp = obj.properties.find((p) => p.name === "BUS_COMP")?.value;
+    if (objValue.type === "applet") {
+      const busComp = objValue.properties.find((p) => p.name === "BUS_COMP")?.value;
       if (!busComp) {
         issues.push({
-          objectName: obj.name,
+          objectName: objValue.name,
           issueType: "missing_bus_comp",
           detail: "Applet has no BUS_COMP property",
         });
@@ -320,6 +320,7 @@ function analyzeCauses(
 
 // --- Main function ---
 
+/** troubleshootSiebel — auto-generated description placeholder. */
 export function troubleshootSiebel(request: TroubleshootRequest): TroubleshootResult {
   const { errorMessage, objects, dependencies } = request;
 
@@ -331,10 +332,10 @@ export function troubleshootSiebel(request: TroubleshootRequest): TroubleshootRe
 
   // If no objects found by name, try to relate by type keywords
   if (relatedNames.size === 0) {
-    for (const obj of objects) {
-      if (errorMessage.toLowerCase().includes(obj.type.replace("_", " "))) {
-        relatedNames.add(obj.name);
-        relatedObjects.push({ name: obj.name, type: obj.type });
+    for (const objValue of objects) {
+      if (errorMessage.toLowerCase().includes(objValue.type.replace("_", " "))) {
+        relatedNames.add(objValue.name);
+        relatedObjects.push({ name: objValue.name, type: objValue.type });
         break;
       }
     }

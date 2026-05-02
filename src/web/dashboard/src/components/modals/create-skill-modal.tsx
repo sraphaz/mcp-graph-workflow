@@ -27,6 +27,7 @@ interface CreateSkillModalProps {
   editSkill?: Skill | null;
 }
 
+/** CreateSkillModal — auto-generated description placeholder. */
 export function CreateSkillModal({ open, onClose, onSubmit, editSkill }: CreateSkillModalProps): React.JSX.Element | null {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

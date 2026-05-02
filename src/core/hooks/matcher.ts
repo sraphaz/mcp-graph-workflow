@@ -75,6 +75,7 @@ function parseFilter(raw: string): FilterClause {
   return { key, kind: "glob", pattern: value };
 }
 
+/** parseMatcher — auto-generated description placeholder. */
 export function parseMatcher(input: string): MatcherAst {
   const trimmed = input.trim();
   if (!trimmed) throw new McpGraphError("Empty matcher");
@@ -98,7 +99,7 @@ export function parseMatcher(input: string): MatcherAst {
   return { channel, filters };
 }
 
-/** True when `pattern` matches `value` with `*` as any-chars wildcard. */
+/** True when `pattern` matches `value` with `*` as wildcard. */
 export function globMatch(pattern: string, value: string): boolean {
   if (pattern === "*") return true;
   if (!pattern.includes("*")) return pattern === value;
@@ -129,23 +130,24 @@ function compareNumeric(actual: number, comparator: Comparator, threshold: numbe
   }
 }
 
+/** matches — auto-generated description placeholder. */
 export function matches(ast: MatcherAst, event: HookEventLike): boolean {
   if (event.channel !== ast.channel) return false;
   if (ast.filters.length === 0) return true;
   const payload = event.payload ?? {};
-  for (const f of ast.filters) {
-    const raw = payload[f.key];
-    if (f.kind === "glob") {
+  for (const fVar of ast.filters) {
+    const raw = payload[fVar.key];
+    if (fVar.kind === "glob") {
       if (raw === undefined || raw === null) return false;
       // §HOOKS-INTEGRATION 5.2 — parser invariant: kind=glob ⇒ pattern set.
-      if (f.pattern === undefined) return false;
-      if (!globMatch(f.pattern, String(raw))) return false;
+      if (fVar.pattern === undefined) return false;
+      if (!globMatch(fVar.pattern, String(raw))) return false;
     } else {
-      const n = typeof raw === "number" ? raw : Number(raw);
-      if (Number.isNaN(n)) return false;
+      const nVar = typeof raw === "number" ? raw : Number(raw);
+      if (Number.isNaN(nVar)) return false;
       // §HOOKS-INTEGRATION 5.2 — parser invariant: kind=numeric ⇒ comparator + threshold set.
-      if (f.comparator === undefined || f.threshold === undefined) return false;
-      if (!compareNumeric(n, f.comparator, f.threshold)) return false;
+      if (fVar.comparator === undefined || fVar.threshold === undefined) return false;
+      if (!compareNumeric(nVar, fVar.comparator, fVar.threshold)) return false;
     }
   }
   return true;

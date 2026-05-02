@@ -25,6 +25,7 @@ interface ProviderState {
 
 const RETRIABLE_STATUSES = new Set([401, 402, 429]);
 
+/** isCircuitOpenStatus — auto-generated description placeholder. */
 export function isCircuitOpenStatus(status: number): boolean {
   if (RETRIABLE_STATUSES.has(status)) return true;
   return status >= 500 && status < 600;
@@ -43,9 +44,9 @@ export class LlmCircuitBreaker {
   }
 
   state(provider: string): CircuitState {
-    const s = this.providers.get(provider);
-    if (!s || s.openedAt === null) return "closed";
-    const elapsed = this.now() - s.openedAt;
+    const sVar = this.providers.get(provider);
+    if (!sVar || sVar.openedAt === null) return "closed";
+    const elapsed = this.now() - sVar.openedAt;
     return elapsed >= this.openMs ? "half-open" : "open";
   }
 
@@ -55,33 +56,33 @@ export class LlmCircuitBreaker {
 
   recordFailure(provider: string, status: number): void {
     if (!isCircuitOpenStatus(status)) return;
-    const s = this.getOrCreate(provider);
+    const sVar = this.getOrCreate(provider);
 
-    if (s.openedAt !== null && this.now() - s.openedAt >= this.openMs) {
+    if (sVar.openedAt !== null && this.now() - sVar.openedAt >= this.openMs) {
       // Half-open failure → re-open with fresh window.
-      s.openedAt = this.now();
-      s.consecutiveFailures = this.failureThreshold;
+      sVar.openedAt = this.now();
+      sVar.consecutiveFailures = this.failureThreshold;
       return;
     }
 
-    s.consecutiveFailures++;
-    if (s.consecutiveFailures >= this.failureThreshold && s.openedAt === null) {
-      s.openedAt = this.now();
+    sVar.consecutiveFailures++;
+    if (sVar.consecutiveFailures >= this.failureThreshold && sVar.openedAt === null) {
+      sVar.openedAt = this.now();
     }
   }
 
   recordSuccess(provider: string): void {
-    const s = this.getOrCreate(provider);
-    s.consecutiveFailures = 0;
-    s.openedAt = null;
+    const sVar = this.getOrCreate(provider);
+    sVar.consecutiveFailures = 0;
+    sVar.openedAt = null;
   }
 
   private getOrCreate(provider: string): ProviderState {
-    let s = this.providers.get(provider);
-    if (!s) {
-      s = { consecutiveFailures: 0, openedAt: null };
-      this.providers.set(provider, s);
+    let sVar = this.providers.get(provider);
+    if (!sVar) {
+      sVar = { consecutiveFailures: 0, openedAt: null };
+      this.providers.set(provider, sVar);
     }
-    return s;
+    return sVar;
   }
 }

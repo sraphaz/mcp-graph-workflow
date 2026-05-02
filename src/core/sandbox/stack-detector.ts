@@ -63,6 +63,7 @@ const PROBES: StackProbe[] = [
   { stack: "pip", markers: { manifest: ["requirements.txt", "pyproject.toml", "setup.py"], lock: ["poetry.lock", "Pipfile.lock"] } },
 ];
 
+/** detectStack — auto-generated description placeholder. */
 export function detectStack(projectDir: string): StackDetectionResult {
   if (!fs.existsSync(projectDir)) {
     throw new McpGraphError(`Project directory does not exist: ${projectDir}`);

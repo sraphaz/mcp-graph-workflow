@@ -28,6 +28,7 @@ function asPositiveOrUndefined(n: number | null | undefined): number | undefined
   return n;
 }
 
+/** extractAnthropicUsage — auto-generated description placeholder. */
 export function extractAnthropicUsage(usage: AnthropicUsage | null | undefined): LlmUsage {
   return {
     inputTokens: usage?.input_tokens ?? 0,

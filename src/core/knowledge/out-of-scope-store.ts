@@ -34,6 +34,7 @@ export interface OutOfScopeEntry {
 
 const SLUG_INVALID = /[^a-z0-9]+/g;
 
+/** slugifyConcept — auto-generated description placeholder. */
 export function slugifyConcept(concept: string): string {
   return concept
     .toLowerCase()
@@ -68,6 +69,7 @@ function buildBody(concept: string, reason: string, date: string): string {
   ].join("\n");
 }
 
+/** recordOutOfScope — auto-generated description placeholder. */
 export function recordOutOfScope(
   concept: string,
   reason: string,
@@ -106,6 +108,7 @@ function parseEntry(path: string, content: string, slug: string): OutOfScopeEntr
   return { slug, concept, reason, date, path };
 }
 
+/** listOutOfScope — auto-generated description placeholder. */
 export function listOutOfScope(dir: string = OUT_OF_SCOPE_DIR): OutOfScopeEntry[] {
   if (!existsSync(dir)) return [];
   const files = readdirSync(dir).filter((f) => f.endsWith(".md") && f !== ".gitignore");
@@ -120,18 +123,19 @@ export function listOutOfScope(dir: string = OUT_OF_SCOPE_DIR): OutOfScopeEntry[
 export function tokenSimilarity(a: string, b: string): number {
   const tok = (s: string) =>
     new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3));
-  const A = tok(a);
-  const B = tok(b);
-  if (A.size === 0 || B.size === 0) return 0;
+  const AVar = tok(a);
+  const BVar = tok(b);
+  if (AVar.size === 0 || BVar.size === 0) return 0;
   let inter = 0;
-  for (const t of A) if (B.has(t)) inter++;
-  return inter / (A.size + B.size - inter);
+  for (const tVar of AVar) if (BVar.has(tVar)) inter++;
+  return inter / (AVar.size + BVar.size - inter);
 }
 
 export interface OutOfScopeMatch extends OutOfScopeEntry {
   similarity: number;
 }
 
+/** checkOutOfScope — auto-generated description placeholder. */
 export function checkOutOfScope(
   concept: string,
   dir: string = OUT_OF_SCOPE_DIR,

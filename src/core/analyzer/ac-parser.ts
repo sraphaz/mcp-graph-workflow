@@ -41,6 +41,7 @@ const MEASURABLE_PATTERNS = [
   /\b(vazio|empty|null|undefined|true|false)\b/i,
 ];
 
+/** parseAc — auto-generated description placeholder. */
 export function parseAc(text: string): ParsedAc {
   const trimmed = text.trim();
   const lines = trimmed.split("\n").map((l) => l.trim()).filter(Boolean);

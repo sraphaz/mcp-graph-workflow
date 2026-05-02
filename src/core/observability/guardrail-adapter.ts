@@ -126,14 +126,14 @@ export function runGuardrailPipeline(
 
   for (const guardrail of guardrails) {
     const startTime = performance.now();
-    let result: GuardrailResult;
+    let resultValue: GuardrailResult;
 
     try {
-      result = guardrail.run(context);
+      resultValue = guardrail.run(context);
     } catch (err) {
       // Guardrail threw — treat based on strategy
       const errorMsg = err instanceof Error ? err.message : String(err);
-      result = {
+      resultValue = {
         passed: guardrail.strategy === "fail_open",
         score: 0,
         name: guardrail.name,
@@ -143,31 +143,31 @@ export function runGuardrailPipeline(
     }
 
     const latencyMs = Math.round(performance.now() - startTime);
-    results.push(result);
+    results.push(resultValue);
 
-    if (!result.passed && result.strategy === "fail_closed") {
-      blockingFailures.push(result);
+    if (!resultValue.passed && resultValue.strategy === "fail_closed") {
+      blockingFailures.push(resultValue);
     }
 
     // Persist if store provided
     if (options?.store && options.traceId) {
       options.store.record({
         traceId: options.traceId,
-        name: result.name,
+        name: resultValue.name,
         position: guardrail.position,
-        passed: result.passed,
-        score: result.score,
+        passed: resultValue.passed,
+        score: resultValue.score,
         latencyMs,
-        strategy: result.strategy,
-        details: result.details,
+        strategy: resultValue.strategy,
+        details: resultValue.details,
       });
     }
 
     logger.debug("guardrail:executed", {
-      name: result.name,
-      passed: result.passed,
-      score: result.score,
-      strategy: result.strategy,
+      name: resultValue.name,
+      passed: resultValue.passed,
+      score: resultValue.score,
+      strategy: resultValue.strategy,
       latencyMs,
     });
   }

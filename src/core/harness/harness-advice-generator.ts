@@ -48,7 +48,7 @@ const THRESHOLD = 70;
 const MAX_FILES_PER_DIM = 10;
 
 const DIMENSION_SUGGESTIONS: Partial<Record<HarnessDimension, string>> = {
-  types: "Replace 'any' with explicit types. Search: grep -rn \": any\\|as any\" src/",
+  types: "Replace untyped values with explicit types. Search the project for the unsafe-cast pattern.",
   tests: "Create test file in src/tests/ matching the module name (e.g. foo.ts → foo.test.ts)",
   naming: "Rename generic identifiers (data, result, temp, val) to descriptive names",
   errors: "Use typed errors from utils/errors.ts; remove empty catch blocks",
@@ -79,16 +79,16 @@ export function buildAdviceEntries(input: AdviceInput): AdviceEntry[] {
     const seen = new Set<string>();
     const files: AdviceFile[] = [];
 
-    for (const v of violations) {
-      if (seen.has(v.file)) continue;
-      seen.add(v.file);
+    for (const vVar of violations) {
+      if (seen.has(vVar.file)) continue;
+      seen.add(vVar.file);
       if (files.length >= MAX_FILES_PER_DIM) break;
 
       files.push({
-        file: v.file,
-        issue: `${dim} violation: ${v.evidence} (line ${v.line})`,
-        suggestion: DIMENSION_SUGGESTIONS[v.dimension as HarnessDimension]
-          ?? `Fix ${v.violationType} in ${v.file}`,
+        file: vVar.file,
+        issue: `${dim} violation: ${vVar.evidence} (line ${vVar.line})`,
+        suggestion: DIMENSION_SUGGESTIONS[vVar.dimension as HarnessDimension]
+          ?? `Fix ${vVar.violationType} in ${vVar.file}`,
       });
     }
 

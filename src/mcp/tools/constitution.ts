@@ -249,9 +249,9 @@ export function handleConstitutionList(
   const principles = metadata.principles ?? [];
 
   const byCategory: Record<string, PrincipleInput[]> = {};
-  for (const p of principles) {
-    if (!byCategory[p.category]) byCategory[p.category] = [];
-    byCategory[p.category].push(p);
+  for (const pVar of principles) {
+    if (!byCategory[pVar.category]) byCategory[pVar.category] = [];
+    byCategory[pVar.category].push(pVar);
   }
 
   return {

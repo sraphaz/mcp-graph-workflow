@@ -52,7 +52,7 @@ const RULES: RemediationRule[] = [
     id: 'R002',
     dimension: 'types',
     violationType: 'as_any_cast',
-    fixTemplate: 'Remove as any in {file}:{line}, use type assertion',
+    fixTemplate: 'Remove the cast in {file}:{line}, use type assertion',
     confidence: 1.0,
     priority: 85,
     category: 'replace',

@@ -85,24 +85,24 @@ export function autoPromoteEpic(
   nodeId: string,
   depth: number = 0,
 ): AutoPromoteResult {
-  const result: AutoPromoteResult = { promoted: [] };
+  const resultValue: AutoPromoteResult = { promoted: [] };
 
-  if (depth >= MAX_PROMOTE_DEPTH) return result;
+  if (depth >= MAX_PROMOTE_DEPTH) return resultValue;
 
   try {
     const node = store.getNodeById(nodeId);
-    if (!node?.parentId) return result;
+    if (!node?.parentId) return resultValue;
 
     const parent = store.getNodeById(node.parentId);
-    if (!parent || parent.status === "done") return result;
+    if (!parent || parent.status === "done") return resultValue;
 
     const siblings = store.getChildNodes(parent.id);
     const allDone = siblings.length > 0 && siblings.every((s) => s.status === "done");
-    if (!allDone) return result;
+    if (!allDone) return resultValue;
 
     // Promote parent to done
     store.updateNodeStatus(parent.id, "done");
-    result.promoted.push(parent.id);
+    resultValue.promoted.push(parent.id);
     logger.info("epic-promotion:auto_promoted", {
       nodeId: parent.id,
       title: parent.title,
@@ -112,12 +112,12 @@ export function autoPromoteEpic(
 
     // Recurse up — maybe grandparent is now promotable
     const parentResult = autoPromoteEpic(store, parent.id, depth + 1);
-    result.promoted.push(...parentResult.promoted);
+    resultValue.promoted.push(...parentResult.promoted);
   } catch (err) {
     logger.debug("epic-promotion:auto_promote_failed", { error: String(err) });
   }
 
-  return result;
+  return resultValue;
 }
 
 /**
@@ -129,11 +129,11 @@ export function cascadeDownOnDone(
   store: SqliteStore,
   nodeId: string,
 ): CascadeDownResult {
-  const result: CascadeDownResult = { cascaded: [] };
+  const resultValue: CascadeDownResult = { cascaded: [] };
 
   try {
     const node = store.getNodeById(nodeId);
-    if (!node || node.status !== "done") return result;
+    if (!node || node.status !== "done") return resultValue;
 
     const children = store.getChildNodes(nodeId);
     const cascadeTypes = new Set(["acceptance_criteria", "subtask"]);
@@ -141,19 +141,19 @@ export function cascadeDownOnDone(
     for (const child of children) {
       if (cascadeTypes.has(child.type) && child.status !== "done") {
         store.updateNodeStatus(child.id, "done");
-        result.cascaded.push(child.id);
+        resultValue.cascaded.push(child.id);
       }
     }
 
-    if (result.cascaded.length > 0) {
+    if (resultValue.cascaded.length > 0) {
       logger.info("epic-promotion:cascade_down", {
         parentId: nodeId,
-        cascadedCount: result.cascaded.length,
+        cascadedCount: resultValue.cascaded.length,
       });
     }
   } catch (err) {
     logger.debug("epic-promotion:cascade_down_failed", { error: String(err) });
   }
 
-  return result;
+  return resultValue;
 }

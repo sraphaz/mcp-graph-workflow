@@ -78,6 +78,7 @@ function formatHours(h: number): string {
   return `${(h / 24).toFixed(1)}d`;
 }
 
+/** DoraCards — auto-generated description placeholder. */
 export function DoraCards({ dora, className }: DoraCardsProps): React.JSX.Element {
   const cards = [
     {

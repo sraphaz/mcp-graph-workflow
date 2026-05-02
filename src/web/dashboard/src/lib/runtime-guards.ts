@@ -27,6 +27,7 @@ export function safePercentage(value: number | null | undefined): number {
   return rounded;
 }
 
+/** safeEntries — auto-generated description placeholder. */
 export function safeEntries<T>(value: Record<string, T> | null | undefined): [string, T][] {
   return value ? Object.entries(value) : [];
 }

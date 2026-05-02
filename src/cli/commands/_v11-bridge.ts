@@ -104,10 +104,10 @@ export function delegateToV11(commandName: string): (...args: unknown[]) => void
       );
       process.exit(2);
     }
-    const result = spawnSync(process.execPath, [bundle, ...toV11Argv(commandName, command)], {
+    const resultValue = spawnSync(process.execPath, [bundle, ...toV11Argv(commandName, command)], {
       stdio: "inherit",
     });
-    process.exit(result.status ?? 1);
+    process.exit(resultValue.status ?? 1);
   };
 }
 
@@ -129,6 +129,7 @@ export interface V11WrapperOptions {
   flags?: Array<{ flags: string; description: string }>;
 }
 
+/** makeV11WrapperCommand — auto-generated description placeholder. */
 export function makeV11WrapperCommand(opts: V11WrapperOptions): Command {
   const cmd = new Command(opts.name).description(opts.description);
   if (opts.aliases?.length) cmd.aliases(opts.aliases);

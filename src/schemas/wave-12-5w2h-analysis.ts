@@ -212,12 +212,12 @@ export type HowMuch5W2H = z.infer<typeof HowMuch5W2HSchema>;
 export function validateWave125W2HAnalysis(
   data: unknown
 ): { valid: true; data: Wave125W2HAnalysis } | { valid: false; errors: string[] } {
-  const result = Wave125W2HAnalysisSchema.safeParse(data);
+  const resultValue = Wave125W2HAnalysisSchema.safeParse(data);
 
-  if (result.success) {
-    return { valid: true, data: result.data };
+  if (resultValue.success) {
+    return { valid: true, data: resultValue.data };
   }
 
-  const errors = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
+  const errors = resultValue.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
   return { valid: false, errors };
 }

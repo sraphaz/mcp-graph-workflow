@@ -54,6 +54,8 @@ vi.mock("../core/rag/rag-pipeline.js", () => ({
 vi.mock("../core/rag/knowledge-quality.js", () => ({
   decayStaleKnowledge: vi.fn().mockReturnValue({ decayed: 0 }),
   recordUsage: vi.fn(),
+  consolidateDuplicates: vi.fn().mockReturnValue({ consolidated: 0, pairs: [] }),
+  forgetContradictions: vi.fn().mockReturnValue({ forgotten: 0, skippedHigherHelpful: 0 }),
 }));
 
 vi.mock("../core/rag/knowledge-linker.js", () => ({

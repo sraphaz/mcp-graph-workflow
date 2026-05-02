@@ -24,6 +24,7 @@ export interface BuildSystemPromptOptions {
   env?: NodeJS.ProcessEnv;
 }
 
+/** isAnthropicCacheEnabled — auto-generated description placeholder. */
 export function isAnthropicCacheEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.ANTHROPIC_CACHE_ENABLED !== "false";
 }

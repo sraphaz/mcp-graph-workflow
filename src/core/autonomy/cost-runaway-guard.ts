@@ -34,6 +34,7 @@ export interface CostRunawayResult {
   skipped: "disabled" | undefined;
 }
 
+/** isCostRunawayGuardDisabled — auto-generated description placeholder. */
 export function isCostRunawayGuardDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_COST_RUNAWAY_GUARD === "off";
 }

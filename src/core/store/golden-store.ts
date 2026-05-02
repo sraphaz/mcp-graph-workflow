@@ -208,7 +208,7 @@ export class GoldenStore {
   }
 
   delete(id: string): boolean {
-    const res = this.db.prepare(`DELETE FROM eval_golden WHERE id = ?`).run(id);
-    return res.changes > 0;
+    const resValue = this.db.prepare(`DELETE FROM eval_golden WHERE id = ?`).run(id);
+    return resValue.changes > 0;
   }
 }

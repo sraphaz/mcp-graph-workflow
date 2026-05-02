@@ -92,13 +92,13 @@ export function identifyUnderutilizedSources(
 ): UnderutilizedSource[] {
   const underutilized: UnderutilizedSource[] = [];
 
-  for (const c of contributions) {
-    if (c.retrievalHitRate < LOW_HIT_RATE_THRESHOLD && c.documentCount > 0) {
+  for (const cVar of contributions) {
+    if (cVar.retrievalHitRate < LOW_HIT_RATE_THRESHOLD && cVar.documentCount > 0) {
       underutilized.push({
-        sourceType: c.sourceType,
-        reason: `Low retrieval hit rate (${(c.retrievalHitRate * 100).toFixed(1)}%). Documents indexed: ${c.documentCount}. Consider reindexing or improving keyword coverage.`,
-        documentCount: c.documentCount,
-        retrievalHitRate: c.retrievalHitRate,
+        sourceType: cVar.sourceType,
+        reason: `Low retrieval hit rate (${(cVar.retrievalHitRate * 100).toFixed(1)}%). Documents indexed: ${cVar.documentCount}. Consider reindexing or improving keyword coverage.`,
+        documentCount: cVar.documentCount,
+        retrievalHitRate: cVar.retrievalHitRate,
       });
     }
   }

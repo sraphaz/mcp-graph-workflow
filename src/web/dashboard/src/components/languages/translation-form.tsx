@@ -41,6 +41,7 @@ interface TranslationFormProps {
   onReset: () => void;
 }
 
+/** TranslationForm — auto-generated description placeholder. */
 export function TranslationForm({
   sourceCode, setSourceCode,
   targetLanguage, setTargetLanguage,

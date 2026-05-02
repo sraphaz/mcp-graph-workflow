@@ -80,8 +80,8 @@ export class BrowserEventBus {
     const results = await Promise.all(
       handlers.map(async ({ name, fn }) => {
         try {
-          const v = await fn(event);
-          return v ?? null;
+          const vVar = await fn(event);
+          return vVar ?? null;
         } catch (err) {
           return {
             watchdog: name,

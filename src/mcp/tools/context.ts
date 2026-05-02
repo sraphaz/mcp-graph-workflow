@@ -138,9 +138,9 @@ function handleCompact(
   // Session delta tracking — opt-in via sessionId
   if (sessionId) {
     const tracker = getSessionTracker(store);
-    const result = applySessionDelta(tracker, sessionId, ctx);
-    logger.info("tool:context:compact:ok", { id, sessionId, savings: result._session_savings });
-    return mcpText({ ...result.context, _session_savings: result._session_savings });
+    const resultValue = applySessionDelta(tracker, sessionId, ctx);
+    logger.info("tool:context:compact:ok", { id, sessionId, savings: resultValue._session_savings });
+    return mcpText({ ...resultValue.context, _session_savings: resultValue._session_savings });
   }
 
   logger.info("tool:context:compact:ok", { id });
@@ -165,9 +165,9 @@ async function handleRag(
       return mcpText(data);
     }
     const tracker = getSessionTracker(store);
-    const result = applyRagSessionDelta(tracker, sessionId, data);
-    logger.info("tool:context:rag:session", { sessionId, savings: result._session_savings });
-    return mcpText({ ...result.response, _session_savings: result._session_savings });
+    const resultValue = applyRagSessionDelta(tracker, sessionId, data);
+    logger.info("tool:context:rag:session", { sessionId, savings: resultValue._session_savings });
+    return mcpText({ ...resultValue.response, _session_savings: resultValue._session_savings });
   };
   const budget = tokenBudget ?? DEFAULT_TOKEN_BUDGET;
 
@@ -316,8 +316,8 @@ async function handleRag(
 
     // Record usage for retrieved docs (best-effort)
     try {
-      for (const result of multiResults.slice(0, 5)) {
-        recordUsage(store.getDb(), result.id, effectiveQuery, "retrieved", { tool: "context", action: "rag", strategy: "multi" });
+      for (const resultValue of multiResults.slice(0, 5)) {
+        recordUsage(store.getDb(), resultValue.id, effectiveQuery, "retrieved", { tool: "context", action: "rag", strategy: "multi" });
       }
     } catch {
       // Usage recording is best-effort
@@ -402,18 +402,18 @@ function handleCompress(params: ContextParams): ReturnType<typeof mcpText> {
 
   logger.debug("tool:context:compress", { format, maxTokens, inputLength: text.length });
 
-  const result = compressText(normalizedText, format, maxTokens);
+  const resultValue = compressText(normalizedText, format, maxTokens);
 
   logger.info("tool:context:compress:ok", {
     format,
-    inputTokens: result.stats.input_tokens,
-    outputTokens: result.stats.output_tokens,
-    reduction: result.stats.reduction_percent,
+    inputTokens: resultValue.stats.input_tokens,
+    outputTokens: resultValue.stats.output_tokens,
+    reduction: resultValue.stats.reduction_percent,
   });
 
   return mcpText({
-    compressed: result.compressed,
-    stats: result.stats,
+    compressed: resultValue.compressed,
+    stats: resultValue.stats,
   });
 }
 
@@ -434,12 +434,12 @@ function handleBatchCompress(params: ContextParams): ReturnType<typeof mcpText> 
     const normalizedText = normalizeNewlines(item.text) ?? item.text;
     const maxTokens = item.max_tokens ?? 2000;
 
-    const result = compressText(normalizedText, item.format, maxTokens);
+    const resultValue = compressText(normalizedText, item.format, maxTokens);
 
     return {
       index,
-      compressed: result.compressed,
-      stats: result.stats,
+      compressed: resultValue.compressed,
+      stats: resultValue.stats,
     };
   });
 
@@ -483,21 +483,21 @@ function handleFocusCompress(params: ContextParams): ReturnType<typeof mcpText> 
 
   logger.debug("tool:context:focus_compress", { focus, maxTokens, inputLength: text.length });
 
-  const result = compressWithFocus(normalizedText, focus, maxTokens);
+  const resultValue = compressWithFocus(normalizedText, focus, maxTokens);
 
   logger.info("tool:context:focus_compress:ok", {
     focus,
-    inputTokens: result.stats.inputTokens,
-    outputTokens: result.stats.outputTokens,
-    reduction: result.stats.reductionPercent,
-    pressure: result.pressureLevel,
+    inputTokens: resultValue.stats.inputTokens,
+    outputTokens: resultValue.stats.outputTokens,
+    reduction: resultValue.stats.reductionPercent,
+    pressure: resultValue.pressureLevel,
   });
 
   return mcpText({
-    compressed: result.compressed,
-    stats: result.stats,
-    focusRelevanceScore: result.focusRelevanceScore,
-    pressureLevel: result.pressureLevel,
+    compressed: resultValue.compressed,
+    stats: resultValue.stats,
+    focusRelevanceScore: resultValue.focusRelevanceScore,
+    pressureLevel: resultValue.pressureLevel,
   });
 }
 

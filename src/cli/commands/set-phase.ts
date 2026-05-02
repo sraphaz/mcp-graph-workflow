@@ -6,6 +6,7 @@
 import type { Command } from "commander";
 import { makeV11WrapperCommand } from "./_v11-bridge.js";
 
+/** setPhaseCommand — auto-generated description placeholder. */
 export function setPhaseCommand(): Command {
   return makeV11WrapperCommand({
     name: "set-phase",

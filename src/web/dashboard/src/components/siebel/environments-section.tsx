@@ -31,6 +31,7 @@ interface SiebelEnvironment {
   restApiUrl?: string;
 }
 
+/** EnvironmentsSection — auto-generated description placeholder. */
 export function EnvironmentsSection(): React.JSX.Element {
   const [environments, setEnvironments] = useState<SiebelEnvironment[]>([]);
   const [loading, setLoading] = useState(false);

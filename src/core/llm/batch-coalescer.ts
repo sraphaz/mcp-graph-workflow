@@ -61,12 +61,12 @@ export class BatchCoalescer<I, O> {
         const err = new Error(
           `BatchCoalescer: length mismatch — executor returned ${outputs.length} for ${inputs.length} inputs`,
         );
-        for (const p of batch) p.reject(err);
+        for (const pVar of batch) pVar.reject(err);
         return;
       }
       batch.forEach((p, i) => p.resolve(outputs[i]));
     } catch (err) {
-      for (const p of batch) p.reject(err);
+      for (const pVar of batch) pVar.reject(err);
     }
   }
 }

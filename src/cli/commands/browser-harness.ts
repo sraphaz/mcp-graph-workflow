@@ -30,16 +30,17 @@ async function withStore<T>(fn: (store: import("../../core/store/sqlite-store.js
 
 function parseKv(items: string[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const item of items) {
-    const eq = item.indexOf("=");
+  for (const itemValue of items) {
+    const eq = itemValue.indexOf("=");
     if (eq === -1) continue;
-    const k = item.slice(0, eq);
-    const raw = item.slice(eq + 1);
+    const k = itemValue.slice(0, eq);
+    const raw = itemValue.slice(eq + 1);
     try { out[k] = JSON.parse(raw); } catch { out[k] = raw; }
   }
   return out;
 }
 
+/** browserHarnessCommand — auto-generated description placeholder. */
 export function browserHarnessCommand(): Command {
   const cmd = new Command("browser-harness")
     .alias("bh")
@@ -90,16 +91,16 @@ export function browserHarnessCommand(): Command {
           process.stdout.write(JSON.stringify({ ok: false, error: "no active session — use 'connect' first in the same process" }) + "\n");
           return;
         }
-        const result = await runtime.invoke(session.cdp, name, parseKv(opts.arg));
-        process.stdout.write(JSON.stringify({ ok: true, result }) + "\n");
+        const resultValue = await runtime.invoke(session.cdp, name, parseKv(opts.arg));
+        process.stdout.write(JSON.stringify({ ok: true, resultValue }) + "\n");
       });
     });
 
   cmd.command("guardrail")
     .description("Print the active guardrail (parsed from SKILL.md)")
     .action(() => {
-      const g = loadGuardrail();
-      process.stdout.write(JSON.stringify(g, null, 2) + "\n");
+      const gVar = loadGuardrail();
+      process.stdout.write(JSON.stringify(gVar, null, 2) + "\n");
     });
 
   return cmd;

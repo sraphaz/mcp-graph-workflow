@@ -35,6 +35,7 @@ import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
 
+/** registerMemory — auto-generated description placeholder. */
 export function registerMemory(server: McpServer, store: SqliteStore): void {
   // ── write_memory ─────────────────────────────
   server.tool(

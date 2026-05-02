@@ -26,6 +26,7 @@ interface UseGraphDataReturn {
   refresh: () => Promise<void>;
 }
 
+/** useGraphData — auto-generated description placeholder. */
 export function useGraphData(): UseGraphDataReturn {
   const [graph, setGraph] = useState<GraphDocument | null>(null);
   const [loading, setLoading] = useState(true);

@@ -40,6 +40,7 @@ function formatCheck(check: CheckResult): string {
   return line;
 }
 
+/** doctorCommand — auto-generated description placeholder. */
 export function doctorCommand(): Command {
   return new Command("doctor")
     .description("Validate the execution environment")

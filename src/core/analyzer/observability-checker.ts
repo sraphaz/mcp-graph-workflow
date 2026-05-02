@@ -93,8 +93,8 @@ export function checkObservability(projectPath: string): ObservabilityReport {
   const filesWithoutLogger = allFiles.filter((f) => !f.content.includes("logger.") && f.content.includes("export "));
   const loggerCoverage = allFiles.length > 0 ? filesWithLogger.length / allFiles.length : 1;
 
-  for (const f of filesWithoutLogger.slice(0, 10)) {
-    gaps.push(f.path);
+  for (const fVar of filesWithoutLogger.slice(0, 10)) {
+    gaps.push(fVar.path);
   }
 
   checks.push({
@@ -119,9 +119,9 @@ export function checkObservability(projectPath: string): ObservabilityReport {
     severity: "recommended",
   });
 
-  for (const f of filesWithConsole) {
+  for (const fVar of filesWithConsole) {
     findings.push({
-      file: f.path,
+      file: fVar.path,
       severity: "medium",
       message: "Uses console.log instead of structured logger",
       rule: "no-console",

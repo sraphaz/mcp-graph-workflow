@@ -44,24 +44,26 @@ export interface PipelineResult {
 const DEFAULT_TARGET_RATIO = 0.6;
 const DEFAULT_EMERGENCY_KEEP = 6;
 
+/** microCompact — auto-generated description placeholder. */
 export function microCompact(messages: ChatMessage[]): ChatMessage[] {
   // Drop exact-duplicate adjacent tool-result messages — common after retries.
   const out: ChatMessage[] = [];
-  for (const m of messages) {
+  for (const mVar of messages) {
     const prev = out[out.length - 1];
     if (
       prev &&
-      prev.role === m.role &&
-      m.role === "tool-result" &&
-      prev.content === m.content
+      prev.role === mVar.role &&
+      mVar.role === "tool-result" &&
+      prev.content === mVar.content
     ) {
       continue;
     }
-    out.push(m);
+    out.push(mVar);
   }
   return out;
 }
 
+/** spilloverCompact — auto-generated description placeholder. */
 export function spilloverCompact(
   messages: ChatMessage[],
   keepRecent: number = 4,
@@ -78,6 +80,7 @@ export function spilloverCompact(
   return [summary, ...recent];
 }
 
+/** emergencyTruncate — auto-generated description placeholder. */
 export function emergencyTruncate(
   messages: ChatMessage[],
   keepLast: number,
@@ -94,6 +97,7 @@ function isWithin(messages: ChatMessage[], target: number, counter: TokenCounter
   return totalTokens(messages, counter) <= target;
 }
 
+/** compactionPipeline — auto-generated description placeholder. */
 export async function compactionPipeline(
   messages: ChatMessage[],
   opts: PipelineOptions,

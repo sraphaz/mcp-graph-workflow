@@ -63,11 +63,11 @@ export function quantizeVector(vector: number[]): QuantizedVector {
  * Dequantize an Int8 vector back to float using the stored scale factor.
  */
 export function dequantizeVector(quantized: Int8Array, scale: number): number[] {
-  const result = new Array<number>(quantized.length);
+  const resultValue = new Array<number>(quantized.length);
   for (let i = 0; i < quantized.length; i++) {
-    result[i] = quantized[i] * scale;
+    resultValue[i] = quantized[i] * scale;
   }
-  return result;
+  return resultValue;
 }
 
 /**

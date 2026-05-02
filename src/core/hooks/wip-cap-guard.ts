@@ -11,12 +11,13 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 
 const DEFAULT_CAP = 1;
 
+/** getWipCap — auto-generated description placeholder. */
 export function getWipCap(env: NodeJS.ProcessEnv | Record<string, string | undefined>): number {
   const raw = env.MCP_GRAPH_WIP_CAP;
   if (!raw) return DEFAULT_CAP;
-  const n = Number.parseInt(raw, 10);
-  if (!Number.isInteger(n) || n < 1) return DEFAULT_CAP;
-  return n;
+  const nVar = Number.parseInt(raw, 10);
+  if (!Number.isInteger(nVar) || nVar < 1) return DEFAULT_CAP;
+  return nVar;
 }
 
 /**

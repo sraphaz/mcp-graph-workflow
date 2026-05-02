@@ -32,6 +32,7 @@ function isRetryable(err: unknown): boolean {
   return status === 0 || status === 429 || (status >= 500 && status < 600);
 }
 
+/** withRetry — auto-generated description placeholder. */
 export async function withRetry<T>(
   fn: () => Promise<T>,
   config: RetryConfig = DEFAULT_RETRY,

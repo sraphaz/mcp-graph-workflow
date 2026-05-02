@@ -58,6 +58,7 @@ const BANNED_LITERAL_STRINGS = new Set<string>([
   "vm",
 ]);
 
+/** validateSource — auto-generated description placeholder. */
 export function validateSource(
   source: string,
   options: ValidateSourceOptions = {},
@@ -77,10 +78,10 @@ export function validateSource(
 
   const parseDiags = (sf as unknown as { parseDiagnostics?: readonly ts.Diagnostic[] }).parseDiagnostics ?? [];
   if (parseDiags.length > 0) {
-    for (const d of parseDiags) {
+    for (const dVar of parseDiags) {
       violations.push({
         kind: "parse",
-        message: typeof d.messageText === "string" ? d.messageText : ts.flattenDiagnosticMessageText(d.messageText, "\n"),
+        message: typeof dVar.messageText === "string" ? dVar.messageText : ts.flattenDiagnosticMessageText(dVar.messageText, "\n"),
       });
     }
     return { ok: false, violations };
@@ -156,9 +157,9 @@ export function validateSource(
 function collectStringConcat(node: ts.Expression): string | null {
   if (ts.isStringLiteralLike(node)) return node.text;
   if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken) {
-    const l = collectStringConcat(node.left);
-    const r = collectStringConcat(node.right);
-    if (l !== null && r !== null) return l + r;
+    const lVar = collectStringConcat(node.left);
+    const rVar = collectStringConcat(node.right);
+    if (lVar !== null && rVar !== null) return lVar + rVar;
   }
   return null;
 }

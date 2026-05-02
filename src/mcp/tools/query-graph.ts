@@ -58,28 +58,28 @@ function stripComments(sql: string): string {
   let i = 0;
   let inStr: '"' | "'" | null = null;
   while (i < sql.length) {
-    const c = sql[i];
+    const cVar = sql[i];
     if (inStr) {
-      out += c;
-      if (c === inStr) {
+      out += cVar;
+      if (cVar === inStr) {
         if (sql[i + 1] === inStr) { out += sql[i + 1]; i += 2; continue; }
         inStr = null;
       }
       i++;
       continue;
     }
-    if (c === "'" || c === '"') { inStr = c; out += c; i++; continue; }
-    if (c === "-" && sql[i + 1] === "-") {
+    if (cVar === "'" || cVar === '"') { inStr = cVar; out += cVar; i++; continue; }
+    if (cVar === "-" && sql[i + 1] === "-") {
       while (i < sql.length && sql[i] !== "\n") i++;
       continue;
     }
-    if (c === "/" && sql[i + 1] === "*") {
+    if (cVar === "/" && sql[i + 1] === "*") {
       i += 2;
       while (i < sql.length && !(sql[i] === "*" && sql[i + 1] === "/")) i++;
       i += 2;
       continue;
     }
-    out += c;
+    out += cVar;
     i++;
   }
   return out;
@@ -92,16 +92,16 @@ function stripComments(sql: string): string {
 function hasMultiStatement(sql: string): boolean {
   let inStr: '"' | "'" | null = null;
   for (let i = 0; i < sql.length; i++) {
-    const c = sql[i];
+    const cVar = sql[i];
     if (inStr) {
-      if (c === inStr) {
+      if (cVar === inStr) {
         if (sql[i + 1] === inStr) { i++; continue; }
         inStr = null;
       }
       continue;
     }
-    if (c === "'" || c === '"') { inStr = c; continue; }
-    if (c === ";") {
+    if (cVar === "'" || cVar === '"') { inStr = cVar; continue; }
+    if (cVar === ";") {
       const rest = sql.slice(i + 1).trim();
       if (rest.length > 0) return true;
     }
@@ -160,6 +160,7 @@ export interface InjectLimitResult {
 
 // Inject LIMIT N at the end if missing; cap to maxLimit if existing > max.
 // Trailing semicolon is stripped before injection so the result is `SELECT ... LIMIT N`.
+/** injectLimit — auto-generated description placeholder. */
 export function injectLimit(rawSql: string, defaultLimit: number, maxLimit: number): InjectLimitResult {
   const trimmed = rawSql.trim().replace(/;\s*$/, "");
   const limitMatch = /\bLIMIT\s+(\d+)/i.exec(trimmed);
@@ -365,13 +366,13 @@ export function registerQueryGraph(server: McpServer, store: SqliteStore): void 
       limit: z.number().int().positive().max(MAX_LIMIT).optional().describe(`Row cap, default ${DEFAULT_LIMIT}, max ${MAX_LIMIT}. LIMIT is injected if absent.`),
     },
     async ({ sql, params, limit }) => {
-      const result = executeQueryGraph(store, { sql, params, limit });
+      const resultValue = executeQueryGraph(store, { sql, params, limit });
       logger.debug("tool:query_graph", {
-        ok: result.ok,
-        durationMs: result.durationMs,
-        auditId: result.auditId,
+        ok: resultValue.ok,
+        durationMs: resultValue.durationMs,
+        auditId: resultValue.auditId,
       });
-      return mcpText(result);
+      return mcpText(resultValue);
     },
   );
 }

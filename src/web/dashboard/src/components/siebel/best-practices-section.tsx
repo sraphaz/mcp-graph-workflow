@@ -32,6 +32,7 @@ interface BestPracticeRule {
   incorrect: string;
 }
 
+/** BestPracticesSection — auto-generated description placeholder. */
 export function BestPracticesSection(): React.JSX.Element {
   const [rules, setRules] = useState<BestPracticeRule[]>([]);
   const [filter, setFilter] = useState("");

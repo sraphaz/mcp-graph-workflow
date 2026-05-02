@@ -32,6 +32,7 @@ interface KanbanTabProps {
   onNavigate?: (tab: TabId) => void;
 }
 
+/** KanbanTab — auto-generated description placeholder. */
 export function KanbanTab({ onNavigate }: KanbanTabProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const [swimlaneMode, setSwimlaneMode] = useState<SwimlaneMode>("none");

@@ -50,8 +50,8 @@ const GET_PATTERN = /GetProfileAttr\s*\(\s*"([^"]+)"/g;
 export function analyzeProfileAttrFlow(objects: SiebelObject[]): ProfileAttrFlowResult {
   const attrMap = new Map<string, { producers: AttrRef[]; consumers: AttrRef[] }>();
 
-  for (const obj of objects) {
-    const scripts = obj.children.filter((c) => c.type === "escript");
+  for (const objValue of objects) {
+    const scripts = objValue.children.filter((c) => c.type === "escript");
     for (const script of scripts) {
       const sourceCode = script.properties.find((p) => p.name === "SOURCE_CODE")?.value ?? "";
       const method = script.properties.find((p) => p.name === "METHOD")?.value ?? script.name;
@@ -63,7 +63,7 @@ export function analyzeProfileAttrFlow(objects: SiebelObject[]): ProfileAttrFlow
       while ((match = SET_PATTERN.exec(sourceCode)) !== null) {
         const name = match[1];
         const entry = attrMap.get(name) ?? { producers: [], consumers: [] };
-        entry.producers.push({ object: obj.name, method, direction: "set" });
+        entry.producers.push({ object: objValue.name, method, direction: "set" });
         attrMap.set(name, entry);
       }
 
@@ -72,7 +72,7 @@ export function analyzeProfileAttrFlow(objects: SiebelObject[]): ProfileAttrFlow
       while ((match = GET_PATTERN.exec(sourceCode)) !== null) {
         const name = match[1];
         const entry = attrMap.get(name) ?? { producers: [], consumers: [] };
-        entry.consumers.push({ object: obj.name, method, direction: "get" });
+        entry.consumers.push({ object: objValue.name, method, direction: "get" });
         attrMap.set(name, entry);
       }
     }

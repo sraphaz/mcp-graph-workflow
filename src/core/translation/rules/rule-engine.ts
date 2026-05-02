@@ -102,9 +102,9 @@ export class RuleEngine {
     const unmatched: IRNode[] = [];
 
     for (const node of nodes) {
-      const result = this.matchRule(node);
-      if (result) {
-        matched.push(result);
+      const resultValue = this.matchRule(node);
+      if (resultValue) {
+        matched.push(resultValue);
       } else {
         unmatched.push(node);
       }

@@ -30,6 +30,7 @@ import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { evaluate as evaluateRemediations } from "../../core/harness/remediation-engine.js";
 import { SuppressionStore } from "../../core/harness/remediation-suppression.js";
 
+/** createHarnessRouter — auto-generated description placeholder. */
 export function createHarnessRouter(storeRef: StoreRef): Router {
   const router = Router();
 
@@ -40,7 +41,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
     try {
       const store = storeRef.current;
       const db = store.getDb();
-      const result = runHarnessScan(process.cwd(), db);
+      const resultValue = runHarnessScan(process.cwd(), db);
 
       let currentPhase: string = "ANALYZE";
       try {
@@ -52,12 +53,12 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({
         ok: true,
-        score: result.score,
-        grade: result.grade,
-        breakdown: result.breakdown,
-        details: result.details,
-        timestamp: result.timestamp,
-        ruleSuggestions: result.ruleSuggestions,
+        score: resultValue.score,
+        grade: resultValue.grade,
+        breakdown: resultValue.breakdown,
+        details: resultValue.details,
+        timestamp: resultValue.timestamp,
+        ruleSuggestions: resultValue.ruleSuggestions,
         currentPhase,
       });
     } catch (err) {

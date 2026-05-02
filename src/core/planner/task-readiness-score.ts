@@ -136,6 +136,7 @@ function depthScoreFor(depth: number): number {
   return 20;
 }
 
+/** computeTaskReadinessScore — auto-generated description placeholder. */
 export function computeTaskReadinessScore(
   node: GraphNode,
   doc: GraphDocument,
@@ -267,8 +268,8 @@ function computeDepDepth(nodeId: string, doc: GraphDocument): number {
     inProgress.add(id);
     let max = 0;
     for (const next of dependsOut.get(id) ?? []) {
-      const d = 1 + depth(next);
-      if (d > max) max = d;
+      const dVar = 1 + depth(next);
+      if (dVar > max) max = dVar;
     }
     inProgress.delete(id);
     memo.set(id, max);

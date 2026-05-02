@@ -88,6 +88,7 @@ export function recordDecision(db: Database.Database, input: DecisionInput): str
   return id;
 }
 
+/** recordOutcome — auto-generated description placeholder. */
 export function recordOutcome(
   db: Database.Database,
   decisionId: string,
@@ -104,6 +105,7 @@ export function recordOutcome(
   return info.changes > 0;
 }
 
+/** listDecisions — auto-generated description placeholder. */
 export function listDecisions(
   db: Database.Database,
   opts: { nodeId?: string; limit?: number } = {},
@@ -124,23 +126,24 @@ export function listDecisions(
   return rows.map(rowToDecision);
 }
 
+/** statsDecisions — auto-generated description placeholder. */
 export function statsDecisions(db: Database.Database): DecisionStats {
   const rows = db
     .prepare(`SELECT intent, success FROM decisions`)
     .all() as Array<{ intent: string; success: number | null }>;
   const byIntent: Record<string, { count: number; successRate: number; outcomes: number }> = {};
-  for (const r of rows) {
-    const slot = byIntent[r.intent] ?? { count: 0, successRate: 0, outcomes: 0 };
+  for (const rVar of rows) {
+    const slot = byIntent[rVar.intent] ?? { count: 0, successRate: 0, outcomes: 0 };
     slot.count++;
-    if (r.success === 1 || r.success === 0) {
+    if (rVar.success === 1 || rVar.success === 0) {
       slot.outcomes++;
-      if (r.success === 1) slot.successRate += 1;
+      if (rVar.success === 1) slot.successRate += 1;
     }
-    byIntent[r.intent] = slot;
+    byIntent[rVar.intent] = slot;
   }
   for (const intent of Object.keys(byIntent)) {
-    const s = byIntent[intent];
-    s.successRate = s.outcomes > 0 ? s.successRate / s.outcomes : 0;
+    const sVar = byIntent[intent];
+    sVar.successRate = sVar.outcomes > 0 ? sVar.successRate / sVar.outcomes : 0;
   }
   return { totalDecisions: rows.length, byIntent };
 }

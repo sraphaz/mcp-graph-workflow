@@ -107,20 +107,20 @@ export class FallbackResolver {
       reason = "No isolation method available (Docker, Podman, and process all unavailable).";
     }
 
-    const result: FallbackResult = {
+    const resultValue: FallbackResult = {
       executionMode,
       reason,
       fallbackChain,
       timestamp: new Date().toISOString(),
     };
 
-    FallbackResultSchema.parse(result);
+    FallbackResultSchema.parse(resultValue);
 
     logger.info("fallback-resolver:resolveExecutionMode", {
       executionMode,
       fallbackChain: fallbackChain.join(" → "),
     });
 
-    return result;
+    return resultValue;
   }
 }

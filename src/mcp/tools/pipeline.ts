@@ -40,10 +40,10 @@ function buildPipelineHandlers(store: SqliteStore): Map<string, ToolHandler> {
 
   // list: list graph nodes
   handlers.set("list", async (args) => {
-    const a = args as Record<string, unknown>;
+    const aVar = args as Record<string, unknown>;
     const doc = store.toGraphDocument();
-    const type = a.type as string | undefined;
-    const status = a.status as string | undefined;
+    const type = aVar.type as string | undefined;
+    const status = aVar.status as string | undefined;
     let nodes = doc.nodes;
     if (type) nodes = nodes.filter((n) => n.type === type);
     if (status) nodes = nodes.filter((n) => n.status === status);
@@ -55,8 +55,8 @@ function buildPipelineHandlers(store: SqliteStore): Map<string, ToolHandler> {
 
   // show: show a single node
   handlers.set("show", async (args) => {
-    const a = args as Record<string, unknown>;
-    const id = a.id as string | undefined;
+    const aVar = args as Record<string, unknown>;
+    const id = aVar.id as string | undefined;
     if (!id) throw new McpGraphError("show requires id");
     const doc = store.toGraphDocument();
     const node = doc.nodes.find((n) => n.id === id);
@@ -74,8 +74,8 @@ function buildPipelineHandlers(store: SqliteStore): Map<string, ToolHandler> {
 
   // search: full-text search
   handlers.set("search", async (args) => {
-    const a = args as Record<string, unknown>;
-    const query = a.query as string | undefined;
+    const aVar = args as Record<string, unknown>;
+    const query = aVar.query as string | undefined;
     if (!query) throw new McpGraphError("search requires query");
     const { searchNodes } = await import("../../core/search/fts-search.js");
     const results = searchNodes(store, query, { limit: 20, rerank: false });
@@ -88,6 +88,7 @@ function buildPipelineHandlers(store: SqliteStore): Map<string, ToolHandler> {
   return handlers;
 }
 
+/** registerPipeline — auto-generated description placeholder. */
 export function registerPipeline(server: McpServer, store: SqliteStore): void {
   server.tool(
     "pipeline",
@@ -115,25 +116,25 @@ export function registerPipeline(server: McpServer, store: SqliteStore): void {
 
       // Parse and validate steps
       const parsedSteps = steps.map((s, i) => {
-        const result = PipelineStepSchema.safeParse({ tool: s.tool, args: s.args ?? {}, extractField: s.extractField });
-        if (!result.success) {
-          throw new McpGraphError(`Step ${i} validation failed: ${JSON.stringify(result.error.issues)}`);
+        const resultValue = PipelineStepSchema.safeParse({ tool: s.tool, args: s.args ?? {}, extractField: s.extractField });
+        if (!resultValue.success) {
+          throw new McpGraphError(`Step ${i} validation failed: ${JSON.stringify(resultValue.error.issues)}`);
         }
-        return result.data;
+        return resultValue.data;
       });
 
       const handlers = buildPipelineHandlers(store);
       const pipeline = new ToolPipeline(handlers);
 
       try {
-        const result = await pipeline.execute(parsedSteps);
+        const resultValue = await pipeline.execute(parsedSteps);
         logger.info("tool:pipeline:ok", {
-          stepsTotal: result.stepsTotal,
-          stepsCompleted: result.stepsCompleted,
-          stepsFailed: result.stepsFailed,
-          totalDurationMs: result.totalDurationMs,
+          stepsTotal: resultValue.stepsTotal,
+          stepsCompleted: resultValue.stepsCompleted,
+          stepsFailed: resultValue.stepsFailed,
+          totalDurationMs: resultValue.totalDurationMs,
         });
-        return mcpText(result);
+        return mcpText(resultValue);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error("tool:pipeline:error", { error: message });

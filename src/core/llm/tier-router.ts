@@ -43,26 +43,28 @@ export interface TierDispatch<T> {
   reason: string;
 }
 
+/** pickTier1Model — auto-generated description placeholder. */
 export function pickTier1Model(tokenBudget: number | undefined): ModelName {
   return (tokenBudget ?? 0) >= SONNET_MIN_TOKENS ? SONNET : HAIKU;
 }
 
+/** dispatchTier — auto-generated description placeholder. */
 export function dispatchTier<T>(input: TierRouterInput<T>): TierDispatch<T> {
   if (input.tier === "tier0") {
     if (!input.booster) {
       return { tier: "tier0", model: null, reason: "tier0-no-booster" };
     }
-    const result = input.booster();
-    if (result.hit && result.output !== undefined) {
+    const resultValue = input.booster();
+    if (resultValue.hit && resultValue.output !== undefined) {
       return {
         tier: "tier0",
         model: null,
-        boosterOutput: result.output,
-        reason: result.reason ?? "tier0-booster-hit",
+        boosterOutput: resultValue.output,
+        reason: resultValue.reason ?? "tier0-booster-hit",
       };
     }
     // Booster missed → escalate to tier 1.
-    const detail = result.reason ?? "tier0-booster-miss";
+    const detail = resultValue.reason ?? "tier0-booster-miss";
     return {
       tier: "tier1",
       model: pickTier1Model(input.tokenBudget),

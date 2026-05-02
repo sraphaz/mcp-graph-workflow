@@ -46,8 +46,8 @@ export function loadSiebelConfig(graphDir: string): SiebelEnvironment[] {
 
   try {
     const raw = readFileSync(filePath, "utf-8");
-    const data = JSON.parse(raw) as SiebelConfigFile;
-    return data.environments ?? [];
+    const dataValue = JSON.parse(raw) as SiebelConfigFile;
+    return dataValue.environments ?? [];
   } catch (err) {
     logger.warn("Failed to load Siebel config", { path: filePath, error: String(err) });
     return [];

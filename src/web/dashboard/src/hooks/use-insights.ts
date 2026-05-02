@@ -36,6 +36,7 @@ export interface InsightsData {
   phaseDistribution: PhaseDistributionEntry[];
 }
 
+/** useInsights — auto-generated description placeholder. */
 export function useInsights(): {
   data: InsightsData | null;
   loading: boolean;

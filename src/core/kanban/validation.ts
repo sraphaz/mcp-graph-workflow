@@ -29,6 +29,7 @@ export const KanbanInputSchema = z.object({
 
 export type ValidatedKanbanInput = z.infer<typeof KanbanInputSchema>;
 
+/** validateKanbanInput — auto-generated description placeholder. */
 export function validateKanbanInput(input: unknown): ValidatedKanbanInput {
   return KanbanInputSchema.parse(input);
 }

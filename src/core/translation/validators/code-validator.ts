@@ -147,8 +147,8 @@ function checkBracketMatching(lines: string[]): ValidationError[] {
     }
   }
 
-  for (const item of stack) {
-    errors.push({ line: item.line, message: `Unmatched '${item.char}'` });
+  for (const itemValue of stack) {
+    errors.push({ line: itemValue.line, message: `Unmatched '${itemValue.char}'` });
   }
 
   return errors;

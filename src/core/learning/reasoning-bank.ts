@@ -35,6 +35,7 @@ export interface TrajectoryStore {
   count(): number;
 }
 
+/** createMemoryTrajectoryStore — auto-generated description placeholder. */
 export function createMemoryTrajectoryStore(initial: Trajectory[] = []): TrajectoryStore {
   let rows = [...initial];
   return {
@@ -68,11 +69,11 @@ export function storeTrajectory(
 /** Jaccard similarity between two tool sequences (treated as sets). */
 export function toolSequenceSimilarity(a: string[], b: string[]): number {
   if (a.length === 0 && b.length === 0) return 1;
-  const A = new Set(a);
-  const B = new Set(b);
+  const AVar = new Set(a);
+  const BVar = new Set(b);
   let inter = 0;
-  for (const t of A) if (B.has(t)) inter++;
-  const unionSize = A.size + B.size - inter;
+  for (const tVar of AVar) if (BVar.has(tVar)) inter++;
+  const unionSize = AVar.size + BVar.size - inter;
   return unionSize === 0 ? 0 : inter / unionSize;
 }
 

@@ -49,6 +49,7 @@ function ScoreBar({ value, max = 100, label }: { value: number; max?: number; la
   );
 }
 
+/** AnalysisResults — auto-generated description placeholder. */
 export function AnalysisResults({ analysis, deterministicCode, targetLanguage }: AnalysisResultsProps): React.JSX.Element | null {
   if (!analysis) return null;
 

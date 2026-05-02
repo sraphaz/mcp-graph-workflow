@@ -18,6 +18,7 @@
 import { Router } from "express";
 import type { StoreRef } from "../../core/store/store-manager.js";
 
+/** createStatsRouter — auto-generated description placeholder. */
 export function createStatsRouter(storeRef: StoreRef): Router {
   const router = Router();
 

@@ -31,13 +31,13 @@ export function distributeViolationsFairly(
 
   // Group by dimension, preserve insertion order within each group.
   const byDim = new Map<string, ViolationDetail[]>();
-  for (const v of all) {
-    const key = v.dimension;
+  for (const vVar of all) {
+    const key = vVar.dimension;
     const arr = byDim.get(key);
     if (arr) {
-      arr.push(v);
+      arr.push(vVar);
     } else {
-      byDim.set(key, [v]);
+      byDim.set(key, [vVar]);
     }
   }
 
@@ -60,8 +60,8 @@ export function distributeViolationsFairly(
       : equalShare;
     const take = Math.min(list.length, dimCap, remaining);
     for (let i = 0; i < take; i++) {
-      const item = list[i];
-      if (item) out.push(item);
+      const itemValue = list[i];
+      if (itemValue) out.push(itemValue);
     }
     remaining -= take;
     dimsLeft -= 1;

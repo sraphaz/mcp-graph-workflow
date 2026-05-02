@@ -25,13 +25,15 @@ export interface SlowQueryReport {
   paramTypes: string[];
 }
 
+/** getSlowQueryThreshold — auto-generated description placeholder. */
 export function getSlowQueryThreshold(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.SQLITE_SLOW_QUERY_MS;
   if (!raw) return DEFAULT_SLOW_QUERY_MS;
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : DEFAULT_SLOW_QUERY_MS;
+  const nVar = Number(raw);
+  return Number.isFinite(nVar) && nVar > 0 ? nVar : DEFAULT_SLOW_QUERY_MS;
 }
 
+/** sanitizeParamTypes — auto-generated description placeholder. */
 export function sanitizeParamTypes(params: unknown[] | undefined): string[] {
   if (!params) return [];
   return params.map((p) => {
@@ -49,6 +51,7 @@ export function previewSql(sql: string, maxChars: number = 200): string {
   return collapsed.length <= maxChars ? collapsed : `${collapsed.slice(0, maxChars - 3)}...`;
 }
 
+/** checkSlowQuery — auto-generated description placeholder. */
 export function checkSlowQuery(input: SlowQueryInput): SlowQueryReport {
   const threshold = input.thresholdMs ?? DEFAULT_SLOW_QUERY_MS;
   return {

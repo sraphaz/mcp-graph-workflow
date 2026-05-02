@@ -52,6 +52,7 @@ const siebelUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+/** createSiebelRouter — auto-generated description placeholder. */
 export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string): Router {
   const router = Router();
 
@@ -70,7 +71,7 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
 
       const parseResult = parseSifContent(content, fileName);
 
-      const result: Record<string, unknown> = {
+      const resultValue: Record<string, unknown> = {
         metadata: parseResult.metadata,
         objectCount: parseResult.objects.length,
         dependencyCount: parseResult.dependencies.length,
@@ -81,15 +82,15 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
       if (mapToGraph) {
         const { nodes, edges } = convertSifToGraph(parseResult);
         storeRef.current.bulkInsert(nodes, edges);
-        result.nodesCreated = nodes.length;
-        result.edgesCreated = edges.length;
+        resultValue.nodesCreated = nodes.length;
+        resultValue.edgesCreated = edges.length;
       }
 
       // Index into knowledge store
       try {
         const knowledgeStore = new KnowledgeStore(storeRef.current.getDb());
         const indexResult = indexSifContent(knowledgeStore, parseResult);
-        result.documentsIndexed = indexResult.documentsIndexed;
+        resultValue.documentsIndexed = indexResult.documentsIndexed;
 
         // Store raw SIF content for later retrieval via GET /graph
         knowledgeStore.deleteBySource("siebel_sif_raw", `siebel_sif_raw:${fileName}`);
@@ -105,7 +106,7 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
         // Non-fatal
       }
 
-      res.status(201).json(result);
+      res.status(201).json(resultValue);
     } catch (err) {
       next(err);
     }
@@ -340,12 +341,12 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
       }
 
       const knowledgeStore = new KnowledgeStore(storeRef.current.getDb());
-      const result = finalizeSifGeneration(knowledgeStore, generatedXml, {
+      const resultValue = finalizeSifGeneration(knowledgeStore, generatedXml, {
         description,
         objectTypes,
       });
 
-      res.json(result);
+      res.json(resultValue);
     } catch (err) {
       next(err);
     }
@@ -483,13 +484,13 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
         try { return parseSifContent(d.content, d.title).objects; } catch { return []; }
       });
 
-      const result = checkSiebelReady({
+      const resultValue = checkSiebelReady({
         targetObjects: parseResult.objects,
         repository: repoObjects,
         prefix,
         currentUser,
       });
-      res.json(result);
+      res.json(resultValue);
     } catch (err) { next(err); }
   });
 
@@ -507,14 +508,14 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
 
       // Type distribution
       const typeCounts: Record<string, number> = {};
-      for (const obj of allObjects) {
-        typeCounts[obj.type] = (typeCounts[obj.type] ?? 0) + 1;
+      for (const objValue of allObjects) {
+        typeCounts[objValue.type] = (typeCounts[objValue.type] ?? 0) + 1;
       }
 
       // Project distribution
       const projectCounts: Record<string, number> = {};
-      for (const obj of allObjects) {
-        const proj = obj.project ?? "unknown";
+      for (const objValue of allObjects) {
+        const proj = objValue.project ?? "unknown";
         projectCounts[proj] = (projectCounts[proj] ?? 0) + 1;
       }
 

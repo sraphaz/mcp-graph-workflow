@@ -128,6 +128,7 @@ function guessKind(name: string): string {
 
 // ── Main component ───────────────────────────────
 
+/** GitNexusTab — auto-generated description placeholder. */
 export function GitNexusTab(): React.JSX.Element {
   const fsContainerRef = useRef<HTMLDivElement>(null);
   const [gitNexusStatus, setGitNexusStatus] = useState<CodeGraphStatus | null>(null);

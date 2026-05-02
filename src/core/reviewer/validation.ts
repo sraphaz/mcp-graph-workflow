@@ -28,6 +28,7 @@ export const ReviewInputSchema = z.object({
 
 export type ValidatedReviewInput = z.infer<typeof ReviewInputSchema>;
 
+/** validateReviewInput — auto-generated description placeholder. */
 export function validateReviewInput(input: unknown): ValidatedReviewInput {
   return ReviewInputSchema.parse(input);
 }

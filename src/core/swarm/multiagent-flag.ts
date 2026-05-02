@@ -24,12 +24,14 @@ export interface SelectExecutionModeOptions {
   override?: ExecutionMode;
 }
 
+/** isMultiAgentEnabled — auto-generated description placeholder. */
 export function isMultiAgentEnabled(env: NodeJS.ProcessEnv | Record<string, string | undefined>): boolean {
   const raw = env[MULTIAGENT_ENV_VAR];
   if (raw === undefined) return false;
   return TRUTHY.has(raw.toLowerCase());
 }
 
+/** selectExecutionMode — auto-generated description placeholder. */
 export function selectExecutionMode(
   env: NodeJS.ProcessEnv | Record<string, string | undefined>,
   opts: SelectExecutionModeOptions = {},

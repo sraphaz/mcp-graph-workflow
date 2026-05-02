@@ -100,8 +100,8 @@ function buildEscriptChunks(
   const chunks: { sourceType: "siebel_escript"; sourceId: string; title: string; content: string; chunkIndex: number; metadata: Record<string, unknown> }[] = [];
   let chunkIdx = 0;
 
-  for (const obj of objects) {
-    const escriptChildren = obj.children.filter((c) => c.type === "escript");
+  for (const objValue of objects) {
+    const escriptChildren = objValue.children.filter((c) => c.type === "escript");
     for (const script of escriptChildren) {
       const sourceCode = script.properties.find((p) => p.name === "SOURCE_CODE")?.value ?? "";
       const methodName = script.properties.find((p) => p.name === "METHOD")?.value ?? script.name;
@@ -110,7 +110,7 @@ function buildEscriptChunks(
 
       const contentParts = [
         `# eScript: ${script.name}`,
-        `Parent: ${obj.type} "${obj.name}"`,
+        `Parent: ${objValue.type} "${objValue.name}"`,
         `Method: ${methodName}`,
         `Language: ${language}`,
         `Lines: ${lineCount}`,
@@ -123,12 +123,12 @@ function buildEscriptChunks(
       chunks.push({
         sourceType: "siebel_escript",
         sourceId,
-        title: `eScript: ${script.name} (${obj.name})`,
+        title: `eScript: ${script.name} (${objValue.name})`,
         content: contentParts.join("\n"),
         chunkIndex: chunkIdx++,
         metadata: {
-          parentObject: obj.name,
-          parentType: obj.type,
+          parentObject: objValue.name,
+          parentType: objValue.type,
           methodName,
           programLanguage: language,
           lineCount: Number(lineCount),

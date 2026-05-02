@@ -74,7 +74,7 @@ export function linkBySharedContext(db: Database.Database): { relationsCreated: 
       if (group.length < 2) continue;
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
-          const result = insertRelation.run(
+          const resultValue = insertRelation.run(
             generateId("krel"),
             group[i].id,
             group[j].id,
@@ -82,7 +82,7 @@ export function linkBySharedContext(db: Database.Database): { relationsCreated: 
             1.0,
             timestamp,
           );
-          if (result.changes > 0) relationsCreated++;
+          if (resultValue.changes > 0) relationsCreated++;
         }
       }
     }
@@ -106,7 +106,7 @@ export function linkBySharedContext(db: Database.Database): { relationsCreated: 
         for (let j = i + 1; j < group.length; j++) {
           // Skip if already linked by nodeId
           if (group[i].id === group[j].id) continue;
-          const result = insertRelation.run(
+          const resultValue = insertRelation.run(
             generateId("krel"),
             group[i].id,
             group[j].id,
@@ -114,7 +114,7 @@ export function linkBySharedContext(db: Database.Database): { relationsCreated: 
             0.7,
             timestamp,
           );
-          if (result.changes > 0) relationsCreated++;
+          if (resultValue.changes > 0) relationsCreated++;
         }
       }
     }

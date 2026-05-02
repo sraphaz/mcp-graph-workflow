@@ -22,6 +22,7 @@ import { calculateDoraMetrics } from "../../core/insights/dora-metrics.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerForecast — auto-generated description placeholder. */
 export function registerForecast(server: McpServer, store: SqliteStore): void {
   server.tool(
     "forecast",

@@ -40,6 +40,7 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+/** DreamHistory — auto-generated description placeholder. */
 export function DreamHistory({ cycles }: DreamHistoryProps): React.JSX.Element {
   if (cycles.length === 0) {
     return (

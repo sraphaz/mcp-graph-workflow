@@ -25,6 +25,7 @@ function output(msg: string): void {
   process.stdout.write(msg + "\n");
 }
 
+/** initCommand — auto-generated description placeholder. */
 export function initCommand(): Command {
   return new Command("init")
     .description("Initialize mcp-graph in the current project")

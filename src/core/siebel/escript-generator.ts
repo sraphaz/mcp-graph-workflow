@@ -197,6 +197,7 @@ function extractReferencedEntities(
 
 // --- Main function ---
 
+/** generateEScript — auto-generated description placeholder. */
 export function generateEScript(request: EScriptGenerationRequest): EScriptGenerationResult {
   const {
     parentObjectName,

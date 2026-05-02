@@ -104,16 +104,16 @@ export function scoreFile(
   const validation = calcValidation(input.content);
   const edges = calcEdgeCases(input.content);
 
-  const w = DEFAULT_FILE_WEIGHTS;
+  const wVar = DEFAULT_FILE_WEIGHTS;
   const hasTestScore = hasTest ? 100 : 0;
 
   const score =
-    density * 100 * w.testDensity +
-    hasTestScore * w.hasTest +
-    errH * w.errorHandling +
-    typeS * w.typeSafety +
-    validation * w.validationCoverage +
-    edges * w.edgeCaseHandling;
+    density * 100 * wVar.testDensity +
+    hasTestScore * wVar.hasTest +
+    errH * wVar.errorHandling +
+    typeS * wVar.typeSafety +
+    validation * wVar.validationCoverage +
+    edges * wVar.edgeCaseHandling;
 
   return {
     relPath: input.relPath,

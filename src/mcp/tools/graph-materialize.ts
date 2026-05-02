@@ -132,6 +132,7 @@ export function buildMaterializePlan(store: SqliteStore, input: MaterializeInput
   return { ok: true, plan: parsed.data };
 }
 
+/** registerGraphMaterialize — auto-generated description placeholder. */
 export function registerGraphMaterialize(server: McpServer, store: SqliteStore): void {
   server.tool(
     "graph_materialize",
@@ -142,13 +143,13 @@ export function registerGraphMaterialize(server: McpServer, store: SqliteStore):
       filePath: z.string().min(1).describe("Absolute or repo-relative path where the agent should Write the artifact"),
     },
     async (args) => {
-      const r = buildMaterializePlan(store, args);
+      const rVar = buildMaterializePlan(store, args);
       logger.debug("tool:graph_materialize", {
-        ok: r.ok,
+        ok: rVar.ok,
         artifact: args.artifact,
         nodeId: args.nodeId,
       });
-      return mcpText(r);
+      return mcpText(rVar);
     },
   );
 }

@@ -22,6 +22,7 @@ export interface HierarchicalLayout {
   report: Record<string, string>;
 }
 
+/** getQueenId — auto-generated description placeholder. */
 export function getQueenId(agentIds: string[]): string {
   const queen = agentIds[0];
   if (queen === undefined) {
@@ -30,22 +31,26 @@ export function getQueenId(agentIds: string[]): string {
   return queen;
 }
 
+/** getWorkerIds — auto-generated description placeholder. */
 export function getWorkerIds(agentIds: string[]): string[] {
   return agentIds.slice(1);
 }
 
+/** buildDispatchRoutes — auto-generated description placeholder. */
 export function buildDispatchRoutes(queen: string, workers: string[]): Record<string, string[]> {
   return { [queen]: [...workers] };
 }
 
+/** buildReportRoutes — auto-generated description placeholder. */
 export function buildReportRoutes(queen: string, workers: string[]): Record<string, string> {
   const routes: Record<string, string> = {};
-  for (const w of workers) {
-    routes[w] = queen;
+  for (const wVar of workers) {
+    routes[wVar] = queen;
   }
   return routes;
 }
 
+/** buildHierarchicalLayout — auto-generated description placeholder. */
 export function buildHierarchicalLayout(agentIds: string[]): HierarchicalLayout {
   const queen = getQueenId(agentIds);
   const workers = getWorkerIds(agentIds);

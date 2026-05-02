@@ -69,7 +69,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     };
 
     const response = await withRetry(async () => {
-      const res = await this.fetch(url, {
+      const resValue = await this.fetch(url, {
         method: "POST",
         headers: {
           authorization: `Bearer ${this.options.apiKey}`,
@@ -77,21 +77,21 @@ export class OpenAIAdapter implements ProviderAdapter {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const text = await readBody(res);
-        if (res.status === 401 || res.status === 403) {
-          throw new LlmAuthError("openai", `${res.status}: ${text}`);
+      if (!resValue.ok) {
+        const text = await readBody(resValue);
+        if (resValue.status === 401 || resValue.status === 403) {
+          throw new LlmAuthError("openai", `${resValue.status}: ${text}`);
         }
-        if (res.status === 429) {
-          throw new LlmRateLimitError("openai", parseRetryAfter(res.headers));
+        if (resValue.status === 429) {
+          throw new LlmRateLimitError("openai", parseRetryAfter(resValue.headers));
         }
-        const err = new LlmTransportError("openai", `${res.status}: ${text}`) as LlmTransportError & {
+        const err = new LlmTransportError("openai", `${resValue.status}: ${text}`) as LlmTransportError & {
           status: number;
         };
-        err.status = res.status;
+        err.status = resValue.status;
         throw err;
       }
-      return (await res.json()) as ChatCompletionBody;
+      return (await resValue.json()) as ChatCompletionBody;
     }, this.retry);
 
     return {
@@ -123,7 +123,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       stream: true,
     };
 
-    const res = await this.fetch(url, {
+    const resValue = await this.fetch(url, {
       method: "POST",
       headers: {
         authorization: `Bearer ${this.options.apiKey}`,
@@ -132,17 +132,17 @@ export class OpenAIAdapter implements ProviderAdapter {
       body: JSON.stringify(body),
     });
 
-    if (!res.ok) {
-      const text = await readBody(res);
-      if (res.status === 401 || res.status === 403) throw new LlmAuthError("openai", `${res.status}: ${text}`);
-      if (res.status === 429) throw new LlmRateLimitError("openai", parseRetryAfter(res.headers));
-      const err = new LlmTransportError("openai", `${res.status}: ${text}`) as LlmTransportError & { status: number };
-      err.status = res.status;
+    if (!resValue.ok) {
+      const text = await readBody(resValue);
+      if (resValue.status === 401 || resValue.status === 403) throw new LlmAuthError("openai", `${resValue.status}: ${text}`);
+      if (resValue.status === 429) throw new LlmRateLimitError("openai", parseRetryAfter(resValue.headers));
+      const err = new LlmTransportError("openai", `${resValue.status}: ${text}`) as LlmTransportError & { status: number };
+      err.status = resValue.status;
       throw err;
     }
 
-    if (!res.body) throw new OperationError("openai stream: empty response body");
-    const reader = res.body.getReader();
+    if (!resValue.body) throw new OperationError("openai stream: empty response body");
+    const reader = resValue.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
     let content = "";

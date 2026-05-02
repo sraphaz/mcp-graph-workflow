@@ -282,6 +282,7 @@ function AppContent(): React.JSX.Element {
   );
 }
 
+/** App — auto-generated description placeholder. */
 export function App(): React.JSX.Element {
   return (
     <ThemeProvider>

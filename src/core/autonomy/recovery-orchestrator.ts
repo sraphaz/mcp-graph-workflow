@@ -48,8 +48,8 @@ export class RecoveryOrchestrator {
     this.retryCounts.set(nodeId, attempt);
     let mttrMs = 0; let rolledBack = false;
     if (checkpoint) {
-      const r = rollbackToCheckpoint(this.store, checkpoint);
-      rolledBack = r.success; mttrMs = r.mttrMs;
+      const rVar = rollbackToCheckpoint(this.store, checkpoint);
+      rolledBack = rVar.success; mttrMs = rVar.mttrMs;
       this.mttrSamples.push(mttrMs); this.rollbackCount++;
     }
     const canRetry = attempt < this.config.maxRetries;

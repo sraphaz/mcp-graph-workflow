@@ -62,6 +62,7 @@ export function countExportLines(content: string): number {
   return count;
 }
 
+/** classifyDepth — auto-generated description placeholder. */
 export function classifyDepth(ratio: number): ModuleDepth {
   if (ratio < DEEP_RATIO_MAX) return "deep";
   if (ratio > SHALLOW_RATIO_MIN) return "shallow";
@@ -76,6 +77,7 @@ function suggestionFor(depth: ModuleDepth, exportLoc: number, totalLoc: number):
   return "balanced surface; track for trend";
 }
 
+/** analyzeDeepModule — auto-generated description placeholder. */
 export function analyzeDeepModule(file: string, content: string): FileMetrics {
   const totalLoc = countNonTrivialLines(content);
   const exportLoc = countExportLines(content);
@@ -97,12 +99,13 @@ export interface DepthReport {
   shallowCandidates: string[];
 }
 
+/** summarizeDepth — auto-generated description placeholder. */
 export function summarizeDepth(reports: FileMetrics[]): DepthReport {
   const byDepth: Record<ModuleDepth, number> = { deep: 0, medium: 0, shallow: 0 };
   const shallowCandidates: string[] = [];
-  for (const r of reports) {
-    byDepth[r.depth]++;
-    if (r.depth === "shallow" && r.totalLoc >= 10) shallowCandidates.push(r.file);
+  for (const rVar of reports) {
+    byDepth[rVar.depth]++;
+    if (rVar.depth === "shallow" && rVar.totalLoc >= 10) shallowCandidates.push(rVar.file);
   }
   return { files: reports, byDepth, shallowCandidates };
 }

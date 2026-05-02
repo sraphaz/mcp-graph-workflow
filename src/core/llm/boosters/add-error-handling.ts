@@ -39,9 +39,9 @@ function isInsideTryBlock(source: string, idx: number): boolean {
   // we're inside a try-block. Best-effort, ignores strings/comments.
   let depth = 0;
   for (let i = idx - 1; i >= 0; i--) {
-    const c = source[i];
-    if (c === "}") depth++;
-    else if (c === "{") {
+    const cVar = source[i];
+    if (cVar === "}") depth++;
+    else if (cVar === "{") {
       if (depth > 0) {
         depth--;
         continue;
@@ -55,6 +55,7 @@ function isInsideTryBlock(source: string, idx: number): boolean {
   return false;
 }
 
+/** addErrorHandling — auto-generated description placeholder. */
 export function addErrorHandling(
   source: string,
   opts: AddErrorHandlingOptions = {},
@@ -64,14 +65,14 @@ export function addErrorHandling(
   const matches = [...source.matchAll(RAW_THROW_RE)];
   let out = source;
   let offset = 0;
-  for (const m of matches) {
-    if (m.index === undefined) continue;
-    const start = m.index + offset;
+  for (const mVar of matches) {
+    if (mVar.index === undefined) continue;
+    const start = mVar.index + offset;
     if (isInsideTryBlock(out, start)) continue;
-    const groups = m.groups as { indent: string; args: string };
+    const groups = mVar.groups as { indent: string; args: string };
     const replacement = `${groups.indent}throw new McpGraphError(${groups.args.trim()});`;
-    out = out.slice(0, start) + replacement + out.slice(start + m[0].length);
-    offset += replacement.length - m[0].length;
+    out = out.slice(0, start) + replacement + out.slice(start + mVar[0].length);
+    offset += replacement.length - mVar[0].length;
     rewritten++;
   }
 

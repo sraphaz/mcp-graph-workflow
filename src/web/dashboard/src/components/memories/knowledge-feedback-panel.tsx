@@ -25,6 +25,7 @@ interface KnowledgeDoc {
   qualityScore?: number;
 }
 
+/** KnowledgeFeedbackPanel — auto-generated description placeholder. */
 export function KnowledgeFeedbackPanel(): React.JSX.Element {
   const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
   const [loading, setLoading] = useState(true);

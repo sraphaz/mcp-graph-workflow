@@ -25,6 +25,7 @@ interface ImportModalProps {
   onImported: () => void;
 }
 
+/** ImportModal — auto-generated description placeholder. */
 export function ImportModal({ open, onClose, onImported }: ImportModalProps): React.JSX.Element | null {
   const [file, setFile] = useState<File | null>(null);
   const [force, setForce] = useState(false);

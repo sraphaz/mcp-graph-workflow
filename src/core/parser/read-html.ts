@@ -37,36 +37,36 @@ export async function readHtmlContent(html: string): Promise<string> {
 
   logger.info("Parsing HTML content", { sizeChars: html.length });
 
-  const $ = load(html);
+  const $Var = load(html);
 
   // Remove non-content elements
-  $("script, style, nav, footer, header, noscript, iframe").remove();
+  $Var("script, style, nav, footer, header, noscript, iframe").remove();
 
   // Convert HTML headings to markdown headings
   for (const [tag, prefix] of Object.entries(HEADING_MAP)) {
-    $(tag).each(function (this: unknown) {
-      const el = $(this as string);
+    $Var(tag).each(function (this: unknown) {
+      const el = $Var(this as string);
       const text = el.text().trim();
       el.replaceWith(`\n\n${prefix} ${text}\n\n`);
     });
   }
 
   // Convert list items to markdown bullets
-  $("li").each(function (this: unknown) {
-    const el = $(this as string);
+  $Var("li").each(function (this: unknown) {
+    const el = $Var(this as string);
     const text = el.text().trim();
     el.replaceWith(`\n- ${text}`);
   });
 
   // Add line breaks for block elements
   const blockElements = "p, div, section, article, blockquote, pre, br, tr";
-  $(blockElements).each(function (this: unknown) {
-    $(this as string).prepend("\n");
-    $(this as string).append("\n");
+  $Var(blockElements).each(function (this: unknown) {
+    $Var(this as string).prepend("\n");
+    $Var(this as string).append("\n");
   });
 
   // Extract text from body (or whole doc if no body)
-  const rawText = $("body").length ? $("body").text() : $.root().text();
+  const rawText = $Var("body").length ? $Var("body").text() : $Var.root().text();
 
   const text = rawText
     .replace(/[ \t]+/g, " ")

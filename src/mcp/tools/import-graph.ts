@@ -26,6 +26,7 @@ import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { indexNodeAsKnowledge } from "../../core/rag/node-indexer.js";
 
+/** registerImportGraph — auto-generated description placeholder. */
 export function registerImportGraph(server: McpServer, store: SqliteStore): void {
   server.tool(
     "import_graph",
@@ -84,12 +85,12 @@ export function registerImportGraph(server: McpServer, store: SqliteStore): void
 
       // 4. Merge (wrapped in transaction for atomicity)
       try {
-        const result = store.getDb().transaction(() => {
+        const resultValue = store.getDb().transaction(() => {
           return mergeGraph(store, parsed, { dryRun: dry_run });
         })();
 
         // Index only newly inserted nodes into Knowledge Store + KG (skip on dry_run)
-        if (!dry_run && result.nodesInserted > 0) {
+        if (!dry_run && resultValue.nodesInserted > 0) {
           try {
             for (const node of parsed.nodes) {
               // Only index nodes that were actually inserted (not pre-existing)
@@ -104,27 +105,27 @@ export function registerImportGraph(server: McpServer, store: SqliteStore): void
         }
 
         logger.info("tool:import_graph:ok", {
-          sourceProject: result.sourceProject,
-          nodesInserted: result.nodesInserted,
-          nodesSkipped: result.nodesSkipped,
-          edgesInserted: result.edgesInserted,
-          edgesSkipped: result.edgesSkipped,
-          edgesOrphaned: result.edgesOrphaned,
+          sourceProject: resultValue.sourceProject,
+          nodesInserted: resultValue.nodesInserted,
+          nodesSkipped: resultValue.nodesSkipped,
+          edgesInserted: resultValue.edgesInserted,
+          edgesSkipped: resultValue.edgesSkipped,
+          edgesOrphaned: resultValue.edgesOrphaned,
           dryRun: dry_run,
         });
 
         return mcpText({
           ok: true,
           dryRun: dry_run,
-          sourceProject: result.sourceProject,
-          nodesInserted: result.nodesInserted,
-          nodesSkipped: result.nodesSkipped,
-          edgesInserted: result.edgesInserted,
-          edgesSkipped: result.edgesSkipped,
-          edgesOrphaned: result.edgesOrphaned,
+          sourceProject: resultValue.sourceProject,
+          nodesInserted: resultValue.nodesInserted,
+          nodesSkipped: resultValue.nodesSkipped,
+          edgesInserted: resultValue.edgesInserted,
+          edgesSkipped: resultValue.edgesSkipped,
+          edgesOrphaned: resultValue.edgesOrphaned,
           summary: dry_run
-            ? `[DRY RUN] Would insert ${result.nodesInserted} nodes and ${result.edgesInserted} edges from "${result.sourceProject}". ${result.nodesSkipped} nodes and ${result.edgesSkipped} edges already exist locally.`
-            : `Merged ${result.nodesInserted} nodes and ${result.edgesInserted} edges from "${result.sourceProject}". ${result.nodesSkipped} nodes and ${result.edgesSkipped} edges already existed locally (kept local version).`,
+            ? `[DRY RUN] Would insert ${resultValue.nodesInserted} nodes and ${resultValue.edgesInserted} edges from "${resultValue.sourceProject}". ${resultValue.nodesSkipped} nodes and ${resultValue.edgesSkipped} edges already exist locally.`
+            : `Merged ${resultValue.nodesInserted} nodes and ${resultValue.edgesInserted} edges from "${resultValue.sourceProject}". ${resultValue.nodesSkipped} nodes and ${resultValue.edgesSkipped} edges already existed locally (kept local version).`,
         });
       } catch (err) {
         return mcpError(err instanceof Error ? err : String(err));

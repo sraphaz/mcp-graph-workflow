@@ -34,10 +34,12 @@ export const MermaidExportInputSchema = z.object({
 export type ValidatedHealthScanInput = z.infer<typeof HealthScanInputSchema>;
 export type ValidatedMermaidExportInput = z.infer<typeof MermaidExportInputSchema>;
 
+/** validateHealthScanInput — auto-generated description placeholder. */
 export function validateHealthScanInput(input: unknown): ValidatedHealthScanInput {
   return HealthScanInputSchema.parse(input);
 }
 
+/** validateMermaidExportInput — auto-generated description placeholder. */
 export function validateMermaidExportInput(input: unknown): ValidatedMermaidExportInput {
   return MermaidExportInputSchema.parse(input);
 }

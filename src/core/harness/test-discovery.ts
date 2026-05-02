@@ -37,6 +37,7 @@ const STOPWORDS = new Set([
   "use", "new", "old", "this", "that", "should", "will", "can",
 ]);
 
+/** discoverTestFiles — auto-generated description placeholder. */
 export function discoverTestFiles(nodeTitle: string, basePath: string): string[] {
   const testsDir = join(basePath, "src", "tests");
   if (!existsSync(testsDir)) {

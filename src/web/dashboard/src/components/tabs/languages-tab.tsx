@@ -152,6 +152,7 @@ function TranslationFlowGraph({ jobs }: TranslationFlowGraphProps): React.JSX.El
   );
 }
 
+/** LanguagesTab — auto-generated description placeholder. */
 export function LanguagesTab(): React.JSX.Element {
   const [subTab, setSubTab] = useState<SubTab>("convert");
   const [translation, translationActions] = useTranslation();

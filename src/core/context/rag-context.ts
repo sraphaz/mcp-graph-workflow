@@ -220,10 +220,10 @@ export function ragBuildContext(
 
   // If the base payload already exceeds budget, cap it and skip expansion
   if (tokensUsed < tokenBudget) {
-    for (const result of searchResults) {
+    for (const resultValue of searchResults) {
       if (tokensUsed >= tokenBudget) break;
 
-      const ctx = buildTaskContext(store, result.node.id, snapshot);
+      const ctx = buildTaskContext(store, resultValue.node.id, snapshot);
       if (!ctx) continue;
 
       const ctxTokens = ctx.metrics.estimatedTokens;
@@ -248,7 +248,7 @@ export function ragBuildContext(
     `RAG context built: ${relevantNodes.length} nodes, ${knowledgeResults.length} knowledge, ${expandedContexts.length} expanded, ${tokensUsed}/${tokenBudget} tokens`,
   );
 
-  const result: RagContext = {
+  const resultValue: RagContext = {
     query,
     relevantNodes,
     knowledgeResults,
@@ -266,7 +266,7 @@ export function ragBuildContext(
   };
 
   // Cache result for subsequent identical queries
-  ragContextCache.set(cacheKey, result);
+  ragContextCache.set(cacheKey, resultValue);
 
-  return result;
+  return resultValue;
 }

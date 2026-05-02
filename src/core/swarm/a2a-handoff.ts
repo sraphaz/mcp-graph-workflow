@@ -31,6 +31,7 @@ export interface A2AHandoffResult {
   messageId: string | null;
 }
 
+/** createA2AHandoff — auto-generated description placeholder. */
 export function createA2AHandoff(opts: CreateA2AHandoffOptions) {
   return async <T = unknown>(input: A2AHandoffInput<T>): Promise<A2AHandoffResult> => {
     if (!opts.enabled) {

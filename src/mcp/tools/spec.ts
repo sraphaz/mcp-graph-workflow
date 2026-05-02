@@ -40,6 +40,7 @@ export function handleSpecListTemplates(): {
   return { ok: true, templates: listSpecTemplates() };
 }
 
+/** handleSpecGenerate — auto-generated description placeholder. */
 export function handleSpecGenerate(
   store: SqliteStore,
   params: { templateName: string; variables: Record<string, unknown>; constitutionPrinciples?: Array<{ id: string; title: string; description: string }> },
@@ -81,6 +82,7 @@ export function handleSpecGenerate(
   return { ok: true, markdown, knowledgeIndexed };
 }
 
+/** handleSpecValidate — auto-generated description placeholder. */
 export function handleSpecValidate(
   params: { content: string; templateName: string },
 ): { ok: boolean; valid: boolean; missing: string[]; warnings: string[]; error?: string } {
@@ -89,13 +91,13 @@ export function handleSpecValidate(
     return { ok: false, valid: false, missing: [], warnings: [], error: `Template not found: "${params.templateName}"` };
   }
 
-  const result = validateSpecDocument(params.content, template);
+  const resultValue = validateSpecDocument(params.content, template);
 
   return {
     ok: true,
-    valid: result.valid,
-    missing: result.missing,
-    warnings: result.warnings,
+    valid: resultValue.valid,
+    missing: resultValue.missing,
+    warnings: resultValue.warnings,
   };
 }
 

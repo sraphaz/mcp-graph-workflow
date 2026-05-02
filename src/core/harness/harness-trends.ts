@@ -66,22 +66,22 @@ export function getTrends(db: Database.Database, projectId: string = "proj_local
   }
 
   const scores = rows.map((r) => r.score);
-  const n = scores.length;
+  const nVar = scores.length;
   const min = Math.min(...scores);
   const max = Math.max(...scores);
-  const avg = Math.round((scores.reduce((a, b) => a + b, 0) / n) * 10) / 10;
+  const avg = Math.round((scores.reduce((a, b) => a + b, 0) / nVar) * 10) / 10;
 
   // Standard deviation
-  const variance = scores.reduce((sum, s) => sum + (s - avg) ** 2, 0) / n;
+  const variance = scores.reduce((sum, s) => sum + (s - avg) ** 2, 0) / nVar;
   const stddev = Math.round(Math.sqrt(variance) * 10) / 10;
 
   // Linear regression slope (least squares)
   // x = index (0, 1, 2, ...), y = score
-  const xMean = (n - 1) / 2;
-  const yMean = scores.reduce((a, b) => a + b, 0) / n;
+  const xMean = (nVar - 1) / 2;
+  const yMean = scores.reduce((a, b) => a + b, 0) / nVar;
   let numerator = 0;
   let denominator = 0;
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < nVar; i++) {
     numerator += (i - xMean) * (scores[i] - yMean);
     denominator += (i - xMean) ** 2;
   }
@@ -92,7 +92,7 @@ export function getTrends(db: Database.Database, projectId: string = "proj_local
   else if (slope < -0.5) direction = "declining";
   else direction = "stable";
 
-  return { direction, slope, min, max, avg, stddev, dataPoints: n };
+  return { direction, slope, min, max, avg, stddev, dataPoints: nVar };
 }
 
 /**

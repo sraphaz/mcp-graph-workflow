@@ -148,24 +148,24 @@ export function compressWithFocus(
   if (allZeroScores) {
     // Try structured compression first, fall back to simple truncation
     const compressed = compressText(text, "summary", effectiveMax);
-    let result = compressed.compressed;
-    let compressedTokens = estimateTokens(result);
+    let resultValue = compressed.compressed;
+    let compressedTokens = estimateTokens(resultValue);
     if (compressedTokens === 0) {
       // Truncate to fit budget by taking first N words
       const words = text.split(/\s+/);
       const truncated: string[] = [];
       let toks = 0;
-      for (const w of words) {
-        const wToks = estimateTokens(w + " ");
+      for (const wVar of words) {
+        const wToks = estimateTokens(wVar + " ");
         if (toks + wToks > effectiveMax) break;
-        truncated.push(w);
+        truncated.push(wVar);
         toks += wToks;
       }
-      result = truncated.join(" ");
-      compressedTokens = estimateTokens(result);
+      resultValue = truncated.join(" ");
+      compressedTokens = estimateTokens(resultValue);
     }
     return {
-      compressed: result,
+      compressed: resultValue,
       stats: { inputTokens, outputTokens: compressedTokens, sectionsTotal: sections.length, sectionsPreserved: 0, sectionsCompressed: sections.length, reductionPercent: inputTokens > 0 ? Math.round((1 - compressedTokens / inputTokens) * 100) : 0 },
       focusRelevanceScore: 0,
       pressureLevel,

@@ -66,6 +66,7 @@ function computeConfidence(reasons: string[]): number {
   return Math.min(0.9, Math.round(score * 100) / 100);
 }
 
+/** proposeSkillFromTrajectory — auto-generated description placeholder. */
 export function proposeSkillFromTrajectory(input: ProposeSkillInput): SkillProposal {
   const domain = inferDomain(input.taskTitle, input.taskDescription);
   const topic = inferTopic(input.taskTitle);

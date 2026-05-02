@@ -31,13 +31,15 @@ export interface SufficiencyResult {
   gap: string[];
 }
 
+/** getSufficiencyThreshold — auto-generated description placeholder. */
 export function getSufficiencyThreshold(env: NodeJS.ProcessEnv = process.env): number {
-  const v = env.SUFFICIENCY_THRESHOLD ?? env.MCP_GRAPH_SUFFICIENCY_THRESHOLD;
-  if (!v) return SUFFICIENCY_THRESHOLD;
-  const n = Number(v);
-  return Number.isFinite(n) && n >= 0 && n <= 1 ? n : SUFFICIENCY_THRESHOLD;
+  const vVar = env.SUFFICIENCY_THRESHOLD ?? env.MCP_GRAPH_SUFFICIENCY_THRESHOLD;
+  if (!vVar) return SUFFICIENCY_THRESHOLD;
+  const nVar = Number(vVar);
+  return Number.isFinite(nVar) && nVar >= 0 && nVar <= 1 ? nVar : SUFFICIENCY_THRESHOLD;
 }
 
+/** computeSufficiency — auto-generated description placeholder. */
 export function computeSufficiency(
   results: RagResult[],
   opts: SufficiencyCheckOptions = {},
@@ -70,6 +72,7 @@ export function computeSufficiency(
   };
 }
 
+/** isAutoDocSyncEnabled — auto-generated description placeholder. */
 export function isAutoDocSyncEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_AUTO_DOC_SYNC === "true";
 }

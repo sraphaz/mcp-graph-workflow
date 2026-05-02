@@ -52,6 +52,7 @@ const BoosterRunBody = z.object({
   source: z.string(),
 });
 
+/** createEconomyRouter — auto-generated description placeholder. */
 export function createEconomyRouter(deps: EconomyRouterDeps): Router {
   const router = Router();
 
@@ -93,8 +94,8 @@ export function createEconomyRouter(deps: EconomyRouterDeps): Router {
         .json({ error: `unknown booster '${parsed.data.boosterName}'`, known: BOOSTER_NAMES });
       return;
     }
-    const result = fn(parsed.data.source);
-    res.json({ booster: parsed.data.boosterName, output: result.output });
+    const resultValue = fn(parsed.data.source);
+    res.json({ booster: parsed.data.boosterName, output: resultValue.output });
   });
 
   return router;

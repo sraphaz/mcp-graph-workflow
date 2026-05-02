@@ -35,6 +35,7 @@ export interface DualPathHandoffResult {
   fallbackReason?: string;
 }
 
+/** createDualPathHandoff — auto-generated description placeholder. */
 export function createDualPathHandoff(opts: DualPathHandoffOptions) {
   return async <T = unknown>(input: A2AHandoffInput<T>): Promise<DualPathHandoffResult> => {
     let a2aResult: A2AHandoffResult | null = null;

@@ -46,6 +46,7 @@
     "spdx:apply": "node scripts/license/headers.mjs --apply",
     "setup:mcp": "bash scripts/setup-mcp.sh",
     "harness:scan": "tsx scripts/harness-scan-run.js",
+    "harness:provenance:backfill": "tsx scripts/provenance-backfill-run.ts",
     "benchmark:daemon-rss": "node scripts/benchmark-daemon-rss.mjs",
     "prepare": "node scripts/prepare-husky.mjs"
   },
@@ -123,6 +124,7 @@
     "tree-sitter-ruby": "^0.23.1",
     "tree-sitter-rust": "^0.24.0",
     "tree-sitter-swift": "^0.7.1",
+    "ts-morph": "^28.0.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript-eslint": "^8.58.1",

@@ -49,6 +49,7 @@ function formatPatternLabel(patternType: string): string {
   return PATTERN_LABELS[patternType] ?? patternType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** IssuePatternTracker — auto-generated description placeholder. */
 export function IssuePatternTracker(): React.JSX.Element {
   const [data, setData] = useState<PatternsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

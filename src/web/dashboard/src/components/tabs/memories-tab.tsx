@@ -27,6 +27,7 @@ type MemoriesSubTab = "memories" | "knowledge" | "export";
 
 // ── Main component ───────────────────────────────
 
+/** MemoriesTab — auto-generated description placeholder. */
 export function MemoriesTab(): React.JSX.Element {
   const [subTab, setSubTab] = useState<MemoriesSubTab>("memories");
 

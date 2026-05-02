@@ -23,8 +23,8 @@ export interface EmbeddingCosineInput {
 
 function dot(a: number[], b: number[]): number {
   let sum = 0;
-  const n = Math.min(a.length, b.length);
-  for (let i = 0; i < n; i++) {
+  const nVar = Math.min(a.length, b.length);
+  for (let i = 0; i < nVar; i++) {
     const ai = a[i];
     const bi = b[i];
     if (ai === undefined || bi === undefined) break;
@@ -35,7 +35,7 @@ function dot(a: number[], b: number[]): number {
 
 function l2(v: number[]): number {
   let sum = 0;
-  for (const x of v) sum += x * x;
+  for (const xVar of v) sum += xVar * xVar;
   return Math.sqrt(sum);
 }
 

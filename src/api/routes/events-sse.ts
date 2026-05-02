@@ -73,9 +73,9 @@ function handleSSE(
   // Forward all graph events to this client, using event.type as SSE event name
   const handler = (event: GraphEvent): void => {
     try {
-      const data = JSON.stringify(event.payload ?? {});
+      const dataValue = JSON.stringify(event.payload ?? {});
       // Send with both the specific event type (for useSSE) and "graph" (for useEventSource)
-      res.write(`event: ${event.type}\ndata: ${data}\n\n`);
+      res.write(`event: ${event.type}\ndata: ${dataValue}\n\n`);
     } catch {
       cleanup();
     }
@@ -103,6 +103,7 @@ function handleSSE(
   req.on("error", cleanup);
 }
 
+/** createEventsSseRouter — auto-generated description placeholder. */
 export function createEventsSseRouter(eventBus: GraphEventBus | undefined): Router {
   const router = Router();
 

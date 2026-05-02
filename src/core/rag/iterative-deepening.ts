@@ -69,9 +69,9 @@ export interface DocResult {
 /** Merge two RAG result sets, deduping by docId, keeping the higher score. */
 export function mergeResults<T extends DocResult>(a: T[], b: T[]): T[] {
   const byId = new Map<string, T>();
-  for (const r of [...a, ...b]) {
-    const prev = byId.get(r.docId);
-    if (!prev || r.score > prev.score) byId.set(r.docId, r);
+  for (const rVar of [...a, ...b]) {
+    const prev = byId.get(rVar.docId);
+    if (!prev || rVar.score > prev.score) byId.set(rVar.docId, rVar);
   }
   return [...byId.values()].sort((x, y) => y.score - x.score);
 }

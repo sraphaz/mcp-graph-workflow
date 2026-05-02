@@ -37,13 +37,13 @@ function isValidLuhn(digits: string): boolean {
   for (let i = digits.length - 1; i >= 0; i--) {
     const ch = digits[i];
     if (ch === undefined) return false;
-    let n = Number.parseInt(ch, 10);
-    if (Number.isNaN(n)) return false;
+    let nVar = Number.parseInt(ch, 10);
+    if (Number.isNaN(nVar)) return false;
     if (alternate) {
-      n *= 2;
-      if (n > 9) n -= 9;
+      nVar *= 2;
+      if (nVar > 9) nVar -= 9;
     }
-    sum += n;
+    sum += nVar;
     alternate = !alternate;
   }
   return sum % 10 === 0;
@@ -53,14 +53,15 @@ function findAll(content: string, re: RegExp, kind: PiiKind, validator?: (m: str
   const hits: PiiHit[] = [];
   // Reset regex lastIndex (global flag persists state across calls).
   re.lastIndex = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(content)) !== null) {
-    if (validator && !validator(m[0])) continue;
-    hits.push({ kind, start: m.index, end: m.index + m[0].length, match: m[0] });
+  let mVar: RegExpExecArray | null;
+  while ((mVar = re.exec(content)) !== null) {
+    if (validator && !validator(mVar[0])) continue;
+    hits.push({ kind, start: mVar.index, end: mVar.index + mVar[0].length, match: mVar[0] });
   }
   return hits;
 }
 
+/** scanForPii — auto-generated description placeholder. */
 export function scanForPii(content: string): PiiHit[] {
   if (!content || content.length === 0) return [];
   const hits: PiiHit[] = [];
@@ -75,6 +76,7 @@ export function scanForPii(content: string): PiiHit[] {
   return hits;
 }
 
+/** hasPii — auto-generated description placeholder. */
 export function hasPii(content: string): boolean {
   return scanForPii(content).length > 0;
 }
@@ -86,6 +88,7 @@ const REDACTION_LABEL: Record<PiiKind, string> = {
   api_token: "[REDACTED-TOKEN]",
 };
 
+/** redactPii — auto-generated description placeholder. */
 export function redactPii(content: string): string {
   const hits = scanForPii(content);
   if (hits.length === 0) return content;
@@ -93,8 +96,8 @@ export function redactPii(content: string): string {
   // Walk right-to-left so earlier offsets remain valid as we splice.
   const sorted = [...hits].sort((a, b) => b.start - a.start);
   let out = content;
-  for (const h of sorted) {
-    out = out.slice(0, h.start) + REDACTION_LABEL[h.kind] + out.slice(h.end);
+  for (const hVar of sorted) {
+    out = out.slice(0, hVar.start) + REDACTION_LABEL[hVar.kind] + out.slice(hVar.end);
   }
   return out;
 }

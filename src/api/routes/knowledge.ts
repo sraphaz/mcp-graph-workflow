@@ -45,6 +45,7 @@ const SearchSchema = z.object({
   limit: z.number().int().positive().optional(),
 });
 
+/** createKnowledgeRouter — auto-generated description placeholder. */
 export function createKnowledgeRouter(storeRef: StoreRef): Router {
   const router = Router();
 
@@ -212,7 +213,7 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
       const includeMemories = req.body?.includeMemories !== false;
       const includeTranslationMemory = req.body?.includeTranslationMemory !== false;
 
-      const result = await exportKnowledge(db, basePath, {
+      const resultValue = await exportKnowledge(db, basePath, {
         sources,
         minQuality,
         includeMemories,
@@ -220,8 +221,8 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
         includeRelations: true,
       });
 
-      logger.info("knowledge:export:ok", { ...result.stats });
-      res.json({ ok: true, package: result.package, stats: result.stats });
+      logger.info("knowledge:export:ok", { ...resultValue.stats });
+      res.json({ ok: true, package: resultValue.package, stats: resultValue.stats });
     } catch (err) {
       next(err);
     }
@@ -241,10 +242,10 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
 
       const db = storeRef.current.getDb();
       const basePath = process.cwd();
-      const result = await importKnowledge(db, basePath, parsed.data);
+      const resultValue = await importKnowledge(db, basePath, parsed.data);
 
-      logger.info("knowledge:import:ok", { documentsImported: result.documentsImported });
-      res.json({ ok: true, result });
+      logger.info("knowledge:import:ok", { documentsImported: resultValue.documentsImported });
+      res.json({ ok: true, resultValue });
     } catch (err) {
       next(err);
     }

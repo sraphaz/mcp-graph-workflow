@@ -34,6 +34,7 @@ interface ViolationsData {
   total: number;
 }
 
+/** ContractViolationsPanel — auto-generated description placeholder. */
 export function ContractViolationsPanel(): React.JSX.Element {
   const [data, setData] = useState<ViolationsData | null>(null);
   const [loading, setLoading] = useState(true);

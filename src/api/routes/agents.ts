@@ -23,6 +23,7 @@ import { changedFiles, diffForFile } from "../../core/autonomy/git-ops.js";
 
 const DIFF_SNIPPET_MAX_BYTES = 8 * 1024;
 
+/** createAgentsRouter — auto-generated description placeholder. */
 export function createAgentsRouter(storeRef: StoreRef): Router {
   const router = Router();
 

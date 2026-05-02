@@ -43,9 +43,9 @@ export function createMcpContext7Fetcher(options?: Context7FetcherOptions): Cont
 
       // Try calling the MCP server via fetch (Context7 exposes HTTP)
       try {
-        const result = await callContext7("resolve-library-id", { libraryName: name }, timeout);
-        if (result?.libraryId) {
-          return result.libraryId as string;
+        const resultValue = await callContext7("resolve-library-id", { libraryName: name }, timeout);
+        if (resultValue?.libraryId) {
+          return resultValue.libraryId as string;
         }
       } catch (err) {
         logger.debug("Context7 MCP call failed, using fallback", {
@@ -61,9 +61,9 @@ export function createMcpContext7Fetcher(options?: Context7FetcherOptions): Cont
       logger.info("Context7: querying docs", { libId });
 
       try {
-        const result = await callContext7("query-docs", { libraryId: libId }, timeout);
-        if (result?.documentation) {
-          return result.documentation as string;
+        const resultValue = await callContext7("query-docs", { libraryId: libId }, timeout);
+        if (resultValue?.documentation) {
+          return resultValue.documentation as string;
         }
       } catch (err) {
         logger.debug("Context7 query-docs failed", {
@@ -99,19 +99,19 @@ async function callContext7(
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const res = await fetch(`${context7Url}/${method}`, {
+    const resValue = await fetch(`${context7Url}/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
       signal: controller.signal,
     });
 
-    if (!res.ok) {
-      logger.debug("Context7 returned non-OK status", { status: res.status });
+    if (!resValue.ok) {
+      logger.debug("Context7 returned non-OK status", { status: resValue.status });
       return null;
     }
 
-    return (await res.json()) as Record<string, unknown>;
+    return (await resValue.json()) as Record<string, unknown>;
   } catch (err) {
     if ((err as Error).name === "AbortError") {
       logger.warn("Context7 call timed out", { method, timeout });

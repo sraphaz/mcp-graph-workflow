@@ -11,14 +11,15 @@
 
 const DEFAULT_TIMEOUT_MS = 300_000; // 5 min
 
+/** getApprovalTimeoutMs — auto-generated description placeholder. */
 export function getApprovalTimeoutMs(
   env: NodeJS.ProcessEnv | Record<string, string | undefined>,
 ): number {
   const raw = env.MCP_GRAPH_APPROVAL_TIMEOUT_MS;
   if (!raw) return DEFAULT_TIMEOUT_MS;
-  const n = Number.parseInt(raw, 10);
-  if (!Number.isInteger(n) || n < 1) return DEFAULT_TIMEOUT_MS;
-  return n;
+  const nVar = Number.parseInt(raw, 10);
+  if (!Number.isInteger(nVar) || nVar < 1) return DEFAULT_TIMEOUT_MS;
+  return nVar;
 }
 
 export type TimeoutCallback = (approvalId: string, context: Record<string, unknown>) => void;
@@ -61,9 +62,9 @@ export class ApprovalTimeoutTracker {
   }
 
   private cancelTimer(approvalId: string): void {
-    const t = this.timers.get(approvalId);
-    if (t) {
-      clearTimeout(t);
+    const tVar = this.timers.get(approvalId);
+    if (tVar) {
+      clearTimeout(tVar);
       this.timers.delete(approvalId);
     }
   }

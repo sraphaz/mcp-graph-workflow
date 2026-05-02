@@ -51,12 +51,12 @@ function aggregate(records: PerfRecord[]): Omit<AgentStats, "agentId"> {
   let sumCycle = 0;
   let lastSeen = 0;
   const cycles: number[] = [];
-  for (const r of records) {
-    sumDelta += r.harnessDelta;
-    if (r.acPassed) acHits++;
-    sumCycle += r.cycleTimeMs;
-    cycles.push(r.cycleTimeMs);
-    if (r.ts > lastSeen) lastSeen = r.ts;
+  for (const rVar of records) {
+    sumDelta += rVar.harnessDelta;
+    if (rVar.acPassed) acHits++;
+    sumCycle += rVar.cycleTimeMs;
+    cycles.push(rVar.cycleTimeMs);
+    if (rVar.ts > lastSeen) lastSeen = rVar.ts;
   }
   cycles.sort((a, b) => a - b);
   return {
@@ -76,10 +76,10 @@ function aggregate(records: PerfRecord[]): Omit<AgentStats, "agentId"> {
  */
 export function aggregatePerformance(records: PerfRecord[]): AgentStats[] {
   const byAgent = new Map<string, PerfRecord[]>();
-  for (const r of records) {
-    const arr = byAgent.get(r.agentId);
-    if (arr) arr.push(r);
-    else byAgent.set(r.agentId, [r]);
+  for (const rVar of records) {
+    const arr = byAgent.get(rVar.agentId);
+    if (arr) arr.push(rVar);
+    else byAgent.set(rVar.agentId, [rVar]);
   }
   const out: AgentStats[] = [];
   for (const [agentId, recs] of byAgent) {
@@ -96,10 +96,10 @@ export function recordsForAgent(records: PerfRecord[], agentId: string): PerfRec
 /** Trim: keep the most recent N records per agent. */
 export function trimToRecent(records: PerfRecord[], maxPerAgent: number): PerfRecord[] {
   const byAgent = new Map<string, PerfRecord[]>();
-  for (const r of records) {
-    const arr = byAgent.get(r.agentId);
-    if (arr) arr.push(r);
-    else byAgent.set(r.agentId, [r]);
+  for (const rVar of records) {
+    const arr = byAgent.get(rVar.agentId);
+    if (arr) arr.push(rVar);
+    else byAgent.set(rVar.agentId, [rVar]);
   }
   const out: PerfRecord[] = [];
   for (const [, recs] of byAgent) {

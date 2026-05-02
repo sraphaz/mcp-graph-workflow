@@ -99,32 +99,32 @@ export function convertSifToGraph(parseResult: SiebelSifParseResult): SifToGraph
   nodes.push(epic);
 
   // Convert each Siebel object to a graph node
-  for (const obj of objects) {
-    const nodeType = getGraphNodeType(obj.type);
+  for (const objValue of objects) {
+    const nodeType = getGraphNodeType(objValue.type);
     const nodeId = generateId("siebel");
 
-    siebelToNodeId.set(`${obj.type}:${obj.name}`, nodeId);
+    siebelToNodeId.set(`${objValue.type}:${objValue.name}`, nodeId);
 
-    const description = buildDescription(obj);
+    const description = buildDescription(objValue);
 
     const node: GraphNode = {
       id: nodeId,
       type: nodeType,
-      title: obj.name,
+      title: objValue.name,
       description,
       status: "backlog",
-      priority: getPriority(obj.type),
-      tags: ["siebel", obj.type],
+      priority: getPriority(objValue.type),
+      tags: ["siebel", objValue.type],
       parentId: epicId,
       sourceRef: { file: metadata.fileName },
       metadata: {
-        siebelType: obj.type,
-        siebelProject: obj.project,
-        siebelProperties: obj.properties.reduce(
+        siebelType: objValue.type,
+        siebelProject: objValue.project,
+        siebelProperties: objValue.properties.reduce(
           (acc, p) => ({ ...acc, [p.name]: p.value }),
           {} as Record<string, string>,
         ),
-        childCount: obj.children.length,
+        childCount: objValue.children.length,
         origin: "sif_import",
       },
       createdAt: timestamp,

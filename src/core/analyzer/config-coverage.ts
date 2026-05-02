@@ -34,6 +34,7 @@ export interface ConfigCoverageReport {
   coveragePercent: number;
 }
 
+/** analyzeConfigCoverage — auto-generated description placeholder. */
 export function analyzeConfigCoverage(doc: GraphDocument): ConfigCoverageReport {
   const configNodes = doc.nodes.filter((n) => n.type === "config_schema");
   const configIds = new Set(configNodes.map((n) => n.id));

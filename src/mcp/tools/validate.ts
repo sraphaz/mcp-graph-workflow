@@ -33,6 +33,7 @@ import { validateAcQuality } from "../../core/analyzer/ac-validator.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
+/** registerValidate — auto-generated description placeholder. */
 export function registerValidate(server: McpServer, store: SqliteStore): void {
   server.tool(
     "validate",
@@ -56,33 +57,33 @@ export function registerValidate(server: McpServer, store: SqliteStore): void {
           return mcpError("url is required for task action");
         }
 
-        const result = await runValidation(url, { compareUrl, selector });
+        const resultValue = await runValidation(url, { compareUrl, selector });
 
         // Index captured content into knowledge store
         const knowledgeStore = new KnowledgeStore(store.getDb());
-        indexCapture(knowledgeStore, result.primary);
-        if (result.comparison) {
-          indexCapture(knowledgeStore, result.comparison);
+        indexCapture(knowledgeStore, resultValue.primary);
+        if (resultValue.comparison) {
+          indexCapture(knowledgeStore, resultValue.comparison);
         }
         indexEntitiesForSource(store.getDb(), "web_capture");
 
         const response: Record<string, unknown> = {
           ok: true,
           url,
-          wordCount: result.primary.wordCount,
-          title: result.primary.title,
-          timestamp: result.timestamp,
+          wordCount: resultValue.primary.wordCount,
+          title: resultValue.primary.title,
+          timestamp: resultValue.timestamp,
         };
 
         if (nodeId) {
           response.nodeId = nodeId;
         }
 
-        if (result.diff) {
+        if (resultValue.diff) {
           response.comparison = {
             compareUrl,
-            wordCountDelta: result.diff.wordCountDelta,
-            lengthDelta: result.diff.lengthDelta,
+            wordCountDelta: resultValue.diff.wordCountDelta,
+            lengthDelta: resultValue.diff.lengthDelta,
           };
         }
 

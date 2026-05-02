@@ -38,6 +38,7 @@ const TREND_LABELS: Record<string, { text: string; color: string }> = {
   no_data: { text: "No Data", color: "#6b7280" },
 };
 
+/** HarnessTrend — auto-generated description placeholder. */
 export function HarnessTrend(): React.JSX.Element {
   const [data, setData] = useState<TrendData | null>(null);
   const [error, setError] = useState<string | null>(null);

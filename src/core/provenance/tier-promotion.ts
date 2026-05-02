@@ -80,6 +80,7 @@ export class InvalidCitationError extends McpGraphError {
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
+/** promoteTier — auto-generated description placeholder. */
 export function promoteTier(input: PromotionInput): PromotionResult {
   const { nodeId, currentTier, targetTier, evidence, resolveCitationId } = input;
 

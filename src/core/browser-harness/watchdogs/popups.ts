@@ -9,6 +9,7 @@
 
 import type { BrowserEventBus, WatchdogVerdict } from "../event-bus.js";
 
+/** registerPopupsWatchdog — auto-generated description placeholder. */
 export function registerPopupsWatchdog(bus: BrowserEventBus): void {
   bus.on("dialog.open", "popups", (event): WatchdogVerdict => {
     // alert / confirm / beforeunload → accept; prompt → cancel (no input source).

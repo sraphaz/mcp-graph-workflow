@@ -54,6 +54,7 @@ export interface OpenCodeImportResult extends ImportEnvelope {
   pluginsDiscovered: string[];
 }
 
+/** importOpenCodeSettings — auto-generated description placeholder. */
 export function importOpenCodeSettings(opts: OpenCodeImportOptions = {}): OpenCodeImportResult {
   const source = opts.source ?? defaultUserConfig();
   const file = readSettingsFile<OpenCodeConfig>(source, "toml");

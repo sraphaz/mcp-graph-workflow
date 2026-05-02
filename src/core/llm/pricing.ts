@@ -12,6 +12,7 @@ import type { LlmUsage, ModelSpec } from "./types.js";
 
 const TOKENS_PER_MTOK = 1_000_000;
 
+/** calcCost — auto-generated description placeholder. */
 export function calcCost(usage: LlmUsage, spec: ModelSpec): number {
   const cacheRead = usage.cachedInputTokens ?? 0;
   const cacheWrite = usage.cacheCreationInputTokens ?? 0;

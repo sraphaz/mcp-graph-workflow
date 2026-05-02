@@ -220,7 +220,7 @@ export class TokenBudgetPolicy {
    * Get aggregate policy statistics.
    */
   getStats(): PolicyStats {
-    const result = this.db.prepare(
+    const resultValue = this.db.prepare(
       `SELECT SUM(visits) as total, COUNT(*) as entries FROM token_budget_policy`,
     ).get() as { total: number; entries: number };
 
@@ -229,8 +229,8 @@ export class TokenBudgetPolicy {
     ).get() as { cnt: number };
 
     return {
-      totalVisits: result.total ?? 0,
-      convergenceRate: result.entries > 0 ? nonZero.cnt / result.entries : 0,
+      totalVisits: resultValue.total ?? 0,
+      convergenceRate: resultValue.entries > 0 ? nonZero.cnt / resultValue.entries : 0,
       currentEpsilon: EPSILON,
     };
   }

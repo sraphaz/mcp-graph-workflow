@@ -35,7 +35,7 @@ export interface SkillMarkdownResult {
  * Not a full YAML parser, but sufficient for SKILL.md frontmatter.
  */
 function parseFrontmatter(yamlText: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
+  const resultValue: Record<string, unknown> = {};
   const lines = yamlText.split("\n");
   let currentKey = "";
   let inArray = false;
@@ -50,7 +50,7 @@ function parseFrontmatter(yamlText: string): Record<string, unknown> {
     if (inlineArrayMatch) {
       const key = inlineArrayMatch[1];
       const values = inlineArrayMatch[2].split(",").map((v) => v.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
-      result[key] = values;
+      resultValue[key] = values;
       inArray = false;
       continue;
     }
@@ -63,10 +63,10 @@ function parseFrontmatter(yamlText: string): Record<string, unknown> {
         const objMatch = itemText.match(/^(\w+):\s*"?([^"]*)"?$/);
         if (objMatch) {
           // Look ahead for more keys at same indent
-          const obj: Record<string, string> = { [objMatch[1]]: objMatch[2] };
+          const objValue: Record<string, string> = { [objMatch[1]]: objMatch[2] };
           // Simple: just parse this line as single-key object
           // Multi-key objects will be handled by next lines checking indent
-          arrayItems.push(obj);
+          arrayItems.push(objValue);
         } else {
           arrayItems.push(itemText.replace(/^["']|["']$/g, ""));
         }
@@ -91,14 +91,14 @@ function parseFrontmatter(yamlText: string): Record<string, unknown> {
     if (kvMatch) {
       // Commit previous array if any
       if (inArray && currentKey) {
-        result[currentKey] = arrayItems;
+        resultValue[currentKey] = arrayItems;
         inArray = false;
         arrayItems = [];
       }
 
       const key = kvMatch[1];
       const value = kvMatch[2].trim().replace(/^["']|["']$/g, "");
-      result[key] = value;
+      resultValue[key] = value;
       currentKey = key;
       continue;
     }
@@ -107,7 +107,7 @@ function parseFrontmatter(yamlText: string): Record<string, unknown> {
     const arrayStartMatch = trimmed.match(/^(\w+):$/);
     if (arrayStartMatch) {
       if (inArray && currentKey) {
-        result[currentKey] = arrayItems;
+        resultValue[currentKey] = arrayItems;
       }
       currentKey = arrayStartMatch[1];
       inArray = true;
@@ -118,10 +118,10 @@ function parseFrontmatter(yamlText: string): Record<string, unknown> {
 
   // Commit final array
   if (inArray && currentKey) {
-    result[currentKey] = arrayItems;
+    resultValue[currentKey] = arrayItems;
   }
 
-  return result;
+  return resultValue;
 }
 
 /**
@@ -185,9 +185,9 @@ export interface DirSkillsResult {
  * collected as {file, error} so the caller can surface them.
  */
 export function loadSkillsFromDir(dir: string): DirSkillsResult {
-  const result: DirSkillsResult = { loaded: [], errors: [] };
-  walk(dir, result);
-  return result;
+  const resultValue: DirSkillsResult = { loaded: [], errors: [] };
+  walk(dir, resultValue);
+  return resultValue;
 }
 
 function walk(dir: string, acc: DirSkillsResult): void {

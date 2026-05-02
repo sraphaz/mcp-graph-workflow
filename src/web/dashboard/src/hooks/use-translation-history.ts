@@ -35,6 +35,7 @@ export interface UseTranslationHistoryActions {
   deleteJob: (id: string) => Promise<void>;
 }
 
+/** useTranslationHistory — auto-generated description placeholder. */
 export function useTranslationHistory(): [UseTranslationHistoryState, UseTranslationHistoryActions] {
   const [jobs, setJobs] = useState<TranslationJob[]>([]);
   const [stats, setStats] = useState<TranslationStats | null>(null);

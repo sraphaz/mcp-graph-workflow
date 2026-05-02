@@ -171,12 +171,12 @@ function extractFieldsFromNode(
   _constructId: string,
   _languageId: string,
 ): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // Name field
   const nameNode = node.childForFieldName?.("name");
   if (nameNode) {
-    result.name = nameNode.text;
+    resultValue.name = nameNode.text;
   }
 
   // Parameters field (function/method)
@@ -187,7 +187,7 @@ function extractFieldsFromNode(
     if (params.startsWith("(") && params.endsWith(")")) {
       params = params.slice(1, -1).trim();
     }
-    result.params = params;
+    resultValue.params = params;
   }
 
   // Body field (function/class/if/loop)
@@ -202,8 +202,8 @@ function extractFieldsFromNode(
     if (body.startsWith(":")) {
       body = body.slice(1).trim();
     }
-    result.body = body;
-    result.members = body; // alias for class constructs
+    resultValue.body = body;
+    resultValue.members = body; // alias for class constructs
   }
 
   // Return type
@@ -212,7 +212,7 @@ function extractFieldsFromNode(
     let returnType = returnTypeNode.text ?? "";
     if (returnType.startsWith(":")) returnType = returnType.slice(1).trim();
     if (returnType.startsWith("->")) returnType = returnType.slice(2).trim();
-    result.returnType = returnType;
+    resultValue.returnType = returnType;
   }
 
   // Condition (if/while/for)
@@ -222,20 +222,20 @@ function extractFieldsFromNode(
     if (cond.startsWith("(") && cond.endsWith(")")) {
       cond = cond.slice(1, -1).trim();
     }
-    result.condition = cond;
+    resultValue.condition = cond;
   }
 
   // Superclass (class extends)
   const superNode = node.childForFieldName?.("superclass") ?? node.childForFieldName?.("superclasses");
   if (superNode) {
-    result.parent = superNode.text ?? "";
+    resultValue.parent = superNode.text ?? "";
   }
 
   // Value (variable declarations, return)
   const valueNode = node.childForFieldName?.("value") ?? node.childForFieldName?.("right");
   if (valueNode) {
-    result.value = valueNode.text ?? "";
-    result.expression = valueNode.text ?? "";
+    resultValue.value = valueNode.text ?? "";
+    resultValue.expression = valueNode.text ?? "";
   }
 
   // Module (imports)
@@ -245,10 +245,10 @@ function extractFieldsFromNode(
     if (mod.startsWith("'") || mod.startsWith('"')) {
       mod = mod.slice(1, -1);
     }
-    result.module = mod;
+    resultValue.module = mod;
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Regex fallback ────────────────────────────────

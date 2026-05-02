@@ -18,6 +18,7 @@ import { logger } from "../utils/logger.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
+/** defaultGuardrail — auto-generated description placeholder. */
 export function defaultGuardrail(): HarnessGuardrail {
   return HarnessGuardrailSchema.parse({});
 }
@@ -32,12 +33,13 @@ function resolveSkillPath(): string | null {
     // CWD fallback
     join(process.cwd(), "src", "browser-harness-skills", "SKILL.md"),
   ];
-  for (const p of candidates) {
-    if (existsSync(p)) return p;
+  for (const pVar of candidates) {
+    if (existsSync(pVar)) return pVar;
   }
   return null;
 }
 
+/** loadGuardrail — auto-generated description placeholder. */
 export function loadGuardrail(skillPath?: string): HarnessGuardrail {
   const path = skillPath ?? resolveSkillPath();
   if (!path) {
@@ -60,6 +62,7 @@ export function loadGuardrail(skillPath?: string): HarnessGuardrail {
   }
 }
 
+/** isDomainAllowed — auto-generated description placeholder. */
 export function isDomainAllowed(url: string, guardrail: HarnessGuardrail): boolean {
   const allow = guardrail.allowedDomains;
   if (allow.includes("*")) return true;
@@ -79,6 +82,7 @@ export function isDomainAllowed(url: string, guardrail: HarnessGuardrail): boole
   return false;
 }
 
+/** isCdpMethodForbidden — auto-generated description placeholder. */
 export function isCdpMethodForbidden(method: string, guardrail: HarnessGuardrail): boolean {
   return guardrail.forbiddenCdpMethods.includes(method);
 }

@@ -61,6 +61,7 @@ const INITIAL_STATE: UseProjectTranslationState = {
   loading: false,
 };
 
+/** useProjectTranslation — auto-generated description placeholder. */
 export function useProjectTranslation(): [UseProjectTranslationState, UseProjectTranslationActions] {
   const [state, setState] = useState<UseProjectTranslationState>(INITIAL_STATE);
   const projectIdRef = useRef<string | null>(null);

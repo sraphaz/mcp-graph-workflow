@@ -155,7 +155,7 @@ function extractDiscriminativeTerms(
     docLengths.push(tokens.length || 1);
   }
 
-  const n = docs.length;
+  const nVar = docs.length;
 
   // Score each term by average TF-IDF across documents
   const termScores = new Map<string, number>();
@@ -165,7 +165,7 @@ function extractDiscriminativeTerms(
     // Skip very short terms
     if (term.length < 3) continue;
 
-    const idf = Math.log(1 + n / df);
+    const idf = Math.log(1 + nVar / df);
     let totalTfIdf = 0;
 
     for (let i = 0; i < docTermFreqs.length; i++) {
@@ -173,7 +173,7 @@ function extractDiscriminativeTerms(
       totalTfIdf += tf * idf;
     }
 
-    termScores.set(term, totalTfIdf / n);
+    termScores.set(term, totalTfIdf / nVar);
   }
 
   // Sort by score descending and take top N

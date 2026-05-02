@@ -26,6 +26,7 @@ export type AgentToolInput = z.infer<typeof agentInputSchema>;
 
 export const AGENT_READ_ONLY_ACTIONS: ReadonlySet<AgentToolInput["action"]> = new Set(["list", "describe", "metrics"]);
 
+/** buildAgentHandler — auto-generated description placeholder. */
 export function buildAgentHandler(store: SqliteStore): (input: AgentToolInput) => Promise<McpToolResponse> {
   const registry = new AgentRegistry(store.getDb());
 
@@ -101,6 +102,7 @@ export function buildAgentHandler(store: SqliteStore): (input: AgentToolInput) =
   };
 }
 
+/** registerAgent — auto-generated description placeholder. */
 export function registerAgent(server: McpServer, store: SqliteStore): void {
   server.tool(
     "agent",

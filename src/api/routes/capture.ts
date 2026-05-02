@@ -28,6 +28,7 @@ const CaptureRequestSchema = z.object({
   waitForSelector: z.string().max(500).optional(),
 }).strict();
 
+/** createCaptureRouter — auto-generated description placeholder. */
 export function createCaptureRouter(): Router {
   const router = Router();
 
@@ -41,9 +42,9 @@ export function createCaptureRouter(): Router {
 
       logger.info("Capture request received", { url, selector });
 
-      const result = await captureWebPage(url, { selector, timeout, waitForSelector });
+      const resultValue = await captureWebPage(url, { selector, timeout, waitForSelector });
 
-      res.status(200).json(result);
+      res.status(200).json(resultValue);
     } catch (err) {
       next(err);
     }

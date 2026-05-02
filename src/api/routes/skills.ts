@@ -45,6 +45,7 @@ interface SkillResponse {
   id?: string;
 }
 
+/** createSkillsRouter — auto-generated description placeholder. */
 export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRef): Router {
   const router = Router();
 
@@ -74,7 +75,7 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
       const ctx = getProjectContext();
       const preferences = ctx ? getSkillPreferences(ctx.db, ctx.projectId) : new Map<string, boolean>();
 
-      const result: SkillResponse[] = [];
+      const resultValue: SkillResponse[] = [];
 
       // Built-in skills
       if (!sourceFilter || sourceFilter === "built-in") {
@@ -83,7 +84,7 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
           : getBuiltInSkills();
 
         for (const skill of builtIn) {
-          result.push({
+          resultValue.push({
             name: skill.name,
             description: skill.description,
             category: skill.category,
@@ -114,7 +115,7 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
             // file unreadable — default to 0
           }
 
-          result.push({
+          resultValue.push({
             name: skill.name,
             description: skill.description,
             category: skill.category,
@@ -132,7 +133,7 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
         for (const skill of customSkills) {
           if (phaseFilter && !skill.phases.includes(phaseFilter as LifecyclePhase)) continue;
 
-          result.push({
+          resultValue.push({
             id: skill.id,
             name: skill.name,
             description: skill.description,
@@ -145,8 +146,8 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
         }
       }
 
-      const totalTokens = result.reduce((sum, s) => sum + s.estimatedTokens, 0);
-      res.json({ skills: result, totalTokens });
+      const totalTokens = resultValue.reduce((sum, s) => sum + s.estimatedTokens, 0);
+      res.json({ skills: resultValue, totalTokens });
     } catch (err) {
       next(err);
     }
@@ -163,9 +164,9 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
         return;
       }
       const prefs = getSkillPreferences(ctx.db, ctx.projectId);
-      const obj: Record<string, boolean> = {};
-      for (const [k, v] of prefs) obj[k] = v;
-      res.json({ preferences: obj });
+      const objValue: Record<string, boolean> = {};
+      for (const [k, v] of prefs) objValue[k] = v;
+      res.json({ preferences: objValue });
     } catch (err) {
       next(err);
     }

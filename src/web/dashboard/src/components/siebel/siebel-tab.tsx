@@ -43,6 +43,7 @@ function LoadingFallback(): React.JSX.Element {
   );
 }
 
+/** SiebelTab — auto-generated description placeholder. */
 export function SiebelTab(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SiebelSection>("upload");
   const { objects, templates, loading, error, refresh } = useSiebelData();

@@ -132,7 +132,7 @@ export class DreamEngine {
       const completedAt = new Date().toISOString();
       const totalDurationMs = nremResult.durationMs + remResult.durationMs + wakeResult.durationMs;
 
-      const result: DreamCycleResult = {
+      const resultValue: DreamCycleResult = {
         id: cycleId,
         startedAt,
         completedAt,
@@ -152,7 +152,7 @@ export class DreamEngine {
       };
 
       if (!config.dryRun) {
-        updateDreamCycle(this.db, result);
+        updateDreamCycle(this.db, resultValue);
       }
 
       this.emitEvent("dream:cycle_completed", {
@@ -163,7 +163,7 @@ export class DreamEngine {
       });
 
       logger.info("dream:cycle:complete", { cycleId, durationMs: totalDurationMs });
-      return result;
+      return resultValue;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       this.emitEvent("dream:cycle_failed", { cycleId, errorMessage });
@@ -230,7 +230,7 @@ export class DreamEngine {
     nremResult: DreamCycleResult["phases"]["nrem"],
     initial: DreamCycleResult,
   ): DreamCycleResult {
-    const result: DreamCycleResult = {
+    const resultValue: DreamCycleResult = {
       ...initial,
       id: cycleId,
       startedAt,
@@ -242,11 +242,11 @@ export class DreamEngine {
 
     // Bug #E13-T05: persist cancelled status to DB and emit event
     if (!config.dryRun) {
-      updateDreamCycle(this.db, result);
+      updateDreamCycle(this.db, resultValue);
     }
     this.emitEvent("dream:cycle_cancelled", { cycleId, phase: this.currentPhase });
     logger.info("dream:cycle:cancelled", { cycleId, phase: this.currentPhase });
 
-    return result;
+    return resultValue;
   }
 }

@@ -119,14 +119,14 @@ export class SqliteEventBridge {
    */
   pruneOld(maxAgeMs: number = 3_600_000): number {
     const cutoff = new Date(Date.now() - maxAgeMs).toISOString();
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM event_queue WHERE created_at < ?")
       .run(cutoff);
 
-    if (result.changes > 0) {
-      logger.debug("event-bridge:pruned", { count: result.changes });
+    if (resultValue.changes > 0) {
+      logger.debug("event-bridge:pruned", { count: resultValue.changes });
     }
 
-    return result.changes;
+    return resultValue.changes;
   }
 }

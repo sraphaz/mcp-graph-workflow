@@ -68,6 +68,7 @@ export interface ApiRouterOptions {
   storeManager?: import("../core/store/store-manager.js").StoreManager;
 }
 
+/** createApiRouter — auto-generated description placeholder. */
 export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions): Router {
   const store = "store" in storeOrOptions ? storeOrOptions.store : storeOrOptions;
   const basePath = "basePath" in storeOrOptions ? (storeOrOptions.basePath ?? process.cwd()) : process.cwd();

@@ -163,9 +163,9 @@ export class JourneyRunsStore {
     const dir = this.screenshotsDirFor(runId);
     if (!existsSync(dir)) return out;
     for (const file of readdirSync(dir)) {
-      const m = file.match(/^(\d+)\.png$/);
-      if (!m) continue;
-      out.set(parseInt(m[1], 10), readFileSync(join(dir, file)));
+      const mVar = file.match(/^(\d+)\.png$/);
+      if (!mVar) continue;
+      out.set(parseInt(mVar[1], 10), readFileSync(join(dir, file)));
     }
     return out;
   }

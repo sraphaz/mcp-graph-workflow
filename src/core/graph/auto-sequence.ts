@@ -25,6 +25,7 @@ import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
 
+/** sequenceSubtasks — auto-generated description placeholder. */
 export function sequenceSubtasks(store: SqliteStore, parentId: string): { edgesCreated: number; chain: string[] } {
   const doc = store.toGraphDocument();
   const children = doc.nodes

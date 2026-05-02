@@ -130,15 +130,15 @@ export function suggestAlternatives(
     return true;
   });
 
-  const result = deduped.slice(0, limit);
+  const resultValue = deduped.slice(0, limit);
 
   logger.info("alternative-suggester:results", {
     nodeId: failedReport.nodeId,
     candidatesFound: suggestions.length,
-    returned: result.length,
+    returned: resultValue.length,
   });
 
-  return result;
+  return resultValue;
 }
 
 // ── Helpers ─────────────────────────────────────────────

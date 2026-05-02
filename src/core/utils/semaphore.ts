@@ -122,7 +122,7 @@ export class Semaphore {
 export function getMaxConcurrentHeavy(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.MAX_CONCURRENT_HEAVY;
   if (!raw) return 2;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < 1) return 2;
-  return n;
+  const nVar = Number(raw);
+  if (!Number.isInteger(nVar) || nVar < 1) return 2;
+  return nVar;
 }

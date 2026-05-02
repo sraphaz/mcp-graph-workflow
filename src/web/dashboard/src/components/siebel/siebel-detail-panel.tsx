@@ -32,6 +32,7 @@ interface SiebelDetailPanelProps {
   impactTarget: { type: string; name: string } | null;
 }
 
+/** SiebelDetailPanel — auto-generated description placeholder. */
 export function SiebelDetailPanel({
   object,
   dependencies,

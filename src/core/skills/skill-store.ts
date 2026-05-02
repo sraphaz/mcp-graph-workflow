@@ -171,11 +171,11 @@ export function updateCustomSkill(
 /** Delete a custom skill by ID, throwing if not found. */
 export function deleteCustomSkill(db: Database.Database, projectId: string, id: string): void {
   logger.info("skill-store:delete", { projectId, id });
-  const result = db.prepare(
+  const resultValue = db.prepare(
     "DELETE FROM custom_skills WHERE id = ? AND project_id = ?",
   ).run(id, projectId);
 
-  if (result.changes === 0) {
+  if (resultValue.changes === 0) {
     throw new ValidationError(`Custom skill not found: ${id}`, []);
   }
 }

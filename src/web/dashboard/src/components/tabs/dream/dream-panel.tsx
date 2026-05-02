@@ -26,6 +26,7 @@ interface DreamPanelProps {
   onPreview: () => Promise<DreamCycleResult | null>;
 }
 
+/** DreamPanel — auto-generated description placeholder. */
 export function DreamPanel({ status, onStartCycle, onCancelCycle, onPreview }: DreamPanelProps): React.JSX.Element {
   const [previewing, setPreviewing] = React.useState(false);
 

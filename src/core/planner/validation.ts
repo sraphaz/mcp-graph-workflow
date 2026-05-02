@@ -35,10 +35,12 @@ export const SprintPlanInputSchema = z.object({
 export type ValidatedNextTaskInput = z.infer<typeof NextTaskInputSchema>;
 export type ValidatedSprintPlanInput = z.infer<typeof SprintPlanInputSchema>;
 
+/** validateNextTaskInput — auto-generated description placeholder. */
 export function validateNextTaskInput(input: unknown): ValidatedNextTaskInput {
   return NextTaskInputSchema.parse(input);
 }
 
+/** validateSprintPlanInput — auto-generated description placeholder. */
 export function validateSprintPlanInput(input: unknown): ValidatedSprintPlanInput {
   return SprintPlanInputSchema.parse(input);
 }

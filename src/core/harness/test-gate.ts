@@ -94,15 +94,15 @@ export async function runTestGate(
   // Run the tests
   logger.info("test-gate:running", { nodeId, testFiles, mode, timeoutMs });
 
-  const result = await runTests(testFiles, { timeoutMs });
+  const resultValue = await runTests(testFiles, { timeoutMs });
 
   const gateResult: TestGateResult = {
-    status: result.success ? "passed" : "failed",
-    blocked: mode === "strict" && !result.success,
-    passed: result.passed,
-    failed: result.failed,
-    errors: result.errors,
-    durationMs: result.durationMs,
+    status: resultValue.success ? "passed" : "failed",
+    blocked: mode === "strict" && !resultValue.success,
+    passed: resultValue.passed,
+    failed: resultValue.failed,
+    errors: resultValue.errors,
+    durationMs: resultValue.durationMs,
     testFiles,
     mode,
   };

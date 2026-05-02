@@ -54,6 +54,7 @@ export interface ContractScaffoldResult {
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
+/** scaffoldContract — auto-generated description placeholder. */
 export function scaffoldContract(
   spec: ContractSpec,
   options: ContractScaffoldOptions = {},
@@ -104,6 +105,7 @@ import { ValidationError } from "../../core/utils/errors.js";
 const OutputSchema = ${outputSchemaExpr};
 type Output = z.infer<typeof OutputSchema>;
 
+/** handle$ — auto-generated description placeholder. */
 export async function handle${spec.name}(req: Request, res: Response): Promise<void> {
   // ── Input validation ─────────────────────────────────────────────
   let validatedInput: z.infer<typeof ${spec.inputSchemaRef}>;
@@ -150,6 +152,7 @@ import { ValidationError } from "../../core/utils/errors.js";
 const OutputSchema = ${outputSchemaExpr};
 type Output = z.infer<typeof OutputSchema>;
 
+/** execute$ — auto-generated description placeholder. */
 export async function execute${spec.name}(rawInput: unknown): Promise<Output> {
   // ── Input validation ─────────────────────────────────────────────
   let validatedInput: z.infer<typeof ${spec.inputSchemaRef}>;

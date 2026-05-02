@@ -24,6 +24,7 @@ export interface CoverageReport {
 /** Files under these path prefixes are intentionally skipped (no citations expected). */
 const SKIP_PREFIXES = ["src/tests/", "src/cli/", "src/web/", "src/api/", "tools/", "docs/"];
 
+/** isCitationGuardDisabled — auto-generated description placeholder. */
 export function isCitationGuardDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_CITATION_GUARD === "off";
 }
@@ -44,14 +45,14 @@ export function checkCitationCoverage(files: FileContent[]): CoverageReport {
   const missing: string[] = [];
   let scanned = 0;
   let skipped = 0;
-  for (const f of files) {
-    if (!isCoreFile(f.file)) {
+  for (const fVar of files) {
+    if (!isCoreFile(fVar.file)) {
       skipped++;
       continue;
     }
     scanned++;
-    if (extractCitations(f.content).length === 0) {
-      missing.push(f.file);
+    if (extractCitations(fVar.content).length === 0) {
+      missing.push(fVar.file);
     }
   }
   return { missing, scanned, skipped };

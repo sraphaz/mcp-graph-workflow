@@ -81,8 +81,8 @@ export async function tracedFederatedQuery(
     try {
       const results = await adapter.query(input.query);
       const latencyMs = Date.now() - t0;
-      for (const data of results) {
-        items.push({ data, source_store: adapter.storeId });
+      for (const dataValue of results) {
+        items.push({ data: dataValue, source_store: adapter.storeId });
       }
       steps.push({ storeId: adapter.storeId, latencyMs, resultCount: results.length });
     } catch (err) {

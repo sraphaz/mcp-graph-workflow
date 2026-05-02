@@ -35,17 +35,17 @@ export async function readPdfBuffer(buffer: Buffer): Promise<PdfReadResult> {
 
   const PDF_TIMEOUT_MS = 30_000;
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
-  const result = await Promise.race([
+  const resultValue = await Promise.race([
     parser.getText(),
     new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`PDF parsing timed out after ${PDF_TIMEOUT_MS / 1000}s`)), PDF_TIMEOUT_MS),
     ),
   ]);
 
-  logger.info("PDF parsed", { pages: result.total, textLength: result.text.length });
+  logger.info("PDF parsed", { pages: resultValue.total, textLength: resultValue.text.length });
 
   return {
-    text: result.text,
-    pages: result.total,
+    text: resultValue.text,
+    pages: resultValue.total,
   };
 }

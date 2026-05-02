@@ -30,6 +30,7 @@ function output(msg: string): void {
   process.stdout.write(msg + "\n");
 }
 
+/** indexCommand — auto-generated description placeholder. */
 export function indexCommand(): Command {
   return new Command("index")
     .description("Reindex all knowledge sources (memories, docs cache) and rebuild embeddings")

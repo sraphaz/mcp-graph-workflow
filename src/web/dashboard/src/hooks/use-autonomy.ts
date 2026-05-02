@@ -67,6 +67,7 @@ export interface AutonomyBudget {
   };
 }
 
+/** useAutonomyStatus — auto-generated description placeholder. */
 export function useAutonomyStatus() {
   const [data, setData] = useState<AutonomyStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +90,7 @@ export function useAutonomyStatus() {
   return { data, loading, error };
 }
 
+/** useAutonomySession — auto-generated description placeholder. */
 export function useAutonomySession() {
   const [data, setData] = useState<AutonomySession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +112,7 @@ export function useAutonomySession() {
   return { data, loading };
 }
 
+/** useAutonomyBudget — auto-generated description placeholder. */
 export function useAutonomyBudget() {
   const [data, setData] = useState<AutonomyBudget | null>(null);
   const [loading, setLoading] = useState(true);

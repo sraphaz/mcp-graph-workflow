@@ -37,10 +37,12 @@ export const RagContextInputSchema = z.object({
 export type ValidatedContextQuery = z.infer<typeof ContextQuerySchema>;
 export type ValidatedRagContextInput = z.infer<typeof RagContextInputSchema>;
 
+/** validateContextQuery — auto-generated description placeholder. */
 export function validateContextQuery(input: unknown): ValidatedContextQuery {
   return ContextQuerySchema.parse(input);
 }
 
+/** validateRagContextInput — auto-generated description placeholder. */
 export function validateRagContextInput(input: unknown): ValidatedRagContextInput {
   return RagContextInputSchema.parse(input);
 }

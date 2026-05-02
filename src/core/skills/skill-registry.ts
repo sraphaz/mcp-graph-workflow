@@ -45,15 +45,15 @@ export function listSkills(
   dir: string,
   currentPhase?: string,
 ): { skills: SkillSummary[]; errors: Array<{ file: string; error: string }> } {
-  const result = loadSkillsFromDir(dir);
-  const summaries = result.loaded.map(summarize);
+  const resultValue = loadSkillsFromDir(dir);
+  const summaries = resultValue.loaded.map(summarize);
   summaries.sort((a, b) => {
     const phaseA = currentPhase && a.phases.includes(currentPhase) ? 0 : 1;
     const phaseB = currentPhase && b.phases.includes(currentPhase) ? 0 : 1;
     if (phaseA !== phaseB) return phaseA - phaseB;
     return a.name.localeCompare(b.name);
   });
-  return { skills: summaries, errors: result.errors };
+  return { skills: summaries, errors: resultValue.errors };
 }
 
 /**
@@ -61,8 +61,8 @@ export function listSkills(
  * the first match. Reads instructions from the parsed CustomSkillInput.
  */
 export function invokeSkill(dir: string, name: string): SkillInvocation | undefined {
-  const result = loadSkillsFromDir(dir);
-  const found = result.loaded.find((s) => s.name === name);
+  const resultValue = loadSkillsFromDir(dir);
+  const found = resultValue.loaded.find((s) => s.name === name);
   if (!found) return undefined;
   const summary = summarize(found);
   return {

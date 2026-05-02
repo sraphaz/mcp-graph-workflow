@@ -41,8 +41,8 @@ import { pruneContextSection } from "./context-pruning.js";
 
 /** Max nodes to load per paginated SQLite query in the fallback search path. Configurable via env. */
 export const CONTEXT_CHUNK_SIZE: number = (() => {
-  const v = parseInt(process.env["CONTEXT_CHUNK_SIZE"] ?? "", 10);
-  return Number.isFinite(v) && v > 0 ? v : 100;
+  const vVar = parseInt(process.env["CONTEXT_CHUNK_SIZE"] ?? "", 10);
+  return Number.isFinite(vVar) && vVar > 0 ? vVar : 100;
 })();
 
 // Module-level cache for assembleContext results (detail path)
@@ -390,7 +390,7 @@ export function assembleContext(
     logger.debug("context:compression", { inputTokens, outputTokens, reductionPercent: reduction });
   }
 
-  const result: AssembledContext = {
+  const resultValue: AssembledContext = {
     query,
     tier,
     detail: tier,
@@ -406,9 +406,9 @@ export function assembleContext(
   };
 
   // Cache result
-  assemblerCache.set(cacheKey, result);
+  assemblerCache.set(cacheKey, resultValue);
 
-  return result;
+  return resultValue;
 }
 
 /**

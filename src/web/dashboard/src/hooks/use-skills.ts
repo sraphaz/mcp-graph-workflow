@@ -33,6 +33,7 @@ export interface UseSkillsReturn {
   deleteSkill: (id: string) => Promise<void>;
 }
 
+/** useSkills — auto-generated description placeholder. */
 export function useSkills(): UseSkillsReturn {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);

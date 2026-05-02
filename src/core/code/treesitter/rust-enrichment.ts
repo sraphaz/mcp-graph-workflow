@@ -124,9 +124,9 @@ export function extractTraitImpl(
  *   non-derive attribute        → []
  */
 export function parseDeriveAttribute(text: string): string[] {
-  const m = /^\s*#\[\s*derive\s*\(([^)]*)\)\s*\]\s*$/.exec(text);
-  if (!m) return [];
-  const inner = m[1];
+  const mVar = /^\s*#\[\s*derive\s*\(([^)]*)\)\s*\]\s*$/.exec(text);
+  if (!mVar) return [];
+  const inner = mVar[1];
   return inner
     .split(",")
     .map((s) => s.trim())

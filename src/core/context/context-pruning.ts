@@ -103,32 +103,32 @@ export function pruneContextSection(
   }
 
   // Apply AST-Pruning
-  const result = pruneFile({
+  const resultValue = pruneFile({
     content,
     relevantSymbols,
     preserveExports: true, // always preserve exported interfaces/types
   });
 
-  const prunedTokens = estimateTokens(result.content);
+  const prunedTokens = estimateTokens(resultValue.content);
 
   logger.debug("context-pruning:applied", {
     originalTokens,
     prunedTokens,
-    reductionPercent: result.reductionPercent,
-    preserved: result.preservedSymbols.length,
-    truncated: result.truncatedSymbols.length,
+    reductionPercent: resultValue.reductionPercent,
+    preserved: resultValue.preservedSymbols.length,
+    truncated: resultValue.truncatedSymbols.length,
   });
 
   return {
-    prunedContent: result.content,
+    prunedContent: resultValue.content,
     summary: {
       originalTokens,
       prunedTokens,
       reductionPercent: originalTokens > 0
         ? Math.round(((originalTokens - prunedTokens) / originalTokens) * 100)
         : 0,
-      symbolsPreserved: result.preservedSymbols.length,
-      symbolsTruncated: result.truncatedSymbols.length,
+      symbolsPreserved: resultValue.preservedSymbols.length,
+      symbolsTruncated: resultValue.truncatedSymbols.length,
     },
   };
 }

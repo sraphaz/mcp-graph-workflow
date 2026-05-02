@@ -38,11 +38,11 @@ interface LedgerRow {
 
 function aggregate(rows: LedgerRow[]): CostBreakdown {
   const out: CostBreakdown = { totalUsd: 0, callCount: 0, byProvider: {}, byModel: {} };
-  for (const r of rows) {
-    out.totalUsd += r.cost_usd;
+  for (const rVar of rows) {
+    out.totalUsd += rVar.cost_usd;
     out.callCount++;
-    out.byProvider[r.provider] = (out.byProvider[r.provider] ?? 0) + r.cost_usd;
-    out.byModel[r.model] = (out.byModel[r.model] ?? 0) + r.cost_usd;
+    out.byProvider[rVar.provider] = (out.byProvider[rVar.provider] ?? 0) + rVar.cost_usd;
+    out.byModel[rVar.model] = (out.byModel[rVar.model] ?? 0) + rVar.cost_usd;
   }
   return out;
 }
@@ -69,6 +69,7 @@ export interface SessionCostOptions {
   inputRateUsdPerToken?: number;
 }
 
+/** sessionCost — auto-generated description placeholder. */
 export function sessionCost(
   db: Database.Database,
   opts: SessionCostOptions = {},

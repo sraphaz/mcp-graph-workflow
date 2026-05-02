@@ -235,11 +235,11 @@ export function computeStrategyPerformance(
 ): StrategyPerformance[] {
   const strategyStats = new Map<string, { totalScore: number; totalQuality: number; count: number }>();
 
-  for (const result of results) {
-    for (const strategy of result.strategies) {
+  for (const resultValue of results) {
+    for (const strategy of resultValue.strategies) {
       const existing = strategyStats.get(strategy) ?? { totalScore: 0, totalQuality: 0, count: 0 };
-      existing.totalScore += result.score;
-      existing.totalQuality += result.qualityScore;
+      existing.totalScore += resultValue.score;
+      existing.totalQuality += resultValue.qualityScore;
       existing.count++;
       strategyStats.set(strategy, existing);
     }

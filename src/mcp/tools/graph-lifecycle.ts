@@ -155,6 +155,7 @@ const PhaseEnum = z.enum([
   "REVIEW", "HANDOFF", "DEPLOY", "LISTENING",
 ]);
 
+/** registerGraphLifecycle — auto-generated description placeholder. */
 export function registerGraphLifecycle(server: McpServer, _store: SqliteStore): void {
   const runAnalyze = makeDefaultAnalyzeRunner(server);
 
@@ -166,17 +167,17 @@ export function registerGraphLifecycle(server: McpServer, _store: SqliteStore): 
       subCheck: z.string().optional().describe("Optional — restrict to a single mode that belongs to the phase. Returns error if mode is not in phase."),
     },
     async ({ phase, subCheck }) => {
-      const r = await buildGraphLifecycleResponse(
+      const rVar = await buildGraphLifecycleResponse(
         phase as LifecyclePhase,
         runAnalyze,
         { subCheck: subCheck as AnalyzeMode | undefined },
       );
       logger.debug("tool:graph_lifecycle", {
-        phase: r.phase,
-        ok: r.ok,
-        modeCount: "results" in r ? r.results?.length ?? 0 : 0,
+        phase: rVar.phase,
+        ok: rVar.ok,
+        modeCount: "results" in rVar ? rVar.results?.length ?? 0 : 0,
       });
-      return mcpText(r);
+      return mcpText(rVar);
     },
   );
 }

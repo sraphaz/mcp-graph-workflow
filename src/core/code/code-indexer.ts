@@ -25,12 +25,14 @@ import { readdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { McpGraphError } from "../utils/errors.js";
-import type { CodeStore } from "./code-store.js";
+import { CodeStore } from "./code-store.js";
 import type { CodeAnalyzer, IndexResult } from "./code-types.js";
 import { isTypeScriptAvailable } from "./ts-analyzer.js";
 import { TsAnalyzer } from "./ts-analyzer.js";
 import { now } from "../utils/time.js";
 import { logger } from "../utils/logger.js";
+import { createAnalyzers } from "./analyzer-factory.js";
+import type { SqliteStore } from "../store/sqlite-store.js";
 
 function getGitHash(basePath: string): string | null {
   try {
@@ -193,16 +195,16 @@ export class CodeIndexer {
         // Clear existing data for this file (incremental)
         this.store.deleteSymbolsByFile(relativePath, this.projectId);
 
-        const result = await analyzer.analyzeFile(filePath, basePath);
+        const resultValue = await analyzer.analyzeFile(filePath, basePath);
 
         fileCount++;
 
-        if (result.symbols.length === 0) continue;
+        if (resultValue.symbols.length === 0) continue;
 
         filesWithSymbols++;
 
         // Insert symbols
-        const symbolsWithProject = result.symbols.map((s) => ({
+        const symbolsWithProject = resultValue.symbols.map((s) => ({
           ...s,
           projectId: this.projectId,
           modulePath: extractModulePath(s.file),
@@ -220,10 +222,10 @@ export class CodeIndexer {
         }
 
         // Insert relations — need to resolve symbol IDs
-        if (result.relations.length > 0) {
+        if (resultValue.relations.length > 0) {
           const resolvedRelations = resolveRelationIds(
-            result.relations,
-            result.symbols,
+            resultValue.relations,
+            resultValue.symbols,
             this.store,
             this.projectId,
           );
@@ -364,4 +366,32 @@ function resolveRelationIds(
   }
 
   return resolved;
+}
+
+/**
+ * Run a full code-symbol reindex for the active project.
+ * Mirrors `runCodeGraphReindex()` in `src/mcp/server.ts` minus the in-flight
+ * guard and label logging, so it can be called from any reindex entry point
+ * (file watcher, MCP knowledge tool, API route).
+ *
+ * Updates `code_index_meta` (last_indexed, git_hash, counts) — which is what
+ * `detectStaleIndex()` reads to surface or clear the stale-index advisory.
+ */
+export async function reindexCodeForProject(
+  store: SqliteStore,
+  basePath: string,
+): Promise<{ fileCount: number; symbolCount: number; relationCount: number }> {
+  const project = store.getProject();
+  if (!project) {
+    throw new McpGraphError("reindexCodeForProject requires an active project");
+  }
+  const codeStore = new CodeStore(store.getDb());
+  const analyzers = await createAnalyzers(basePath);
+  const indexer = new CodeIndexer(codeStore, project.id, analyzers);
+  const resultValue = await indexer.indexDirectory(basePath, basePath);
+  return {
+    fileCount: resultValue.fileCount,
+    symbolCount: resultValue.symbolCount,
+    relationCount: resultValue.relationCount,
+  };
 }

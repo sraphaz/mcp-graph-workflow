@@ -41,8 +41,8 @@ function renderFieldsTable(fields: WsdlField[]): string {
   const lines: string[] = [];
   lines.push("| Field | Type | Flags |");
   lines.push("|-------|------|-------|");
-  for (const f of fields) {
-    lines.push(`| ${f.name} | \`${formatFieldType(f)}\` | ${formatFieldFlags(f)} |`);
+  for (const fVar of fields) {
+    lines.push(`| ${fVar.name} | \`${formatFieldType(fVar)}\` | ${formatFieldFlags(fVar)} |`);
   }
   return lines.join("\n") + "\n";
 }

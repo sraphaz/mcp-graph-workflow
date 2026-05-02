@@ -22,6 +22,7 @@ interface SprintBarsProps {
   className?: string;
 }
 
+/** SprintBars — auto-generated description placeholder. */
 export function SprintBars({ data, className }: SprintBarsProps): React.JSX.Element {
   if (data.length === 0) {
     return (

@@ -98,8 +98,8 @@ export class RepairLoop {
       });
 
       // Validate repaired code
-      const result = this.validator(repairedCode);
-      if (result.valid) {
+      const resultValue = this.validator(repairedCode);
+      if (resultValue.valid) {
         return {
           success: true,
           finalCode: repairedCode,
@@ -110,7 +110,7 @@ export class RepairLoop {
       }
 
       currentCode = repairedCode;
-      lastErrors = result.errors;
+      lastErrors = resultValue.errors;
     }
 
     // Max iterations reached without success

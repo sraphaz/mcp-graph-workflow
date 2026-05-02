@@ -6,6 +6,7 @@
 import type { Command } from "commander";
 import { makeV11WrapperCommand } from "./_v11-bridge.js";
 
+/** uiCommand — auto-generated description placeholder. */
 export function uiCommand(): Command {
   return makeV11WrapperCommand({
     name: "ui",

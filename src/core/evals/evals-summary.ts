@@ -62,6 +62,7 @@ interface FailingRow {
   attempts: number;
 }
 
+/** computeEvalsSummary — auto-generated description placeholder. */
 export function computeEvalsSummary(
   db: Database.Database,
   opts: EvalsSummaryOptions = {},

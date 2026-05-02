@@ -89,6 +89,7 @@ function scoreForGolden(golden: GoldenEntry, output: string): ScorerResult {
   }
 }
 
+/** runEvals — auto-generated description placeholder. */
 export async function runEvals(opts: RunEvalsOptions): Promise<RunEvalsSummary> {
   const runId = opts.runId ?? generateId("evalrun");
   const goldenList = opts.goldens.list(opts.filter ?? {});
@@ -102,14 +103,14 @@ export async function runEvals(opts: RunEvalsOptions): Promise<RunEvalsSummary> 
     const cost = dispatched.costUsd ?? 0;
     totalCostUsd += cost;
 
-    const result = scoreForGolden(golden, dispatched.output);
-    if (result.passed) passed++;
+    const resultValue = scoreForGolden(golden, dispatched.output);
+    if (resultValue.passed) passed++;
 
     opts.runs.record({
       runId,
       goldenId: golden.id,
-      score: result.score,
-      passed: result.passed,
+      score: resultValue.score,
+      passed: resultValue.passed,
       latencyMs: dispatched.latencyMs,
       modelUsed: dispatched.modelUsed,
       costUsd: cost,
@@ -121,9 +122,9 @@ export async function runEvals(opts: RunEvalsOptions): Promise<RunEvalsSummary> 
       scorerKind: golden.scorerKind,
       output: dispatched.output,
       expected: golden.expected,
-      score: result.score,
-      passed: result.passed,
-      details: result.details,
+      score: resultValue.score,
+      passed: resultValue.passed,
+      details: resultValue.details,
       costUsd: cost,
       modelUsed: dispatched.modelUsed,
       latencyMs: dispatched.latencyMs,

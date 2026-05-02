@@ -54,8 +54,8 @@ export function readSettingsFile<T = unknown>(
     return { ok: false, reason: `read error: ${err instanceof Error ? err.message : String(err)}` };
   }
   try {
-    const data = parseRaw<T>(raw, parser);
-    return { ok: true, data };
+    const dataValue = parseRaw<T>(raw, parser);
+    return { ok: true, data: dataValue };
   } catch (err) {
     return { ok: false, reason: `parse error (${parser}): ${err instanceof Error ? err.message : String(err)}` };
   }
@@ -80,14 +80,14 @@ function parseRaw<T>(raw: string, parser: SettingsParser): T {
  * library or report the field as `skipped`.
  */
 export function parseToml(raw: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  let currentTable: Record<string, unknown> = result;
+  const resultValue: Record<string, unknown> = {};
+  let currentTable: Record<string, unknown> = resultValue;
   for (const rawLine of raw.split("\n")) {
     const line = rawLine.trim();
     if (!line || line.startsWith("#")) continue;
     if (line.startsWith("[") && line.endsWith("]")) {
       const headerInner = line.slice(1, -1);
-      currentTable = navigateOrCreate(result, headerInner.split("."));
+      currentTable = navigateOrCreate(resultValue, headerInner.split("."));
       continue;
     }
     const eq = line.indexOf("=");
@@ -96,7 +96,7 @@ export function parseToml(raw: string): Record<string, unknown> {
     const valueRaw = stripInlineComment(line.slice(eq + 1)).trim();
     currentTable[key] = parseTomlValue(valueRaw);
   }
-  return result;
+  return resultValue;
 }
 
 function navigateOrCreate(root: Record<string, unknown>, path: string[]): Record<string, unknown> {
@@ -198,12 +198,12 @@ export function walkEventBlocks<TBlock, THook>(
       const hooks = ctx.blockHooks(block);
       const matcher = ctx.blockMatcher?.(block);
       hooks.forEach((hook, hookIdx) => {
-        const r = ctx.toHandler(event, channel, matcher, hook, blockIdx, hookIdx);
-        if ("skip" in r) {
-          envelope.skipped.push({ event, reason: `block ${blockIdx}.${hookIdx}: ${r.skip}` });
+        const rVar = ctx.toHandler(event, channel, matcher, hook, blockIdx, hookIdx);
+        if ("skip" in rVar) {
+          envelope.skipped.push({ event, reason: `block ${blockIdx}.${hookIdx}: ${rVar.skip}` });
           return;
         }
-        envelope.imported.push(r);
+        envelope.imported.push(rVar);
       });
     });
   }

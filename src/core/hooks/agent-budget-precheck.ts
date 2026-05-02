@@ -16,6 +16,7 @@ export interface BudgetCheckInput {
   capUsd: number | undefined;
 }
 
+/** isBudgetLow — auto-generated description placeholder. */
 export function isBudgetLow(
   input: BudgetCheckInput,
   threshold: number = BUDGET_LOW_THRESHOLD,

@@ -48,6 +48,7 @@ const IMPLEMENTATION_KEYWORDS = [
   "column", "redis", "queue", "cron",
 ];
 
+/** validateAcQuality — auto-generated description placeholder. */
 export function validateAcQuality(doc: GraphDocument, nodeId?: string, all?: boolean): AcQualityReport {
   const { nodes } = doc;
   const targetNodes = selectTargetNodes(nodes, nodeId, all);

@@ -40,6 +40,7 @@ interface ModelAgg {
   cost: number;
 }
 
+/** computeEmpiricalModelHint — auto-generated description placeholder. */
 export function computeEmpiricalModelHint(
   runs: EvalRunStore,
   opts: EmpiricalModelHintOptions,
@@ -51,18 +52,18 @@ export function computeEmpiricalModelHint(
   if (rows.length === 0) return null;
 
   const byModel = new Map<string, ModelAgg>();
-  for (const r of rows) {
-    if (!r.modelUsed) continue;
-    const agg = byModel.get(r.modelUsed) ?? {
-      model: r.modelUsed,
+  for (const rVar of rows) {
+    if (!rVar.modelUsed) continue;
+    const agg = byModel.get(rVar.modelUsed) ?? {
+      model: rVar.modelUsed,
       samples: 0,
       passed: 0,
       cost: 0,
     };
     agg.samples++;
-    if (r.passed) agg.passed++;
-    agg.cost += r.costUsd;
-    byModel.set(r.modelUsed, agg);
+    if (rVar.passed) agg.passed++;
+    agg.cost += rVar.costUsd;
+    byModel.set(rVar.modelUsed, agg);
   }
 
   const eligible = [...byModel.values()].filter((m) => m.samples >= minSamples);

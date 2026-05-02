@@ -57,12 +57,13 @@ function corpus(node: RiskNode): string {
 function matchedPatterns(text: string, patterns: RegExp[]): string[] {
   const hits: string[] = [];
   for (const re of patterns) {
-    const m = text.match(re);
-    if (m) hits.push(m[0].toLowerCase());
+    const mVar = text.match(re);
+    if (mVar) hits.push(mVar[0].toLowerCase());
   }
   return hits;
 }
 
+/** classifyRisk — auto-generated description placeholder. */
 export function classifyRisk(node: RiskNode): RiskClassification {
   const text = corpus(node);
   const signals: string[] = [];

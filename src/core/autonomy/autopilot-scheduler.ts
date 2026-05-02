@@ -23,6 +23,7 @@ export interface ReadyNode {
   priority: number;
 }
 
+/** isAutopilotPaused — auto-generated description placeholder. */
 export function isAutopilotPaused(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_AUTOPILOT_PAUSED === "true";
 }
@@ -33,6 +34,7 @@ interface NodeRow {
   priority: number;
 }
 
+/** pickNextReadyNode — auto-generated description placeholder. */
 export function pickNextReadyNode(db: Database.Database): ReadyNode | null {
   const row = db
     .prepare(

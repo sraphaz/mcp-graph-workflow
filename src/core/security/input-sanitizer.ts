@@ -180,11 +180,11 @@ export function sanitizeToolArgs(args: Record<string, unknown>): ToolArgsSanitiz
   }
 
   function sanitizeRecord(obj: Record<string, unknown>): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
+    const resultValue: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(obj)) {
-      result[key] = sanitizeValue(val);
+      resultValue[key] = sanitizeValue(val);
     }
-    return result;
+    return resultValue;
   }
 
   const sanitized = sanitizeRecord(args);

@@ -27,6 +27,7 @@ interface GenerationSectionProps {
   gen: ReturnType<typeof useSiebelGeneration>;
 }
 
+/** GenerationSection — auto-generated description placeholder. */
 export function GenerationSection({ templates, gen }: GenerationSectionProps): React.JSX.Element {
   return (
     <div className="h-full overflow-auto">

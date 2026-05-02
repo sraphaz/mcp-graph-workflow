@@ -525,6 +525,7 @@ export interface GateContext {
   hasSnapshots: boolean;
 }
 
+/** loadGateContext — auto-generated description placeholder. */
 export function loadGateContext(store: SqliteStore): GateContext | null {
   try {
     const doc = store.toGraphDocument();
@@ -788,7 +789,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       // ══ EXECUTE original handler (with timing + error capture for telemetry — V11 Maestro Phase 1) ══
       const startedAt = Date.now();
       const inputText = JSON.stringify(args);
-      let result: ToolCallResult;
+      let resultValue: ToolCallResult;
       let toolError: string | undefined;
       const releaseSlot = await heavySemaphore.acquire(name).catch(() => null);
       // Sprint 1 (S1.2): tool:pre-call hook — skip read-only tools to avoid noise.
@@ -801,7 +802,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         });
       }
       try {
-        result = await originalHandler(...args) as ToolCallResult;
+        resultValue = await originalHandler(...args) as ToolCallResult;
       } catch (err) {
         const durationMs = Date.now() - startedAt;
         const errorKind = classifyError(err);
@@ -837,14 +838,14 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
           ? { name: `${name}({mode:'${argMode}'})`, entry: modeDeprecation }
           : null;
 
-      if (noticeEntry && result?.content?.[0]?.type === "text") {
+      if (noticeEntry && resultValue?.content?.[0]?.type === "text") {
         try {
-          const text = result.content[0].text ?? "";
+          const text = resultValue.content[0].text ?? "";
           const parsed = JSON.parse(text);
           if (parsed && typeof parsed === "object") {
             const annotated = attachDeprecationNotice(parsed as Record<string, unknown>, noticeEntry.name, noticeEntry.entry);
-            result = {
-              ...result,
+            resultValue = {
+              ...resultValue,
               content: [{ type: "text" as const, text: JSON.stringify(annotated, null, 2) }],
             };
           }
@@ -861,8 +862,8 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       // ── Token tracking + telemetry (V11 Maestro Phase 1) ──
       // recordCall writes input_tokens, output_tokens AND success/duration_ms/error_kind in one row.
       // Replaces legacy ToolTokenStore.record() — same table, same cost-tracker compatibility.
-      const outputText = result?.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
-      const succeeded = !result?.isError;
+      const outputText = resultValue?.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
+      const succeeded = !resultValue?.isError;
       recordToolCallTelemetry(
         store,
         name,
@@ -874,13 +875,13 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       );
 
       // ── Tool result persistence ──
-      if (!result?.isError) {
+      if (!resultValue?.isError) {
         try {
           const project = store.getProject();
           if (project) {
             const toolResultStore = new ToolResultStore(store.getDb());
             const toolArgs = (args[0] as Record<string, unknown>) ?? {};
-            toolResultStore.record(project.id, null, name, toolArgs, result);
+            toolResultStore.record(project.id, null, name, toolArgs, resultValue);
             if (eventBus) {
               eventBus.emitTyped("tool:result_persisted", { toolName: name, projectId: project.id });
             }
@@ -891,7 +892,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       }
 
       // ── Tool call recording ──
-      if (!result?.isError) {
+      if (!resultValue?.isError) {
         try {
           const project = store.getProject();
           if (project) {
@@ -906,9 +907,9 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       }
 
       // ── POST-EXECUTION: Exfiltration detection (detection-only) ──
-      if (eventBus && result && !result.isError) {
+      if (eventBus && resultValue && !resultValue.isError) {
         try {
-          const outputText = result.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
+          const outputText = resultValue.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
           if (outputText.length > 0) {
             const exfilReport = detectExfiltration(outputText);
             if (exfilReport.detected) {
@@ -929,9 +930,9 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       }
 
       // ── Error detection for self-healing ──
-      if (eventBus && result?.isError) {
+      if (eventBus && resultValue?.isError) {
         try {
-          const errorText = result.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
+          const errorText = resultValue.content?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
           const errorCategory = categorizeError(errorText);
           const errorHash = generateErrorHash(errorCategory, errorText);
           eventBus.emitTyped("error:detected", { toolName: name, errorMessage: errorText.slice(0, 500), errorCategory, errorHash });
@@ -941,7 +942,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       }
 
       // ── Append _lifecycle block (skip for read-only tools to save tokens) ──
-      if (postCtx && result && Array.isArray(result.content) && !READ_ONLY_TOOLS.has(name)) {
+      if (postCtx && resultValue && Array.isArray(resultValue.content) && !READ_ONLY_TOOLS.has(name)) {
         try {
           const lifecycleBlock = buildLifecycleBlock(postCtx.doc, {
             toolName: name,
@@ -953,7 +954,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
 
           // Compute nextAction
           try {
-            const toolResultText = result.content
+            const toolResultText = resultValue.content
               ?.filter((c: { type?: string }) => c.type === "text")
               ?.map((c: { text?: string }) => c.text ?? "").join("") ?? "";
             const parsedResult = toolResultText ? JSON.parse(toolResultText) : {};
@@ -964,17 +965,17 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
             logger.debug("unified-gate: nextAction computation skipped", { tool: name });
           }
 
-          result.content.push({ type: "text", text: JSON.stringify({ _lifecycle: lifecycleBlock }) });
+          resultValue.content.push({ type: "text", text: JSON.stringify({ _lifecycle: lifecycleBlock }) });
         } catch {
           logger.debug("unified-gate: lifecycle block skipped", { tool: name });
         }
       }
 
       // ── Append _deprecation_notice for `warning` stage ──
-      if (effectiveDeprecationStage === "warning" && deprecationEntry && result && Array.isArray(result.content) && !result.isError) {
+      if (effectiveDeprecationStage === "warning" && deprecationEntry && resultValue && Array.isArray(resultValue.content) && !resultValue.isError) {
         try {
           const notice = buildDeprecationNotice(name, deprecationEntry);
-          result.content.push({ type: "text", text: JSON.stringify({ _deprecation_notice: notice }) });
+          resultValue.content.push({ type: "text", text: JSON.stringify({ _deprecation_notice: notice }) });
           logger.warn("unified-gate: deprecated tool called (warning)", {
             tool: name,
             replacement: deprecationEntry.replacement,
@@ -985,7 +986,7 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
       }
 
       // ── Append _code_intelligence block (skip for read-only tools to save tokens) ──
-      if (postCtx && postCtx.codeIntelMode !== "off" && result && Array.isArray(result.content) && !READ_ONLY_TOOLS.has(name)) {
+      if (postCtx && postCtx.codeIntelMode !== "off" && resultValue && Array.isArray(resultValue.content) && !READ_ONLY_TOOLS.has(name)) {
         try {
           const project = store.getProject();
           if (project) {
@@ -1000,14 +1001,14 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
             }
             const enrichmentMode = name === "set_phase" ? loadCodeIntelMode(store) : effectiveMode;
             const block = buildCodeIntelBlock(codeStore, project.id, postCtx.phase, enrichmentMode, name, args);
-            result.content.push({ type: "text", text: JSON.stringify({ _code_intelligence: block }) });
+            resultValue.content.push({ type: "text", text: JSON.stringify({ _code_intelligence: block }) });
           }
         } catch {
           logger.debug("unified-gate: code intelligence block skipped", { tool: name });
         }
       }
 
-      return result;
+      return resultValue;
     };
   }
 

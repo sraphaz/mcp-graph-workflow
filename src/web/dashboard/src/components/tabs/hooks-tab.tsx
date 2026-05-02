@@ -22,6 +22,7 @@ interface HooksStatsResponse {
   handlers: HookHandlerStatRow[];
 }
 
+/** HooksTab — auto-generated description placeholder. */
 export function HooksTab(): ReactElement {
   const [data, setData] = useState<HooksStatsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

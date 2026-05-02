@@ -191,9 +191,9 @@ export function createMemoryPersistence<V>(): CachePersistence<V> {
       return removed;
     },
     clear: () => {
-      const n = store.size;
+      const nVar = store.size;
       store.clear();
-      return n;
+      return nVar;
     },
     size: () => store.size,
   };

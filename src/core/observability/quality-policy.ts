@@ -93,7 +93,7 @@ export function evaluatePolicy(
     const actual = currentMetrics[gate.metric] ?? 0;
     const passed = evaluateGate(actual, gate.operator, gate.threshold);
 
-    const result: GateResult = {
+    const resultValue: GateResult = {
       metric: gate.metric,
       operator: gate.operator,
       threshold: gate.threshold,
@@ -104,9 +104,9 @@ export function evaluatePolicy(
 
     if (!passed) {
       if (gate.severity === "block") {
-        blockers.push(result);
+        blockers.push(resultValue);
       } else {
-        warnings.push(result);
+        warnings.push(resultValue);
       }
     }
   }

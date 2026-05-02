@@ -124,12 +124,12 @@ export class HookSystem {
   }
 
   listHooks(): Array<{ pluginName: string; hookPoint: HookPoint; priority: number }> {
-    const result: Array<{ pluginName: string; hookPoint: HookPoint; priority: number }> = [];
+    const resultValue: Array<{ pluginName: string; hookPoint: HookPoint; priority: number }> = [];
     for (const [, registrations] of this.hooks) {
       for (const reg of registrations) {
-        result.push({ pluginName: reg.pluginName, hookPoint: reg.hookPoint, priority: reg.priority });
+        resultValue.push({ pluginName: reg.pluginName, hookPoint: reg.hookPoint, priority: reg.priority });
       }
     }
-    return result;
+    return resultValue;
   }
 }

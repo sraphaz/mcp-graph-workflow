@@ -28,6 +28,7 @@ interface ReadyCheck {
   detail: string;
 }
 
+/** ReadyCheckSection — auto-generated description placeholder. */
 export function ReadyCheckSection(): React.JSX.Element {
   const [sifContent, setSifContent] = useState("");
   const [prefix, setPrefix] = useState("CX_");

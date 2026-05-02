@@ -169,6 +169,7 @@ function TokenBudgetBar({ totalTokens, activeTokens }: { totalTokens: number; ac
 
 // ── Main component ────────────────────────────────
 
+/** SkillsTab — auto-generated description placeholder. */
 export function SkillsTab(): React.JSX.Element {
   const {
     skills, recommendations, totalTokens, activeTokens,

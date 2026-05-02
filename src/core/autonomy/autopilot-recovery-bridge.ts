@@ -35,9 +35,9 @@ export class AutopilotRecoveryBridge {
   }
 
   onTaskFailure(nodeId: string, reason: string): AutopilotRecoveryResult {
-    const r = this.recovery.failTask(nodeId, reason); this.autopilot.recordResult(nodeId, false);
-    logger.info("autopilot-recovery:task-failure", { nodeId, reason, rolledBack: r.rolledBack, canRetry: r.canRetry, escalate: r.escalate, attempt: r.attempt, mttrMs: r.mttrMs });
-    return { autopilotAction: r.escalate ? "pause" : "retry", rolledBack: r.rolledBack, canRetry: r.canRetry, escalate: r.escalate, mttrMs: r.mttrMs };
+    const rVar = this.recovery.failTask(nodeId, reason); this.autopilot.recordResult(nodeId, false);
+    logger.info("autopilot-recovery:task-failure", { nodeId, reason, rolledBack: rVar.rolledBack, canRetry: rVar.canRetry, escalate: rVar.escalate, attempt: rVar.attempt, mttrMs: rVar.mttrMs });
+    return { autopilotAction: rVar.escalate ? "pause" : "retry", rolledBack: rVar.rolledBack, canRetry: rVar.canRetry, escalate: rVar.escalate, mttrMs: rVar.mttrMs };
   }
 
   getRecoveryMetrics(): RecoveryMetrics { return this.recovery.getMetrics(); }

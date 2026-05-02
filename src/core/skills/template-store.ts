@@ -111,11 +111,11 @@ export function getTaskTemplateByName(
 /** Delete a task template by ID, throwing if not found. */
 export function deleteTaskTemplate(db: Database.Database, projectId: string, id: string): void {
   logger.info("template-store:delete", { projectId, id });
-  const result = db.prepare(
+  const resultValue = db.prepare(
     "DELETE FROM task_templates WHERE id = ? AND project_id = ?",
   ).run(id, projectId);
 
-  if (result.changes === 0) {
+  if (resultValue.changes === 0) {
     throw new ValidationError(`Template not found: ${id}`, []);
   }
 }

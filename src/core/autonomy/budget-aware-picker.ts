@@ -24,10 +24,12 @@ export interface BudgetState {
   totalUsd: number;
 }
 
+/** isBudgetAwareDisabled — auto-generated description placeholder. */
 export function isBudgetAwareDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_BUDGET_AWARE === "off";
 }
 
+/** isBudgetLow — auto-generated description placeholder. */
 export function isBudgetLow(budget: BudgetState, threshold = LOW_BUDGET_THRESHOLD): boolean {
   if (
     budget.capUsdPerRun === undefined ||

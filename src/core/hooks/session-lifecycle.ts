@@ -17,6 +17,7 @@ import { getSharedHookBus } from "./shared-hook-bus.js";
 let sessionId: string | null = null;
 let sessionEnded = false;
 
+/** emitSessionStart — auto-generated description placeholder. */
 export function emitSessionStart(): string {
   if (sessionId) return sessionId;
   sessionId = randomUUID();
@@ -28,6 +29,7 @@ export function emitSessionStart(): string {
   return sessionId;
 }
 
+/** emitSessionEnd — auto-generated description placeholder. */
 export function emitSessionEnd(reason: string): boolean {
   if (sessionEnded) return false;
   sessionEnded = true;

@@ -44,6 +44,7 @@ const DIMENSION_LABELS: Record<string, string> = {
   context: "Context Density",
 };
 
+/** HarnessGauge — auto-generated description placeholder. */
 export function HarnessGauge(): React.JSX.Element {
   const [data, setData] = useState<HarnessScore | null>(null);
   const [error, setError] = useState<string | null>(null);

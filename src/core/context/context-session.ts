@@ -124,8 +124,8 @@ function ragResponseToChunks(response: Record<string, unknown>): string[] {
 
   // results array (multi-strategy path)
   if (Array.isArray(response.results)) {
-    for (const result of response.results) {
-      chunks.push(JSON.stringify(result));
+    for (const resultValue of response.results) {
+      chunks.push(JSON.stringify(resultValue));
     }
   }
 

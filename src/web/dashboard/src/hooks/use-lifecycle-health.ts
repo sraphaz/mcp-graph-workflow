@@ -32,6 +32,7 @@ export interface SuccessRateData {
   summary: string;
 }
 
+/** useLifecycleSnapshots — auto-generated description placeholder. */
 export function useLifecycleSnapshots(epicId?: string, limit = 30) {
   const [data, setData] = useState<LifecycleSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,7 @@ export function useLifecycleSnapshots(epicId?: string, limit = 30) {
   return { data, loading, error };
 }
 
+/** useLifecycleTrend — auto-generated description placeholder. */
 export function useLifecycleTrend(window = 10, epicId?: string) {
   const [data, setData] = useState<SuccessRateData | null>(null);
   const [loading, setLoading] = useState(true);

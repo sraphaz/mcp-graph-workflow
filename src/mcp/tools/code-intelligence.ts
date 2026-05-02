@@ -162,6 +162,7 @@ export function handleStatus(): ReturnType<typeof mcpText> {
 // Registration
 // ---------------------------------------------------------------------------
 
+/** registerCodeIntelligence — auto-generated description placeholder. */
 export function registerCodeIntelligence(server: McpServer, store: SqliteStore): void {
   server.tool(
     "code_intelligence",
@@ -422,9 +423,9 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
             const renameResult = await editApplier.applyWorkspaceEdit(wsEdit);
             if (renameResult.applied) {
-              for (const f of renameResult.filesModified) {
-                const content = await readFile(f, "utf-8");
-                const rel = path.relative(process.cwd(), f);
+              for (const fVar of renameResult.filesModified) {
+                const content = await readFile(fVar, "utf-8");
+                const rel = path.relative(process.cwd(), fVar);
                 await lspBridge.notifyDocumentChanged(rel, content);
               }
             }
@@ -524,9 +525,9 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             }
             const actionResult = await editApplier.applyWorkspaceEdit(action.edit);
             if (actionResult.applied) {
-              for (const f of actionResult.filesModified) {
-                const content = await readFile(f, "utf-8");
-                const rel = path.relative(process.cwd(), f);
+              for (const fVar of actionResult.filesModified) {
+                const content = await readFile(fVar, "utf-8");
+                const rel = path.relative(process.cwd(), fVar);
                 await lspBridge.notifyDocumentChanged(rel, content);
               }
             }

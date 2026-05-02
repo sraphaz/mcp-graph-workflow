@@ -31,6 +31,7 @@ export interface EvolutionReport {
   direction: "improving" | "declining" | "stable";
 }
 
+/** getEvolutionReport — auto-generated description placeholder. */
 export function getEvolutionReport(
   db: Database.Database,
   projectId: string = "proj_local",

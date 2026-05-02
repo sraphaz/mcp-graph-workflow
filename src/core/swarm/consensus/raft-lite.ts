@@ -41,6 +41,7 @@ export interface RaftNodeState<T = unknown> {
   leaderId: string | null;
 }
 
+/** makeFollower — auto-generated description placeholder. */
 export function makeFollower<T = unknown>(id: string): RaftNodeState<T> {
   return { id, role: "follower", currentTerm: 0, votedFor: null, log: [], leaderId: null };
 }
@@ -185,6 +186,7 @@ export interface HeartbeatTimer {
   electionTimeoutMs: number;
 }
 
+/** shouldStartElection — auto-generated description placeholder. */
 export function shouldStartElection(now: number, t: HeartbeatTimer): boolean {
   return now - t.lastHeartbeatMs >= t.electionTimeoutMs;
 }

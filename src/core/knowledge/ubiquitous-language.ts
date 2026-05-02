@@ -21,6 +21,7 @@ export interface VocabTerm {
 
 const TERM_LINE = /^### (.+?)\s*$/;
 
+/** parseVocab — auto-generated description placeholder. */
 export function parseVocab(content: string): VocabTerm[] {
   const idx = content.indexOf(VOCAB_HEADER);
   if (idx === -1) return [];
@@ -50,10 +51,10 @@ export function parseVocab(content: string): VocabTerm[] {
   };
 
   for (const line of lines) {
-    const m = line.match(TERM_LINE);
-    if (m) {
+    const mVar = line.match(TERM_LINE);
+    if (mVar) {
       flush();
-      current = { term: m[1].trim(), definition: "" };
+      current = { term: mVar[1].trim(), definition: "" };
       continue;
     }
     if (!current) continue;
@@ -78,7 +79,7 @@ export function parseVocab(content: string): VocabTerm[] {
  */
 export function mergeVocab(existing: VocabTerm[], incoming: VocabTerm[]): VocabTerm[] {
   const byTerm = new Map<string, VocabTerm>();
-  for (const t of existing) byTerm.set(t.term.toLowerCase(), { ...t });
+  for (const tVar of existing) byTerm.set(tVar.term.toLowerCase(), { ...tVar });
 
   for (const incoming_t of incoming) {
     const key = incoming_t.term.toLowerCase();
@@ -106,6 +107,7 @@ export function mergeVocab(existing: VocabTerm[], incoming: VocabTerm[]): VocabT
   return [...byTerm.values()].sort((a, b) => a.term.localeCompare(b.term));
 }
 
+/** renderVocabSection — auto-generated description placeholder. */
 export function renderVocabSection(terms: VocabTerm[]): string {
   if (terms.length === 0) return `${VOCAB_HEADER}\n\n_(empty)_\n`;
   const sorted = [...terms].sort((a, b) => a.term.localeCompare(b.term));

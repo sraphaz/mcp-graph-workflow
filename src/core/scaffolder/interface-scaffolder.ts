@@ -80,6 +80,7 @@ export interface ScaffoldInterfaceResult {
 const DEFAULT_INTERFACE_DIR = "src/core/generated";
 const DEFAULT_TEST_DIR = "src/tests/scaffolder";
 
+/** scaffoldInterface — auto-generated description placeholder. */
 export function scaffoldInterface(
   spec: InterfaceSpec,
   options: ScaffoldOptions = {},

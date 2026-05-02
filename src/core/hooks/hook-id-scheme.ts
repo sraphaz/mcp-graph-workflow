@@ -30,6 +30,7 @@ export interface HookIdParts {
   hookIndex?: number;
 }
 
+/** makeHookId — auto-generated description placeholder. */
 export function makeHookId(parts: HookIdParts): string {
   if (!/^[a-z][a-z0-9]+$/.test(parts.cli)) {
     throw new InvalidArgumentError(`hook-id:invalid-cli — '${parts.cli}'`);
@@ -50,18 +51,20 @@ export function makeHookId(parts: HookIdParts): string {
   return `${parts.cli}-${parts.event}-${parts.groupIndex}${tail}`;
 }
 
+/** parseHookId — auto-generated description placeholder. */
 export function parseHookId(id: string): HookIdParts | undefined {
-  const m = ID_RE.exec(id);
-  if (!m) return undefined;
+  const mVar = ID_RE.exec(id);
+  if (!mVar) return undefined;
   const parts: HookIdParts = {
-    cli: m[1],
-    event: m[2],
-    groupIndex: Number(m[3]),
+    cli: mVar[1],
+    event: mVar[2],
+    groupIndex: Number(mVar[3]),
   };
-  if (m[4] !== undefined) parts.hookIndex = Number(m[4]);
+  if (mVar[4] !== undefined) parts.hookIndex = Number(mVar[4]);
   return parts;
 }
 
+/** isValidHookId — auto-generated description placeholder. */
 export function isValidHookId(id: string): boolean {
   return parseHookId(id) !== undefined;
 }

@@ -180,8 +180,8 @@ export class TranslationStore {
   }
 
   deleteJob(id: string): boolean {
-    const result = this.db.prepare("DELETE FROM translation_jobs WHERE id = ?").run(id);
-    return result.changes > 0;
+    const resultValue = this.db.prepare("DELETE FROM translation_jobs WHERE id = ?").run(id);
+    return resultValue.changes > 0;
   }
 
   getJobsByLanguagePair(projectId: string, sourceLang: string, targetLang: string): TranslationJob[] {

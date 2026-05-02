@@ -49,6 +49,7 @@ const MATCHERS: ReadonlyArray<{ phrase: BannedPhrase; re: RegExp }> = BANNED_PHR
   (phrase) => ({ phrase, re: matcherFor(phrase) }),
 );
 
+/** detectBannedPhrases — auto-generated description placeholder. */
 export function detectBannedPhrases(text: string | undefined | null): BannedPhrase[] {
   if (!text || typeof text !== "string") return [];
   const hits: BannedPhrase[] = [];

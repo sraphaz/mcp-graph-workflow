@@ -27,16 +27,16 @@ export interface GitRunResult {
 export type GitRunner = (args: ReadonlyArray<string>, cwd?: string) => GitRunResult;
 
 const realGitRunner: GitRunner = (args, cwd) => {
-  const r: SpawnSyncReturns<string> = spawnSync("git", args as string[], {
+  const rVar: SpawnSyncReturns<string> = spawnSync("git", args as string[], {
     cwd,
     encoding: "utf8",
     maxBuffer: 32 * 1024 * 1024,
   });
   return {
-    ok: r.status === 0,
-    stdout: r.stdout ?? "",
-    stderr: r.stderr ?? "",
-    exitCode: r.status ?? -1,
+    ok: rVar.status === 0,
+    stdout: rVar.stdout ?? "",
+    stderr: rVar.stderr ?? "",
+    exitCode: rVar.status ?? -1,
   };
 };
 
@@ -54,8 +54,8 @@ function run(opts: GitOpsOptions, args: string[]): GitRunResult {
  * Resolve the SHA of HEAD. Returns null when not in a git repository.
  */
 export function currentHead(opts: GitOpsOptions = {}): string | null {
-  const r = run(opts, ["rev-parse", "HEAD"]);
-  return r.ok ? r.stdout.trim() : null;
+  const rVar = run(opts, ["rev-parse", "HEAD"]);
+  return rVar.ok ? rVar.stdout.trim() : null;
 }
 
 /**
@@ -67,9 +67,9 @@ export function commitsBetween(
   headRef: string,
   opts: GitOpsOptions = {},
 ): ReadonlyArray<string> {
-  const r = run(opts, ["rev-list", `${baseRef}..${headRef}`]);
-  if (!r.ok) return [];
-  return r.stdout
+  const rVar = run(opts, ["rev-list", `${baseRef}..${headRef}`]);
+  if (!rVar.ok) return [];
+  return rVar.stdout
     .split("\n")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
@@ -86,9 +86,9 @@ export interface DiffStat {
  *   " 3 files changed, 47 insertions(+), 12 deletions(-)"
  */
 export function diffStat(sha: string, opts: GitOpsOptions = {}): DiffStat {
-  const r = run(opts, ["diff", "--shortstat", `${sha}^!`]);
-  if (!r.ok) return { filesChanged: 0, insertions: 0, deletions: 0 };
-  const text = r.stdout.trim();
+  const rVar = run(opts, ["diff", "--shortstat", `${sha}^!`]);
+  if (!rVar.ok) return { filesChanged: 0, insertions: 0, deletions: 0 };
+  const text = rVar.stdout.trim();
   const files = /(\d+)\s+files?\s+changed/.exec(text);
   const ins = /(\d+)\s+insertions?\(\+\)/.exec(text);
   const del = /(\d+)\s+deletions?\(-\)/.exec(text);
@@ -111,9 +111,9 @@ export interface RevertResult {
  * the working tree is clean before invocation.
  */
 export function revert(sha: string, opts: GitOpsOptions = {}): RevertResult {
-  const r = run(opts, ["revert", "--no-edit", sha]);
-  if (!r.ok) {
-    return { ok: false, newHead: null, stderr: r.stderr };
+  const rVar = run(opts, ["revert", "--no-edit", sha]);
+  if (!rVar.ok) {
+    return { ok: false, newHead: null, stderr: rVar.stderr };
   }
   return { ok: true, newHead: currentHead(opts), stderr: "" };
 }
@@ -137,6 +137,7 @@ export function revert(sha: string, opts: GitOpsOptions = {}): RevertResult {
 export type BisectVerdict = "good" | "bad" | "skip";
 export type BisectPredicate = (sha: string) => BisectVerdict;
 
+/** bisect — auto-generated description placeholder. */
 export function bisect(
   goodSha: string,
   badSha: string,
@@ -157,9 +158,9 @@ export function bisect(
  * Return the current branch name, or null when detached / not a repo.
  */
 export function currentBranch(opts: GitOpsOptions = {}): string | null {
-  const r = run(opts, ["rev-parse", "--abbrev-ref", "HEAD"]);
-  if (!r.ok) return null;
-  const name = r.stdout.trim();
+  const rVar = run(opts, ["rev-parse", "--abbrev-ref", "HEAD"]);
+  if (!rVar.ok) return null;
+  const name = rVar.stdout.trim();
   return name.length > 0 && name !== "HEAD" ? name : null;
 }
 
@@ -167,8 +168,8 @@ export function currentBranch(opts: GitOpsOptions = {}): string | null {
  * `true` when the working tree has no uncommitted changes.
  */
 export function isClean(opts: GitOpsOptions = {}): boolean {
-  const r = run(opts, ["status", "--porcelain"]);
-  return r.ok && r.stdout.trim().length === 0;
+  const rVar = run(opts, ["status", "--porcelain"]);
+  return rVar.ok && rVar.stdout.trim().length === 0;
 }
 
 /**
@@ -182,8 +183,8 @@ export function diffForFile(
   baseRef: string = "HEAD",
   opts: GitOpsOptions = {},
 ): string {
-  const r = run(opts, ["diff", "--unified=3", baseRef, "--", path]);
-  return r.ok ? r.stdout : "";
+  const rVar = run(opts, ["diff", "--unified=3", baseRef, "--", path]);
+  return rVar.ok ? rVar.stdout : "";
 }
 
 /**
@@ -198,19 +199,20 @@ export interface ChangedFile {
   readonly deletions: number;
 }
 
+/** changedFiles — auto-generated description placeholder. */
 export function changedFiles(
   baseRef: string = "HEAD",
   opts: GitOpsOptions = {},
 ): ReadonlyArray<ChangedFile> {
-  const r = run(opts, ["diff", "--numstat", baseRef]);
-  if (!r.ok) return [];
+  const rVar = run(opts, ["diff", "--numstat", baseRef]);
+  if (!rVar.ok) return [];
   const out: ChangedFile[] = [];
-  for (const line of r.stdout.split("\n")) {
-    const m = /^(-|\d+)\s+(-|\d+)\s+(.+)$/.exec(line);
-    if (!m) continue;
-    const additions = m[1] === "-" ? 0 : Number(m[1]);
-    const deletions = m[2] === "-" ? 0 : Number(m[2]);
-    out.push({ path: m[3].trim(), additions, deletions });
+  for (const line of rVar.stdout.split("\n")) {
+    const mVar = /^(-|\d+)\s+(-|\d+)\s+(.+)$/.exec(line);
+    if (!mVar) continue;
+    const additions = mVar[1] === "-" ? 0 : Number(mVar[1]);
+    const deletions = mVar[2] === "-" ? 0 : Number(mVar[2]);
+    out.push({ path: mVar[3].trim(), additions, deletions });
   }
   return out;
 }

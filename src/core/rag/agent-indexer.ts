@@ -39,6 +39,7 @@ export function agentSourceId(agent: AgentDefinition): string {
   return `agent:${agent.phase}:${agent.name}`;
 }
 
+/** indexAgents — auto-generated description placeholder. */
 export function indexAgents(
   store: KnowledgeStore,
   inputs: AgentIndexInput[],

@@ -60,6 +60,7 @@ interface ConvertResult {
 
 const API_BASE = "/api/v1/davinci";
 
+/** DavinciTab — auto-generated description placeholder. */
 export function DavinciTab() {
   const [section, setSection] = useState<Section>("upload");
   const [code, setCode] = useState("");

@@ -204,24 +204,24 @@ export class LspServerManager {
    * Get status of all known language servers.
    */
   getStatus(): Map<string, LspServerState> {
-    const result = new Map<string, LspServerState>();
+    const resultValue = new Map<string, LspServerState>();
 
     // Include running/errored servers
     for (const [langId, managed] of this.servers) {
-      result.set(langId, { ...managed.state });
+      resultValue.set(langId, { ...managed.state });
     }
 
     // Include known-but-not-started servers from registry
     for (const config of this.registry.getAllConfigs()) {
-      if (!result.has(config.languageId)) {
-        result.set(config.languageId, {
+      if (!resultValue.has(config.languageId)) {
+        resultValue.set(config.languageId, {
           languageId: config.languageId,
           status: "stopped",
         });
       }
     }
 
-    return result;
+    return resultValue;
   }
 
   /**

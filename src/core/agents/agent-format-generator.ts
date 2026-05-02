@@ -73,8 +73,8 @@ function renderMarkdown(agent: string, ctx: AgentContext): string {
   if (ctx.constitutionPrinciples?.length) {
     lines.push("## Constitution Principles");
     lines.push("");
-    for (const p of ctx.constitutionPrinciples) {
-      lines.push(`- **${p.title}**: ${p.description}`);
+    for (const pVar of ctx.constitutionPrinciples) {
+      lines.push(`- **${pVar.title}**: ${pVar.description}`);
     }
     lines.push("");
   }
@@ -117,10 +117,10 @@ function renderToml(agent: string, ctx: AgentContext): string {
   if (ctx.constitutionPrinciples?.length) {
     lines.push("[principles]");
     for (let i = 0; i < ctx.constitutionPrinciples.length; i++) {
-      const p = ctx.constitutionPrinciples[i];
+      const pVar = ctx.constitutionPrinciples[i];
       lines.push(`[principles.p${i + 1}]`);
-      lines.push(`title = "${p.title}"`);
-      lines.push(`description = "${p.description}"`);
+      lines.push(`title = "${pVar.title}"`);
+      lines.push(`description = "${pVar.description}"`);
     }
     lines.push("");
   }

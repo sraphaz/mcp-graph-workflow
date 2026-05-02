@@ -75,6 +75,7 @@ function computeStats(docs: QualityDoc[]): QualityStats {
   return { avgQuality, distribution, bySource, totalDocs: docs.length };
 }
 
+/** KnowledgeQualityPanel — auto-generated description placeholder. */
 export function KnowledgeQualityPanel(): React.JSX.Element {
   const [stats, setStats] = useState<QualityStats | null>(null);
   const [loading, setLoading] = useState(true);

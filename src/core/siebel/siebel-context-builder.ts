@@ -31,28 +31,28 @@ export function buildSiebelObjectContext(
   objects: SiebelObject[],
   dependencies: SiebelDependency[],
 ): string {
-  const obj = objects.find((o) => o.name === objectName && o.type === objectType && !o.parentName);
-  if (!obj) {
+  const objValue = objects.find((o) => o.name === objectName && o.type === objectType && !o.parentName);
+  if (!objValue) {
     return `Object "${objectName}" (${objectType}) not found.`;
   }
 
   const parts: string[] = [];
 
   // Header
-  parts.push(`# ${objectType}: ${obj.name}`);
-  if (obj.project) parts.push(`Project: ${obj.project}`);
+  parts.push(`# ${objectType}: ${objValue.name}`);
+  if (objValue.project) parts.push(`Project: ${objValue.project}`);
 
   // Properties (compact)
-  if (obj.properties.length > 0) {
+  if (objValue.properties.length > 0) {
     parts.push(`\n## Props`);
-    for (const p of obj.properties) {
-      parts.push(`${p.name}=${p.value}`);
+    for (const pVar of objValue.properties) {
+      parts.push(`${pVar.name}=${pVar.value}`);
     }
   }
 
   // Children by type (grouped)
   const childGroups = new Map<string, SiebelObject[]>();
-  for (const child of obj.children) {
+  for (const child of objValue.children) {
     const group = childGroups.get(child.type) ?? [];
     group.push(child);
     childGroups.set(child.type, group);
@@ -74,8 +74,8 @@ export function buildSiebelObjectContext(
     } else if (type === "user_property") {
       parts.push(`\n## User Props (${children.length})`);
       for (const up of children) {
-        const val = up.properties.find((p) => p.name === "VALUE")?.value ?? "";
-        parts.push(`${up.name}=${val}`);
+        const valValue = up.properties.find((p) => p.name === "VALUE")?.value ?? "";
+        parts.push(`${up.name}=${valValue}`);
       }
     } else {
       parts.push(`\n## ${type} (${children.length})`);
@@ -87,16 +87,16 @@ export function buildSiebelObjectContext(
   }
 
   // Dependencies (bidirectional)
-  const outbound = dependencies.filter((d) => d.from.name === obj.name && d.from.type === obj.type);
-  const inbound = dependencies.filter((d) => d.to.name === obj.name && d.to.type === obj.type);
+  const outbound = dependencies.filter((d) => d.from.name === objValue.name && d.from.type === objValue.type);
+  const inbound = dependencies.filter((d) => d.to.name === objValue.name && d.to.type === objValue.type);
 
   if (outbound.length > 0 || inbound.length > 0) {
     parts.push(`\n## Deps`);
-    for (const d of outbound) {
-      parts.push(`→ ${d.relationType} ${d.to.type}:${d.to.name}`);
+    for (const dVar of outbound) {
+      parts.push(`→ ${dVar.relationType} ${dVar.to.type}:${dVar.to.name}`);
     }
-    for (const d of inbound) {
-      parts.push(`← ${d.from.type}:${d.from.name} ${d.relationType}`);
+    for (const dVar of inbound) {
+      parts.push(`← ${dVar.from.type}:${dVar.from.name} ${dVar.relationType}`);
     }
   }
 

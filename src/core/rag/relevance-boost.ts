@@ -46,10 +46,10 @@ export function applyRelevanceBoosts<T extends ScoredResult>(
 
   let boostedCount = 0;
 
-  for (const result of results) {
-    const boost = boosts.get(result.id) ?? 0;
+  for (const resultValue of results) {
+    const boost = boosts.get(resultValue.id) ?? 0;
     if (boost !== 0) {
-      result.score = Math.max(0, result.score + boost);
+      resultValue.score = Math.max(0, resultValue.score + boost);
       boostedCount++;
     }
   }

@@ -131,6 +131,7 @@ function EntryCard({
   );
 }
 
+/** KnowledgeSection — auto-generated description placeholder. */
 export function KnowledgeSection(): React.JSX.Element {
   const [state, { search, refresh }] = useTranslationKnowledge();
   const [query, setQuery] = useState("");

@@ -42,17 +42,17 @@ export function safeParseInt(
     return { value: opts.defaultValue };
   }
 
-  const n = parseInt(raw, 10);
+  const nVar = parseInt(raw, 10);
 
-  if (isNaN(n)) {
+  if (isNaN(nVar)) {
     return { value: opts.defaultValue, error: `Expected integer, got: "${raw}"` };
   }
-  if (opts.min !== undefined && n < opts.min) {
-    return { value: opts.defaultValue, error: `Value ${n} is below minimum ${opts.min}` };
+  if (opts.min !== undefined && nVar < opts.min) {
+    return { value: opts.defaultValue, error: `Value ${nVar} is below minimum ${opts.min}` };
   }
-  if (opts.max !== undefined && n > opts.max) {
-    return { value: opts.defaultValue, error: `Value ${n} exceeds maximum ${opts.max}` };
+  if (opts.max !== undefined && nVar > opts.max) {
+    return { value: opts.defaultValue, error: `Value ${nVar} exceeds maximum ${opts.max}` };
   }
 
-  return { value: n };
+  return { value: nVar };
 }

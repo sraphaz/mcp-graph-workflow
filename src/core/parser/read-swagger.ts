@@ -153,12 +153,12 @@ function extractPathEndpoints(paths: Record<string, unknown> | undefined): Swagg
       const parameters: SwaggerEndpointParam[] = [];
       const rawParams = op.parameters as Array<Record<string, unknown>> | undefined;
       if (Array.isArray(rawParams)) {
-        for (const p of rawParams) {
+        for (const pVar of rawParams) {
           parameters.push({
-            name: String(p.name ?? ""),
-            location: String(p.in ?? "query"),
-            type: extractParamType(p),
-            required: Boolean(p.required),
+            name: String(pVar.name ?? ""),
+            location: String(pVar.in ?? "query"),
+            type: extractParamType(pVar),
+            required: Boolean(pVar.required),
           });
         }
       }
@@ -203,18 +203,18 @@ function extractPathEndpoints(paths: Record<string, unknown> | undefined): Swagg
 
 function extractComponentSchemas(schemas: Record<string, unknown> | undefined): SwaggerSchema[] {
   if (!schemas) return [];
-  const result: SwaggerSchema[] = [];
+  const resultValue: SwaggerSchema[] = [];
 
   for (const [name, schema] of Object.entries(schemas)) {
     if (!schema || typeof schema !== "object") continue;
-    const s = schema as Record<string, unknown>;
+    const sVar = schema as Record<string, unknown>;
 
-    const requiredFields = Array.isArray(s.required)
-      ? (s.required as string[])
+    const requiredFields = Array.isArray(sVar.required)
+      ? (sVar.required as string[])
       : [];
 
     const properties: SwaggerSchemaProperty[] = [];
-    const rawProps = s.properties as Record<string, unknown> | undefined;
+    const rawProps = sVar.properties as Record<string, unknown> | undefined;
     if (rawProps) {
       for (const [propName, propDef] of Object.entries(rawProps)) {
         const def = propDef as Record<string, unknown> | undefined;
@@ -226,15 +226,15 @@ function extractComponentSchemas(schemas: Record<string, unknown> | undefined): 
       }
     }
 
-    result.push({
+    resultValue.push({
       name,
-      type: String(s.type ?? "object"),
+      type: String(sVar.type ?? "object"),
       properties,
       required: requiredFields,
     });
   }
 
-  return result;
+  return resultValue;
 }
 
 function extractParamType(param: Record<string, unknown>): string {
@@ -419,20 +419,20 @@ export function parseWsdlContent(content: string): SwaggerParseResult {
 // ---- XML Helpers ----
 
 function getFirst(obj: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
-  const val = obj[key];
-  if (Array.isArray(val) && val.length > 0) return val[0] as Record<string, unknown>;
-  if (val && typeof val === "object") return val as Record<string, unknown>;
+  const valValue = obj[key];
+  if (Array.isArray(valValue) && valValue.length > 0) return valValue[0] as Record<string, unknown>;
+  if (valValue && typeof valValue === "object") return valValue as Record<string, unknown>;
   return undefined;
 }
 
 function getArraySafe(obj: Record<string, unknown>, key: string): Array<Record<string, unknown>> {
-  const val = obj[key];
-  if (Array.isArray(val)) return val as Array<Record<string, unknown>>;
-  if (val && typeof val === "object") return [val as Record<string, unknown>];
+  const valValue = obj[key];
+  if (Array.isArray(valValue)) return valValue as Array<Record<string, unknown>>;
+  if (valValue && typeof valValue === "object") return [valValue as Record<string, unknown>];
   return [];
 }
 
 function getAttr(obj: Record<string, unknown>, name: string): string | undefined {
-  const val = obj[`@_${name}`];
-  return val != null ? String(val) : undefined;
+  const valValue = obj[`@_${name}`];
+  return valValue != null ? String(valValue) : undefined;
 }

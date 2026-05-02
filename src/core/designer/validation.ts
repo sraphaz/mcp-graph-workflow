@@ -29,6 +29,7 @@ export const DesignInputSchema = z.object({
 
 export type ValidatedDesignInput = z.infer<typeof DesignInputSchema>;
 
+/** validateDesignInput — auto-generated description placeholder. */
 export function validateDesignInput(input: unknown): ValidatedDesignInput {
   return DesignInputSchema.parse(input);
 }

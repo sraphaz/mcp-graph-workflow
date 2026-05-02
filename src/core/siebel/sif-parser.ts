@@ -201,9 +201,9 @@ function extractObjectsFromProject(
   for (const [tag, siebelType] of Object.entries(TAG_TO_TYPE)) {
     const elements = getArray(projObj, tag);
     for (const elem of elements) {
-      const obj = elementToSiebelObject(elem as Record<string, unknown>, siebelType, projectName);
-      if (obj) {
-        objects.push(obj);
+      const objValue = elementToSiebelObject(elem as Record<string, unknown>, siebelType, projectName);
+      if (objValue) {
+        objects.push(objValue);
       }
     }
   }
@@ -320,17 +320,17 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
   const deps: SiebelDependency[] = [];
   const objectIndex = new Map<string, SiebelObject>();
 
-  for (const obj of objects) {
-    objectIndex.set(`${obj.type}:${obj.name}`, obj);
+  for (const objValue of objects) {
+    objectIndex.set(`${objValue.type}:${objValue.name}`, objValue);
   }
 
-  for (const obj of objects) {
+  for (const objValue of objects) {
     // Applet → BC (via BUS_COMP attribute)
-    if (obj.type === "applet") {
-      const busComp = findProperty(obj, "BUS_COMP");
+    if (objValue.type === "applet") {
+      const busComp = findProperty(objValue, "BUS_COMP");
       if (busComp && objectIndex.has(`business_component:${busComp}`)) {
         deps.push({
-          from: { name: obj.name, type: "applet" },
+          from: { name: objValue.name, type: "applet" },
           to: { name: busComp, type: "business_component" },
           relationType: "references",
           inferred: true,
@@ -339,13 +339,13 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // Applet/View → Web Template (via WEB_TEMPLATE attribute in children)
-    if (obj.type === "applet" || obj.type === "view") {
-      for (const child of obj.children) {
+    if (objValue.type === "applet" || objValue.type === "view") {
+      for (const child of objValue.children) {
         if (child.type === "web_template") {
           const wtName = findProperty(child, "WEB_TEMPLATE");
           if (wtName && objectIndex.has(`web_template:${wtName}`)) {
             deps.push({
-              from: { name: obj.name, type: obj.type },
+              from: { name: objValue.name, type: objValue.type },
               to: { name: wtName, type: "web_template" },
               relationType: "references",
               inferred: true,
@@ -356,11 +356,11 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // View → BO (via BUS_OBJECT attribute)
-    if (obj.type === "view") {
-      const busObject = findProperty(obj, "BUS_OBJECT");
+    if (objValue.type === "view") {
+      const busObject = findProperty(objValue, "BUS_OBJECT");
       if (busObject && objectIndex.has(`business_object:${busObject}`)) {
         deps.push({
-          from: { name: obj.name, type: "view" },
+          from: { name: objValue.name, type: "view" },
           to: { name: busObject, type: "business_object" },
           relationType: "references",
           inferred: true,
@@ -368,12 +368,12 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
       }
 
       // View → Applet (via VIEW_APPLET children)
-      for (const child of obj.children) {
+      for (const child of objValue.children) {
         if (child.type === "applet") {
           const appletName = findProperty(child, "APPLET") ?? child.name;
           if (objectIndex.has(`applet:${appletName}`)) {
             deps.push({
-              from: { name: obj.name, type: "view" },
+              from: { name: objValue.name, type: "view" },
               to: { name: appletName, type: "applet" },
               relationType: "contains",
               inferred: true,
@@ -384,13 +384,13 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // Screen → View (via SCREEN_VIEW children)
-    if (obj.type === "screen") {
-      for (const child of obj.children) {
+    if (objValue.type === "screen") {
+      for (const child of objValue.children) {
         if (child.type === "view") {
           const viewName = findProperty(child, "VIEW") ?? child.name;
           if (objectIndex.has(`view:${viewName}`)) {
             deps.push({
-              from: { name: obj.name, type: "screen" },
+              from: { name: objValue.name, type: "screen" },
               to: { name: viewName, type: "view" },
               relationType: "contains",
               inferred: true,
@@ -401,13 +401,13 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // BO → BC (via BUSINESS_OBJECT_COMPONENT children)
-    if (obj.type === "business_object") {
-      for (const child of obj.children) {
+    if (objValue.type === "business_object") {
+      for (const child of objValue.children) {
         if (child.type === "business_component") {
           const bcName = findProperty(child, "BUS_COMP") ?? child.name;
           if (objectIndex.has(`business_component:${bcName}`)) {
             deps.push({
-              from: { name: obj.name, type: "business_object" },
+              from: { name: objValue.name, type: "business_object" },
               to: { name: bcName, type: "business_component" },
               relationType: "contains",
               inferred: true,
@@ -418,11 +418,11 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // Workflow → BO (via BUS_OBJECT attribute)
-    if (obj.type === "workflow") {
-      const busObject = findProperty(obj, "BUS_OBJECT");
+    if (objValue.type === "workflow") {
+      const busObject = findProperty(objValue, "BUS_OBJECT");
       if (busObject && objectIndex.has(`business_object:${busObject}`)) {
         deps.push({
-          from: { name: obj.name, type: "workflow" },
+          from: { name: objValue.name, type: "workflow" },
           to: { name: busObject, type: "business_object" },
           relationType: "references",
           inferred: true,
@@ -430,11 +430,11 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
       }
 
       // Workflow → BS (via workflow steps)
-      for (const child of obj.children) {
+      for (const child of objValue.children) {
         const busService = findProperty(child, "BUS_SERVICE");
         if (busService && objectIndex.has(`business_service:${busService}`)) {
           deps.push({
-            from: { name: obj.name, type: "workflow" },
+            from: { name: objValue.name, type: "workflow" },
             to: { name: busService, type: "business_service" },
             relationType: "uses",
             inferred: true,
@@ -444,11 +444,11 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // Integration Object → BC (via BUS_COMP attribute or INTEGRATION_COMPONENT children)
-    if (obj.type === "integration_object") {
-      const busComp = findProperty(obj, "BUS_COMP");
+    if (objValue.type === "integration_object") {
+      const busComp = findProperty(objValue, "BUS_COMP");
       if (busComp && objectIndex.has(`business_component:${busComp}`)) {
         deps.push({
-          from: { name: obj.name, type: "integration_object" },
+          from: { name: objValue.name, type: "integration_object" },
           to: { name: busComp, type: "business_component" },
           relationType: "references",
           inferred: true,
@@ -457,13 +457,13 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // Application → Screen (via SCREEN_MENU children)
-    if (obj.type === "application") {
-      for (const child of obj.children) {
+    if (objValue.type === "application") {
+      for (const child of objValue.children) {
         if (child.type === "screen") {
           const screenName = findProperty(child, "SCREEN") ?? child.name;
           if (objectIndex.has(`screen:${screenName}`)) {
             deps.push({
-              from: { name: obj.name, type: "application" },
+              from: { name: objValue.name, type: "application" },
               to: { name: screenName, type: "screen" },
               relationType: "contains",
               inferred: true,
@@ -474,11 +474,11 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
     }
 
     // BC → Table (via TABLE attribute)
-    if (obj.type === "business_component") {
-      const table = findProperty(obj, "TABLE");
+    if (objValue.type === "business_component") {
+      const table = findProperty(objValue, "TABLE");
       if (table) {
         deps.push({
-          from: { name: obj.name, type: "business_component" },
+          from: { name: objValue.name, type: "business_component" },
           to: { name: table, type: "table" },
           relationType: "based_on",
           inferred: true,
@@ -486,12 +486,12 @@ function inferDependencies(objects: SiebelObject[]): SiebelDependency[] {
       }
 
       // BC → BC (via LINK children's CHILD_BC)
-      for (const child of obj.children) {
+      for (const child of objValue.children) {
         if (child.type === "link") {
           const childBc = findProperty(child, "CHILD_BC");
           if (childBc && objectIndex.has(`business_component:${childBc}`)) {
             deps.push({
-              from: { name: obj.name, type: "business_component" },
+              from: { name: objValue.name, type: "business_component" },
               to: { name: childBc, type: "business_component" },
               relationType: "linked_to",
               inferred: true,
@@ -512,14 +512,14 @@ function findProperty(obj: SiebelObject, propName: string): string | undefined {
 
 /** Safely get an array of elements from parsed XML. */
 function getArray(obj: Record<string, unknown>, key: string): unknown[] {
-  const val = obj[key];
-  if (Array.isArray(val)) return val;
-  if (val != null) return [val];
+  const valValue = obj[key];
+  if (Array.isArray(valValue)) return valValue;
+  if (valValue != null) return [valValue];
   return [];
 }
 
 /** Get an XML attribute value. */
 function getAttr(obj: Record<string, unknown>, name: string): string | undefined {
-  const val = obj[`@_${name}`];
-  return val != null ? String(val) : undefined;
+  const valValue = obj[`@_${name}`];
+  return valValue != null ? String(valValue) : undefined;
 }

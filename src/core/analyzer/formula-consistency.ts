@@ -39,6 +39,7 @@ function getStringArray(value: unknown): string[] {
   return value.filter((v): v is string => typeof v === "string");
 }
 
+/** analyzeFormulaConsistency — auto-generated description placeholder. */
 export function analyzeFormulaConsistency(doc: GraphDocument): FormulaConsistencyReport {
   const formulaNodes = doc.nodes.filter((n) => n.type === "formula");
 

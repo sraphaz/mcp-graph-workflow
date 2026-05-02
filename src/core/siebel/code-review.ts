@@ -69,12 +69,12 @@ export interface CodeReviewResult {
 
 function getAllScripts(objects: readonly SiebelObject[]): Array<{ parent: string; name: string; code: string }> {
   const scripts: Array<{ parent: string; name: string; code: string }> = [];
-  for (const obj of objects) {
-    for (const child of obj.children) {
+  for (const objValue of objects) {
+    for (const child of objValue.children) {
       if (child.type === "escript") {
         const code = child.properties.find((p) => p.name === "SOURCE_CODE")?.value ?? "";
         if (code.trim()) {
-          scripts.push({ parent: obj.name, name: child.name, code });
+          scripts.push({ parent: objValue.name, name: child.name, code });
         }
       }
     }
@@ -94,16 +94,16 @@ function checkNaming(objects: readonly SiebelObject[], opts: ReviewOptions): Rev
   const prefixes = opts.allowedPrefixes ?? [opts.prefix];
   const checkTypes = new Set(["applet", "business_component", "business_object", "view", "screen", "business_service", "integration_object", "workflow"]);
 
-  for (const obj of objects) {
-    if (!checkTypes.has(obj.type)) continue;
-    const hasPrefix = prefixes.some((p) => obj.name.startsWith(p));
+  for (const objValue of objects) {
+    if (!checkTypes.has(objValue.type)) continue;
+    const hasPrefix = prefixes.some((p) => objValue.name.startsWith(p));
     if (!hasPrefix) {
       issues.push({
         category: "naming",
         severity: "warning",
-        objectName: obj.name,
-        detail: `Object "${obj.name}" does not start with required prefix (${prefixes.join(", ")})`,
-        suggestion: `Rename to "${prefixes[0]}${obj.name}" or use an allowed prefix`,
+        objectName: objValue.name,
+        detail: `Object "${objValue.name}" does not start with required prefix (${prefixes.join(", ")})`,
+        suggestion: `Rename to "${prefixes[0]}${objValue.name}" or use an allowed prefix`,
       });
     }
   }
@@ -116,15 +116,15 @@ function checkErrorHandling(objects: readonly SiebelObject[]): ReviewIssue[] {
   const issues: ReviewIssue[] = [];
   const scripts = getAllScripts(objects);
 
-  for (const s of scripts) {
-    const hasFunction = /function\s+\w+/.test(s.code);
-    const hasTry = /\btry\s*\{/.test(s.code);
+  for (const sVar of scripts) {
+    const hasFunction = /function\s+\w+/.test(sVar.code);
+    const hasTry = /\btry\s*\{/.test(sVar.code);
     if (hasFunction && !hasTry) {
       issues.push({
         category: "error_handling",
         severity: "error",
-        objectName: s.parent,
-        detail: `Script "${s.name}" has no try/catch error handling`,
+        objectName: sVar.parent,
+        detail: `Script "${sVar.name}" has no try/catch error handling`,
         suggestion: "Wrap function body in try/catch/finally with TheApplication().RaiseErrorText()",
       });
     }
@@ -144,15 +144,15 @@ function checkHardcodedValues(objects: readonly SiebelObject[]): ReviewIssue[] {
     { name: "environment name", regex: /\b(?:PROD|STAGING|DEV|TEST|UAT)_\w*(?:SERVER|HOST|ENV)\w*/i, suggestion: "Use TheApplication().GetProfileAttr() for environment-specific values" },
   ];
 
-  for (const s of scripts) {
-    for (const p of patterns) {
-      if (p.regex.test(s.code)) {
+  for (const sVar of scripts) {
+    for (const pVar of patterns) {
+      if (pVar.regex.test(sVar.code)) {
         issues.push({
           category: "hardcoded_values",
           severity: "warning",
-          objectName: s.parent,
-          detail: `Script "${s.name}" contains hardcoded ${p.name}`,
-          suggestion: p.suggestion,
+          objectName: sVar.parent,
+          detail: `Script "${sVar.name}" contains hardcoded ${pVar.name}`,
+          suggestion: pVar.suggestion,
         });
       }
     }
@@ -167,20 +167,20 @@ function checkFieldReferences(objects: readonly SiebelObject[]): ReviewIssue[] {
 
   // Build field index: BC name → Set of field names
   const bcFields = new Map<string, Set<string>>();
-  for (const obj of objects) {
-    if (obj.type === "business_component") {
-      const fields = new Set(obj.children.filter((c) => c.type === "field").map((c) => c.name));
-      bcFields.set(obj.name, fields);
+  for (const objValue of objects) {
+    if (objValue.type === "business_component") {
+      const fields = new Set(objValue.children.filter((c) => c.type === "field").map((c) => c.name));
+      bcFields.set(objValue.name, fields);
     }
   }
 
   if (bcFields.size === 0) return issues;
 
   const scripts = getAllScripts(objects);
-  for (const s of scripts) {
+  for (const sVar of scripts) {
     const getFieldPattern = /GetFieldValue\s*\(\s*"([^"]+)"\s*\)/g;
     let match;
-    while ((match = getFieldPattern.exec(s.code)) !== null) {
+    while ((match = getFieldPattern.exec(sVar.code)) !== null) {
       const fieldName = match[1];
       // Check if any known BC has this field
       let found = false;
@@ -194,8 +194,8 @@ function checkFieldReferences(objects: readonly SiebelObject[]): ReviewIssue[] {
         issues.push({
           category: "field_reference",
           severity: "warning",
-          objectName: s.parent,
-          detail: `Script "${s.name}" references field "${fieldName}" not found in any BC`,
+          objectName: sVar.parent,
+          detail: `Script "${sVar.name}" references field "${fieldName}" not found in any BC`,
           suggestion: `Verify field "${fieldName}" exists in the target BC or add it`,
         });
       }
@@ -213,15 +213,15 @@ function checkProfileAttrs(objects: readonly SiebelObject[]): ReviewIssue[] {
   const setAttrs = new Set<string>();
   const getAttrs = new Set<string>();
 
-  for (const s of scripts) {
+  for (const sVar of scripts) {
     const setPattern = /SetProfileAttr\s*\(\s*"([^"]+)"/g;
     const getPattern = /GetProfileAttr\s*\(\s*"([^"]+)"/g;
     let match;
 
-    while ((match = setPattern.exec(s.code)) !== null) {
+    while ((match = setPattern.exec(sVar.code)) !== null) {
       setAttrs.add(match[1]);
     }
-    while ((match = getPattern.exec(s.code)) !== null) {
+    while ((match = getPattern.exec(sVar.code)) !== null) {
       getAttrs.add(match[1]);
     }
   }
@@ -247,14 +247,14 @@ function checkTestObjects(objects: readonly SiebelObject[]): ReviewIssue[] {
   const issues: ReviewIssue[] = [];
   const testPattern = /(?:^|[\s_])(?:Test|Debug|Temp|Temporary|TODO)(?:[\s_]|$)/i;
 
-  for (const obj of objects) {
-    if (obj.inactive) continue;
-    if (testPattern.test(obj.name)) {
+  for (const objValue of objects) {
+    if (objValue.inactive) continue;
+    if (testPattern.test(objValue.name)) {
       issues.push({
         category: "test_objects",
         severity: "warning",
-        objectName: obj.name,
-        detail: `Object "${obj.name}" appears to be a test/debug object but is active (INACTIVE=N)`,
+        objectName: objValue.name,
+        detail: `Object "${objValue.name}" appears to be a test/debug object but is active (INACTIVE=N)`,
         suggestion: `Set INACTIVE="Y" or remove if no longer needed`,
       });
     }
@@ -304,6 +304,7 @@ function calculateScore(issues: readonly ReviewIssue[], objectCount: number): { 
 
 // --- Main function ---
 
+/** reviewSiebelCode — auto-generated description placeholder. */
 export function reviewSiebelCode(
   objects: readonly SiebelObject[],
   options: ReviewOptions,

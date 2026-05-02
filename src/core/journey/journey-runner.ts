@@ -99,11 +99,11 @@ export class JourneyRunner {
       let domText: string | null = null;
 
       try {
-        const res = await this.deps.executor(step.helper, step.args);
-        ok = res.ok !== false;
-        if (!ok) error = res.error ?? "step failed";
-        if (res.base64) pngBytes = Buffer.from(res.base64, "base64");
-        if (typeof res.text === "string") domText = res.text;
+        const resValue = await this.deps.executor(step.helper, step.args);
+        ok = resValue.ok !== false;
+        if (!ok) error = resValue.error ?? "step failed";
+        if (resValue.base64) pngBytes = Buffer.from(resValue.base64, "base64");
+        if (typeof resValue.text === "string") domText = resValue.text;
       } catch (err) {
         ok = false;
         error = err instanceof Error ? err.message : String(err);
@@ -135,7 +135,7 @@ export class JourneyRunner {
 
       if (!ok) overallOk = false;
 
-      const result: JourneyStepResult = {
+      const resultValue: JourneyStepResult = {
         index: step.index,
         screenId: step.screenId,
         helper: step.helper,
@@ -147,7 +147,7 @@ export class JourneyRunner {
         domText,
         error,
       };
-      results.push(result);
+      results.push(resultValue);
 
       // Persist progressive results so tab can poll for live state if SSE drops.
       this.deps.runs.updateResults(initial.id, results);
@@ -205,6 +205,7 @@ export class JourneyRunner {
   }
 }
 
+/** buildPlan — auto-generated description placeholder. */
 export function buildPlan(screens: JourneyScreen[]): JourneyPlannedStep[] {
   const plan: JourneyPlannedStep[] = [];
   let idx = 0;

@@ -27,6 +27,7 @@ interface SkillDetailModalProps {
   onEdit?: (skill: Skill) => void;
 }
 
+/** SkillDetailModal — auto-generated description placeholder. */
 export function SkillDetailModal({ skill, onClose, onToggle, onDelete, onEdit }: SkillDetailModalProps): React.JSX.Element | null {
   if (!skill) return null;
 

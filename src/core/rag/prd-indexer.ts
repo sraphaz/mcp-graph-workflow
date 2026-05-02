@@ -101,8 +101,8 @@ export function indexPrdContent(
   // the common case where docs.length <= budget.
   let pruned = 0;
   if (options.budget && options.budget > 0) {
-    const result = knowledgeStore.autoprune(options.budget);
-    pruned = result.removed;
+    const resultValue = knowledgeStore.autoprune(options.budget);
+    pruned = resultValue.removed;
     if (pruned > 0) {
       logger.info("PRD index budget enforced", { sourceFile, budget: options.budget, pruned });
     }

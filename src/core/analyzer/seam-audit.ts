@@ -62,6 +62,7 @@ export interface SeamReport {
 
 const IMPORT_RE = /^\s*(?:import|export)\s+[^'"]*\s+from\s+["']([^"']+)["']/gm;
 
+/** extractImportSpecifiers — auto-generated description placeholder. */
 export function extractImportSpecifiers(content: string): string[] {
   const out: string[] = [];
   let match: RegExpExecArray | null;
@@ -72,6 +73,7 @@ export function extractImportSpecifiers(content: string): string[] {
   return out;
 }
 
+/** classifySpecifier — auto-generated description placeholder. */
 export function classifySpecifier(spec: string): ClassifiedImport {
   if (spec.startsWith(".") || spec.startsWith("/")) {
     return {
@@ -113,6 +115,7 @@ export function classifySpecifier(spec: string): ClassifiedImport {
   };
 }
 
+/** auditFile — auto-generated description placeholder. */
 export function auditFile(file: string, content: string): SeamReport {
   const imports = extractImportSpecifiers(content).map(classifySpecifier);
   const summary: Record<SeamCategory, number> = {

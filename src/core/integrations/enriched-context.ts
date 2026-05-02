@@ -47,6 +47,7 @@ export class EnrichedContextTimeoutError extends Error {
   }
 }
 
+/** withOperationTimeout — auto-generated description placeholder. */
 export async function withOperationTimeout<T>(
   operation: Promise<T>,
   timeoutMs: number,

@@ -26,6 +26,7 @@ interface KnowledgeDoc {
   createdAt?: string;
 }
 
+/** KnowledgeStorePanel — auto-generated description placeholder. */
 export function KnowledgeStorePanel(): React.JSX.Element {
   const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
   const [stats, setStats] = useState<{ total: number; bySource: Record<string, number> } | null>(null);

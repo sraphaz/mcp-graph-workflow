@@ -75,7 +75,7 @@ function isPascalCase(name: string): boolean {
 
 /** Substitute {{placeholders}} in a syntax pattern with construct data. */
 function substitutePattern(pattern: string, construct: ParsedConstruct): string {
-  let result = pattern;
+  let resultValue = pattern;
 
   if (construct.name) {
     // Keep PascalCase for classes, convert functions/variables to snake_case
@@ -83,22 +83,22 @@ function substitutePattern(pattern: string, construct: ParsedConstruct): string 
     const name = isClass || isPascalCase(construct.name) && isClass
       ? construct.name
       : toSnakeCase(construct.name);
-    result = result.replace(/\{\{name\}\}/g, name);
+    resultValue = resultValue.replace(/\{\{name\}\}/g, name);
   }
 
   // Default placeholders for unresolved template vars
-  result = result.replace(/\{\{members\}\}/g, "pass  # TODO: members");
-  result = result.replace(/\{\{params\}\}/g, "");
-  result = result.replace(/\{\{body\}\}/g, "pass  # TODO: implement");
-  result = result.replace(/\{\{value\}\}/g, "None");
-  result = result.replace(/\{\{condition\}\}/g, "True  # condition");
-  result = result.replace(/\{\{type\}\}/g, "Any");
-  result = result.replace(/\{\{module\}\}/g, "module");
-  result = result.replace(/\{\{items\}\}/g, "items");
-  result = result.replace(/\{\{item\}\}/g, "item");
-  result = result.replace(/\{\{expression\}\}/g, "None  # expression");
-  result = result.replace(/\{\{error\}\}/g, "e");
-  result = result.replace(/\{\{message\}\}/g, "'Error'");
-  result = result.replace(/\{\{parent\}\}/g, "object");
-  return result;
+  resultValue = resultValue.replace(/\{\{members\}\}/g, "pass  # TODO: members");
+  resultValue = resultValue.replace(/\{\{params\}\}/g, "");
+  resultValue = resultValue.replace(/\{\{body\}\}/g, "pass  # TODO: implement");
+  resultValue = resultValue.replace(/\{\{value\}\}/g, "None");
+  resultValue = resultValue.replace(/\{\{condition\}\}/g, "True  # condition");
+  resultValue = resultValue.replace(/\{\{type\}\}/g, "Any");
+  resultValue = resultValue.replace(/\{\{module\}\}/g, "module");
+  resultValue = resultValue.replace(/\{\{items\}\}/g, "items");
+  resultValue = resultValue.replace(/\{\{item\}\}/g, "item");
+  resultValue = resultValue.replace(/\{\{expression\}\}/g, "None  # expression");
+  resultValue = resultValue.replace(/\{\{error\}\}/g, "e");
+  resultValue = resultValue.replace(/\{\{message\}\}/g, "'Error'");
+  resultValue = resultValue.replace(/\{\{parent\}\}/g, "object");
+  return resultValue;
 }

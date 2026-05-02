@@ -35,6 +35,7 @@ function sanitizeLogEntry(entry: LogEntry): LogEntry {
   return { ...entry, context: stripStackFromLogContext(entry.context) };
 }
 
+/** createLogsRouter — auto-generated description placeholder. */
 export function createLogsRouter(): Router {
   const router = Router();
 

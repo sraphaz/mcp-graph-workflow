@@ -76,11 +76,11 @@ export class DocsCacheStore {
       .run(doc.libId, doc.libName, doc.version ?? null, doc.content, fetchedAt);
 
     logger.info(`Docs cache upserted: ${doc.libName} (${doc.libId})`);
-    const result = this.getDoc(doc.libId);
-    if (!result) {
+    const resultValue = this.getDoc(doc.libId);
+    if (!resultValue) {
       throw new McpGraphError(`Failed to retrieve doc after upsert: ${doc.libId}`);
     }
-    return result;
+    return resultValue;
   }
 
   getDoc(libId: string): CachedDoc | null {

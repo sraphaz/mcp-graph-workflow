@@ -35,11 +35,12 @@ export interface ScaleDownInput {
   idleThresholdMs?: number;
 }
 
+/** getPoolMax — auto-generated description placeholder. */
 export function getPoolMax(env: NodeJS.ProcessEnv = process.env): number {
-  const v = env.MCP_GRAPH_AGENT_POOL_MAX;
-  if (!v) return DEFAULT_POOL_MAX;
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_POOL_MAX;
+  const vVar = env.MCP_GRAPH_AGENT_POOL_MAX;
+  if (!vVar) return DEFAULT_POOL_MAX;
+  const nVar = Number(vVar);
+  return Number.isFinite(nVar) && nVar > 0 ? Math.floor(nVar) : DEFAULT_POOL_MAX;
 }
 
 /** Decide target pool size for an incoming task. Caps at poolMax. */

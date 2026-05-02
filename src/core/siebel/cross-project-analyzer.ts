@@ -54,9 +54,9 @@ export function analyzeCrossProjectDeps(
 ): CrossProjectResult {
   // Build object→project index
   const objectProject = new Map<string, string>();
-  for (const obj of objects) {
-    if (obj.project) {
-      objectProject.set(`${obj.type}:${obj.name}`, obj.project);
+  for (const objValue of objects) {
+    if (objValue.project) {
+      objectProject.set(`${objValue.type}:${objValue.name}`, objValue.project);
     }
   }
 
@@ -83,9 +83,9 @@ export function analyzeCrossProjectDeps(
 
   // Build project summary
   const projectObjects = new Map<string, number>();
-  for (const obj of objects) {
-    if (obj.project && !obj.parentName) {
-      projectObjects.set(obj.project, (projectObjects.get(obj.project) ?? 0) + 1);
+  for (const objValue of objects) {
+    if (objValue.project && !objValue.parentName) {
+      projectObjects.set(objValue.project, (projectObjects.get(objValue.project) ?? 0) + 1);
     }
   }
 
@@ -120,15 +120,15 @@ function generateMermaid(deps: CrossProjectDep[], summary: ProjectSummary[]): st
     projects.add(dep.fromProject);
     projects.add(dep.toProject);
   }
-  for (const s of summary) {
-    projects.add(s.project);
+  for (const sVar of summary) {
+    projects.add(sVar.project);
   }
 
   // Node definitions
-  for (const p of projects) {
-    const s = summary.find((x) => x.project === p);
-    const label = s ? `${p} (${s.objectCount} objects)` : p;
-    const safeId = p.replace(/\s+/g, "_");
+  for (const pVar of projects) {
+    const sVar = summary.find((x) => x.project === pVar);
+    const label = sVar ? `${pVar} (${sVar.objectCount} objects)` : pVar;
+    const safeId = pVar.replace(/\s+/g, "_");
     lines.push(`  ${safeId}["${label}"]`);
   }
 

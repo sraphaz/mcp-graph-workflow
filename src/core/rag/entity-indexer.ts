@@ -87,14 +87,14 @@ export function indexDocument(db: Database.Database, docId: string): IndexDocume
     const toId = entityNameToId.get(rel.toName);
 
     if (fromId && toId) {
-      const result = store.addRelation(
+      const resultValue = store.addRelation(
         fromId,
         toId,
         rel.relationType,
         rel.weight,
         docId,
       );
-      if (result) relationsCreated++;
+      if (resultValue) relationsCreated++;
     }
   }
 

@@ -26,6 +26,7 @@ import { indexEntitiesForDoc } from "../../core/rag/entity-index-hook.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerPlanSprint — auto-generated description placeholder. */
 export function registerPlanSprint(server: McpServer, store: SqliteStore): void {
   server.tool(
     "plan_sprint",
@@ -66,24 +67,24 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
       const doc = store.toGraphDocument();
 
       if (mode === "next") {
-        const result = findEnhancedNextTask(doc, store);
+        const resultValue = findEnhancedNextTask(doc, store);
 
-        if (!result) {
+        if (!resultValue) {
           return mcpText({ message: "No tasks available" });
         }
 
-        logger.info("tool:plan_sprint:ok", { mode: "next", taskId: result.task.node.id });
+        logger.info("tool:plan_sprint:ok", { mode: "next", taskId: resultValue.task.node.id });
         return mcpText({
           task: {
-            id: result.task.node.id,
-            title: result.task.node.title,
-            type: result.task.node.type,
-            priority: result.task.node.priority,
-            xpSize: result.task.node.xpSize,
+            id: resultValue.task.node.id,
+            title: resultValue.task.node.title,
+            type: resultValue.task.node.type,
+            priority: resultValue.task.node.priority,
+            xpSize: resultValue.task.node.xpSize,
           },
-          knowledgeCoverage: result.knowledgeCoverage,
-          velocityContext: result.velocityContext,
-          enhancedReason: result.enhancedReason,
+          knowledgeCoverage: resultValue.knowledgeCoverage,
+          velocityContext: resultValue.velocityContext,
+          enhancedReason: resultValue.enhancedReason,
         });
       }
 

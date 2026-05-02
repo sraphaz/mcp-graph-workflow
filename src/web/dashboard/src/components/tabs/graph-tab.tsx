@@ -87,6 +87,7 @@ function GraphEmpty({ onImportPrd }: { onImportPrd?: () => void }): React.JSX.El
   );
 }
 
+/** GraphTab — auto-generated description placeholder. */
 export function GraphTab({ graph, loading, error, onRetry, onImportPrd }: GraphTabProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
 

@@ -36,6 +36,7 @@ function confidenceColor(confidence: number): string {
   return "#ef4444";
 }
 
+/** ImpactGraph — auto-generated description placeholder. */
 export function ImpactGraph({ impact, className }: ImpactGraphProps): React.JSX.Element {
   const { nodes, edges } = useMemo(() => {
     const riskColor = RISK_COLORS[impact.riskLevel] ?? "#6b7280";

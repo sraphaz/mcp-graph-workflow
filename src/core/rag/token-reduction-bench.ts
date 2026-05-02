@@ -32,6 +32,7 @@ export interface TokenReductionStats {
   meanReduction: number;
 }
 
+/** percentile — auto-generated description placeholder. */
 export function percentile(values: readonly number[], q: number): number {
   if (values.length === 0) {
     throw new InvalidArgumentError("percentile: empty array");
@@ -57,6 +58,7 @@ function reductionOf(sample: TokenReductionSample): number {
   return (sample.before - sample.after) / sample.before;
 }
 
+/** computeTokenReductionStats — auto-generated description placeholder. */
 export function computeTokenReductionStats(
   samples: readonly TokenReductionSample[],
 ): TokenReductionStats {

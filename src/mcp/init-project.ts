@@ -226,14 +226,14 @@ function generateAndWriteClaudeMd(projectDir: string, dryRun?: boolean, contextM
     existing = readFileSync(claudeMdPath, "utf-8");
   }
 
-  const result = applySection(existing, section);
+  const resultValue = applySection(existing, section);
 
-  if (fileExists && existing === result) {
+  if (fileExists && existing === resultValue) {
     return { step: "claude-md", status: "up-to-date", message: "CLAUDE.md up-to-date" };
   }
 
   if (!dryRun) {
-    writeFileSync(claudeMdPath, result, "utf-8");
+    writeFileSync(claudeMdPath, resultValue, "utf-8");
     logger.info("CLAUDE.md updated with mcp-graph instructions", { path: claudeMdPath });
   }
 
@@ -256,15 +256,15 @@ function generateAndWriteCopilotInstructions(projectDir: string, dryRun?: boolea
     existing = readFileSync(copilotPath, "utf-8");
   }
 
-  const result = applySection(existing, section);
+  const resultValue = applySection(existing, section);
 
-  if (fileExists && existing === result) {
+  if (fileExists && existing === resultValue) {
     return { step: "copilot-md", status: "up-to-date", message: "copilot-instructions.md up-to-date" };
   }
 
   if (!dryRun) {
     mkdirSync(githubDir, { recursive: true });
-    writeFileSync(copilotPath, result, "utf-8");
+    writeFileSync(copilotPath, resultValue, "utf-8");
     logger.info("copilot-instructions.md updated", { path: copilotPath });
   }
 
@@ -286,14 +286,14 @@ function generateAndWriteCodexAgentsMd(projectDir: string, dryRun?: boolean, con
     existing = readFileSync(agentsMdPath, "utf-8");
   }
 
-  const result = applySection(existing, section);
+  const resultValue = applySection(existing, section);
 
-  if (fileExists && existing === result) {
+  if (fileExists && existing === resultValue) {
     return { step: "codex-md", status: "up-to-date", message: "AGENTS.md up-to-date" };
   }
 
   if (!dryRun) {
-    writeFileSync(agentsMdPath, result, "utf-8");
+    writeFileSync(agentsMdPath, resultValue, "utf-8");
     logger.info("AGENTS.md updated with Codex mcp-graph instructions", { path: agentsMdPath });
   }
 
@@ -459,6 +459,7 @@ function generateAndUpdateDocs(projectDir: string, dryRun?: boolean): UpdateStep
 
 // --- Public API ---
 
+/** runUpdate — auto-generated description placeholder. */
 export async function runUpdate(
   projectDir: string,
   options: UpdateOptions = {},
@@ -544,6 +545,7 @@ export async function runUpdate(
   return report;
 }
 
+/** runInit — auto-generated description placeholder. */
 export async function runInit(projectDir: string): Promise<void> {
   logger.info("mcp-graph init", { dir: projectDir });
 

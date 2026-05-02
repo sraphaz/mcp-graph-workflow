@@ -18,6 +18,7 @@
 import { useState } from "react";
 import { useBenchmark } from "@/hooks/use-benchmark";
 
+/** BenchmarkTab — auto-generated description placeholder. */
 export function BenchmarkTab(): React.JSX.Element {
   const { data, loading, error } = useBenchmark();
   const [showLayers, setShowLayers] = useState(false);

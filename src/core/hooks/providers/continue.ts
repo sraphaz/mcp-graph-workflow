@@ -31,6 +31,7 @@ export interface ContinueImportResult extends ImportEnvelope {
   mcpServers: string[];
 }
 
+/** importContinueSettings — auto-generated description placeholder. */
 export function importContinueSettings(opts: ContinueImportOptions = {}): ContinueImportResult {
   const source = opts.source ?? join(homedir(), ".continue", "config.json");
   const file = readSettingsFile<ContinueConfig>(source, "json");

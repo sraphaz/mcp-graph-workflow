@@ -32,6 +32,7 @@ import { getAdaptiveBudgetSplit } from "../../core/context/adaptive-budget.js";
 import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
 import { logger } from "../../core/utils/logger.js";
 
+/** createAutonomyRouter — auto-generated description placeholder. */
 export function createAutonomyRouter(storeRef: StoreRef): Router {
   const router = Router();
 

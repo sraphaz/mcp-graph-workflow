@@ -8,11 +8,13 @@ import { HookBus } from "./hook-bus.js";
 
 let instance: HookBus | null = null;
 
+/** getSharedHookBus — auto-generated description placeholder. */
 export function getSharedHookBus(): HookBus {
   if (!instance) instance = new HookBus(new GraphEventBus());
   return instance;
 }
 
+/** setSharedHookBus — auto-generated description placeholder. */
 export function setSharedHookBus(bus: HookBus | null): void {
   instance = bus;
 }

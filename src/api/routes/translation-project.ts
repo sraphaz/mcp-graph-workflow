@@ -61,6 +61,7 @@ const upload = multer({
   },
 });
 
+/** createTranslationProjectRouter — auto-generated description placeholder. */
 export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: GraphEventBus): Router {
   const router = Router();
 
@@ -211,8 +212,8 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
 
       const results: Array<{ fileId: string; jobId: string; prompt: string }> = [];
       for (const fileId of fileIds) {
-        const result = await projectOrchestrator.prepareFile(id, fileId);
-        results.push({ fileId, ...result });
+        const resultValue = await projectOrchestrator.prepareFile(id, fileId);
+        results.push({ fileId, ...resultValue });
       }
 
       res.json({ results });
@@ -237,14 +238,14 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
 
       logger.info("Finalizing translation file", { projectId: id, fileId });
 
-      const result = projectOrchestrator.finalizeFile(id, fileId, parsed.data.generatedCode);
+      const resultValue = projectOrchestrator.finalizeFile(id, fileId, parsed.data.generatedCode);
 
       // Index translation evidence into knowledge store for RAG
       try {
         const file = getProjectStore().getFile(fileId);
-        if (file?.jobId && result.evidence) {
+        if (file?.jobId && resultValue.evidence) {
           const job = (_translationStore as TranslationStore).getJob(file.jobId);
-          const ev = result.evidence as Record<string, unknown>;
+          const ev = resultValue.evidence as Record<string, unknown>;
           if (job) {
             const ks = new KnowledgeStore(storeRef.current.getDb());
             indexTranslationEvidence(ks, {
@@ -271,7 +272,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
         payload: { projectId: id, fileId },
       });
 
-      res.json(result);
+      res.json(resultValue);
     } catch (err) {
       const status = errorStatus(err);
       logger.error("Translation file finalize failed", { error: err });

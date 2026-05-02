@@ -23,10 +23,12 @@ export interface AutoApprovalDecision {
   reason: string;
 }
 
+/** isAutoApprovalDisabled — auto-generated description placeholder. */
 export function isAutoApprovalDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_AUTO_APPROVAL === "off";
 }
 
+/** decideAutoApproval — auto-generated description placeholder. */
 export function decideAutoApproval(
   input: AutoApprovalInput,
   env: NodeJS.ProcessEnv = process.env,

@@ -103,6 +103,7 @@ const BUILT_INS: BuiltIn[] = [
 
 export const BUILT_IN_HELPER_NAMES: readonly string[] = BUILT_INS.map((h) => h.name);
 
+/** seedBuiltInHelpers — auto-generated description placeholder. */
 export function seedBuiltInHelpers(registry: HelpersRegistry): number {
   let inserted = 0;
   for (const helper of BUILT_INS) {

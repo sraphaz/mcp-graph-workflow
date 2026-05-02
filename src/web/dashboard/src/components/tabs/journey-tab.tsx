@@ -547,6 +547,7 @@ function ImportJourneyModal({
 
 const proOptions = { hideAttribution: true };
 
+/** JourneyTab — auto-generated description placeholder. */
 export function JourneyTab(): React.JSX.Element {
   const [maps, setMaps] = useState<JourneyMap[]>([]);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);

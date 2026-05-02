@@ -49,6 +49,7 @@ function getBarColor(score: number): string {
   return "bg-red-500";
 }
 
+/** DimensionBreakdown — auto-generated description placeholder. */
 export function DimensionBreakdown(): React.JSX.Element {
   const [data, setData] = useState<ScoreResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

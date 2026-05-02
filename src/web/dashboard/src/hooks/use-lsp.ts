@@ -122,6 +122,7 @@ export interface LspRenameEdit {
   newText: string;
 }
 
+/** useLsp — auto-generated description placeholder. */
 export function useLsp(): {
   languages: LspLanguagesResponse | null;
   status: LspStatusResponse | null;

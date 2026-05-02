@@ -135,7 +135,7 @@ export function finalizeSifGeneration(
     }
   }
 
-  const result: SifGenerationResult = {
+  const resultValue: SifGenerationResult = {
     sifContent: generatedXml,
     objects: parseResult.objects.map((o) => ({ name: o.name, type: o.type })),
     validation: { status, messages, score },
@@ -152,7 +152,7 @@ export function finalizeSifGeneration(
     objectCount: String(parseResult.objects.length),
   });
 
-  return result;
+  return resultValue;
 }
 
 function checkNameCollisions(
@@ -160,23 +160,23 @@ function checkNameCollisions(
   parseResult: SiebelSifParseResult,
   messages: SifValidationMessage[],
 ): void {
-  for (const obj of parseResult.objects) {
+  for (const objValue of parseResult.objects) {
     try {
       // Search by object name — simpler query for better FTS5 matching
-      const existing = knowledgeStore.search(obj.name, 10);
+      const existing = knowledgeStore.search(objValue.name, 10);
       const collision = existing.find(
         (doc) =>
           doc.sourceType === "siebel_sif" &&
-          doc.title.toLowerCase().includes(obj.name.toLowerCase()) &&
-          (doc.title.toLowerCase().includes(obj.type) ||
-           doc.title.toLowerCase().includes(obj.type.replace(/_/g, " "))),
+          doc.title.toLowerCase().includes(objValue.name.toLowerCase()) &&
+          (doc.title.toLowerCase().includes(objValue.type) ||
+           doc.title.toLowerCase().includes(objValue.type.replace(/_/g, " "))),
       );
 
       if (collision) {
         messages.push({
           level: "warning",
-          message: `Name collision: ${obj.type} "${obj.name}" already exists in indexed objects`,
-          objectName: obj.name,
+          message: `Name collision: ${objValue.type} "${objValue.name}" already exists in indexed objects`,
+          objectName: objValue.name,
         });
       }
     } catch {
@@ -189,45 +189,45 @@ function runBestPracticeChecks(
   parseResult: SiebelSifParseResult,
   messages: SifValidationMessage[],
 ): void {
-  for (const obj of parseResult.objects) {
+  for (const objValue of parseResult.objects) {
     // BCs without TABLE
-    if (obj.type === "business_component") {
-      const hasTable = obj.properties.some((p) => p.name === "TABLE");
+    if (objValue.type === "business_component") {
+      const hasTable = objValue.properties.some((p) => p.name === "TABLE");
       if (!hasTable) {
         messages.push({
           level: "warning",
-          message: `Business Component "${obj.name}" is missing TABLE attribute`,
-          objectName: obj.name,
+          message: `Business Component "${objValue.name}" is missing TABLE attribute`,
+          objectName: objValue.name,
         });
       }
     }
 
     // Applets without BUS_COMP
-    if (obj.type === "applet") {
-      const hasBusComp = obj.properties.some((p) => p.name === "BUS_COMP");
+    if (objValue.type === "applet") {
+      const hasBusComp = objValue.properties.some((p) => p.name === "BUS_COMP");
       if (!hasBusComp) {
         messages.push({
           level: "warning",
-          message: `Applet "${obj.name}" is missing BUS_COMP attribute`,
-          objectName: obj.name,
+          message: `Applet "${objValue.name}" is missing BUS_COMP attribute`,
+          objectName: objValue.name,
         });
       }
     }
 
     // Views without BUS_OBJECT
-    if (obj.type === "view") {
-      const hasBusObject = obj.properties.some((p) => p.name === "BUS_OBJECT");
+    if (objValue.type === "view") {
+      const hasBusObject = objValue.properties.some((p) => p.name === "BUS_OBJECT");
       if (!hasBusObject) {
         messages.push({
           level: "warning",
-          message: `View "${obj.name}" is missing BUS_OBJECT attribute`,
-          objectName: obj.name,
+          message: `View "${objValue.name}" is missing BUS_OBJECT attribute`,
+          objectName: objValue.name,
         });
       }
     }
 
     // Objects without name (shouldn't happen but defensive)
-    if (!obj.name || obj.name.trim() === "") {
+    if (!objValue.name || objValue.name.trim() === "") {
       messages.push({
         level: "error",
         message: "Object found without a NAME attribute",

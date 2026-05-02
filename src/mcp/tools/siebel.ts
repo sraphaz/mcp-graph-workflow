@@ -40,6 +40,7 @@ import {
   handleSiebelBatchImportSif,
 } from "./siebel-handlers.js";
 
+/** registerSiebel — auto-generated description placeholder. */
 export function registerSiebel(server: McpServer, store: SqliteStore): void {
   server.tool(
     "siebel",

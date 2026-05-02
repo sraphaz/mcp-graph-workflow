@@ -34,6 +34,7 @@ const VALID_PHASES = [
   "auto",
 ] as const;
 
+/** registerSetPhase — auto-generated description placeholder. */
 export function registerSetPhase(server: McpServer, store: SqliteStore): void {
   server.tool(
     "set_phase",
@@ -71,11 +72,11 @@ export function registerSetPhase(server: McpServer, store: SqliteStore): void {
       ),
     },
     async (input) => {
-      const result = setPhaseCore(store, input);
-      if (!result.ok) {
-        return mcpError(result.error);
+      const resultValue = setPhaseCore(store, input);
+      if (!resultValue.ok) {
+        return mcpError(resultValue.error);
       }
-      const { ok, ...payload } = result;
+      const { ok, ...payload } = resultValue;
       return mcpText({ ok, ...payload });
     },
   );

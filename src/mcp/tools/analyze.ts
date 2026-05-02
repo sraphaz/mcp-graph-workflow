@@ -139,6 +139,7 @@ function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean
   return doc.nodes.some((node) => node.id === nodeId);
 }
 
+/** registerAnalyze — auto-generated description placeholder. */
 export function registerAnalyze(server: McpServer, store: SqliteStore): void {
   server.tool(
     "analyze",
@@ -668,18 +669,18 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             if (node.type !== "decision") {
               return mcpError(`InvalidNodeType: expected 'decision', got '${node.type}'`);
             }
-            const result = runAdrChallenge(store, nodeId);
-            const serialized = serializeChallengeReport(result.report, "standard");
+            const resultValue = runAdrChallenge(store, nodeId);
+            const serialized = serializeChallengeReport(resultValue.report, "standard");
             return mcpText({
               ok: true,
               mode,
               nodeId,
-              nodeTitle: result.nodeTitle,
-              verdict: result.report.overallVerdict.verdict,
-              compositeScore: result.report.fitnessScore.composite,
-              grade: result.report.fitnessScore.grade,
-              findings: result.report.preMortemFindings.length,
-              questions: result.report.challengeQuestions,
+              nodeTitle: resultValue.nodeTitle,
+              verdict: resultValue.report.overallVerdict.verdict,
+              compositeScore: resultValue.report.fitnessScore.composite,
+              grade: resultValue.report.fitnessScore.grade,
+              findings: resultValue.report.preMortemFindings.length,
+              questions: resultValue.report.challengeQuestions,
               report: serialized,
             });
           }
@@ -734,30 +735,30 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const paths = [...new Set([...observed, ...declared])];
           const cwd = process.cwd();
           const files: { path: string; content: string }[] = [];
-          for (const p of paths) {
+          for (const pVar of paths) {
             try {
-              const full = p.startsWith("/") ? p : `${cwd}/${p}`;
+              const full = pVar.startsWith("/") ? pVar : `${cwd}/${pVar}`;
               const fs = await import("node:fs");
               if (fs.existsSync(full) && fs.statSync(full).isFile()) {
-                files.push({ path: p, content: fs.readFileSync(full, "utf-8") });
+                files.push({ path: pVar, content: fs.readFileSync(full, "utf-8") });
               }
             } catch {
               // skip unreadable files
             }
           }
-          const result = validateFilesCitations(files);
+          const resultValue = validateFilesCitations(files);
           logger.info("tool:analyze:citation_groundedness:ok", {
             nodeId,
-            checked: result.checkedCount,
-            violations: result.violations.length,
+            checked: resultValue.checkedCount,
+            violations: resultValue.violations.length,
           });
           return mcpText({
             ok: true,
             mode,
             nodeId,
-            checkedCount: result.checkedCount,
-            violationCount: result.violations.length,
-            violations: result.violations,
+            checkedCount: resultValue.checkedCount,
+            violationCount: resultValue.violations.length,
+            violations: resultValue.violations,
           });
         }
 
@@ -780,17 +781,17 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           if (typeof tool !== "string") {
             return mcpError("approval_check payload.tool must be a string");
           }
-          const result = checkApproval({
+          const resultValue = checkApproval({
             tool,
             input: (input && typeof input === "object") ? (input as Record<string, unknown>) : null,
           });
           logger.info("tool:analyze:approval_check:ok", {
             tool,
-            requires_approval: result.requires_approval,
-            severity: result.severity,
-            matched: result.matchedPatterns,
+            requires_approval: resultValue.requires_approval,
+            severity: resultValue.severity,
+            matched: resultValue.matchedPatterns,
           });
-          return mcpText({ ok: true, mode, ...result });
+          return mcpText({ ok: true, mode, ...resultValue });
         }
 
         case "prd_lifecycle_health": {
@@ -835,16 +836,16 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const { computeSuccessRate } = await import(
             "../../core/analyzer/lifecycle-health-snapshots.js"
           );
-          const result = computeSuccessRate(store.getDb(), {
+          const resultValue = computeSuccessRate(store.getDb(), {
             window: window ?? 10,
             epicId: nodeId ?? null,
           });
           logger.info("tool:analyze:success_rate:ok", {
-            samples: result.samples,
-            passed: result.passed,
-            successRate: result.successRate,
+            samples: resultValue.samples,
+            passed: resultValue.passed,
+            successRate: resultValue.successRate,
           });
-          return mcpText({ ok: true, mode, ...result });
+          return mcpText({ ok: true, mode, ...resultValue });
         }
 
         case "capacity_health": {
@@ -852,24 +853,24 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             "../../core/analyzer/capacity-health.js"
           );
           const sprintLabel = nodeId; // optional sprint filter via nodeId param
-          const result = computeCapacityHealth(doc, sprintLabel);
+          const resultValue = computeCapacityHealth(doc, sprintLabel);
           logger.info("tool:analyze:capacity_health:ok", {
-            sprintLabel: result.sprintLabel,
-            withinTolerance: result.withinTolerance,
+            sprintLabel: resultValue.sprintLabel,
+            withinTolerance: resultValue.withinTolerance,
           });
-          return mcpText({ ok: true, mode, ...result });
+          return mcpText({ ok: true, mode, ...resultValue });
         }
 
         case "evolution_audit": {
           const { analyzeEvolutionAudit } = await import(
             "../../core/analyzer/evolution-audit.js"
           );
-          const result = analyzeEvolutionAudit(doc);
+          const resultValue = analyzeEvolutionAudit(doc);
           logger.info("tool:analyze:evolution_audit:ok", {
-            totalRegenerated: result.totalRegenerated,
-            totalRegenerations: result.totalRegenerations,
+            totalRegenerated: resultValue.totalRegenerated,
+            totalRegenerations: resultValue.totalRegenerations,
           });
-          return mcpText({ ok: true, mode, ...result });
+          return mcpText({ ok: true, mode, ...resultValue });
         }
 
         case "harness_savings": {

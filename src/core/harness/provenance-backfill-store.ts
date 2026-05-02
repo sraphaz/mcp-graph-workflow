@@ -24,6 +24,7 @@ export interface BackfillSummary {
   updated: number;
 }
 
+/** applyProvenanceBackfill — auto-generated description placeholder. */
 export function applyProvenanceBackfill(db: Database.Database): BackfillSummary {
   const nodeRows = db
     .prepare("SELECT id, source_file, metadata FROM nodes")

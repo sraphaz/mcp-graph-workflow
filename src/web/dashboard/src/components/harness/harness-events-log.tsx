@@ -49,6 +49,7 @@ function formatTimestamp(ts: string): string {
   }
 }
 
+/** HarnessEventsLog — auto-generated description placeholder. */
 export function HarnessEventsLog(): React.JSX.Element {
   const [data, setData] = useState<EventsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

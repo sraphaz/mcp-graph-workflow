@@ -66,6 +66,7 @@ const MonacoEditor = lazy<React.ComponentType<any>>(() =>
     .catch(() => ({ default: (() => null) as React.ComponentType<any> }))
 );
 
+/** TaskEditorPanel — auto-generated description placeholder. */
 export function TaskEditorPanel({
   initialValue,
   language = "typescript",

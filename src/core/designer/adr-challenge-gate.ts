@@ -72,10 +72,10 @@ export function runAdrChallengeGate(
   }
 
   // Run challenges for all decision nodes
-  const result = runAllAdrChallenges(store);
+  const resultValue = runAllAdrChallenges(store);
 
   // Zero decisions case
-  if (result.summary.totalDecisions === 0) {
+  if (resultValue.summary.totalDecisions === 0) {
     logger.info("adr-challenge-gate: no decision nodes found");
     return {
       blocked: false,
@@ -91,7 +91,7 @@ export function runAdrChallengeGate(
   }
 
   // Collect failed decisions
-  const failedDecisions = result.reports
+  const failedDecisions = resultValue.reports
     .filter((r) => r.report.overallVerdict.verdict === "CHALLENGE_FAILED")
     .map((r) => ({
       nodeId: r.nodeId,
@@ -116,16 +116,16 @@ export function runAdrChallengeGate(
 
   logger.info("adr-challenge-gate:result", {
     mode,
-    totalDecisions: result.summary.totalDecisions,
-    passed: result.summary.passed,
-    failed: result.summary.failed,
+    totalDecisions: resultValue.summary.totalDecisions,
+    passed: resultValue.summary.passed,
+    failed: resultValue.summary.failed,
     blocked,
   });
 
   return {
     blocked,
-    totalDecisions: result.summary.totalDecisions,
-    reports: result.reports,
+    totalDecisions: resultValue.summary.totalDecisions,
+    reports: resultValue.reports,
     failedDecisions,
     warnings,
   };

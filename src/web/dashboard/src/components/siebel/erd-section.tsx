@@ -28,6 +28,7 @@ interface ErdData {
   mermaid: string;
 }
 
+/** ErdSection — auto-generated description placeholder. */
 export function ErdSection(): React.JSX.Element {
   const [erd, setErd] = useState<ErdData | null>(null);
   const [project, setProject] = useState("");

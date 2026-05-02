@@ -37,6 +37,7 @@ import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerGraphRefreshDocs — auto-generated description placeholder. */
 export function registerGraphRefreshDocs(server: McpServer, store: SqliteStore): void {
   server.tool(
     "graph_refresh_docs",

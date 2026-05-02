@@ -59,11 +59,11 @@ export interface PostRetrievalResult {
 export function deduplicateResults(results: RankedResult[]): RankedResult[] {
   const seen = new Map<string, RankedResult>();
 
-  for (const result of results) {
-    const key = result.content.trim().toLowerCase();
+  for (const resultValue of results) {
+    const key = resultValue.content.trim().toLowerCase();
     const existing = seen.get(key);
-    if (!existing || result.score > existing.score) {
-      seen.set(key, result);
+    if (!existing || resultValue.score > existing.score) {
+      seen.set(key, resultValue);
     }
   }
 
@@ -107,15 +107,15 @@ export function stitchAdjacentChunks(
   const groups = new Map<string, RankedResult[]>();
   const ungrouped: RankedResult[] = [];
 
-  for (const r of results) {
-    const chunkIdx = chunkMeta.get(r.id);
+  for (const rVar of results) {
+    const chunkIdx = chunkMeta.get(rVar.id);
     if (chunkIdx === undefined) {
-      ungrouped.push(r);
+      ungrouped.push(rVar);
       continue;
     }
-    const group = groups.get(r.sourceId) ?? [];
-    group.push(r);
-    groups.set(r.sourceId, group);
+    const group = groups.get(rVar.sourceId) ?? [];
+    group.push(rVar);
+    groups.set(rVar.sourceId, group);
   }
 
   const stitched: RankedResult[] = [];

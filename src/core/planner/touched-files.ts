@@ -75,7 +75,7 @@ export function getInFlightFileMap(
   store: SqliteStore,
   lockManager: LockManager,
 ): Map<string, Set<string>> {
-  const result = new Map<string, Set<string>>();
+  const resultValue = new Map<string, Set<string>>();
 
   for (const lock of lockManager.listActive()) {
     if (!lock.resourceId.startsWith("task:")) {
@@ -90,8 +90,8 @@ export function getInFlightFileMap(
       continue;
     }
 
-    result.set(nodeId, new Set(getTouchedFiles(node)));
+    resultValue.set(nodeId, new Set(getTouchedFiles(node)));
   }
 
-  return result;
+  return resultValue;
 }

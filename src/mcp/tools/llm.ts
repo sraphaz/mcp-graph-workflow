@@ -53,6 +53,7 @@ export interface LlmToolDeps {
   gateway?: LlmGateway;
 }
 
+/** buildLlmHandler — auto-generated description placeholder. */
 export function buildLlmHandler(
   deps: LlmToolDeps,
 ): (params: LlmToolInput) => Promise<McpToolResponse> {
@@ -160,6 +161,7 @@ async function handleGenerate(
   }
 }
 
+/** registerLlm — auto-generated description placeholder. */
 export function registerLlm(server: McpServer, deps: LlmToolDeps = {}): void {
   const handler = buildLlmHandler(deps);
   server.tool(

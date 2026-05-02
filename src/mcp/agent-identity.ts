@@ -32,16 +32,16 @@ export function extractAgentId(extra: unknown): string {
   const meta = (extra as Record<string, unknown>).meta;
   if (!meta || typeof meta !== 'object') return 'unknown';
 
-  const m = meta as Record<string, unknown>;
+  const mVar = meta as Record<string, unknown>;
 
   // Prefer explicit agentId
-  if (typeof m.agentId === 'string' && m.agentId.length > 0) {
-    return m.agentId;
+  if (typeof mVar.agentId === 'string' && mVar.agentId.length > 0) {
+    return mVar.agentId;
   }
 
   // Fall back to sessionId
-  if (typeof m.sessionId === 'string' && m.sessionId.length > 0) {
-    return m.sessionId;
+  if (typeof mVar.sessionId === 'string' && mVar.sessionId.length > 0) {
+    return mVar.sessionId;
   }
 
   return 'unknown';

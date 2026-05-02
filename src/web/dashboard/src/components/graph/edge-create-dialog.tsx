@@ -40,6 +40,7 @@ interface EdgeCreateDialogProps {
   onCancel: () => void;
 }
 
+/** EdgeCreateDialog — auto-generated description placeholder. */
 export function EdgeCreateDialog({
   fromId,
   toId,

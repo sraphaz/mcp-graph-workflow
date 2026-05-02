@@ -90,7 +90,7 @@ async function snapshotRef(
     };
   }
 
-  const result = await runGoFileMode(toolPath, worktreePath, jsonPath);
+  const resultValue = await runGoFileMode(toolPath, worktreePath, jsonPath);
 
   const cleanup = (): void => {
     try {
@@ -102,12 +102,12 @@ async function snapshotRef(
     }
   };
 
-  if (!result.ok) {
+  if (!resultValue.ok) {
     return {
       ok: false,
       jsonPath: "",
       cleanup,
-      error: `analyzer failed at ref ${ref}: ${result.stderr.slice(0, 500)}`,
+      error: `analyzer failed at ref ${ref}: ${resultValue.stderr.slice(0, 500)}`,
     };
   }
   return { ok: true, jsonPath, cleanup };
@@ -117,7 +117,7 @@ function loadReport(jsonPath: string): Map<string, FileEntry> {
   const raw = execSync(`cat ${JSON.stringify(jsonPath)}`).toString();
   const parsed = JSON.parse(raw) as FileReportJSON;
   const map = new Map<string, FileEntry>();
-  for (const f of parsed.files) map.set(f.RelPath, f);
+  for (const fVar of parsed.files) map.set(fVar.RelPath, fVar);
   return map;
 }
 
@@ -130,16 +130,16 @@ function computeDeltas(
   for (const [path, cur] of current) {
     const prev = baseline.get(path);
     if (!prev) continue; // new file — no baseline to compare
-    const d = cur.Score - prev.Score;
-    if (Math.abs(d) < 0.5) continue; // noise floor
+    const dVar = cur.Score - prev.Score;
+    if (Math.abs(dVar) < 0.5) continue; // noise floor
     const entry: FileDelta = {
       path,
       module: cur.Module,
       before: prev.Score,
       after: cur.Score,
-      delta: d,
+      delta: dVar,
     };
-    if (d > 0) improvers.push(entry);
+    if (dVar > 0) improvers.push(entry);
     else regressions.push(entry);
   }
   improvers.sort((a, b) => b.delta - a.delta);
@@ -147,6 +147,7 @@ function computeDeltas(
   return { improvers, regressions };
 }
 
+/** reviewDepthCommand — auto-generated description placeholder. */
 export function reviewDepthCommand(): Command {
   return new Command("review-depth")
     .description("Compare feature-depth scores between two git refs (default: merge-base...HEAD)")
@@ -203,7 +204,7 @@ export function reviewDepthCommand(): Command {
         const baseline = loadReport(baseSnap.jsonPath);
         const current = loadReport(headSnap.jsonPath);
         const { improvers, regressions } = computeDeltas(baseline, current);
-        const result = evaluateReview({
+        const resultValue = evaluateReview({
           improvers,
           regressions,
           singleFileThreshold: singleThreshold,
@@ -211,27 +212,27 @@ export function reviewDepthCommand(): Command {
         });
 
         if (opts.json) {
-          output(JSON.stringify(result, null, 2));
+          output(JSON.stringify(resultValue, null, 2));
         } else {
-          output(result.summary + "\n");
+          output(resultValue.summary + "\n");
           if (improvers.length > 0) {
             output("↑ TOP IMPROVERS");
-            for (const f of improvers.slice(0, 10)) {
-              output(`  +${f.delta.toFixed(1).padStart(5)}  ${f.before.toFixed(1)} → ${f.after.toFixed(1)}  ${f.path}`);
+            for (const fVar of improvers.slice(0, 10)) {
+              output(`  +${fVar.delta.toFixed(1).padStart(5)}  ${fVar.before.toFixed(1)} → ${fVar.after.toFixed(1)}  ${fVar.path}`);
             }
             output("");
           }
           if (regressions.length > 0) {
             output("↓ REGRESSIONS");
-            for (const f of regressions.slice(0, 10)) {
-              output(`  ${f.delta.toFixed(1).padStart(6)}  ${f.before.toFixed(1)} → ${f.after.toFixed(1)}  ${f.path}`);
+            for (const fVar of regressions.slice(0, 10)) {
+              output(`  ${fVar.delta.toFixed(1).padStart(6)}  ${fVar.before.toFixed(1)} → ${fVar.after.toFixed(1)}  ${fVar.path}`);
             }
             output("");
           }
-          output(result.ok ? "✓ Review passed." : "✗ Review failed.");
+          output(resultValue.ok ? "✓ Review passed." : "✗ Review failed.");
         }
 
-        if (!result.ok) process.exit(1);
+        if (!resultValue.ok) process.exit(1);
       } finally {
         baseSnap.cleanup();
         headSnap.cleanup();

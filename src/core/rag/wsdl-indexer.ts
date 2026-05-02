@@ -135,17 +135,17 @@ function buildOperationContent(
 
   if (inputType) {
     parts.push(`\n## Input Fields (${inputType.name})`);
-    for (const f of inputType.fields) {
-      const flags = [f.optional ? "optional" : "required", f.isArray ? "array" : ""].filter(Boolean).join(", ");
-      parts.push(`- ${f.name}: ${f.type} (${flags})`);
+    for (const fVar of inputType.fields) {
+      const flags = [fVar.optional ? "optional" : "required", fVar.isArray ? "array" : ""].filter(Boolean).join(", ");
+      parts.push(`- ${fVar.name}: ${fVar.type} (${flags})`);
     }
   }
 
   if (outputType) {
     parts.push(`\n## Output Fields (${outputType.name})`);
-    for (const f of outputType.fields) {
-      const flags = [f.optional ? "optional" : "required", f.isArray ? "array" : ""].filter(Boolean).join(", ");
-      parts.push(`- ${f.name}: ${f.type} (${flags})`);
+    for (const fVar of outputType.fields) {
+      const flags = [fVar.optional ? "optional" : "required", fVar.isArray ? "array" : ""].filter(Boolean).join(", ");
+      parts.push(`- ${fVar.name}: ${fVar.type} (${flags})`);
     }
   }
 
@@ -160,9 +160,9 @@ function buildTypeContent(type: WsdlComplexType, namespace: string): string {
   parts.push(`Fields: ${type.fields.length}`);
   parts.push("");
 
-  for (const f of type.fields) {
-    const flags = [f.optional ? "optional" : "required", f.isArray ? "array" : ""].filter(Boolean).join(", ");
-    parts.push(`- ${f.name}: ${f.type} (${flags})`);
+  for (const fVar of type.fields) {
+    const flags = [fVar.optional ? "optional" : "required", fVar.isArray ? "array" : ""].filter(Boolean).join(", ");
+    parts.push(`- ${fVar.name}: ${fVar.type} (${flags})`);
   }
 
   return parts.join("\n");

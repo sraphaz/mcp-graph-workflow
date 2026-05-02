@@ -22,21 +22,25 @@ export interface DedupCandidate {
   similarity: number;
 }
 
+/** isMemoryDedupDisabled — auto-generated description placeholder. */
 export function isMemoryDedupDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_MEMORY_DEDUP === "off";
 }
 
+/** getDedupWindow — auto-generated description placeholder. */
 export function getDedupWindow(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.MCP_GRAPH_DEDUP_WINDOW;
   if (!raw) return DEFAULT_DEDUP_WINDOW;
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_DEDUP_WINDOW;
+  const nVar = Number(raw);
+  return Number.isFinite(nVar) && nVar > 0 ? Math.floor(nVar) : DEFAULT_DEDUP_WINDOW;
 }
 
+/** shouldSkipDedup — auto-generated description placeholder. */
 export function shouldSkipDedup(content: string): boolean {
   return !content || content.length < MIN_DEDUP_CONTENT_LEN;
 }
 
+/** cosineSimilarity — auto-generated description placeholder. */
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length === 0 || a.length !== b.length) return 0;
   let dot = 0;

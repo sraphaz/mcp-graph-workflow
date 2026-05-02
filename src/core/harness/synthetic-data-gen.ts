@@ -41,13 +41,13 @@ export function generateMinimal<T extends z.ZodObject<ZodShape>>(
   schema: T,
 ): z.infer<T> {
   const shape = schema.shape;
-  const result: Record<string, unknown> = {};
+  const resultValue: Record<string, unknown> = {};
 
   for (const [key, fieldSchema] of Object.entries(shape)) {
-    result[key] = generateValueMinimal(fieldSchema);
+    resultValue[key] = generateValueMinimal(fieldSchema);
   }
 
-  return result as z.infer<T>;
+  return resultValue as z.infer<T>;
 }
 
 /**
@@ -86,11 +86,11 @@ function generateValueMinimal(schema: z.ZodType): unknown {
 
   if (typeName === "object") {
     const shape = (schema as z.ZodObject<ZodShape>).shape;
-    const obj: Record<string, unknown> = {};
+    const objValue: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(shape)) {
-      obj[k] = generateValueMinimal(v);
+      objValue[k] = generateValueMinimal(v);
     }
-    return obj;
+    return objValue;
   }
 
   if (typeName === "record") return {};
@@ -113,19 +113,19 @@ export function generateEdgeCase<T extends z.ZodObject<ZodShape>>(
 
   for (const [key, fieldSchema] of Object.entries(shape)) {
     const edgeValues = generateEdgeValues(fieldSchema);
-    for (const val of edgeValues) {
-      cases.push({ ...baseMinimal, [key]: val });
+    for (const valValue of edgeValues) {
+      cases.push({ ...baseMinimal, [key]: valValue });
     }
   }
 
   // Deduplicate by JSON
   const seen = new Set<string>();
   const unique: Array<z.infer<T>> = [];
-  for (const c of cases) {
-    const json = JSON.stringify(c);
+  for (const cVar of cases) {
+    const json = JSON.stringify(cVar);
     if (!seen.has(json)) {
       seen.add(json);
-      unique.push(c);
+      unique.push(cVar);
     }
   }
 
@@ -209,7 +209,7 @@ function getZodDef(schema: z.ZodType): Record<string, unknown> {
  * Zod v4 stores checks as objects with _zod.def containing the constraint.
  */
 function getChecks(schema: z.ZodType): { min?: number; max?: number } {
-  const result: { min?: number; max?: number } = {};
+  const resultValue: { min?: number; max?: number } = {};
 
   try {
     const schemaDef = getZodDef(schema);
@@ -220,17 +220,17 @@ function getChecks(schema: z.ZodType): { min?: number; max?: number } {
         const checkDef = ((check as { _zod?: { def?: Record<string, unknown> } })._zod?.def ?? {});
         const checkType = checkDef.check as string | undefined;
 
-        if (checkType === "min_length") result.min = checkDef.minimum as number;
-        if (checkType === "max_length") result.max = checkDef.maximum as number;
-        if (checkType === "greater_than") result.min = checkDef.value as number;
-        if (checkType === "less_than") result.max = checkDef.value as number;
+        if (checkType === "min_length") resultValue.min = checkDef.minimum as number;
+        if (checkType === "max_length") resultValue.max = checkDef.maximum as number;
+        if (checkType === "greater_than") resultValue.min = checkDef.value as number;
+        if (checkType === "less_than") resultValue.max = checkDef.value as number;
       }
     }
   } catch {
     // Graceful fallback
   }
 
-  return result;
+  return resultValue;
 }
 
 /**

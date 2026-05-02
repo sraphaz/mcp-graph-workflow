@@ -50,6 +50,7 @@ function logsToText(logs: LogEntry[]): string {
     .join("\n");
 }
 
+/** LogsTab — auto-generated description placeholder. */
 export function LogsTab(): React.JSX.Element {
   const { logs, loading, clearLogs, refresh } = useLogs();
   const [levelFilter, setLevelFilter] = useState<LogLevel | "all">("all");

@@ -56,6 +56,7 @@ interface UseDocsResult {
   refresh: () => Promise<void>;
 }
 
+/** useDocs — auto-generated description placeholder. */
 export function useDocs(): UseDocsResult {
   const [tools, setTools] = useState<ToolInfo[]>([]);
   const [routes, setRoutes] = useState<RouteInfo[]>([]);

@@ -47,8 +47,8 @@ const LOOKUP_VALUE_PATTERN = /LookupValue\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"/g;
 export function mapLovDependencies(objects: SiebelObject[]): LovMapResult {
   const lovMap = new Map<string, { values: Set<string>; dependents: LovDependent[] }>();
 
-  for (const obj of objects) {
-    const scripts = obj.children.filter((c) => c.type === "escript");
+  for (const objValue of objects) {
+    const scripts = objValue.children.filter((c) => c.type === "escript");
     for (const script of scripts) {
       const sourceCode = script.properties.find((p) => p.name === "SOURCE_CODE")?.value ?? "";
       const method = script.properties.find((p) => p.name === "METHOD")?.value ?? script.name;
@@ -65,8 +65,8 @@ export function mapLovDependencies(objects: SiebelObject[]): LovMapResult {
           entry.values.add(lovValue);
 
           // Avoid duplicate dependents for same object+method
-          if (!entry.dependents.some((d) => d.object === obj.name && d.method === method && d.value === lovValue)) {
-            entry.dependents.push({ object: obj.name, method, value: lovValue });
+          if (!entry.dependents.some((d) => d.object === objValue.name && d.method === method && d.value === lovValue)) {
+            entry.dependents.push({ object: objValue.name, method, value: lovValue });
           }
 
           lovMap.set(lovType, entry);

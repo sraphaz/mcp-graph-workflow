@@ -58,6 +58,7 @@ function buildScrubbedEnv(extra: Record<string, string> | undefined): NodeJS.Pro
   return out;
 }
 
+/** runShellHandler — auto-generated description placeholder. */
 export async function runShellHandler(
   config: ShellHandlerConfig,
   event: HookEvent,

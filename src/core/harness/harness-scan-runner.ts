@@ -78,12 +78,26 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
 
   const typeResult = scanTypeCoverage(typeFiles, scannerOpts);
 
-  // 2. Test Coverage — exclude node_modules to avoid counting third-party TS files
-  const modules = globSync("src/**/*.ts", {
+  // 2. Test Coverage — include both server (.ts) and dashboard (.tsx) sources;
+  // mirror the npm-script scanner that tracks the dashboard test surface.
+  const moduleFiles = globSync("src/**/*.{ts,tsx}", {
     cwd: rootDir,
-    ignore: ["src/**/*.test.ts", "src/**/*.bench.ts", "src/index.ts", "**/node_modules/**"],
-  }).map((p) => path.basename(p, ".ts"));
-  const testFiles = globSync("src/tests/**/*.test.ts", { cwd: rootDir }).map((p) => ({
+    ignore: [
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+      "src/**/*.bench.ts",
+      "src/index.ts",
+      "src/web/dashboard/src/test-setup.ts",
+      "src/web/dashboard/src/main.tsx",
+      "src/web/dashboard/src/vite-env.d.ts",
+      "**/node_modules/**",
+    ],
+  });
+  const modules = moduleFiles.map((p) => path.basename(p).replace(/\.(ts|tsx)$/, ""));
+  const testFiles = [
+    ...globSync("src/tests/**/*.test.ts", { cwd: rootDir }),
+    ...globSync("src/web/dashboard/src/**/*.test.{ts,tsx}", { cwd: rootDir }),
+  ].map((p) => ({
     name: path.basename(p),
     hasAssertions: fs.readFileSync(path.join(rootDir, p), "utf-8").includes("expect("),
   }));
@@ -164,10 +178,10 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
   ];
 
   // Add fitness failure details
-  for (const r of fitnessResults) {
-    if (!r.passed) {
+  for (const rVar of fitnessResults) {
+    if (!rVar.passed) {
       details.push(
-        `Fitness fail [${r.name}]: ${r.violations.slice(0, 3).map((v) => `${v.file}:${v.line} -> ${v.rule}`).join("; ")}`,
+        `Fitness fail [${rVar.name}]: ${rVar.violations.slice(0, 3).map((v) => `${v.file}:${v.line} -> ${v.rule}`).join("; ")}`,
       );
     }
   }
@@ -188,15 +202,15 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     // Convert fitness Violation[] → ViolationDetail[]
     for (const fr of fitnessResults) {
       if (!fr.passed) {
-        for (const v of fr.violations) {
+        for (const vVar of fr.violations) {
           all.push({
-            file: v.file,
-            line: v.line,
+            file: vVar.file,
+            line: vVar.line,
             dimension: 'fitness',
             violationType: fr.name === 'dependency_direction' ? 'bad_import'
               : fr.name === 'circular_dependencies' ? 'circular_dep'
               : 'missing_barrel',
-            evidence: v.rule,
+            evidence: vVar.rule,
             confidence: 1.0,
           });
         }
@@ -216,7 +230,7 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     : [];
 
   const timestamp = new Date().toISOString();
-  const result: HarnessScanResult = {
+  const resultValue: HarnessScanResult = {
     ...finalResult,
     details,
     timestamp,
@@ -233,8 +247,8 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
       .get(projectId) as { score: number } | undefined;
 
     if (lastRow !== undefined && finalResult.score <= lastRow.score - 5) {
-      result.regression = true;
-      result.regressionDelta = +(finalResult.score - lastRow.score).toFixed(2);
+      resultValue.regression = true;
+      resultValue.regressionDelta = +(finalResult.score - lastRow.score).toFixed(2);
     }
 
     let gitCommit: string | null = null;
@@ -268,12 +282,12 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
         timestamp,
         payload: { score: finalResult.score, grade: finalResult.grade, timestamp },
       });
-      if (result.regression && result.regressionDelta !== undefined) {
-        const before = +(finalResult.score - result.regressionDelta).toFixed(1);
+      if (resultValue.regression && resultValue.regressionDelta !== undefined) {
+        const before = +(finalResult.score - resultValue.regressionDelta).toFixed(1);
         eventBus.emit({
           type: "harness:regression_detected",
           timestamp,
-          payload: { before, after: finalResult.score, delta: result.regressionDelta },
+          payload: { before, after: finalResult.score, delta: resultValue.regressionDelta },
         });
       }
     } catch {
@@ -281,5 +295,5 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
     }
   }
 
-  return result;
+  return resultValue;
 }

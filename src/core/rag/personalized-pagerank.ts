@@ -77,15 +77,15 @@ export function computePPR(input: PprInput): PprResult {
     return { scores: new Map(), iterations: 0, converged: true };
   }
 
-  const n = nodeIds.length;
+  const nVar = nodeIds.length;
   const nodeIndex = new Map<string, number>();
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < nVar; i++) {
     nodeIndex.set(nodeIds[i], i);
   }
 
   // Build adjacency list (outgoing edges per node)
-  const outEdges = new Array<number[]>(n);
-  for (let i = 0; i < n; i++) outEdges[i] = [];
+  const outEdges = new Array<number[]>(nVar);
+  for (let i = 0; i < nVar; i++) outEdges[i] = [];
 
   for (const edge of edges) {
     const fromIdx = nodeIndex.get(edge.from);
@@ -96,7 +96,7 @@ export function computePPR(input: PprInput): PprResult {
   }
 
   // Build seed vector (uniform over valid seeds)
-  const seed = new Float64Array(n);
+  const seed = new Float64Array(nVar);
   const seedWeight = 1.0 / validSeeds.length;
   for (const seedId of validSeeds) {
     const idx = nodeIndex.get(seedId);
@@ -110,10 +110,10 @@ export function computePPR(input: PprInput): PprResult {
 
   for (let iter = 0; iter < maxIterations; iter++) {
     iterations = iter + 1;
-    const next = new Float64Array(n);
+    const next = new Float64Array(nVar);
 
     // Propagate: for each node, distribute its score equally to outgoing neighbors
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < nVar; i++) {
       const outs = outEdges[i];
       if (outs.length > 0) {
         const share = scores[i] / outs.length;
@@ -127,10 +127,10 @@ export function computePPR(input: PprInput): PprResult {
 
     // Apply damping: s_{t+1} = (1-α) * propagated + α * seed
     let maxDiff = 0;
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < nVar; i++) {
       next[i] = (1 - alpha) * next[i] + alpha * seed[i];
-      const d = Math.abs(next[i] - scores[i]);
-      if (d > maxDiff) maxDiff = d;
+      const dVar = Math.abs(next[i] - scores[i]);
+      if (dVar > maxDiff) maxDiff = dVar;
     }
 
     scores = next;
@@ -143,17 +143,17 @@ export function computePPR(input: PprInput): PprResult {
   }
 
   // Build result map (include all nodes, even with score 0)
-  const result = new Map<string, number>();
-  for (let i = 0; i < n; i++) {
-    result.set(nodeIds[i], scores[i]);
+  const resultValue = new Map<string, number>();
+  for (let i = 0; i < nVar; i++) {
+    resultValue.set(nodeIds[i], scores[i]);
   }
 
   logger.debug("ppr:computed", {
-    nodes: n,
+    nodes: nVar,
     seeds: validSeeds.length,
     iterations,
     converged,
   });
 
-  return { scores: result, iterations, converged };
+  return { scores: resultValue, iterations, converged };
 }

@@ -88,10 +88,10 @@ export class AuthStore {
 
     if (file) {
       view.preferredProvider = file.preferredProvider;
-      for (const p of ["anthropic", "copilot"] as const) {
-        const entry = file.providers[p];
+      for (const pVar of ["anthropic", "copilot"] as const) {
+        const entry = file.providers[pVar];
         if (entry) {
-          view.providers[p] = {
+          view.providers[pVar] = {
             model: entry.model,
             fingerprint: fingerprint(entry.apiKey),
             source: "file",
@@ -102,13 +102,13 @@ export class AuthStore {
     }
 
     // Env-var fallback for providers not in the file.
-    for (const p of ["anthropic", "copilot"] as const) {
-      if (view.providers[p]) continue;
-      const raw = process.env[ENV_KEY_FOR[p]];
-      if (raw && KEY_PATTERN[p].test(raw)) {
-        view.providers[p] = { fingerprint: fingerprint(raw), source: "env" };
+    for (const pVar of ["anthropic", "copilot"] as const) {
+      if (view.providers[pVar]) continue;
+      const raw = process.env[ENV_KEY_FOR[pVar]];
+      if (raw && KEY_PATTERN[pVar].test(raw)) {
+        view.providers[pVar] = { fingerprint: fingerprint(raw), source: "env" };
         view.authenticated = true;
-        view.preferredProvider ??= p;
+        view.preferredProvider ??= pVar;
       }
     }
 

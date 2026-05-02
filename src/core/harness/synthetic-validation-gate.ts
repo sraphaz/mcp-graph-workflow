@@ -23,6 +23,7 @@ import { logger } from "../utils/logger.js";
 export interface MutationRecord { type: "dangling_edge" | "status_regression" | "self_cycle" | "duplicate_edge"; description: string; detected: boolean; }
 export interface SyntheticValidationResult { passed: boolean; mutationsApplied: number; mutationsCaught: number; score: number; mutations: MutationRecord[]; durationMs: number; }
 
+/** runSyntheticValidation — auto-generated description placeholder. */
 export function runSyntheticValidation(store: SqliteStore): SyntheticValidationResult {
   const start = performance.now();
   const doc = store.toGraphDocument();
@@ -34,8 +35,8 @@ export function runSyntheticValidation(store: SqliteStore): SyntheticValidationR
   if (doc.nodes.length > 0) {
     const mutated = cloneDoc(doc);
     mutated.edges.push({ id: "mut_dangling", from: doc.nodes[0].id, to: "nonexistent_mutation_target", relationType: "depends_on", createdAt: new Date().toISOString() });
-    const r = checkInvariants(mutated, invariants);
-    mutations.push({ type: "dangling_edge", description: "Added edge to nonexistent node", detected: !r.passed });
+    const rVar = checkInvariants(mutated, invariants);
+    mutations.push({ type: "dangling_edge", description: "Added edge to nonexistent node", detected: !rVar.passed });
   }
 
   if (doc.nodes.some((n) => n.status === "done")) {
@@ -44,17 +45,17 @@ export function runSyntheticValidation(store: SqliteStore): SyntheticValidationR
     if (doneNode) {
       doneNode.status = "backlog";
       doneNode.metadata = { ...doneNode.metadata, previousStatus: "done" };
-      const r = checkInvariants(mutated, invariants);
-      mutations.push({ type: "status_regression", description: "Regressed node from done to backlog", detected: !r.passed });
+      const rVar = checkInvariants(mutated, invariants);
+      mutations.push({ type: "status_regression", description: "Regressed node from done to backlog", detected: !rVar.passed });
     }
   }
 
   if (doc.nodes.length > 0) {
     const mutated = cloneDoc(doc);
-    const t = mutated.nodes[0];
-    mutated.edges.push({ id: "mut_self_cycle", from: t.id, to: t.id, relationType: "depends_on", createdAt: new Date().toISOString() });
-    const r = checkInvariants(mutated, invariants);
-    mutations.push({ type: "self_cycle", description: "Added self-dependency", detected: !r.passed });
+    const tVar = mutated.nodes[0];
+    mutated.edges.push({ id: "mut_self_cycle", from: tVar.id, to: tVar.id, relationType: "depends_on", createdAt: new Date().toISOString() });
+    const rVar = checkInvariants(mutated, invariants);
+    mutations.push({ type: "self_cycle", description: "Added self-dependency", detected: !rVar.passed });
   }
 
   const caught = mutations.filter((m) => m.detected).length;

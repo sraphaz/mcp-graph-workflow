@@ -247,7 +247,7 @@ export class ProjectTranslationOrchestrator {
       );
     }
 
-    const result = await this.orchestrator.prepareTranslation({
+    const resultValue = await this.orchestrator.prepareTranslation({
       projectId: project.projectId,
       sourceCode: file.sourceCode,
       sourceLanguage: file.sourceLanguage,
@@ -257,10 +257,10 @@ export class ProjectTranslationOrchestrator {
 
     this.projectStore.updateFile(fileId, {
       status: "translating",
-      jobId: result.jobId,
+      jobId: resultValue.jobId,
     });
 
-    return { jobId: result.jobId, prompt: result.prompt };
+    return { jobId: resultValue.jobId, prompt: resultValue.prompt };
   }
 
   /**
@@ -294,11 +294,11 @@ export class ProjectTranslationOrchestrator {
       );
     }
 
-    const result = this.orchestrator.finalizeTranslation(file.jobId, generatedCode);
+    const resultValue = this.orchestrator.finalizeTranslation(file.jobId, generatedCode);
 
     this.projectStore.updateFile(fileId, {
       status: "done",
-      confidenceScore: result.evidence.confidenceScore,
+      confidenceScore: resultValue.evidence.confidenceScore,
     });
 
     const confidence = this.projectStore.computeProjectConfidence(translationProjectId);
@@ -307,7 +307,7 @@ export class ProjectTranslationOrchestrator {
       deterministicPct: confidence.deterministicPct,
     });
 
-    return result;
+    return resultValue;
   }
 
   /**

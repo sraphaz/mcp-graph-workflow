@@ -75,6 +75,7 @@ export interface BrowserPilotToolOverrides {
   readonly spawnAgent?: BrowserPilotRunDeps["spawnAgent"];
 }
 
+/** buildBrowserPilotDeps — auto-generated description placeholder. */
 export function buildBrowserPilotDeps(
   _store: SqliteStore,
   overrides: BrowserPilotToolOverrides = {},
@@ -105,6 +106,7 @@ export function buildBrowserPilotDeps(
   };
 }
 
+/** registerBrowserPilotTool — auto-generated description placeholder. */
 export function registerBrowserPilotTool(
   server: McpServer,
   store: SqliteStore,

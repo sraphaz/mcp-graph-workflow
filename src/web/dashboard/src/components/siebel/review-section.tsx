@@ -37,6 +37,7 @@ interface ReviewResult {
   objectCount: number;
 }
 
+/** ReviewSection — auto-generated description placeholder. */
 export function ReviewSection(): React.JSX.Element {
   const [sifContent, setSifContent] = useState("");
   const [prefix, setPrefix] = useState("CX_");

@@ -29,6 +29,7 @@ const HEALTH_CONFIG = {
   critical: { color: "#ef4444", bgColor: "#ef444418", Icon: AlertCircle, label: "Critical" },
 } as const;
 
+/** SprintHealthCard — auto-generated description placeholder. */
 export function SprintHealthCard({ report, className }: SprintHealthCardProps): React.JSX.Element {
   if (report.metrics.taskCount === 0) {
     return (

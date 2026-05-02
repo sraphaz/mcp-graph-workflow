@@ -83,6 +83,7 @@ const IGNORED_DIRS = new Set([
 // Public API
 // ---------------------------------------------------------------------------
 
+/** detectProjectLanguages — auto-generated description placeholder. */
 export function detectProjectLanguages(
   projectPath: string,
   registry: ServerRegistry,

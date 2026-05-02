@@ -38,14 +38,15 @@ function escapeMermaid(file: string): string {
   return file.replace(/"/g, '\\"');
 }
 
+/** buildMermaid — auto-generated description placeholder. */
 export function buildMermaid(nodes: NodeMetric[], edges: ImportEdge[]): string {
   const ids = new Map<string, string>();
-  for (const n of nodes) ids.set(n.file, shortLabel(n.file));
+  for (const nVar of nodes) ids.set(nVar.file, shortLabel(nVar.file));
   const lines = ["graph TD"];
-  for (const n of nodes) {
-    const id = ids.get(n.file);
+  for (const nVar of nodes) {
+    const id = ids.get(nVar.file);
     if (id === undefined) continue;
-    lines.push(`  ${id}["${escapeMermaid(n.file)}"]`);
+    lines.push(`  ${id}["${escapeMermaid(nVar.file)}"]`);
   }
   for (const e of edges) {
     const from = ids.get(e.from);
@@ -56,6 +57,7 @@ export function buildMermaid(nodes: NodeMetric[], edges: ImportEdge[]): string {
   return lines.join("\n");
 }
 
+/** analyzeZoomOut — auto-generated description placeholder. */
 export function analyzeZoomOut(
   files: string[],
   edges: ImportEdge[],
@@ -63,9 +65,9 @@ export function analyzeZoomOut(
 ): ZoomOutReport {
   const fanIn = new Map<string, number>();
   const fanOut = new Map<string, number>();
-  for (const f of files) {
-    fanIn.set(f, 0);
-    fanOut.set(f, 0);
+  for (const fVar of files) {
+    fanIn.set(fVar, 0);
+    fanOut.set(fVar, 0);
   }
   for (const e of edges) {
     if (!fanIn.has(e.to)) fanIn.set(e.to, 0);

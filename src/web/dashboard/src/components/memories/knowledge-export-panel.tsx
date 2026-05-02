@@ -18,6 +18,7 @@
 import { useState, useCallback } from "react";
 import { apiClient } from "@/lib/api-client";
 
+/** KnowledgeExportPanel — auto-generated description placeholder. */
 export function KnowledgeExportPanel(): React.JSX.Element {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);

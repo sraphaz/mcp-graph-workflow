@@ -49,10 +49,10 @@ export function diffPrd(oldText: string, newText: string): PrdDiffResult {
   const newSections = segment(normalize(newText));
 
   const oldMap = new Map<string, Section>();
-  for (const s of oldSections) oldMap.set(s.title.toLowerCase(), s);
+  for (const sVar of oldSections) oldMap.set(sVar.title.toLowerCase(), sVar);
 
   const newMap = new Map<string, Section>();
-  for (const s of newSections) newMap.set(s.title.toLowerCase(), s);
+  for (const sVar of newSections) newMap.set(sVar.title.toLowerCase(), sVar);
 
   const sections: PrdDiffSection[] = [];
   const processed = new Set<string>();

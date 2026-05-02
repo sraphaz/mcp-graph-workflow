@@ -54,6 +54,7 @@ function getBundle(store: SqliteStore): HarnessRuntimeBundle {
   return bundle;
 }
 
+/** registerBrowserHarnessTool — auto-generated description placeholder. */
 export function registerBrowserHarnessTool(server: McpServer, store: SqliteStore): void {
   server.tool(
     "browser_harness",
@@ -112,23 +113,23 @@ export function registerBrowserHarnessTool(server: McpServer, store: SqliteStore
                 hint: "use action:add_helper with a TS function expression like 'async (cdp, args) => {...}'",
               }));
             }
-            const result = await bundle.runtime.invoke(session.cdp, input.name, input.args ?? {});
+            const resultValue = await bundle.runtime.invoke(session.cdp, input.name, input.args ?? {});
             bundle.selfHeal.audit(input.sessionId, "call", { helper: input.name, args: input.args ?? {} }, { ok: true });
-            return mcpText({ ok: true, result });
+            return mcpText({ ok: true, resultValue });
           }
 
           case "add_helper": {
             if (!input.sessionId || !input.name || !input.source) {
               return mcpError("sessionId, name, and source required");
             }
-            const result = bundle.selfHeal.add({
+            const resultValue = bundle.selfHeal.add({
               sessionId: input.sessionId,
               name: input.name,
               source: input.source,
               signature: input.signature,
               guardrail,
             });
-            return mcpText({ ok: true, ...result });
+            return mcpText({ ok: true, ...resultValue });
           }
 
           case "cdp_raw": {
@@ -139,9 +140,9 @@ export function registerBrowserHarnessTool(server: McpServer, store: SqliteStore
               return mcpError(err);
             }
             const session = bundle.sessions.get(input.sessionId);
-            const result = await session.cdp.send(input.method, input.params ?? {});
+            const resultValue = await session.cdp.send(input.method, input.params ?? {});
             bundle.selfHeal.audit(input.sessionId, "cdp_raw", { method: input.method }, { ok: true });
-            return mcpText({ ok: true, result });
+            return mcpText({ ok: true, resultValue });
           }
         }
       } catch (err) {
@@ -158,6 +159,7 @@ export function registerBrowserHarnessTool(server: McpServer, store: SqliteStore
 }
 
 // Test-only helper to clear the bundle cache so tests don't leak state.
+/** _resetBundleCacheForTests — auto-generated description placeholder. */
 export function _resetBundleCacheForTests(): void {
   // WeakMap can't be cleared; nothing to do — tests create fresh stores.
 }

@@ -24,6 +24,7 @@ import { runQualityGates } from "../../core/pipeline/quality-gates-runner.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerFinishTask — auto-generated description placeholder. */
 export function registerFinishTask(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
   server.tool(
     "finish_task",
@@ -53,73 +54,73 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
     async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, artifacts }) => {
       logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const result = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts });
+      const resultValue = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts });
 
       logger.info("tool:finish_task:ok", {
         nodeId,
-        status: result.status,
-        dodGrade: result.dodReport.grade,
-        blockers: result.blockers.length,
-        hasNext: result.nextTask !== null,
+        status: resultValue.status,
+        dodGrade: resultValue.dodReport.grade,
+        blockers: resultValue.blockers.length,
+        hasNext: resultValue.nextTask !== null,
       });
 
       const response: Record<string, unknown> = {
-        status: result.status,
+        status: resultValue.status,
         dodReport: {
-          score: result.dodReport.score,
-          grade: result.dodReport.grade,
-          checks: result.dodReport.checks,
-          summary: result.dodReport.summary,
+          score: resultValue.dodReport.score,
+          grade: resultValue.dodReport.grade,
+          checks: resultValue.dodReport.checks,
+          summary: resultValue.dodReport.summary,
         },
       };
 
-      if (result.blockers.length > 0) {
-        response.blockers = result.blockers;
+      if (resultValue.blockers.length > 0) {
+        response.blockers = resultValue.blockers;
         response.hint = "Fix the listed blockers and try again. Required DoD checks must pass before marking done.";
       }
 
-      if (result.epicPromotion) {
-        response.epicPromotion = result.epicPromotion;
+      if (resultValue.epicPromotion) {
+        response.epicPromotion = resultValue.epicPromotion;
       }
 
-      if (result.nextTask) {
+      if (resultValue.nextTask) {
         response.nextTask = {
-          node: result.nextTask.task.node,
-          reason: result.nextTask.task.reason,
-          knowledgeCoverage: result.nextTask.knowledgeCoverage,
-          enhancedReason: result.nextTask.enhancedReason,
+          node: resultValue.nextTask.task.node,
+          reason: resultValue.nextTask.task.reason,
+          knowledgeCoverage: resultValue.nextTask.knowledgeCoverage,
+          enhancedReason: resultValue.nextTask.enhancedReason,
         };
       }
 
-      if (result.decisionIndexed) {
+      if (resultValue.decisionIndexed) {
         response.decisionIndexed = true;
       }
 
-      if (result.harnessRegression) {
-        response.harnessRegression = result.harnessRegression;
+      if (resultValue.harnessRegression) {
+        response.harnessRegression = resultValue.harnessRegression;
       }
 
-      if (result.ruleSuggestions.length > 0) {
-        response.ruleSuggestions = result.ruleSuggestions;
+      if (resultValue.ruleSuggestions.length > 0) {
+        response.ruleSuggestions = resultValue.ruleSuggestions;
       }
 
-      if (result.testGate) {
-        response.testGate = result.testGate;
+      if (resultValue.testGate) {
+        response.testGate = resultValue.testGate;
       }
 
-      if (result.invariantResult && !result.invariantResult.passed) {
-        response.invariantViolations = result.invariantResult.violations;
+      if (resultValue.invariantResult && !resultValue.invariantResult.passed) {
+        response.invariantViolations = resultValue.invariantResult.violations;
       }
 
-      if (result.discoveredTestFiles && result.discoveredTestFiles.length > 0) {
-        response.discoveredTestFiles = result.discoveredTestFiles;
+      if (resultValue.discoveredTestFiles && resultValue.discoveredTestFiles.length > 0) {
+        response.discoveredTestFiles = resultValue.discoveredTestFiles;
       }
 
       // v11 Context-Pollination: expose persisted artifact ids for auditoria
-      response.artifactIds = result.artifactIds;
+      response.artifactIds = resultValue.artifactIds;
 
-      if (result.skillProposal) {
-        response.skillProposal = result.skillProposal;
+      if (resultValue.skillProposal) {
+        response.skillProposal = resultValue.skillProposal;
       }
 
       // Run optional quality gates (advisory mode — never blocks)

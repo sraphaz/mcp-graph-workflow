@@ -27,6 +27,7 @@ interface DownloadDialogProps {
   onDownloadDeterministicOnly: () => void;
 }
 
+/** DownloadDialog — auto-generated description placeholder. */
 export function DownloadDialog({
   open,
   onClose,

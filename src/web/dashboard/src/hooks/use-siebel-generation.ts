@@ -60,6 +60,7 @@ interface UseSiebelGenerationReturn {
   download: () => void;
 }
 
+/** useSiebelGeneration — auto-generated description placeholder. */
 export function useSiebelGeneration(onSuccess?: () => void): UseSiebelGenerationReturn {
   const [description, setDescription] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["business_component"]);

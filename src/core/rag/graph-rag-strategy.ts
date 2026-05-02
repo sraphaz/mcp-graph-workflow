@@ -463,7 +463,7 @@ export function findCommunityDocs(
   const matchedNodeSet = new Set<string>();
   try {
     const results = store.searchNodes(query, 3);
-    for (const r of results) matchedNodeSet.add(r.id);
+    for (const rVar of results) matchedNodeSet.add(rVar.id);
   } catch {
     return [];
   }

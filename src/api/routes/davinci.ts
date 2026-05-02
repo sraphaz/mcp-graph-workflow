@@ -47,6 +47,7 @@ import { generatePlugin } from "../../core/davinci/plugin-generator.js";
 import { listTemplates, getTemplate } from "../../core/davinci/template-registry.js";
 import type { TargetSdk } from "../../core/davinci/pom-generator.js";
 
+/** createDavinciRouter — auto-generated description placeholder. */
 export function createDavinciRouter(): Router {
   const router = Router();
 
@@ -91,12 +92,12 @@ export function createDavinciRouter(): Router {
       }
 
       const analysis = parseDaVinciCode(code);
-      const result = detectPluginType(analysis, targetSdk ?? "pingfederate", {
+      const resultValue = detectPluginType(analysis, targetSdk ?? "pingfederate", {
         sourceCode: code,
         override,
       });
 
-      res.json({ ok: true, detection: result });
+      res.json({ ok: true, detection: resultValue });
     } catch (err: unknown) {
       res.status(500).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
     }
@@ -117,7 +118,7 @@ export function createDavinciRouter(): Router {
         return;
       }
 
-      const result = generatePlugin({
+      const resultValue = generatePlugin({
         code,
         pluginName,
         packageName,
@@ -127,7 +128,7 @@ export function createDavinciRouter(): Router {
         attributeContract: attributeContract ?? [],
       });
 
-      res.json({ ok: true, ...result });
+      res.json({ ok: true, ...resultValue });
     } catch (err: unknown) {
       res.status(500).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
     }
@@ -219,8 +220,8 @@ export function createDavinciRouter(): Router {
         return;
       }
 
-      const result = await runMavenBuild(projectDir);
-      res.json({ ok: result.success, buildResult: result, environment: env });
+      const resultValue = await runMavenBuild(projectDir);
+      res.json({ ok: resultValue.success, buildResult: resultValue, environment: env });
     } catch (err: unknown) {
       res.status(500).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
     }

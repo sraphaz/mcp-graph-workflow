@@ -23,14 +23,15 @@ export interface PipelineStage {
 
 export type StageExecutor<T> = (stage: PipelineStage, input: T) => Promise<T>;
 
+/** buildPipelineStages — auto-generated description placeholder. */
 export function buildPipelineStages(input: PipelineStageInput[]): PipelineStage[] {
   if (input.length === 0) return [];
   const seen = new Set<string>();
-  for (const s of input) {
-    if (seen.has(s.agentId)) {
-      throw new McpGraphError(`Duplicate agent in pipeline: ${s.agentId}`);
+  for (const sVar of input) {
+    if (seen.has(sVar.agentId)) {
+      throw new McpGraphError(`Duplicate agent in pipeline: ${sVar.agentId}`);
     }
-    seen.add(s.agentId);
+    seen.add(sVar.agentId);
   }
   return input.map((s, i) => {
     const peer = i < input.length - 1 ? input[i + 1] : undefined;
@@ -42,6 +43,7 @@ export function buildPipelineStages(input: PipelineStageInput[]): PipelineStage[
   });
 }
 
+/** getNextStage — auto-generated description placeholder. */
 export function getNextStage(
   stages: PipelineStage[],
   currentAgentId: string,
@@ -51,6 +53,7 @@ export function getNextStage(
   return stages[idx + 1] ?? null;
 }
 
+/** runPipeline — auto-generated description placeholder. */
 export async function runPipeline<T>(
   stages: PipelineStage[],
   initialInput: T,

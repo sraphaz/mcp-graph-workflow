@@ -81,6 +81,7 @@ export interface LoadHookConfigOptions {
   paths?: { user?: string; project?: string; local?: string };
 }
 
+/** loadHookConfig — auto-generated description placeholder. */
 export function loadHookConfig(options: LoadHookConfigOptions = {}): MergedHookConfig {
   const cwd = options.cwd ?? process.cwd();
   const paths = {

@@ -29,6 +29,7 @@ const CARDS = [
   { key: "avgQualityImprovement" as const, label: "Avg Quality Delta", format: (v: number) => (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%" },
 ];
 
+/** DreamMetricsCards — auto-generated description placeholder. */
 export function DreamMetricsCards({ metrics }: DreamMetricsProps): React.JSX.Element {
   if (!metrics) return <></>;
 

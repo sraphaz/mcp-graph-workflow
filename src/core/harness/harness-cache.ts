@@ -84,14 +84,14 @@ export function runHarnessScanCached(
 
   // Cache miss: run scan
   try {
-    const result = runHarnessScan(rootDir, db);
-    cache = { result, cachedAt: now, rootDir, gitHash: currentHash };
+    const resultValue = runHarnessScan(rootDir, db);
+    cache = { result: resultValue, cachedAt: now, rootDir, gitHash: currentHash };
     logger.debug("harness:cache:miss", {
-      score: result.score,
-      grade: result.grade,
+      score: resultValue.score,
+      grade: resultValue.grade,
       reason: !cache ? "empty" : "expired_or_invalidated",
     });
-    return result;
+    return resultValue;
   } catch (err) {
     logger.warn("harness:cache:scan_failed", { error: String(err) });
     return null;

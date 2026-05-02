@@ -58,16 +58,16 @@ export class LspDiagnosticsCollector {
 
   /** Get diagnostics for a specific file (across all languages). */
   getForFile(file: string): LspDiagnostic[] {
-    const result: LspDiagnostic[] = [];
+    const resultValue: LspDiagnostic[] = [];
 
     for (const langMap of this.store.values()) {
       const fileDiags = langMap.get(file);
       if (fileDiags) {
-        result.push(...fileDiags);
+        resultValue.push(...fileDiags);
       }
     }
 
-    return result;
+    return resultValue;
   }
 
   /** Get all diagnostics for a language. */
@@ -77,7 +77,7 @@ export class LspDiagnosticsCollector {
 
   /** Get all diagnostics, optionally filtered by severity (1=error,2=warning,3=info,4=hint). */
   getAll(severity?: number): Map<string, LspDiagnostic[]> {
-    const result = new Map<string, LspDiagnostic[]>();
+    const resultValue = new Map<string, LspDiagnostic[]>();
 
     for (const langMap of this.store.values()) {
       for (const [file, diagnostics] of langMap) {
@@ -89,16 +89,16 @@ export class LspDiagnosticsCollector {
           continue;
         }
 
-        const existing = result.get(file);
+        const existing = resultValue.get(file);
         if (existing) {
           existing.push(...filtered);
         } else {
-          result.set(file, [...filtered]);
+          resultValue.set(file, [...filtered]);
         }
       }
     }
 
-    return result;
+    return resultValue;
   }
 
   /** Get summary counts. */

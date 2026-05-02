@@ -500,7 +500,7 @@ export async function handleSiebelGenerate(store: SqliteStore, params: SiebelPar
 
     const normalized = normalizeNewlines(generatedXml) ?? generatedXml;
 
-    const result = finalizeSifGeneration(
+    const resultValue = finalizeSifGeneration(
       knowledgeStore,
       normalized,
       {
@@ -512,11 +512,11 @@ export async function handleSiebelGenerate(store: SqliteStore, params: SiebelPar
     return mcpText({
       ok: true,
       action: "finalize",
-      sifContent: result.sifContent,
-      objectCount: result.metadata.objectCount,
-      objects: result.objects,
-      validation: result.validation,
-      metadata: result.metadata,
+      sifContent: resultValue.sifContent,
+      objectCount: resultValue.metadata.objectCount,
+      objects: resultValue.objects,
+      validation: resultValue.validation,
+      metadata: resultValue.metadata,
     });
   }
 
@@ -567,7 +567,7 @@ export async function handleSiebelGenerate(store: SqliteStore, params: SiebelPar
     }));
     const removeChildren = removeFields;
 
-    const result = cloneAndAdapt({
+    const resultValue = cloneAndAdapt({
       source: sourceObj,
       newName,
       renames: renames ?? {},
@@ -575,15 +575,15 @@ export async function handleSiebelGenerate(store: SqliteStore, params: SiebelPar
       removeChildren,
     });
 
-    const diffMarkdown = formatDiffMarkdown(result.diff);
+    const diffMarkdown = formatDiffMarkdown(resultValue.diff);
 
     return mcpText({
       ok: true,
       action: "clone_adapt",
-      clonedObject: { name: result.cloned.name, type: result.cloned.type },
-      childCount: result.cloned.children.length,
-      renamesApplied: result.renamesApplied,
-      diff: result.diff.summary,
+      clonedObject: { name: resultValue.cloned.name, type: resultValue.cloned.type },
+      childCount: resultValue.cloned.children.length,
+      renamesApplied: resultValue.renamesApplied,
+      diff: resultValue.diff.summary,
       diffMarkdown,
     });
   }
@@ -1104,7 +1104,7 @@ function importSingleSif(
   parseResult: SiebelSifParseResult,
   mapToGraph: boolean,
 ): Record<string, unknown> {
-  const result: Record<string, unknown> = {
+  const resultValue: Record<string, unknown> = {
     ok: true,
     metadata: parseResult.metadata,
     objectCount: parseResult.objects.length,
@@ -1115,15 +1115,15 @@ function importSingleSif(
   if (mapToGraph) {
     const { nodes, edges } = convertSifToGraph(parseResult);
     store.bulkInsert(nodes, edges);
-    result.nodesCreated = nodes.length;
-    result.edgesCreated = edges.length;
-    result.epicId = nodes.find((n) => n.type === "epic")?.id;
+    resultValue.nodesCreated = nodes.length;
+    resultValue.edgesCreated = edges.length;
+    resultValue.epicId = nodes.find((n) => n.type === "epic")?.id;
   }
 
   try {
     const knowledgeStore = new KnowledgeStore(store.getDb());
     const indexResult = indexSifContent(knowledgeStore, parseResult);
-    result.documentsIndexed = indexResult.documentsIndexed;
+    resultValue.documentsIndexed = indexResult.documentsIndexed;
     indexEntitiesForSource(store.getDb(), "siebel_sif");
   } catch (indexErr) {
     logger.warn("Siebel knowledge indexing failed (non-fatal)", {
@@ -1133,7 +1133,7 @@ function importSingleSif(
 
   store.recordImport(parseResult.metadata.fileName, parseResult.objects.length, parseResult.dependencies.length);
 
-  return result;
+  return resultValue;
 }
 
 function loadReferenceObjects(knowledgeStore: KnowledgeStore): SiebelObject[] {
@@ -1174,14 +1174,14 @@ function resolveNamingRuleSet(name?: string): NamingRuleSet | undefined {
 }
 
 function flattenObjects(objects: readonly SiebelObject[]): SiebelObject[] {
-  const result: SiebelObject[] = [];
-  for (const obj of objects) {
-    result.push(obj);
-    if (obj.children.length > 0) {
-      result.push(...flattenObjects(obj.children));
+  const resultValue: SiebelObject[] = [];
+  for (const objValue of objects) {
+    resultValue.push(objValue);
+    if (objValue.children.length > 0) {
+      resultValue.push(...flattenObjects(objValue.children));
     }
   }
-  return result;
+  return resultValue;
 }
 
 function validateBestPractices(objects: SiebelObject[], warnings: string[]): void {

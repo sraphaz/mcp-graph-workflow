@@ -80,16 +80,16 @@ export function validateSecurity(objects: readonly SiebelObject[]): SecurityVali
   const visibilityIssues: VisibilityIssue[] = [];
   const personalFields: { bcName: string; fieldName: string }[] = [];
 
-  for (const obj of objects) {
+  for (const objValue of objects) {
     // AC1: Sensitive fields in BCs
-    if (obj.type === "business_component") {
-      for (const child of obj.children) {
+    if (objValue.type === "business_component") {
+      for (const child of objValue.children) {
         if (child.type === "field") {
           const col = child.properties.find((p) => p.name === "COLUMN")?.value ?? "";
           for (const pattern of SENSITIVE_FIELD_PATTERNS) {
             if (pattern.test(child.name) || pattern.test(col)) {
               sensitiveFields.push({
-                bcName: obj.name,
+                bcName: objValue.name,
                 fieldName: child.name,
                 columnName: col,
                 reason: `Matches sensitive pattern: ${pattern.source}`,
@@ -100,7 +100,7 @@ export function validateSecurity(objects: readonly SiebelObject[]): SecurityVali
           // LGPD personal fields
           for (const pattern of PERSONAL_FIELD_PATTERNS) {
             if (pattern.test(child.name) || pattern.test(col)) {
-              personalFields.push({ bcName: obj.name, fieldName: child.name });
+              personalFields.push({ bcName: objValue.name, fieldName: child.name });
               break;
             }
           }
@@ -109,13 +109,13 @@ export function validateSecurity(objects: readonly SiebelObject[]): SecurityVali
     }
 
     // AC2: Dangerous delete operations
-    if (obj.type === "applet") {
-      for (const child of obj.children) {
+    if (objValue.type === "applet") {
+      for (const child of objValue.children) {
         const method = child.properties.find((p) => p.name === "METHOD_INVOKED")?.value;
         if (method === "DeleteRecord") {
           dangerousOperations.push({
-            objectName: obj.name,
-            objectType: obj.type,
+            objectName: objValue.name,
+            objectType: objValue.type,
             operation: "DeleteRecord",
             reason: "Applet exposes DeleteRecord method",
           });
@@ -124,14 +124,14 @@ export function validateSecurity(objects: readonly SiebelObject[]): SecurityVali
     }
 
     // AC3: Visibility rules
-    if (obj.type === "view" || obj.type === "applet") {
-      const hasVisibility = obj.properties.some(
+    if (objValue.type === "view" || objValue.type === "applet") {
+      const hasVisibility = objValue.properties.some(
         (p) => p.name === "VISIBILITY_TYPE" || p.name === "VISIBILITY_APPLET_TYPE",
       );
       if (!hasVisibility) {
         visibilityIssues.push({
-          objectName: obj.name,
-          objectType: obj.type,
+          objectName: objValue.name,
+          objectType: objValue.type,
           issue: "No VISIBILITY_TYPE defined — may expose data to unauthorized users",
         });
       }
@@ -187,30 +187,30 @@ const INFINITE_LOOP_PATTERNS = [
 export function validatePerformance(objects: readonly SiebelObject[]): PerformanceValidationResult {
   const issues: PerformanceIssue[] = [];
 
-  for (const obj of objects) {
+  for (const objValue of objects) {
     // AC1: Excessive fields in BCs
-    if (obj.type === "business_component") {
-      const fieldCount = obj.children.filter((c) => c.type === "field").length;
+    if (objValue.type === "business_component") {
+      const fieldCount = objValue.children.filter((c) => c.type === "field").length;
       if (fieldCount > 100) {
         issues.push({
-          objectName: obj.name, objectType: obj.type,
+          objectName: objValue.name, objectType: objValue.type,
           rule: "excessive_fields", severity: "error",
           detail: `BC has ${fieldCount} fields (>100 limit)`,
         });
       } else if (fieldCount > 50) {
         issues.push({
-          objectName: obj.name, objectType: obj.type,
+          objectName: objValue.name, objectType: objValue.type,
           rule: "excessive_fields", severity: "warning",
           detail: `BC has ${fieldCount} fields (>50 threshold)`,
         });
       }
 
       // AC2: Missing search/sort spec
-      const hasSearchSpec = obj.properties.some((p) => p.name === "SEARCH_SPEC");
-      const hasSortSpec = obj.properties.some((p) => p.name === "SORT_SPEC");
+      const hasSearchSpec = objValue.properties.some((p) => p.name === "SEARCH_SPEC");
+      const hasSortSpec = objValue.properties.some((p) => p.name === "SORT_SPEC");
       if (!hasSearchSpec && !hasSortSpec) {
         issues.push({
-          objectName: obj.name, objectType: obj.type,
+          objectName: objValue.name, objectType: objValue.type,
           rule: "missing_search_spec", severity: "warning",
           detail: "BC has no SEARCH_SPEC or SORT_SPEC — may cause full table scans",
         });
@@ -218,11 +218,11 @@ export function validatePerformance(objects: readonly SiebelObject[]): Performan
     }
 
     // AC3: Views with too many applets
-    if (obj.type === "view") {
-      const appletCount = obj.children.filter((c) => c.type === "applet").length;
+    if (objValue.type === "view") {
+      const appletCount = objValue.children.filter((c) => c.type === "applet").length;
       if (appletCount > 5) {
         issues.push({
-          objectName: obj.name, objectType: obj.type,
+          objectName: objValue.name, objectType: objValue.type,
           rule: "excessive_applets", severity: "warning",
           detail: `View has ${appletCount} applets (>5 threshold)`,
         });
@@ -230,13 +230,13 @@ export function validatePerformance(objects: readonly SiebelObject[]): Performan
     }
 
     // AC4: Links without constraints (check link children)
-    if (obj.type === "link") {
-      const hasConstraint = obj.properties.some(
+    if (objValue.type === "link") {
+      const hasConstraint = objValue.properties.some(
         (p) => p.name === "SOURCE_FIELD" || p.name === "DESTINATION_FIELD",
       );
       if (!hasConstraint) {
         issues.push({
-          objectName: obj.name, objectType: obj.type,
+          objectName: objValue.name, objectType: objValue.type,
           rule: "unconstrained_link", severity: "warning",
           detail: "Link has no relationship constraints",
         });
@@ -244,12 +244,12 @@ export function validatePerformance(objects: readonly SiebelObject[]): Performan
     }
 
     // AC5: Infinite loop detection in scripts
-    if (obj.type === "escript") {
-      const script = obj.properties.find((p) => p.name === "SCRIPT")?.value ?? "";
+    if (objValue.type === "escript") {
+      const script = objValue.properties.find((p) => p.name === "SCRIPT")?.value ?? "";
       for (const pattern of INFINITE_LOOP_PATTERNS) {
         if (pattern.test(script)) {
           issues.push({
-            objectName: obj.name, objectType: obj.type,
+            objectName: objValue.name, objectType: objValue.type,
             rule: "potential_infinite_loop", severity: "error",
             detail: `Script contains potential infinite loop pattern: ${pattern.source}`,
           });
@@ -322,25 +322,25 @@ export function validateMigrationReadiness(
   // AC3: Best practices — delegated to existing validateBestPractices in siebel-validate.ts
   // We check basic structural validity here
   const bestPracticeIssues: string[] = [];
-  for (const obj of objects) {
-    if (obj.type === "business_component" && !obj.properties.some((p) => p.name === "TABLE")) {
-      bestPracticeIssues.push(`BC "${obj.name}" missing TABLE`);
+  for (const objValue of objects) {
+    if (objValue.type === "business_component" && !objValue.properties.some((p) => p.name === "TABLE")) {
+      bestPracticeIssues.push(`BC "${objValue.name}" missing TABLE`);
     }
-    if (obj.type === "applet" && !obj.properties.some((p) => p.name === "BUS_COMP")) {
-      bestPracticeIssues.push(`Applet "${obj.name}" missing BUS_COMP`);
+    if (objValue.type === "applet" && !objValue.properties.some((p) => p.name === "BUS_COMP")) {
+      bestPracticeIssues.push(`Applet "${objValue.name}" missing BUS_COMP`);
     }
   }
 
   // AC4: Hardcoded environment values
   const hardcodedValues: HardcodedValue[] = [];
-  for (const obj of objects) {
-    for (const prop of obj.properties) {
+  for (const objValue of objects) {
+    for (const prop of objValue.properties) {
       if (prop.name === "SCRIPT" || prop.name === "VALUE") {
         for (const pattern of HARDCODED_PATTERNS) {
           const match = prop.value.match(pattern);
           if (match) {
             hardcodedValues.push({
-              objectName: obj.name,
+              objectName: objValue.name,
               pattern: pattern.source,
               snippet: match[0].slice(0, 80),
             });

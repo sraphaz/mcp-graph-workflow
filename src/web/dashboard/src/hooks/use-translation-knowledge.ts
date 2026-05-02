@@ -50,6 +50,7 @@ const INITIAL_STATE: UseTranslationKnowledgeState = {
   error: null,
 };
 
+/** useTranslationKnowledge — auto-generated description placeholder. */
 export function useTranslationKnowledge(): [UseTranslationKnowledgeState, UseTranslationKnowledgeActions] {
   const [state, setState] = useState<UseTranslationKnowledgeState>(INITIAL_STATE);
 

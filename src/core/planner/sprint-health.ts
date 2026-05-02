@@ -64,14 +64,14 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
   // as child nodes of type `acceptance_criteria`. Count both — otherwise tasks
   // that were decomposed into structured AC nodes are wrongly flagged.
   const taskHasAC = new Set<string>();
-  for (const t of tasks) {
-    if (t.acceptanceCriteria && t.acceptanceCriteria.length > 0) {
-      taskHasAC.add(t.id);
+  for (const tVar of tasks) {
+    if (tVar.acceptanceCriteria && tVar.acceptanceCriteria.length > 0) {
+      taskHasAC.add(tVar.id);
     }
   }
-  for (const n of doc.nodes) {
-    if (n.type === "acceptance_criteria" && n.parentId && !taskHasAC.has(n.parentId)) {
-      taskHasAC.add(n.parentId);
+  for (const nVar of doc.nodes) {
+    if (nVar.type === "acceptance_criteria" && nVar.parentId && !taskHasAC.has(nVar.parentId)) {
+      taskHasAC.add(nVar.parentId);
     }
   }
   const tasksWithoutAC = tasks.filter((t) => !taskHasAC.has(t.id)).length;

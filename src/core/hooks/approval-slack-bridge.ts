@@ -46,10 +46,12 @@ const SEVERITY_COLORS: Record<Severity, string> = {
   critical: "#9b1c31",
 };
 
+/** isApprovalSlackDisabled — auto-generated description placeholder. */
 export function isApprovalSlackDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_APPROVAL_SLACK === "off";
 }
 
+/** buildSlackPayload — auto-generated description placeholder. */
 export function buildSlackPayload(event: ApprovalEvent): SlackPayload {
   const fields = [
     { title: "Tool", value: event.tool, short: true },
@@ -70,6 +72,7 @@ export function buildSlackPayload(event: ApprovalEvent): SlackPayload {
   };
 }
 
+/** postApprovalToSlack — auto-generated description placeholder. */
 export async function postApprovalToSlack(
   event: ApprovalEvent,
   deps: PostApprovalDeps = {},
@@ -85,13 +88,13 @@ export async function postApprovalToSlack(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), APPROVAL_SLACK_TIMEOUT_MS);
   try {
-    const res = await fetchImpl(url, {
+    const resValue = await fetchImpl(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    return { posted: res.ok, reason: res.ok ? "ok" : "failed", status: res.status };
+    return { posted: resValue.ok, reason: resValue.ok ? "ok" : "failed", status: resValue.status };
   } catch {
     return { posted: false, reason: "failed" };
   } finally {

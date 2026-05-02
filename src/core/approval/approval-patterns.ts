@@ -68,6 +68,7 @@ const SEVERITY_RANK: Record<ApprovalSeverity, number> = {
   critical: 3,
 };
 
+/** maxSeverity — auto-generated description placeholder. */
 export function maxSeverity(a: ApprovalSeverity, b: ApprovalSeverity): ApprovalSeverity {
   return SEVERITY_RANK[a] >= SEVERITY_RANK[b] ? a : b;
 }

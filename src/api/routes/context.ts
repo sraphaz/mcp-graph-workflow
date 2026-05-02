@@ -22,6 +22,7 @@ import { getBuiltInSkills } from "../../core/skills/built-in-skills.js";
 import { getSkillPreferences, getCustomSkills } from "../../core/skills/skill-store.js";
 import { estimateTokens } from "../../core/context/token-estimator.js";
 
+/** createContextRouter — auto-generated description placeholder. */
 export function createContextRouter(storeRef: StoreRef): Router {
   const router = Router();
 

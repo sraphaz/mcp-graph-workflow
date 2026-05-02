@@ -11,6 +11,7 @@ import { Command } from "commander";
 import { spawnSync } from "node:child_process";
 import { resolveV11Bundle } from "./_v11-bridge.js";
 
+/** replCommand — auto-generated description placeholder. */
 export function replCommand(): Command {
   return new Command("repl")
     .description("Launch interactive REPL (Ink-based, type / for slash commands)")
@@ -22,9 +23,9 @@ export function replCommand(): Command {
         );
         process.exit(2);
       }
-      const result = spawnSync(process.execPath, [bundle], {
+      const resultValue = spawnSync(process.execPath, [bundle], {
         stdio: "inherit",
       });
-      process.exit(result.status ?? 1);
+      process.exit(resultValue.status ?? 1);
     });
 }

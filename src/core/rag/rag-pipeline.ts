@@ -35,8 +35,8 @@ import { logger } from "../utils/logger.js";
 
 /** Chunk size for embedding batch processing — configurable via env to tune GC pressure. */
 export const EMBEDDING_BATCH_SIZE: number = (() => {
-  const v = parseInt(process.env["EMBEDDING_BATCH_SIZE"] ?? "", 10);
-  return Number.isFinite(v) && v > 0 ? v : 50;
+  const vVar = parseInt(process.env["EMBEDDING_BATCH_SIZE"] ?? "", 10);
+  return Number.isFinite(vVar) && vVar > 0 ? vVar : 50;
 })();
 
 /**
@@ -52,8 +52,8 @@ export async function batchProcess<T, R>(
   const results: R[] = [];
   for (let i = 0; i < items.length; i += chunkSize) {
     const chunk = items.slice(i, i + chunkSize);
-    for (const item of chunk) {
-      results.push(await fn(item));
+    for (const itemValue of chunk) {
+      results.push(await fn(itemValue));
     }
     // Yield between chunks (not after the last one — no point waiting with nothing queued)
     if (i + chunkSize < items.length) {
@@ -88,10 +88,10 @@ function buildVocabulary(documents: string[][]): { vocab: Map<string, number>; i
   }
 
   // Compute IDF: log(N / df)
-  const N = documents.length;
+  const NVar = documents.length;
   const idf = new Map<string, number>();
   for (const [term, df] of docFreq) {
-    idf.set(term, Math.log((N + 1) / (df + 1)) + 1); // smoothed IDF
+    idf.set(term, Math.log((NVar + 1) / (df + 1)) + 1); // smoothed IDF
   }
 
   return { vocab, idf };
@@ -120,7 +120,7 @@ function computeTfIdfVector(tokens: string[], vocab: Map<string, number>, idf: M
 
   // L2 normalize
   let norm = 0;
-  for (const v of vector) norm += v * v;
+  for (const vVar of vector) norm += vVar * vVar;
   norm = Math.sqrt(norm);
   if (norm > 0) {
     for (let i = 0; i < vector.length; i++) {
@@ -147,9 +147,9 @@ export class TfIdfVectorizer {
    * Build vocabulary and IDF from tokenized documents.
    */
   fit(documents: string[][]): void {
-    const result = buildVocabulary(documents);
-    this.vocab = result.vocab;
-    this.idf = result.idf;
+    const resultValue = buildVocabulary(documents);
+    this.vocab = resultValue.vocab;
+    this.idf = resultValue.idf;
   }
 
   /**
@@ -183,7 +183,7 @@ function hashEmbed(text: string, dim: number): number[] {
 
   // L2 normalize
   let norm = 0;
-  for (const v of vector) norm += v * v;
+  for (const vVar of vector) norm += vVar * vVar;
   norm = Math.sqrt(norm);
   if (norm > 0) {
     for (let i = 0; i < vector.length; i++) {
@@ -394,8 +394,8 @@ export async function incrementalIndex(
   // If no active vocabulary, do a full index instead
   if (!activeVectorizer || activeVectorizer.vocabSize === 0) {
     logger.info("No active vocabulary — performing full index for incremental request");
-    const result = await indexAllEmbeddings(store, embeddingStore);
-    return { indexed: result.nodes + result.knowledge, fullReindex: true };
+    const resultValue = await indexAllEmbeddings(store, embeddingStore);
+    return { indexed: resultValue.nodes + resultValue.knowledge, fullReindex: true };
   }
 
   const knowledgeStore = new KnowledgeStore(store.getDb());

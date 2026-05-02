@@ -211,12 +211,12 @@ function extractTopTerms(nodes: GraphNode[]): string[] {
     docLengths.push(tokens.length || 1);
   }
 
-  const n = nodes.length;
+  const nVar = nodes.length;
 
   // Score each term by average TF-IDF across all documents
   const termScores = new Map<string, number>();
   for (const [term, df] of docFreq) {
-    const idf = Math.log(1 + n / df);
+    const idf = Math.log(1 + nVar / df);
     let totalTfIdf = 0;
 
     for (let i = 0; i < docTermFreqs.length; i++) {
@@ -224,7 +224,7 @@ function extractTopTerms(nodes: GraphNode[]): string[] {
       totalTfIdf += tf * idf;
     }
 
-    termScores.set(term, totalTfIdf / n);
+    termScores.set(term, totalTfIdf / nVar);
   }
 
   // Sort by score descending
@@ -311,15 +311,15 @@ export function rebuildCommunities(store: SqliteStore): CommunitySummaryResult[]
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    for (const s of summaries) {
+    for (const sVar of summaries) {
       insert.run(
         generateId("comm"),
-        s.communityId,
-        s.title,
-        s.summary,
-        JSON.stringify(s.memberNodeIds),
-        s.memberCount,
-        JSON.stringify(s.topTerms),
+        sVar.communityId,
+        sVar.title,
+        sVar.summary,
+        JSON.stringify(sVar.memberNodeIds),
+        sVar.memberCount,
+        JSON.stringify(sVar.topTerms),
         now,
         now,
       );

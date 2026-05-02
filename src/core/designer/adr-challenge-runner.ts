@@ -204,11 +204,11 @@ export function runAllAdrChallenges(store: SqliteStore): AllAdrChallengesResult 
   let failed = 0;
 
   for (const node of decisionNodes) {
-    const result = runAdrChallenge(store, node.id);
-    reports.push(result);
+    const resultValue = runAdrChallenge(store, node.id);
+    reports.push(resultValue);
 
-    totalComposite += result.report.fitnessScore.composite;
-    if (result.report.overallVerdict.verdict === "CHALLENGE_PASSED") {
+    totalComposite += resultValue.report.fitnessScore.composite;
+    if (resultValue.report.overallVerdict.verdict === "CHALLENGE_PASSED") {
       passed++;
     } else {
       failed++;

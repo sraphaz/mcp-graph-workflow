@@ -31,6 +31,7 @@ interface KnowledgeBarProps {
   className?: string;
 }
 
+/** KnowledgeBar — auto-generated description placeholder. */
 export function KnowledgeBar({ data, className }: KnowledgeBarProps): React.JSX.Element {
   const entries = Object.entries(data)
     .filter(([, count]) => count > 0)

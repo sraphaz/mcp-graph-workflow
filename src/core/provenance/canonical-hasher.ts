@@ -30,10 +30,12 @@
 
 import { createHash } from "node:crypto";
 
+/** canonicalSerialize — auto-generated description placeholder. */
 export function canonicalSerialize(value: unknown): string {
   return serialize(value);
 }
 
+/** hashNodeCanonical — auto-generated description placeholder. */
 export function hashNodeCanonical(value: unknown): string {
   const canonical = serialize(value);
   return createHash("sha256").update(canonical).digest("hex");

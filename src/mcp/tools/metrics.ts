@@ -124,6 +124,7 @@ export function buildToolUsageResponse(store: SqliteStore, sinceDays?: number): 
   };
 }
 
+/** registerMetrics — auto-generated description placeholder. */
 export function registerMetrics(server: McpServer, store: SqliteStore): void {
   server.tool(
     "metrics",
@@ -137,20 +138,20 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
       logger.debug("tool:metrics", { mode, sprint, sinceDays });
 
       if (mode === "dora_metrics") {
-        const res = buildDoraMetricsResponse(store);
+        const resValue = buildDoraMetricsResponse(store);
         logger.info("tool:metrics:dora_metrics:ok", {
-          deployFreq: res.metrics.deploymentFrequency,
+          deployFreq: resValue.metrics.deploymentFrequency,
         });
-        return mcpText(res);
+        return mcpText(resValue);
       }
 
       if (mode === "tool_usage") {
-        const res = buildToolUsageResponse(store, sinceDays);
+        const resValue = buildToolUsageResponse(store, sinceDays);
         logger.info("tool:metrics:tool_usage:ok", {
-          totalDistinctTools: res.totalDistinctTools,
-          sinceDays: res.sinceDays,
+          totalDistinctTools: resValue.totalDistinctTools,
+          sinceDays: resValue.sinceDays,
         });
-        return mcpText(res);
+        return mcpText(resValue);
       }
 
       if (mode === "cost") {

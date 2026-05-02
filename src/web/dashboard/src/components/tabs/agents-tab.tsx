@@ -500,6 +500,7 @@ export function sortAgents<T extends { agentId: string; status: string; lastHear
   });
 }
 
+/** AgentsTab — auto-generated description placeholder. */
 export function AgentsTab(): React.JSX.Element {
   const { data, loading, error } = useAgentActivity();
   const agents = useMemo(() => sortAgents(data?.agents ?? []), [data]);

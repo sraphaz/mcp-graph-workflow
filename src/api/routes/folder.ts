@@ -69,6 +69,7 @@ export function validateBrowsePath(rawPath: string): string {
   return resolved;
 }
 
+/** createFolderRouter — auto-generated description placeholder. */
 export function createFolderRouter(storeManager: StoreManager): Router {
   const router = Router();
 
@@ -82,15 +83,15 @@ export function createFolderRouter(storeManager: StoreManager): Router {
   router.post("/open", validateBody(OpenFolderBodySchema), async (req, res, next) => {
     try {
       const { path: folderPath } = req.body as { path: string };
-      const result = storeManager.swap(folderPath);
+      const resultValue = storeManager.swap(folderPath);
 
-      if (!result.ok) {
-        res.status(400).json({ ok: false, error: result.error });
+      if (!resultValue.ok) {
+        res.status(400).json({ ok: false, error: resultValue.error });
         return;
       }
 
       // Trigger code graph re-index for the new project (non-blocking)
-      const newBasePath = result.basePath;
+      const newBasePath = resultValue.basePath;
       try {
         const project = storeManager.store.getProject();
         if (project) {
@@ -110,7 +111,7 @@ export function createFolderRouter(storeManager: StoreManager): Router {
 
       res.json({
         ok: true,
-        basePath: result.basePath,
+        basePath: resultValue.basePath,
         recentFolders: storeManager.recentFolders,
       });
     } catch (err) {

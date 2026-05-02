@@ -18,13 +18,14 @@
 import { Router } from "express";
 import type { StoreRef } from "../../core/store/store-manager.js";
 
+/** createSearchRouter — auto-generated description placeholder. */
 export function createSearchRouter(storeRef: StoreRef): Router {
   const router = Router();
 
   router.get("/", (req, res, next) => {
     try {
-      const q = req.query.q as string | undefined;
-      if (!q || q.trim().length === 0) {
+      const qVar = req.query.q as string | undefined;
+      if (!qVar || qVar.trim().length === 0) {
         res.status(400).json({ error: "Query parameter 'q' is required" });
         return;
       }
@@ -35,7 +36,7 @@ export function createSearchRouter(storeRef: StoreRef): Router {
         return;
       }
 
-      const results = storeRef.current.searchNodes(q, limit);
+      const results = storeRef.current.searchNodes(qVar, limit);
       res.json(results);
     } catch (err) {
       next(err);

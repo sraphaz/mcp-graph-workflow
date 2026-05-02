@@ -48,6 +48,7 @@ import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { readFileSync } from "node:fs";
 
+/** registerManageSkill — auto-generated description placeholder. */
 export function registerManageSkill(server: McpServer, store: SqliteStore): void {
   server.tool(
     "manage_skill",
@@ -208,9 +209,9 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
 
           case "get_preferences": {
             const prefs = getSkillPreferences(db, projectId);
-            const obj: Record<string, boolean> = {};
-            for (const [k, v] of prefs) obj[k] = v;
-            return mcpText({ preferences: obj });
+            const objValue: Record<string, boolean> = {};
+            for (const [k, v] of prefs) objValue[k] = v;
+            return mcpText({ preferences: objValue });
           }
 
           case "create_template": {
@@ -254,15 +255,15 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
 
           case "list_domain": {
             const rootDir = join(process.cwd(), "src", "skills", "domain");
-            const result = loadDomainSkills(rootDir);
+            const resultValue = loadDomainSkills(rootDir);
             logger.info("tool:manage_skill:list_domain", {
-              count: result.skills.length,
-              errors: result.errors.length,
+              count: resultValue.skills.length,
+              errors: resultValue.errors.length,
             });
             return mcpText({
               ok: true,
-              total: result.skills.length,
-              skills: result.skills.map((s) => ({
+              total: resultValue.skills.length,
+              skills: resultValue.skills.map((s) => ({
                 domain: s.domain,
                 topic: s.topic,
                 triggers: s.triggers,
@@ -271,7 +272,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
                 discovered_at: s.discovered_at,
                 path: s.path,
               })),
-              errors: result.errors,
+              errors: resultValue.errors,
             });
           }
 

@@ -204,6 +204,7 @@ function PrdBacklogFlow({ graph }: { graph: GraphDocument }): React.JSX.Element 
   );
 }
 
+/** PrdBacklogTab — auto-generated description placeholder. */
 export function PrdBacklogTab({ graph, loading, error, onRetry }: PrdBacklogTabProps): React.JSX.Element {
   if (loading || !graph) {
     return (

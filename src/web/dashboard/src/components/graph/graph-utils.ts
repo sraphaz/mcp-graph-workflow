@@ -43,6 +43,7 @@ export interface WorkflowEdgeData {
 const NODE_WIDTH = 240;
 const NODE_HEIGHT = 80;
 
+/** toFlowNodes — auto-generated description placeholder. */
 export function toFlowNodes(
   nodes: GraphNode[],
   filters?: { statuses?: Set<string>; types?: Set<string>; sprints?: Set<string> },
@@ -85,6 +86,7 @@ export function toFlowNodes(
     });
 }
 
+/** toFlowEdges — auto-generated description placeholder. */
 export function toFlowEdges(
   edges: GraphEdge[],
   visibleNodeIds: Set<string>,
@@ -143,6 +145,7 @@ let layoutCache: {
   positions: Map<string, { x: number; y: number }>;
 } | null = null;
 
+/** applyDagreLayout — auto-generated description placeholder. */
 export function applyDagreLayout(
   nodes: Node<WorkflowNodeData>[],
   edges: Edge<WorkflowEdgeData>[],

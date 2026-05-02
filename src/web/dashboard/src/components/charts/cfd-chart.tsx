@@ -39,6 +39,7 @@ const STATUS_LABELS: Record<string, string> = {
   backlog: "Backlog",
 };
 
+/** CfdChart — auto-generated description placeholder. */
 export function CfdChart({ data, className }: CfdChartProps): React.JSX.Element {
   if (data.length === 0) {
     return (

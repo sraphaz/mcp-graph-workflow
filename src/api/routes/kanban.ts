@@ -52,6 +52,7 @@ function saveConfig(storeRef: StoreRef, config: KanbanConfig): void {
   storeRef.current.setProjectSetting(KANBAN_SETTINGS_KEY, JSON.stringify(config));
 }
 
+/** createKanbanRouter — auto-generated description placeholder. */
 export function createKanbanRouter(storeRef: StoreRef): Router {
   const router = Router();
 
@@ -85,15 +86,15 @@ export function createKanbanRouter(storeRef: StoreRef): Router {
       }
 
       const config = loadConfig(storeRef);
-      const result = validateMove(
+      const resultValue = validateMove(
         storeRef.current,
         nodeId,
         newStatus as "backlog" | "ready" | "in_progress" | "blocked" | "done",
         config,
       );
 
-      if (!result.success) {
-        res.status(404).json(result);
+      if (!resultValue.success) {
+        res.status(404).json(resultValue);
         return;
       }
 
@@ -103,7 +104,7 @@ export function createKanbanRouter(storeRef: StoreRef): Router {
         newStatus as "backlog" | "ready" | "in_progress" | "blocked" | "done",
       );
 
-      res.json(result);
+      res.json(resultValue);
     } catch (err) {
       next(err);
     }

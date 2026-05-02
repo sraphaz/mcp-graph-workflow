@@ -24,6 +24,7 @@ function isPlaceholder(content: string): boolean {
   return PLACEHOLDER_RE.test(content);
 }
 
+/** compactByTools — auto-generated description placeholder. */
 export function compactByTools(
   messages: ChatMessage[],
   opts: MicroCompactOptions = {},

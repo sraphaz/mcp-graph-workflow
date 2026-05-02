@@ -26,6 +26,7 @@ import { scanGraphHealth } from "../../core/graph/graph-health-scanner.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerGraphHealth — auto-generated description placeholder. */
 export function registerGraphHealth(server: McpServer, store: SqliteStore): void {
   server.tool(
     "graph_health",

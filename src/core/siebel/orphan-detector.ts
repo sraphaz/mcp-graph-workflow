@@ -64,19 +64,19 @@ export function detectOrphans(
 
   const orphans: OrphanObject[] = [];
 
-  for (const obj of objects) {
-    if (obj.parentName) continue; // skip children
-    const key = `${obj.type}:${obj.name}`;
+  for (const objValue of objects) {
+    if (objValue.parentName) continue; // skip children
+    const key = `${objValue.type}:${objValue.name}`;
 
     // If referenced by something, not an orphan
     if (referenced.has(key)) continue;
 
     // Standalone types are intentional
-    if (STANDALONE_TYPES.has(obj.type)) {
+    if (STANDALONE_TYPES.has(objValue.type)) {
       orphans.push({
-        object: { name: obj.name, type: obj.type },
+        object: { name: objValue.name, type: objValue.type },
         classification: "intentionally_standalone",
-        reason: `${obj.type} objects are commonly standalone`,
+        reason: `${objValue.type} objects are commonly standalone`,
       });
       continue;
     }
@@ -84,7 +84,7 @@ export function detectOrphans(
     // Has outbound deps but no inbound — probably orphan (it uses things but nothing uses it)
     if (hasOutbound.has(key)) {
       orphans.push({
-        object: { name: obj.name, type: obj.type },
+        object: { name: objValue.name, type: objValue.type },
         classification: "probably_orphan",
         reason: `References other objects but not referenced by anything`,
       });
@@ -93,7 +93,7 @@ export function detectOrphans(
 
     // No deps at all — definitely orphan
     orphans.push({
-      object: { name: obj.name, type: obj.type },
+      object: { name: objValue.name, type: objValue.type },
       classification: "definitely_orphan",
       reason: `No inbound or outbound dependencies`,
     });

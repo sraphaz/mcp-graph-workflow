@@ -36,6 +36,7 @@ export interface EvolutionAuditReport {
 
 const DEFAULT_TOP_LIMIT = 10;
 
+/** analyzeEvolutionAudit — auto-generated description placeholder. */
 export function analyzeEvolutionAudit(
   doc: GraphDocument,
   options: { readonly topLimit?: number } = {},
@@ -68,10 +69,10 @@ export function analyzeEvolutionAudit(
   }));
 
   const reasonCounts = new Map<string, number>();
-  for (const n of regenerated) {
-    const r = (n.evolutionReason ?? "").trim();
-    if (r.length === 0) continue;
-    reasonCounts.set(r, (reasonCounts.get(r) ?? 0) + 1);
+  for (const nVar of regenerated) {
+    const rVar = (nVar.evolutionReason ?? "").trim();
+    if (rVar.length === 0) continue;
+    reasonCounts.set(rVar, (reasonCounts.get(rVar) ?? 0) + 1);
   }
   const byReason = [...reasonCounts.entries()]
     .map(([reason, count]) => ({ reason, count }))

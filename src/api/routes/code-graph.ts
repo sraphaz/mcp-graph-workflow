@@ -71,6 +71,7 @@ export interface CodeGraphRouterOptions {
   getBasePath: () => string;
 }
 
+/** createCodeGraphRouter — auto-generated description placeholder. */
 export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
   const { storeRef, getBasePath } = options;
   const router = Router();
@@ -119,11 +120,11 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
       const analyzers = await createAnalyzers(basePath);
       const indexer = new CodeIndexer(codeStore, projectId, analyzers);
       codeStore.deleteAllSymbols(projectId);
-      const result = await indexer.indexDirectory(basePath, basePath);
+      const resultValue = await indexer.indexDirectory(basePath, basePath);
 
       res.json({
         success: true,
-        ...result,
+        ...resultValue,
       });
     } catch (err) {
       next(err);
@@ -271,14 +272,14 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const { file, line, character } = LspPositionSchema.parse(req.body);
       const bridge = getOrCreateLspBridge();
-      const result = await bridge.goToDefinition(file, line, character);
+      const resultValue = await bridge.goToDefinition(file, line, character);
       res.json({
         ok: true,
-        definitions: result.map(d => ({
+        definitions: resultValue.map(d => ({
           ...d,
           hint: `Read lines ${d.startLine}-${d.endLine} of ${d.file}`,
         })),
-        estimatedTokens: estimateTokens(JSON.stringify(result)),
+        estimatedTokens: estimateTokens(JSON.stringify(resultValue)),
       });
     } catch (err) { next(err); }
   });
@@ -288,10 +289,10 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const { file, line, character } = LspPositionSchema.parse(req.body);
       const bridge = getOrCreateLspBridge();
-      const result = await bridge.findReferences(file, line, character);
+      const resultValue = await bridge.findReferences(file, line, character);
       const byFile: Record<string, number> = {};
-      for (const ref of result) byFile[ref.file] = (byFile[ref.file] ?? 0) + 1;
-      res.json({ ok: true, totalReferences: result.length, references: result, byFile });
+      for (const ref of resultValue) byFile[ref.file] = (byFile[ref.file] ?? 0) + 1;
+      res.json({ ok: true, totalReferences: resultValue.length, references: resultValue, byFile });
     } catch (err) { next(err); }
   });
 
@@ -300,8 +301,8 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const { file, line, character } = LspPositionSchema.parse(req.body);
       const bridge = getOrCreateLspBridge();
-      const result = await bridge.hover(file, line, character);
-      res.json({ ok: true, hover: result });
+      const resultValue = await bridge.hover(file, line, character);
+      res.json({ ok: true, hover: resultValue });
     } catch (err) { next(err); }
   });
 
@@ -310,8 +311,8 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const { file, line, character, newName } = LspRenameSchema.parse(req.body);
       const bridge = getOrCreateLspBridge();
-      const result = await bridge.rename(file, line, character, newName);
-      res.json({ ok: true, edit: result });
+      const resultValue = await bridge.rename(file, line, character, newName);
+      res.json({ ok: true, edit: resultValue });
     } catch (err) { next(err); }
   });
 
@@ -320,10 +321,10 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const { file, line, character, direction } = LspCallHierarchySchema.parse(req.body);
       const bridge = getOrCreateLspBridge();
-      const result = direction === "incoming"
+      const resultValue = direction === "incoming"
         ? await bridge.callHierarchyIncoming(file, line, character)
         : await bridge.callHierarchyOutgoing(file, line, character);
-      res.json({ ok: true, direction, items: result });
+      res.json({ ok: true, direction, items: resultValue });
     } catch (err) { next(err); }
   });
 
@@ -332,8 +333,8 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const file = z.string().min(1).parse(req.query.file);
       const bridge = getOrCreateLspBridge();
-      const result = await bridge.getDiagnostics(file);
-      res.json({ ok: true, file, diagnostics: result });
+      const resultValue = await bridge.getDiagnostics(file);
+      res.json({ ok: true, file, diagnostics: resultValue });
     } catch (err) { next(err); }
   });
 
@@ -342,8 +343,8 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       const file = z.string().min(1).parse(req.query.file);
       const bridge = getOrCreateLspBridge();
-      const result = await bridge.getDocumentSymbols(file);
-      res.json({ ok: true, file, symbols: result });
+      const resultValue = await bridge.getDocumentSymbols(file);
+      res.json({ ok: true, file, symbols: resultValue });
     } catch (err) { next(err); }
   });
 

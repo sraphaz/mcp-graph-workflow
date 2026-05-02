@@ -42,10 +42,12 @@ export interface ResumeDelta {
   commits: CommitRef[];
 }
 
+/** isSessionResumeDisabled — auto-generated description placeholder. */
 export function isSessionResumeDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_SESSION_RESUME === "off";
 }
 
+/** computeResumeDelta — auto-generated description placeholder. */
 export function computeResumeDelta(input: SessionResumeInput): ResumeDelta {
   const now = input.nowMs ?? Date.now();
   if (input.lastSessionMs === undefined) {

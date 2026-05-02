@@ -33,6 +33,7 @@ export interface ReportInput {
   screenshots?: Map<number, Buffer>;
 }
 
+/** buildHtmlReport — auto-generated description placeholder. */
 export function buildHtmlReport(input: ReportInput): string {
   const { run, screenshots } = input;
   const verdictColor = run.verdict === "pass" ? "#16a34a" : run.verdict === "fail" ? "#dc2626" : "#d97706";
@@ -82,6 +83,7 @@ export function buildHtmlReport(input: ReportInput): string {
 </body></html>`;
 }
 
+/** buildMarkdownReport — auto-generated description placeholder. */
 export function buildMarkdownReport(input: ReportInput): string {
   const { run } = input;
   const lines: string[] = [];
@@ -95,14 +97,14 @@ export function buildMarkdownReport(input: ReportInput): string {
   lines.push(`> ${run.prompt.replace(/\n/g, "\n> ")}`);
   lines.push("");
   lines.push("## Steps");
-  for (const r of run.results) {
-    const planned = run.plan.find((p) => p.index === r.index);
+  for (const rVar of run.results) {
+    const planned = run.plan.find((p) => p.index === rVar.index);
     lines.push("");
-    lines.push(`### #${r.index} ${r.helper} ${r.ok ? "✅" : "❌"} (${r.durationMs}ms)`);
+    lines.push(`### #${rVar.index} ${rVar.helper} ${rVar.ok ? "✅" : "❌"} (${rVar.durationMs}ms)`);
     if (planned) lines.push("- args: `" + JSON.stringify(planned.args) + "`");
     if (planned?.expect) lines.push("- expect: `" + planned.expect + "`");
-    if (r.error) lines.push("- error: `" + r.error + "`");
-    if (r.screenshotPath) lines.push(`- screenshot: \`${r.screenshotPath}\``);
+    if (rVar.error) lines.push("- error: `" + rVar.error + "`");
+    if (rVar.screenshotPath) lines.push(`- screenshot: \`${rVar.screenshotPath}\``);
   }
   return lines.join("\n");
 }

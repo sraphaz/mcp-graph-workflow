@@ -70,8 +70,8 @@ export async function federatedQuery(
     active.map(async (adapter) => {
       try {
         const results = await adapter.query(input.query);
-        for (const data of results) {
-          items.push({ data, source_store: adapter.storeId });
+        for (const dataValue of results) {
+          items.push({ data: dataValue, source_store: adapter.storeId });
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

@@ -22,6 +22,7 @@ import { initWithHarnessBaseline } from "../../core/pipeline/init-harness.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
+/** registerInit — auto-generated description placeholder. */
 export function registerInit(server: McpServer, store: SqliteStore): void {
   server.tool(
     "init",

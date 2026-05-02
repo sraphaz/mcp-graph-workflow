@@ -27,6 +27,7 @@ import { calculateDoraMetrics } from "../../core/insights/dora-metrics.js";
 import { captureFlowSnapshot, getCfdData } from "../../core/insights/flow-tracker.js";
 import { analyzeSprintHealth } from "../../core/planner/sprint-health.js";
 
+/** createInsightsRouter — auto-generated description placeholder. */
 export function createInsightsRouter(storeRef: StoreRef, getBasePath: () => string): Router {
   const router = Router();
 
@@ -80,8 +81,8 @@ export function createInsightsRouter(storeRef: StoreRef, getBasePath: () => stri
       const sprint = typeof req.query.sprint === "string" ? req.query.sprint : undefined;
       // Capture today's snapshot before returning data
       captureFlowSnapshot(storeRef.current, project.id, sprint);
-      const data = getCfdData(storeRef.current, project.id, { sprint });
-      res.json(data);
+      const dataValue = getCfdData(storeRef.current, project.id, { sprint });
+      res.json(dataValue);
     } catch (err) {
       next(err);
     }

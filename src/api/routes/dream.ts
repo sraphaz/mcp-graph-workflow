@@ -24,6 +24,7 @@ import { GraphEventBus } from "../../core/events/event-bus.js";
 import { EmbeddingStore } from "../../core/rag/embedding-store.js";
 import { logger } from "../../core/utils/logger.js";
 
+/** createDreamRouter — auto-generated description placeholder. */
 export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus): Router {
   const router = Router();
   const bus = eventBus ?? new GraphEventBus();
@@ -134,8 +135,8 @@ export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus):
   router.get("/preview", async (_req, res, next) => {
     try {
       const dreamEngine = getEngine();
-      const result = await dreamEngine.runCycle({ dryRun: true });
-      res.json(result);
+      const resultValue = await dreamEngine.runCycle({ dryRun: true });
+      res.json(resultValue);
     } catch (err) {
       next(err);
     }

@@ -41,6 +41,7 @@ export interface AssetBlockersReport {
   blockingAssets: BlockingAsset[];
 }
 
+/** analyzeAssetBlockers — auto-generated description placeholder. */
 export function analyzeAssetBlockers(doc: GraphDocument): AssetBlockersReport {
   const assetNodes = doc.nodes.filter((n) => n.type === "asset");
   const pendingAssets = assetNodes.filter((n) => n.status !== "done");

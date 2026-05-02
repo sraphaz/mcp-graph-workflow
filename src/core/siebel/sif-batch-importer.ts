@@ -81,17 +81,17 @@ export async function batchImportSifs(
 
     const batchResults = await Promise.all(batchPromises);
 
-    for (const item of batchResults) {
-      if (item.parseResult) {
-        results.push(item.parseResult);
-        totalObjects += item.parseResult.objects.length;
-        totalDependencies += item.parseResult.dependencies.length;
+    for (const itemValue of batchResults) {
+      if (itemValue.parseResult) {
+        results.push(itemValue.parseResult);
+        totalObjects += itemValue.parseResult.objects.length;
+        totalDependencies += itemValue.parseResult.dependencies.length;
 
-        for (const obj of item.parseResult.objects) {
-          objectsByType[obj.type] = (objectsByType[obj.type] ?? 0) + 1;
+        for (const objValue of itemValue.parseResult.objects) {
+          objectsByType[objValue.type] = (objectsByType[objValue.type] ?? 0) + 1;
         }
       } else {
-        errors.push({ file: item.fileName, error: item.error ?? "Unknown error" });
+        errors.push({ file: itemValue.fileName, error: itemValue.error ?? "Unknown error" });
       }
     }
   }

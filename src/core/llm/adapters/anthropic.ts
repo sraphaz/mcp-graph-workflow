@@ -89,7 +89,7 @@ export class AnthropicAdapter implements ProviderAdapter {
     };
 
     const response = await withRetry(async () => {
-      const res = await this.fetch(url, {
+      const resValue = await this.fetch(url, {
         method: "POST",
         headers: {
           "x-api-key": this.options.apiKey,
@@ -98,24 +98,24 @@ export class AnthropicAdapter implements ProviderAdapter {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const text = await readBody(res);
-        if (res.status === 401 || res.status === 403) {
-          throw new LlmAuthError("anthropic", `${res.status}: ${text}`);
+      if (!resValue.ok) {
+        const text = await readBody(resValue);
+        if (resValue.status === 401 || resValue.status === 403) {
+          throw new LlmAuthError("anthropic", `${resValue.status}: ${text}`);
         }
-        if (res.status === 429) {
-          throw new LlmRateLimitError("anthropic", parseRetryAfter(res.headers));
+        if (resValue.status === 429) {
+          throw new LlmRateLimitError("anthropic", parseRetryAfter(resValue.headers));
         }
-        if (res.status === 413) {
+        if (resValue.status === 413) {
           throw new LlmContextWindowError(req.model, req.maxTokens ?? 0, 0);
         }
-        const err = new LlmTransportError("anthropic", `${res.status}: ${text}`) as LlmTransportError & {
+        const err = new LlmTransportError("anthropic", `${resValue.status}: ${text}`) as LlmTransportError & {
           status: number;
         };
-        err.status = res.status;
+        err.status = resValue.status;
         throw err;
       }
-      return (await res.json()) as AnthropicResponseBody;
+      return (await resValue.json()) as AnthropicResponseBody;
     }, this.retry);
 
     const content = response.content
@@ -161,7 +161,7 @@ export class AnthropicAdapter implements ProviderAdapter {
       stream: true,
     };
 
-    const res = await this.fetch(url, {
+    const resValue = await this.fetch(url, {
       method: "POST",
       headers: {
         "x-api-key": this.options.apiKey,
@@ -171,18 +171,18 @@ export class AnthropicAdapter implements ProviderAdapter {
       body: JSON.stringify(body),
     });
 
-    if (!res.ok) {
-      const text = await readBody(res);
-      if (res.status === 401 || res.status === 403) throw new LlmAuthError("anthropic", `${res.status}: ${text}`);
-      if (res.status === 429) throw new LlmRateLimitError("anthropic", parseRetryAfter(res.headers));
-      if (res.status === 413) throw new LlmContextWindowError(req.model, req.maxTokens ?? 0, 0);
-      const err = new LlmTransportError("anthropic", `${res.status}: ${text}`) as LlmTransportError & { status: number };
-      err.status = res.status;
+    if (!resValue.ok) {
+      const text = await readBody(resValue);
+      if (resValue.status === 401 || resValue.status === 403) throw new LlmAuthError("anthropic", `${resValue.status}: ${text}`);
+      if (resValue.status === 429) throw new LlmRateLimitError("anthropic", parseRetryAfter(resValue.headers));
+      if (resValue.status === 413) throw new LlmContextWindowError(req.model, req.maxTokens ?? 0, 0);
+      const err = new LlmTransportError("anthropic", `${resValue.status}: ${text}`) as LlmTransportError & { status: number };
+      err.status = resValue.status;
       throw err;
     }
 
-    if (!res.body) throw new OperationError("anthropic stream: empty response body");
-    const reader = res.body.getReader();
+    if (!resValue.body) throw new OperationError("anthropic stream: empty response body");
+    const reader = resValue.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
     let content = "";
@@ -209,11 +209,11 @@ export class AnthropicAdapter implements ProviderAdapter {
             }
           } else if (event["type"] === "message_start") {
             const msg = event["message"] as Record<string, unknown> | undefined;
-            const u = msg?.["usage"] as Record<string, unknown> | undefined;
-            if (typeof u?.["input_tokens"] === "number") inputTokens = u["input_tokens"] as number;
+            const uVar = msg?.["usage"] as Record<string, unknown> | undefined;
+            if (typeof uVar?.["input_tokens"] === "number") inputTokens = uVar["input_tokens"] as number;
           } else if (event["type"] === "message_delta") {
-            const u = event["usage"] as Record<string, unknown> | undefined;
-            if (typeof u?.["output_tokens"] === "number") outputTokens = u["output_tokens"] as number;
+            const uVar = event["usage"] as Record<string, unknown> | undefined;
+            if (typeof uVar?.["output_tokens"] === "number") outputTokens = uVar["output_tokens"] as number;
           }
         } catch { /* ignore malformed SSE lines */ }
       }

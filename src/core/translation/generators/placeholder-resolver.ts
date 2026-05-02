@@ -144,7 +144,7 @@ function isVariableConstruct(id: string): boolean {
 // ── Brace-Family Function Resolver ────────────────
 
 function resolveBraceFunction(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // Match: [async] [public/private/static/...] [returnType] functionName(params) [: returnType] { body }
   // Also: function name(params): returnType { body }
@@ -153,16 +153,16 @@ function resolveBraceFunction(source: string): Record<string, string> {
   // Extract params from first (...)
   const paramsMatch = source.match(/\(([^)]*)\)/);
   if (paramsMatch) {
-    result.params = paramsMatch[1].trim();
+    resultValue.params = paramsMatch[1].trim();
   } else {
-    result.params = "";
+    resultValue.params = "";
   }
 
   // Extract name — word before the opening paren
   const beforeParen = source.substring(0, source.indexOf("("));
   const nameMatch = beforeParen.match(/(\w+)\s*$/);
   if (nameMatch) {
-    result.name = nameMatch[1];
+    resultValue.name = nameMatch[1];
   }
 
   // Extract returnType — between closing paren and opening brace
@@ -173,42 +173,42 @@ function resolveBraceFunction(source: string): Record<string, string> {
     // TypeScript style: ): returnType {
     const tsReturn = between.match(/^:\s*(.+)/);
     if (tsReturn) {
-      result.returnType = tsReturn[1].trim();
+      resultValue.returnType = tsReturn[1].trim();
     }
     // Go style: ) returnType {
     else if (between.length > 0 && !between.startsWith("{")) {
-      result.returnType = between;
+      resultValue.returnType = between;
     }
     // Java style: returnType is before the name — extract from modifiers
-    if (!result.returnType) {
+    if (!resultValue.returnType) {
       const javaMatch = beforeParen.match(/(?:public|private|protected|static|final|abstract)?\s*(\w+)\s+\w+\s*$/);
       if (javaMatch && javaMatch[1] !== "function" && javaMatch[1] !== "func" && javaMatch[1] !== "async") {
-        result.returnType = javaMatch[1];
+        resultValue.returnType = javaMatch[1];
       }
     }
   }
 
   // Extract body — content between first { and last }
-  result.body = extractBraceBody(source);
+  resultValue.body = extractBraceBody(source);
 
-  return result;
+  return resultValue;
 }
 
 function resolveArrowFunction(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // const name = (params): returnType => { body }
   // const name = (params) => expression
   const assignMatch = source.match(/(?:const|let|var)\s+(\w+)\s*=/);
   if (assignMatch) {
-    result.name = assignMatch[1];
+    resultValue.name = assignMatch[1];
   }
 
   const paramsMatch = source.match(/\(([^)]*)\)/);
   if (paramsMatch) {
-    result.params = paramsMatch[1].trim();
+    resultValue.params = paramsMatch[1].trim();
   } else {
-    result.params = "";
+    resultValue.params = "";
   }
 
   // Return type between ) and =>
@@ -218,24 +218,24 @@ function resolveArrowFunction(source: string): Record<string, string> {
     const between = source.substring(closeParen + 1, arrowIdx).trim();
     const tsReturn = between.match(/^:\s*(.+)/);
     if (tsReturn) {
-      result.returnType = tsReturn[1].trim();
+      resultValue.returnType = tsReturn[1].trim();
     }
   }
 
   // Body
   if (source.includes("{")) {
-    result.body = extractBraceBody(source);
+    resultValue.body = extractBraceBody(source);
   } else if (arrowIdx >= 0) {
-    result.body = source.substring(arrowIdx + 2).trim().replace(/;$/, "");
+    resultValue.body = source.substring(arrowIdx + 2).trim().replace(/;$/, "");
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Indent-Family Function Resolver ───────────────
 
 function resolveIndentFunction(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
   const lines = source.split("\n");
   const firstLine = lines[0];
 
@@ -243,10 +243,10 @@ function resolveIndentFunction(source: string): Record<string, string> {
   // eslint-disable-next-line security/detect-unsafe-regex
   const defMatch = firstLine.match(/def\s+(\w+)\s*\(([^)]*)\)(?:\s*->\s*(\S+))?\s*:/);
   if (defMatch) {
-    result.name = defMatch[1];
-    result.params = defMatch[2].trim();
+    resultValue.name = defMatch[1];
+    resultValue.params = defMatch[2].trim();
     if (defMatch[3]) {
-      result.returnType = defMatch[3];
+      resultValue.returnType = defMatch[3];
     }
   }
 
@@ -254,19 +254,19 @@ function resolveIndentFunction(source: string): Record<string, string> {
   if (lines.length > 1) {
     const bodyLines = lines.slice(1);
     const minIndent = getMinIndent(bodyLines);
-    result.body = bodyLines
+    resultValue.body = bodyLines
       .map((l) => l.substring(minIndent))
       .join("\n")
       .trim();
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Keyword-End Function Resolver ─────────────────
 
 function resolveKeywordEndFunction(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
   const lines = source.split("\n");
   const firstLine = lines[0];
 
@@ -274,104 +274,104 @@ function resolveKeywordEndFunction(source: string): Record<string, string> {
   // eslint-disable-next-line security/detect-unsafe-regex
   const defMatch = firstLine.match(/(?:def|function)\s+(\w+)\s*(?:\(([^)]*)\))?/);
   if (defMatch) {
-    result.name = defMatch[1];
-    result.params = (defMatch[2] ?? "").trim();
+    resultValue.name = defMatch[1];
+    resultValue.params = (defMatch[2] ?? "").trim();
   }
 
   // Body: everything between first line and 'end', dedented
   if (lines.length > 2) {
     const bodyLines = lines.slice(1, -1); // Exclude first and last (end)
     const minIndent = getMinIndent(bodyLines);
-    result.body = bodyLines
+    resultValue.body = bodyLines
       .map((l) => l.substring(minIndent))
       .join("\n")
       .trim();
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Class Resolvers ───────────────────────────────
 
 function resolveBraceClass(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // eslint-disable-next-line security/detect-unsafe-regex
   const classMatch = source.match(/class\s+(\w+)(?:\s+extends\s+(\w+))?(?:\s+implements\s+(\w+))?/);
   if (classMatch) {
-    result.name = classMatch[1];
-    if (classMatch[2]) result.parent = classMatch[2];
+    resultValue.name = classMatch[1];
+    if (classMatch[2]) resultValue.parent = classMatch[2];
   }
 
   // Interface
   // eslint-disable-next-line security/detect-unsafe-regex
   const ifaceMatch = source.match(/interface\s+(\w+)(?:\s+extends\s+(\w+))?/);
-  if (ifaceMatch && !result.name) {
-    result.name = ifaceMatch[1];
-    if (ifaceMatch[2]) result.parent = ifaceMatch[2];
+  if (ifaceMatch && !resultValue.name) {
+    resultValue.name = ifaceMatch[1];
+    if (ifaceMatch[2]) resultValue.parent = ifaceMatch[2];
   }
 
-  result.body = extractBraceBody(source);
-  if (result.body) result.members = result.body;
+  resultValue.body = extractBraceBody(source);
+  if (resultValue.body) resultValue.members = resultValue.body;
 
-  return result;
+  return resultValue;
 }
 
 function resolveIndentClass(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
   const lines = source.split("\n");
   const firstLine = lines[0];
 
   // eslint-disable-next-line security/detect-unsafe-regex
   const classMatch = firstLine.match(/class\s+(\w+)(?:\s*\(([^)]*)\))?\s*:/);
   if (classMatch) {
-    result.name = classMatch[1];
-    if (classMatch[2]) result.parent = classMatch[2];
+    resultValue.name = classMatch[1];
+    if (classMatch[2]) resultValue.parent = classMatch[2];
   }
 
   if (lines.length > 1) {
     const bodyLines = lines.slice(1);
     const minIndent = getMinIndent(bodyLines);
-    result.body = bodyLines
+    resultValue.body = bodyLines
       .map((l) => l.substring(minIndent))
       .join("\n")
       .trim();
-    result.members = result.body;
+    resultValue.members = resultValue.body;
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── If/Else Resolvers ─────────────────────────────
 
 function resolveBraceIfElse(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   const condMatch = source.match(/if\s*\(([^)]+)\)/);
   if (condMatch) {
-    result.condition = condMatch[1].trim();
+    resultValue.condition = condMatch[1].trim();
   }
 
-  result.body = extractBraceBody(source);
+  resultValue.body = extractBraceBody(source);
 
   // Try to extract else body
   const elseIdx = source.indexOf("else");
   if (elseIdx >= 0) {
     const afterElse = source.substring(elseIdx + 4);
     const elseBody = extractBraceBody(afterElse);
-    if (elseBody) result.elseBody = elseBody;
+    if (elseBody) resultValue.elseBody = elseBody;
   }
 
-  return result;
+  return resultValue;
 }
 
 function resolveIndentIfElse(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
   const lines = source.split("\n");
 
   const condMatch = lines[0].match(/if\s+(.+)\s*:/);
   if (condMatch) {
-    result.condition = condMatch[1].trim();
+    resultValue.condition = condMatch[1].trim();
   }
 
   // Body: indented lines after if
@@ -382,142 +382,142 @@ function resolveIndentIfElse(source: string): Record<string, string> {
       bodyLines.push(lines[i]);
     }
     const minIndent = getMinIndent(bodyLines);
-    result.body = bodyLines.map((l) => l.substring(minIndent)).join("\n").trim();
+    resultValue.body = bodyLines.map((l) => l.substring(minIndent)).join("\n").trim();
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Loop Resolvers ────────────────────────────────
 
 function resolveBraceLoop(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // for (const item of items) or for (let i = 0; ...)
   const forOfMatch = source.match(/for\s*\(\s*(?:const|let|var)?\s*(\w+)\s+(?:of|in)\s+(.+?)\)/);
   if (forOfMatch) {
-    result.variable = forOfMatch[1];
-    result.iterable = forOfMatch[2].trim();
-    result.item = forOfMatch[1];
+    resultValue.variable = forOfMatch[1];
+    resultValue.iterable = forOfMatch[2].trim();
+    resultValue.item = forOfMatch[1];
   }
 
   // while (condition)
   const whileMatch = source.match(/while\s*\(([^)]+)\)/);
   if (whileMatch) {
-    result.condition = whileMatch[1].trim();
+    resultValue.condition = whileMatch[1].trim();
   }
 
-  result.body = extractBraceBody(source);
+  resultValue.body = extractBraceBody(source);
 
-  return result;
+  return resultValue;
 }
 
 function resolveIndentLoop(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
   const lines = source.split("\n");
 
   const forMatch = lines[0].match(/for\s+(\w+)\s+in\s+(.+)\s*:/);
   if (forMatch) {
-    result.variable = forMatch[1];
-    result.iterable = forMatch[2].trim();
-    result.item = forMatch[1];
+    resultValue.variable = forMatch[1];
+    resultValue.iterable = forMatch[2].trim();
+    resultValue.item = forMatch[1];
   }
 
   const whileMatch = lines[0].match(/while\s+(.+)\s*:/);
   if (whileMatch) {
-    result.condition = whileMatch[1].trim();
+    resultValue.condition = whileMatch[1].trim();
   }
 
   if (lines.length > 1) {
     const bodyLines = lines.slice(1);
     const minIndent = getMinIndent(bodyLines);
-    result.body = bodyLines.map((l) => l.substring(minIndent)).join("\n").trim();
+    resultValue.body = bodyLines.map((l) => l.substring(minIndent)).join("\n").trim();
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Try/Catch Resolver ────────────────────────────
 
 function resolveBraceTryCatch(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // Try body
   const tryIdx = source.indexOf("try");
   const catchIdx = source.indexOf("catch");
   if (tryIdx >= 0 && catchIdx > tryIdx) {
     const tryBlock = source.substring(tryIdx + 3, catchIdx);
-    result.body = extractBraceBody(tryBlock) || tryBlock.trim();
+    resultValue.body = extractBraceBody(tryBlock) || tryBlock.trim();
   }
 
   // Catch error variable
   const catchMatch = source.match(/catch\s*\(\s*(\w+)\s*\)/);
   if (catchMatch) {
-    result.error = catchMatch[1];
+    resultValue.error = catchMatch[1];
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Switch Resolver ───────────────────────────────
 
 function resolveBraceSwitch(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   const switchMatch = source.match(/switch\s*\(([^)]+)\)/);
   if (switchMatch) {
-    result.expression = switchMatch[1].trim();
+    resultValue.expression = switchMatch[1].trim();
   }
 
-  result.body = extractBraceBody(source);
+  resultValue.body = extractBraceBody(source);
 
-  return result;
+  return resultValue;
 }
 
 // ── Import Resolver ───────────────────────────────
 
 function resolveImport(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // import { names } from 'module'
   const namedMatch = source.match(/import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/);
   if (namedMatch) {
-    result.names = namedMatch[1].trim();
-    result.module = namedMatch[2];
-    return result;
+    resultValue.names = namedMatch[1].trim();
+    resultValue.module = namedMatch[2];
+    return resultValue;
   }
 
   // import name from 'module'
   const defaultMatch = source.match(/import\s+(\w+)\s+from\s*['"]([^'"]+)['"]/);
   if (defaultMatch) {
-    result.name = defaultMatch[1];
-    result.module = defaultMatch[2];
-    return result;
+    resultValue.name = defaultMatch[1];
+    resultValue.module = defaultMatch[2];
+    return resultValue;
   }
 
   // import * as name from 'module'
   const nsMatch = source.match(/import\s+\*\s+as\s+(\w+)\s+from\s*['"]([^'"]+)['"]/);
   if (nsMatch) {
-    result.name = nsMatch[1];
-    result.module = nsMatch[2];
-    return result;
+    resultValue.name = nsMatch[1];
+    resultValue.module = nsMatch[2];
+    return resultValue;
   }
 
   // Python: from module import names
   const pyMatch = source.match(/from\s+(\S+)\s+import\s+(.+)/);
   if (pyMatch) {
-    result.module = pyMatch[1];
-    result.names = pyMatch[2].trim();
-    return result;
+    resultValue.module = pyMatch[1];
+    resultValue.names = pyMatch[2].trim();
+    return resultValue;
   }
 
   // Go/Java: import "module" or import module.path
   const simpleMatch = source.match(/import\s+['"]?([^'";\s]+)['"]?/);
   if (simpleMatch) {
-    result.module = simpleMatch[1];
+    resultValue.module = simpleMatch[1];
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Return/Throw Resolvers ────────────────────────
@@ -526,8 +526,8 @@ function resolveReturn(source: string): Record<string, string> {
   const trimmed = source.trim().replace(/;$/, "").trim();
   const match = trimmed.match(/^return\s+([\s\S]+)$/);
   if (match) {
-    const val = match[1].trim();
-    return { expression: val, value: val };
+    const valValue = match[1].trim();
+    return { expression: valValue, value: valValue };
   }
   return { expression: "", value: "" };
 }
@@ -544,18 +544,18 @@ function resolveThrow(source: string): Record<string, string> {
 // ── Variable Resolver ─────────────────────────────
 
 function resolveVariable(source: string): Record<string, string> {
-  const result: Record<string, string> = {};
+  const resultValue: Record<string, string> = {};
 
   // const/let/var name [: type] = value
   // eslint-disable-next-line security/detect-unsafe-regex
   const match = source.match(/(?:const|let|var)\s+(\w+)(?:\s*:\s*(\S+))?\s*=\s*(.+?)[\s;]*$/);
   if (match) {
-    result.name = match[1];
-    if (match[2]) result.type = match[2];
-    result.value = match[3].trim();
+    resultValue.name = match[1];
+    if (match[2]) resultValue.type = match[2];
+    resultValue.value = match[3].trim();
   }
 
-  return result;
+  return resultValue;
 }
 
 // ── Helpers ───────────────────────────────────────

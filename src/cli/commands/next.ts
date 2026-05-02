@@ -18,6 +18,7 @@
 import type { Command } from "commander";
 import { makeV11WrapperCommand } from "./_v11-bridge.js";
 
+/** nextCommand — auto-generated description placeholder. */
 export function nextCommand(): Command {
   return makeV11WrapperCommand({
     name: "next",

@@ -44,6 +44,7 @@ function ensureProject(db: Database.Database, projectId: string): void {
   ).run(projectId, "default", now, now);
 }
 
+/** saveHarnessMemory — auto-generated description placeholder. */
 export function saveHarnessMemory(db: Database.Database, state: HarnessMemoryState): void {
   const projectId = getProjectId(db);
   ensureProject(db, projectId);
@@ -53,6 +54,7 @@ export function saveHarnessMemory(db: Database.Database, state: HarnessMemorySta
   ).run(projectId, SETTING_KEY, json, new Date().toISOString());
 }
 
+/** getHarnessMemory — auto-generated description placeholder. */
 export function getHarnessMemory(db: Database.Database): HarnessMemoryState | null {
   const projectId = getProjectId(db);
   const row = db.prepare(

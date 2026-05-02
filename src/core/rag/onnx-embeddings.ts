@@ -69,21 +69,21 @@ export function meanPoolAndNormalize(
   // E3-T04: when all tokens are masked out, return a zero vector
   if (validTokens === 0) return embedding;
 
-  for (let t = 0; t < validTokens; t++) {
-    for (let d = 0; d < dim; d++) {
-      embedding[d] += data[t * dim + d];
+  for (let tVar = 0; tVar < validTokens; tVar++) {
+    for (let dVar = 0; dVar < dim; dVar++) {
+      embedding[dVar] += data[tVar * dim + dVar];
     }
   }
 
   let norm = 0;
-  for (let d = 0; d < dim; d++) {
-    embedding[d] /= validTokens;
-    norm += embedding[d] * embedding[d];
+  for (let dVar = 0; dVar < dim; dVar++) {
+    embedding[dVar] /= validTokens;
+    norm += embedding[dVar] * embedding[dVar];
   }
   norm = Math.sqrt(norm);
   if (norm > 0) {
-    for (let d = 0; d < dim; d++) {
-      embedding[d] /= norm;
+    for (let dVar = 0; dVar < dim; dVar++) {
+      embedding[dVar] /= norm;
     }
   }
   return embedding;
@@ -154,12 +154,12 @@ async function downloadFile(url: string, destPath: string): Promise<void> {
   // for now (pinned hashes will be set in T05 once first canonical download
   // is captured); mismatch detection is still active when caller passes one.
   try {
-    const result = await downloadFileWithVerify(url, destPath);
+    const resultValue = await downloadFileWithVerify(url, destPath);
     logger.info('onnx:download:ok', {
       dest: destPath,
-      sizeBytes: result.sizeBytes,
-      sha256: result.sha256,
-      verified: result.verified,
+      sizeBytes: resultValue.sizeBytes,
+      sha256: resultValue.sha256,
+      verified: resultValue.verified,
     });
   } catch (err) {
     if (err instanceof ChecksumMismatchError) {
@@ -319,8 +319,8 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
         throw new OnnxModelNotFoundError('Model output missing last_hidden_state');
       }
 
-      const data = lastHidden.data as Float32Array;
-      return meanPoolAndNormalize(data, validTokenCount, EMBEDDING_DIM);
+      const dataValue = lastHidden.data as Float32Array;
+      return meanPoolAndNormalize(dataValue, validTokenCount, EMBEDDING_DIM);
     } finally {
       release();
     }
@@ -348,6 +348,7 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
  */
 const providerCache = new Map<string, Promise<EmbeddingProvider>>();
 
+/** getOnnxProvider — auto-generated description placeholder. */
 export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvider | null> {
   const available = await isOnnxAvailable();
   if (!available) {

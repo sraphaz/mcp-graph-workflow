@@ -168,6 +168,7 @@ function classifyAction(signals: RegressionSignals): unknown {
   return { classification, recommendation, issueBodyPreview: body };
 }
 
+/** registerEvolve — auto-generated description placeholder. */
 export function registerEvolve(server: McpServer, store: SqliteStore): void {
   server.tool(
     "evolve",

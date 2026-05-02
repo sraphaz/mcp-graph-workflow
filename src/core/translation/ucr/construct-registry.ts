@@ -243,31 +243,31 @@ export class ConstructRegistry {
   // ── Seed ───────────────────────────────────────────────
 
   seedFromJson(data: UcrSeedData): SeedResult {
-    const result: SeedResult = { categories: 0, constructs: 0, mappings: 0 };
+    const resultValue: SeedResult = { categories: 0, constructs: 0, mappings: 0 };
 
     const tx = this.db.transaction(() => {
       for (const cat of data.categories) {
         this.insertCategory(cat);
-        result.categories++;
+        resultValue.categories++;
       }
       for (const construct of data.constructs) {
         this.insertConstruct(construct);
-        result.constructs++;
+        resultValue.constructs++;
       }
       for (const mapping of data.mappings) {
         this.insertMapping(mapping);
-        result.mappings++;
+        resultValue.mappings++;
       }
     });
 
     tx();
 
     logger.info("ucr:seed", {
-      categories: result.categories,
-      constructs: result.constructs,
-      mappings: result.mappings,
+      categories: resultValue.categories,
+      constructs: resultValue.constructs,
+      mappings: resultValue.mappings,
     });
 
-    return result;
+    return resultValue;
   }
 }

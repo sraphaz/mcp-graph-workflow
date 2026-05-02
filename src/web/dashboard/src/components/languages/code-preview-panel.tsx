@@ -49,6 +49,7 @@ function MethodTag({ deterministic }: { deterministic: boolean }): React.JSX.Ele
   );
 }
 
+/** CodePreviewPanel — auto-generated description placeholder. */
 export function CodePreviewPanel({
   sourceCode,
   targetCode,

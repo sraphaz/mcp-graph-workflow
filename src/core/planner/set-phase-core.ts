@@ -69,6 +69,7 @@ export type SetPhaseBlocked = {
 
 export type SetPhaseResult = SetPhaseSuccess | SetPhaseBlocked;
 
+/** setPhaseCore — auto-generated description placeholder. */
 export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhaseResult {
   const {
     phase,

@@ -33,6 +33,7 @@ interface CaptureResult {
   capturedAt: string;
 }
 
+/** CaptureModal — auto-generated description placeholder. */
 export function CaptureModal({ open, onClose, onImported }: CaptureModalProps): React.JSX.Element | null {
   const [url, setUrl] = useState("");
   const [selector, setSelector] = useState("");

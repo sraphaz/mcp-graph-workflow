@@ -33,8 +33,8 @@ export function getHubId(agentIds: string[]): string {
  */
 export function buildStarRoutes(hub: string, workers: string[]): Record<string, string> {
   const routes: Record<string, string> = {};
-  for (const w of workers) {
-    routes[w] = hub;
+  for (const wVar of workers) {
+    routes[wVar] = hub;
   }
   return routes;
 }

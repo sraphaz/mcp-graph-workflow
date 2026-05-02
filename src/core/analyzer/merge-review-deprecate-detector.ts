@@ -107,32 +107,32 @@ function detectMergeCandidates(doc: GraphDocument): MergeCandidatePair[] {
 
   for (const [, group] of byType) {
     for (let i = 0; i < group.length; i++) {
-      const a = group[i];
-      if (!a) continue;
-      const tokA = new Set(tokenize(a.title));
+      const aVar = group[i];
+      if (!aVar) continue;
+      const tokA = new Set(tokenize(aVar.title));
       if (tokA.size === 0) continue;
 
       for (let j = i + 1; j < group.length; j++) {
-        const b = group[j];
-        if (!b) continue;
-        const tokB = new Set(tokenize(b.title));
+        const bVar = group[j];
+        if (!bVar) continue;
+        const tokB = new Set(tokenize(bVar.title));
         if (tokB.size === 0) continue;
 
         const sim = jaccardSimilarity(tokA, tokB);
         if (sim < MERGE_SIMILARITY_THRESHOLD) continue;
 
-        const key = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
+        const key = aVar.id < bVar.id ? `${aVar.id}|${bVar.id}` : `${bVar.id}|${aVar.id}`;
         if (reported.has(key)) continue;
         reported.add(key);
 
         candidates.push({
-          nodeA: a.id,
-          nodeB: b.id,
-          titleA: a.title,
-          titleB: b.title,
+          nodeA: aVar.id,
+          nodeB: bVar.id,
+          titleA: aVar.title,
+          titleB: bVar.title,
           similarity: Math.round(sim * 100) / 100,
-          sameParent: !!(a.parentId && b.parentId && a.parentId === b.parentId),
-          sameType: a.type === b.type,
+          sameParent: !!(aVar.parentId && bVar.parentId && aVar.parentId === bVar.parentId),
+          sameType: aVar.type === bVar.type,
         });
       }
     }

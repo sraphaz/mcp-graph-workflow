@@ -98,6 +98,7 @@ const USER_CODE_END = "// USER-CODE-END";
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
+/** scaffoldFormula — auto-generated description placeholder. */
 export function scaffoldFormula(
   spec: FormulaSpec,
   options: ScaffoldFormulaOptions = {},

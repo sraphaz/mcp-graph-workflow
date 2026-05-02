@@ -42,6 +42,7 @@ function isWhitespace(code: number): boolean {
   return code === 32 || code === 9 || code === 10 || code === 13 || code === 12 || code === 11;
 }
 
+/** estimateTokens — auto-generated description placeholder. */
 export function estimateTokens(text: string): number {
   if (!text) return 0;
 

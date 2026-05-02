@@ -14,6 +14,7 @@ export interface DomWatchdogOptions {
   largeMutationThreshold?: number;
 }
 
+/** registerDomWatchdog — auto-generated description placeholder. */
 export function registerDomWatchdog(bus: BrowserEventBus, opts: DomWatchdogOptions = {}): void {
   const threshold = opts.largeMutationThreshold ?? 50;
 

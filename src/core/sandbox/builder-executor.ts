@@ -78,6 +78,7 @@ export interface BuilderResult {
 
 const DEFAULT_TIMEOUT_MS = 300_000;
 
+/** executeBuild — auto-generated description placeholder. */
 export async function executeBuild(options: BuilderExecutorOptions): Promise<BuilderResult> {
   const {
     command,

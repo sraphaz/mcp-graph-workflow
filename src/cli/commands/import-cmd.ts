@@ -28,6 +28,7 @@ function output(msg: string): void {
   process.stdout.write(msg + "\n");
 }
 
+/** importCommand — auto-generated description placeholder. */
 export function importCommand(): Command {
   return new Command("import")
     .description("Import a PRD file into the graph")
@@ -43,8 +44,8 @@ export function importCommand(): Command {
       }
 
       try {
-        const result = await readFileContent(filePath);
-        const entities = extractEntities(result.text);
+        const resultValue = await readFileContent(filePath);
+        const entities = extractEntities(resultValue.text);
         const graph = convertToGraph(entities, filePath);
 
         store.bulkInsert(graph.nodes, graph.edges);

@@ -46,24 +46,24 @@ export function detectSimilarObjects(
 
   // Group by type
   const byType = new Map<string, SiebelObject[]>();
-  for (const obj of topLevel) {
-    const group = byType.get(obj.type) ?? [];
-    group.push(obj);
-    byType.set(obj.type, group);
+  for (const objValue of topLevel) {
+    const group = byType.get(objValue.type) ?? [];
+    group.push(objValue);
+    byType.set(objValue.type, group);
   }
 
   // Compare within each type group
   for (const [, group] of byType) {
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
-        const a = group[i];
-        const b = group[j];
-        const { score, sharedChildren } = computeSimilarity(a, b);
+        const aVar = group[i];
+        const bVar = group[j];
+        const { score, sharedChildren } = computeSimilarity(aVar, bVar);
 
         if (score >= threshold) {
           pairs.push({
-            a: { name: a.name, type: a.type },
-            b: { name: b.name, type: b.type },
+            a: { name: aVar.name, type: aVar.type },
+            b: { name: bVar.name, type: bVar.type },
             score,
             sharedChildren,
           });

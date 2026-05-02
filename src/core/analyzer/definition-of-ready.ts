@@ -34,6 +34,7 @@ import { analyzeScope } from "./scope-analyzer.js";
 import { analyzePrdQuality } from "./prd-quality.js";
 import { logger } from "../utils/logger.js";
 
+/** checkDefinitionOfReady — auto-generated description placeholder. */
 export function checkDefinitionOfReady(doc: GraphDocument): ReadinessReport {
   const { nodes } = doc;
   const checks: ReadinessCheck[] = [];

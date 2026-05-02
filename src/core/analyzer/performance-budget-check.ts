@@ -39,6 +39,7 @@ function toBudgetStatus(value: unknown): BudgetStatus {
   return "untested";
 }
 
+/** analyzePerformanceBudgets — auto-generated description placeholder. */
 export function analyzePerformanceBudgets(doc: GraphDocument): PerformanceBudgetReport {
   const budgetNodes = doc.nodes.filter((n) => n.type === "performance_budget");
 

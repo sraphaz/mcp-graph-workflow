@@ -246,8 +246,8 @@ export class EmbeddingStore {
       const docTokens = row.text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(t => t.length > 1);
       // Jaccard-like overlap score
       let overlap = 0;
-      for (const t of docTokens) {
-        if (queryTokens.has(t)) overlap++;
+      for (const tVar of docTokens) {
+        if (queryTokens.has(tVar)) overlap++;
       }
       const similarity = queryTokens.size > 0
         ? overlap / (queryTokens.size + docTokens.length - overlap)

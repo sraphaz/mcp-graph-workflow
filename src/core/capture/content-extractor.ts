@@ -58,29 +58,29 @@ export async function extractContent(
   const { load } = await import("cheerio");
   logger.info("Extracting content from HTML", { sizeChars: html.length, selector: options?.selector });
 
-  const $ = load(html);
+  const $Var = load(html);
 
   // Extract metadata before stripping
-  const titleTag = $("title").first().text().trim() || null;
-  const h1Text = $("h1").first().text().trim() || null;
+  const titleTag = $Var("title").first().text().trim() || null;
+  const h1Text = $Var("h1").first().text().trim() || null;
   const title = h1Text ?? titleTag;
-  const description = $('meta[name="description"]').attr("content") ?? null;
+  const description = $Var('meta[name="description"]').attr("content") ?? null;
 
   // Remove non-content elements
-  $("script, style, nav, footer, header, noscript, iframe, svg").remove();
+  $Var("script, style, nav, footer, header, noscript, iframe, svg").remove();
 
   // Scope to selector if provided — extract scoped HTML and reload
   let scopedHtml: string;
   if (options?.selector) {
-    const selected = $(options.selector);
+    const selected = $Var(options.selector);
     if (selected.length > 0) {
       scopedHtml = selected.html() ?? "";
     } else {
       logger.info("Selector matched nothing, falling back to body", { selector: options.selector });
-      scopedHtml = $("body").length ? ($("body").html() ?? "") : $.html();
+      scopedHtml = $Var("body").length ? ($Var("body").html() ?? "") : $Var.html();
     }
   } else {
-    scopedHtml = $("body").length ? ($("body").html() ?? "") : $.html();
+    scopedHtml = $Var("body").length ? ($Var("body").html() ?? "") : $Var.html();
   }
 
   // Reload scoped content for transformation

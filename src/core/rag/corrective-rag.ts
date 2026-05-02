@@ -64,8 +64,8 @@ export function validateRetrievedResults(
 ): ValidationResult[] {
   const validations: ValidationResult[] = [];
 
-  for (const result of results) {
-    const validation = validateSingleResult(result, db, store);
+  for (const resultValue of results) {
+    const validation = validateSingleResult(resultValue, db, store);
     validations.push(validation);
   }
 
@@ -93,18 +93,18 @@ export function correctResults(
 
   const corrected: RankedResult[] = [];
 
-  for (const result of results) {
-    const validation = validationMap.get(result.id);
+  for (const resultValue of results) {
+    const validation = validationMap.get(resultValue.id);
     if (!validation) {
       // No validation data — keep as-is
-      corrected.push(result);
+      corrected.push(resultValue);
       continue;
     }
 
     // Filter out results below confidence threshold
     if (validation.confidenceScore < minConfidence) {
       logger.debug("corrective-rag: filtering low-confidence result", {
-        docId: result.id,
+        docId: resultValue.id,
         confidence: validation.confidenceScore,
         staleness: validation.staleness,
       });
@@ -112,9 +112,9 @@ export function correctResults(
     }
 
     // Apply confidence multiplier to score
-    const adjustedScore = result.score * validation.confidenceScore;
+    const adjustedScore = resultValue.score * validation.confidenceScore;
     corrected.push({
-      ...result,
+      ...resultValue,
       score: Math.round(adjustedScore * 10000) / 10000,
     });
   }
@@ -294,11 +294,11 @@ export function computeBatchConfidence(validations: ValidationResult[]): BatchCo
   let sumSq = 0;
   let min = 1;
 
-  for (const v of validations) {
-    const c = v.confidenceScore;
-    sum += c;
-    sumSq += c * c;
-    if (c < min) min = c;
+  for (const vVar of validations) {
+    const cVar = vVar.confidenceScore;
+    sum += cVar;
+    sumSq += cVar * cVar;
+    if (cVar < min) min = cVar;
   }
 
   const mean = sum / count;

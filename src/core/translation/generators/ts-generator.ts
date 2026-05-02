@@ -61,22 +61,22 @@ export class TsGenerator implements GeneratorAdapter {
 
 /** Substitute {{placeholders}} in a syntax pattern with construct data. */
 function substitutePattern(pattern: string, construct: ParsedConstruct): string {
-  let result = pattern;
+  let resultValue = pattern;
   if (construct.name) {
-    result = result.replace(/\{\{name\}\}/g, construct.name);
+    resultValue = resultValue.replace(/\{\{name\}\}/g, construct.name);
   }
   // Default placeholders for unresolved template vars
-  result = result.replace(/\{\{members\}\}/g, "// TODO: members");
-  result = result.replace(/\{\{params\}\}/g, "");
-  result = result.replace(/\{\{body\}\}/g, "// TODO: implement");
-  result = result.replace(/\{\{value\}\}/g, "undefined");
-  result = result.replace(/\{\{condition\}\}/g, "/* condition */");
-  result = result.replace(/\{\{type\}\}/g, "unknown");
-  result = result.replace(/\{\{module\}\}/g, "'./module'");
-  result = result.replace(/\{\{items\}\}/g, "items");
-  result = result.replace(/\{\{item\}\}/g, "item");
-  result = result.replace(/\{\{expression\}\}/g, "/* expression */");
-  result = result.replace(/\{\{error\}\}/g, "e");
-  result = result.replace(/\{\{message\}\}/g, "'Error'");
-  return result;
+  resultValue = resultValue.replace(/\{\{members\}\}/g, "// TODO: members");
+  resultValue = resultValue.replace(/\{\{params\}\}/g, "");
+  resultValue = resultValue.replace(/\{\{body\}\}/g, "// TODO: implement");
+  resultValue = resultValue.replace(/\{\{value\}\}/g, "undefined");
+  resultValue = resultValue.replace(/\{\{condition\}\}/g, "/* condition */");
+  resultValue = resultValue.replace(/\{\{type\}\}/g, "unknown");
+  resultValue = resultValue.replace(/\{\{module\}\}/g, "'./module'");
+  resultValue = resultValue.replace(/\{\{items\}\}/g, "items");
+  resultValue = resultValue.replace(/\{\{item\}\}/g, "item");
+  resultValue = resultValue.replace(/\{\{expression\}\}/g, "/* expression */");
+  resultValue = resultValue.replace(/\{\{error\}\}/g, "e");
+  resultValue = resultValue.replace(/\{\{message\}\}/g, "'Error'");
+  return resultValue;
 }

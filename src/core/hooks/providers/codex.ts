@@ -42,6 +42,7 @@ export interface CodexImportOptions {
   source?: string;
 }
 
+/** importCodexSettings — auto-generated description placeholder. */
 export function importCodexSettings(opts: CodexImportOptions = {}): ImportEnvelope {
   const source = opts.source ?? join(homedir(), ".codex", "config.toml");
   const file = readSettingsFile<CodexConfig>(source, "toml");

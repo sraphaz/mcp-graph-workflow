@@ -34,6 +34,7 @@ const DEFAULT_SEMANTIC_WEIGHT = 0.6;
 
 // ── Pure math ────────────────────────────────────────────────────────────────
 
+/** cosineScore — auto-generated description placeholder. */
 export function cosineScore(a: number[], b: number[]): number {
   if (a.length === 0 || a.length !== b.length) return 0;
   let dot = 0, na = 0, nb = 0;
@@ -58,6 +59,7 @@ function combinedScore(
 
 // ── MMR re-ranking ────────────────────────────────────────────────────────────
 
+/** mmrRerank — auto-generated description placeholder. */
 export function mmrRerank(
   candidates: HybridCandidate[],
   opts: HybridSearchOptions = {},
@@ -115,6 +117,7 @@ export function mmrRerank(
 
 // ── hybridSearch — main entry point ──────────────────────────────────────────
 
+/** hybridSearch — auto-generated description placeholder. */
 export function hybridSearch(
   candidates: HybridCandidate[],
   queryVector: number[] | null,

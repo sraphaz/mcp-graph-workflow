@@ -16,6 +16,7 @@ export interface BackpressureState {
   blocked: boolean;
 }
 
+/** getCurrentWip — auto-generated description placeholder. */
 export function getCurrentWip(db: Database.Database): number {
   const row = db
     .prepare(`SELECT COUNT(*) AS n FROM nodes WHERE status = 'in_progress'`)
@@ -23,6 +24,7 @@ export function getCurrentWip(db: Database.Database): number {
   return row.n;
 }
 
+/** checkBackpressure — auto-generated description placeholder. */
 export function checkBackpressure(
   db: Database.Database,
   capacity: number,

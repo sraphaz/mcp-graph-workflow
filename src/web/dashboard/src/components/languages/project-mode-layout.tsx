@@ -33,6 +33,7 @@ interface ProjectModeLayoutProps {
   loading?: boolean;
 }
 
+/** ProjectModeLayout — auto-generated description placeholder. */
 export function ProjectModeLayout({
   project,
   files,

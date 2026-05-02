@@ -56,6 +56,7 @@ const INITIAL_STATE: UseTranslationState = {
   loading: false,
 };
 
+/** useTranslation — auto-generated description placeholder. */
 export function useTranslation(): [UseTranslationState, UseTranslationActions] {
   const [state, setState] = useState<UseTranslationState>(INITIAL_STATE);
 

@@ -79,6 +79,7 @@ function resolveCodeAndLanguage(
   return { resolvedCode, resolvedSourceLanguage };
 }
 
+/** registerTranslate — auto-generated description placeholder. */
 export function registerTranslate(server: McpServer, store: SqliteStore): void {
   let _cachedDb: unknown = null;
   let _orchestrator: TranslationOrchestrator | null = null;
@@ -194,15 +195,15 @@ async function handleConvert(
 
   // Finalize mode: submit generated code for an existing job
   if (jobId && generatedCode) {
-    const result = orchestrator.finalizeTranslation(jobId, generatedCode);
+    const resultValue = orchestrator.finalizeTranslation(jobId, generatedCode);
     return mcpText({
       ok: true,
       phase: "finalized",
       jobId,
-      confidence: result.evidence?.confidenceScore,
-      risks: result.evidence?.risks,
-      humanReviewPoints: result.evidence?.humanReviewPoints,
-      translatedConstructs: result.evidence?.translatedConstructs,
+      confidence: resultValue.evidence?.confidenceScore,
+      risks: resultValue.evidence?.risks,
+      humanReviewPoints: resultValue.evidence?.humanReviewPoints,
+      translatedConstructs: resultValue.evidence?.translatedConstructs,
     });
   }
 
@@ -389,12 +390,12 @@ async function handleBatchConvert(
   }> = [];
 
   for (let i = 0; i < items.length; i++) {
-    const item = items[i];
+    const itemValue = items[i];
     try {
       const { resolvedCode, resolvedSourceLanguage } = resolveCodeAndLanguage(
-        item.code,
-        item.filePath,
-        item.sourceLanguage,
+        itemValue.code,
+        itemValue.filePath,
+        itemValue.sourceLanguage,
       );
 
       if (!resolvedCode) {
@@ -406,8 +407,8 @@ async function handleBatchConvert(
         projectId,
         sourceCode: resolvedCode,
         sourceLanguage: resolvedSourceLanguage,
-        targetLanguage: item.targetLanguage,
-        scope: item.scope ?? "snippet",
+        targetLanguage: itemValue.targetLanguage,
+        scope: itemValue.scope ?? "snippet",
       });
 
       results.push({ index: i, ok: true, jobId: prepareResult.jobId });

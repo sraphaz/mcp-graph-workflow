@@ -90,6 +90,7 @@ function StatCard({ icon, value, label, colorClass = "text-foreground" }: StatCa
   );
 }
 
+/** ProjectDashboard — auto-generated description placeholder. */
 export function ProjectDashboard({
   project: _project,
   files,

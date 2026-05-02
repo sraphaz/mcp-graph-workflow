@@ -57,6 +57,7 @@ interface Registration {
 
 let active: Registration | null = null;
 
+/** registerDaemon — auto-generated description placeholder. */
 export function registerDaemon(reg: {
   handle: DaemonRunnerHandle;
   socketPath: string;
@@ -75,10 +76,12 @@ export function registerDaemon(reg: {
   };
 }
 
+/** unregisterDaemon — auto-generated description placeholder. */
 export function unregisterDaemon(): void {
   active = null;
 }
 
+/** getDaemonStatus — auto-generated description placeholder. */
 export function getDaemonStatus(): DaemonStatusInfo {
   if (!active) return { mode: "inactive" };
   const uptimeMs = Date.now() - active.startedAtMs;

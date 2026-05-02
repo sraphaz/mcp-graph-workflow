@@ -61,24 +61,24 @@ export class RetryExhaustedError extends McpGraphError {
  * Returns a function that yields values in [0, 1) each call.
  */
 function mulberry32(seed: number): () => number {
-  let s = seed;
+  let sVar = seed;
   return () => {
-    s += 0x6d2b79f5;
-    let z = s;
-    z = Math.imul(z ^ (z >>> 15), z | 1);
-    z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
-    return ((z ^ (z >>> 14)) >>> 0) / 0x100000000;
+    sVar += 0x6d2b79f5;
+    let zVar = sVar;
+    zVar = Math.imul(zVar ^ (zVar >>> 15), zVar | 1);
+    zVar ^= zVar + Math.imul(zVar ^ (zVar >>> 7), zVar | 61);
+    return ((zVar ^ (zVar >>> 14)) >>> 0) / 0x100000000;
   };
 }
 
 /** Deterministic string hash → 32-bit unsigned integer. */
 function hashSeed(seed: string): number {
-  let h = 0x811c9dc5;
+  let hVar = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
+    hVar ^= seed.charCodeAt(i);
+    hVar = Math.imul(hVar, 0x01000193);
   }
-  return h >>> 0;
+  return hVar >>> 0;
 }
 
 /**

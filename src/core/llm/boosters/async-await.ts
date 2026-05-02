@@ -33,6 +33,7 @@ function hasUnsafeMethod(line: string): boolean {
   return /\.(catch|finally)\(/.test(line);
 }
 
+/** asyncAwait — auto-generated description placeholder. */
 export function asyncAwait(source: string): AsyncAwaitResult {
   let rewritten = 0;
   let skippedChains = 0;

@@ -52,6 +52,7 @@ export interface FieldSuggestionResult {
 
 // --- Implementation ---
 
+/** suggestFields — auto-generated description placeholder. */
 export function suggestFields(request: FieldSuggestionRequest): FieldSuggestionResult {
   const { targetBcName, repository, requiredThreshold = 0.6 } = request;
 

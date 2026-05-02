@@ -55,6 +55,7 @@ export interface LearningStore {
   replaceAll(records: PerfRecord[]): void;
 }
 
+/** isReadOnlyAction — auto-generated description placeholder. */
 export function isReadOnlyAction(action: LearningAction): boolean {
   return READ_ONLY_ACTIONS.has(action);
 }
@@ -86,6 +87,7 @@ export interface StatsResult {
   agents: AgentStats[];
 }
 
+/** actionStats — auto-generated description placeholder. */
 export function actionStats(store: LearningStore): StatsResult {
   const records = store.readAll();
   return {
@@ -94,6 +96,7 @@ export function actionStats(store: LearningStore): StatsResult {
   };
 }
 
+/** actionExplain — auto-generated description placeholder. */
 export function actionExplain(
   store: LearningStore,
   strategy?: RoutingStrategy,
@@ -113,6 +116,7 @@ export interface ExportPayload {
   records: PerfRecord[];
 }
 
+/** actionExport — auto-generated description placeholder. */
 export function actionExport(store: LearningStore): ExportPayload {
   return {
     schemaVersion: 1,
@@ -143,11 +147,11 @@ export function actionImport(
     throw new InvalidArgumentError("learning:import — records must be an array");
   }
   // Pre-validate so a bad record doesn't half-fill the store.
-  for (const r of payload.records) {
-    if (!r.agentId || !r.nodeId) {
+  for (const rVar of payload.records) {
+    if (!rVar.agentId || !rVar.nodeId) {
       throw new InvalidArgumentError("learning:import — every record requires agentId and nodeId");
     }
-    if (!Number.isFinite(r.cycleTimeMs)) {
+    if (!Number.isFinite(rVar.cycleTimeMs)) {
       throw new InvalidArgumentError("learning:import — cycleTimeMs must be finite");
     }
   }

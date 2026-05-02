@@ -31,6 +31,7 @@ const TRANSITION_FLUFF: RegExp[] = [
   /\b(?:however|nonetheless|nevertheless),\s+/gi,
 ];
 
+/** cavemanFilter — auto-generated description placeholder. */
 export function cavemanFilter(text: string): string {
   if (!text) return "";
   let out = text;
@@ -48,6 +49,7 @@ export function cavemanFilter(text: string): string {
   return out;
 }
 
+/** shouldCavemanFilter — auto-generated description placeholder. */
 export function shouldCavemanFilter(
   settings: { caveman?: boolean | null },
 ): boolean {

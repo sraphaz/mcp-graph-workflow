@@ -22,6 +22,7 @@ import { buildTaskContext, computeLayeredMetrics, type LayeredTokenMetrics } fro
 import { detectCycles } from "../../core/planner/dependency-chain.js";
 import { ToolTokenStore, type ToolTokenSummary } from "../../core/store/tool-token-store.js";
 
+/** createBenchmarkRouter — auto-generated description placeholder. */
 export function createBenchmarkRouter(storeRef: StoreRef): Router {
   const router = Router();
 

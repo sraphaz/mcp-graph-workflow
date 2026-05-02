@@ -42,6 +42,7 @@ export interface ReclassifyReport {
 
 const ELIGIBLE_TYPES = new Set(["task", "subtask", "epic"]);
 
+/** findStructuralCandidates — auto-generated description placeholder. */
 export function findStructuralCandidates(doc: GraphDocument): ReclassifyCandidate[] {
   const candidates: ReclassifyCandidate[] = [];
   for (const node of doc.nodes) {
@@ -87,8 +88,8 @@ export function reclassifyStructural(
       const node = doc.nodes.find((n) => n.id === candidate.nodeId);
       if (!node) continue;
       const nextMetadata = { ...(node.metadata ?? {}), implementable: false };
-      const result = store.updateNode(candidate.nodeId, { metadata: nextMetadata });
-      if (result) applied++;
+      const resultValue = store.updateNode(candidate.nodeId, { metadata: nextMetadata });
+      if (resultValue) applied++;
     }
     logger.info("reclassify-structural:applied", { applied, totalCandidates: candidates.length });
   } else {

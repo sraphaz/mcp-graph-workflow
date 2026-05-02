@@ -119,7 +119,7 @@ function resolveTransitiveDependents(
   }
 
   const visited = new Set<string>(modifiedRefs);
-  const result: SiebelObjectRef[] = [];
+  const resultValue: SiebelObjectRef[] = [];
   const queue = [...modifiedRefs];
 
   while (queue.length > 0) {
@@ -130,13 +130,13 @@ function resolveTransitiveDependents(
       const depKey = refKey(dep);
       if (!visited.has(depKey)) {
         visited.add(depKey);
-        result.push(dep);
+        resultValue.push(dep);
         queue.push(depKey);
       }
     }
   }
 
-  return result;
+  return resultValue;
 }
 
 /** AC3: Sort by deploy order */
@@ -159,17 +159,17 @@ function detectLockConflicts(
 ): LockConflict[] {
   const conflicts: LockConflict[] = [];
 
-  for (const obj of objects) {
-    const key = refKey(objToRef(obj));
+  for (const objValue of objects) {
+    const key = refKey(objToRef(objValue));
     if (!packageRefs.has(key)) continue;
 
-    const locked = obj.properties.find((p) => p.name === "OBJECT_LOCKED")?.value;
-    const lockedBy = obj.properties.find((p) => p.name === "LOCKED_BY")?.value;
+    const locked = objValue.properties.find((p) => p.name === "OBJECT_LOCKED")?.value;
+    const lockedBy = objValue.properties.find((p) => p.name === "LOCKED_BY")?.value;
 
     if (locked === "Y" && lockedBy && lockedBy !== currentUser) {
       conflicts.push({
-        objectName: obj.name,
-        objectType: obj.type,
+        objectName: objValue.name,
+        objectType: objValue.type,
         lockedBy,
       });
     }
@@ -308,8 +308,8 @@ function generateReport(
 
   if (pkg.conflicts.length > 0) {
     lines.push("", "## Lock Conflicts", "");
-    for (const c of pkg.conflicts) {
-      lines.push(`- ⚠ \`${c.objectName}\` (${c.objectType}) locked by **${c.lockedBy}**`);
+    for (const cVar of pkg.conflicts) {
+      lines.push(`- ⚠ \`${cVar.objectName}\` (${cVar.objectType}) locked by **${cVar.lockedBy}**`);
     }
   }
 
@@ -326,6 +326,7 @@ function generateReport(
 
 // --- Main function ---
 
+/** buildMigrationPackage — auto-generated description placeholder. */
 export function buildMigrationPackage(request: MigrationPackageRequest): MigrationPackage {
   const {
     modifiedObjects,

@@ -61,6 +61,7 @@ function present(s: string | undefined): s is string {
   return typeof s === "string" && s.length > 0;
 }
 
+/** resolveWsEndpoint — auto-generated description placeholder. */
 export function resolveWsEndpoint(input: ResolveWsEndpointInput): ResolveWsEndpointResult {
   // Tier 1 — explicit arg wins.
   if (present(input.argEndpoint)) {

@@ -92,6 +92,7 @@ function pruneRedundantFields(node: JsonValue): JsonValue {
   return out;
 }
 
+/** flattenSchema — auto-generated description placeholder. */
 export function flattenSchema(schema: JsonValue): JsonValue {
   if (!isObject(schema)) return schema;
   const defs = isObject(schema[DEFS_KEY]) ? (schema[DEFS_KEY] as Record<string, JsonValue>) : {};

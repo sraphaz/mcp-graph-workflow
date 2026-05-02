@@ -25,6 +25,7 @@ export type RoutingStrategy = (typeof ROUTING_STRATEGIES)[number];
 
 export const HYBRID_CONFIDENT_SCORE = 1.0;
 
+/** isValidStrategy — auto-generated description placeholder. */
 export function isValidStrategy(s: unknown): s is RoutingStrategy {
   return typeof s === "string" && (ROUTING_STRATEGIES as readonly string[]).includes(s);
 }
@@ -50,6 +51,7 @@ function manualDecision(samples: number): DelegateRouteDecision {
   };
 }
 
+/** decideRoute — auto-generated description placeholder. */
 export function decideRoute(input: DelegateRouteInput): DelegateRouteDecision {
   const strategy: RoutingStrategy = input.strategy ?? "manual";
 

@@ -28,6 +28,7 @@ export interface Section {
   endLine: number;
 }
 
+/** segment — auto-generated description placeholder. */
 export function segment(text: string): Section[] {
   const lines = text.split("\n");
   const sections: Section[] = [];
@@ -91,7 +92,7 @@ const TABLE_SEP_PATTERN = /^\|\s*[-:]+[-| :]*\|$/;
  * Each table block (header + separator + data rows) becomes a Section with title "[table]" and level 0.
  */
 export function extractTableSections(sections: Section[]): Section[] {
-  const result: Section[] = [];
+  const resultValue: Section[] = [];
 
   for (const section of sections) {
     const lines = section.body.split("\n");
@@ -131,12 +132,12 @@ export function extractTableSections(sections: Section[]): Section[] {
     }
 
     if (tables.length === 0) {
-      result.push(section);
+      resultValue.push(section);
     } else {
       // Push original section with table lines removed
       const cleanBody = nonTableLines.join("\n").trim();
       if (cleanBody || section.title !== "[table]") {
-        result.push({
+        resultValue.push({
           ...section,
           body: cleanBody,
         });
@@ -144,7 +145,7 @@ export function extractTableSections(sections: Section[]): Section[] {
 
       // Push each table as a separate section
       for (const tableLines of tables) {
-        result.push({
+        resultValue.push({
           level: 0,
           title: "[table]",
           body: tableLines.join("\n"),
@@ -155,5 +156,5 @@ export function extractTableSections(sections: Section[]): Section[] {
     }
   }
 
-  return result;
+  return resultValue;
 }

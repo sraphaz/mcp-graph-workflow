@@ -38,6 +38,7 @@ export interface RemoveConsoleOptions {
 
 const DEFAULT_LOGGER_IMPORT = '"../utils/logger.js"';
 
+/** removeConsole — auto-generated description placeholder. */
 export function removeConsole(
   source: string,
   opts: RemoveConsoleOptions = {},

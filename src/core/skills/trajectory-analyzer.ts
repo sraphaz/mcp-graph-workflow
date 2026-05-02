@@ -17,6 +17,7 @@ export interface TrajectoryResult {
 
 const DISCOVERED_RE = /discovered|não-óbvio/i;
 
+/** analyzeTrajectory — auto-generated description placeholder. */
 export function analyzeTrajectory(input: TrajectoryInput): TrajectoryResult {
   const reasons: string[] = [];
 

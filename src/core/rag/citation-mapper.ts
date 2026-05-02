@@ -77,10 +77,10 @@ export function buildCitedContext(results: RankedResult[]): CitedContext {
   const textParts: string[] = [];
 
   for (let i = 0; i < results.length; i++) {
-    const r = results[i];
-    textParts.push(`[${i + 1}] ${r.content}`);
+    const rVar = results[i];
+    textParts.push(`[${i + 1}] ${rVar.content}`);
 
-    sourceBreakdown[r.sourceType] = (sourceBreakdown[r.sourceType] ?? 0) + 1;
+    sourceBreakdown[rVar.sourceType] = (sourceBreakdown[rVar.sourceType] ?? 0) + 1;
   }
 
   const assembledText = textParts.join("\n\n");

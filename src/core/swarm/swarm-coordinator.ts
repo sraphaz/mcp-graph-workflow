@@ -65,11 +65,11 @@ export class SwarmCoordinator {
   }
 
   start(sessionId: string): SwarmSession {
-    const result = this.db
+    const resultValue = this.db
       .prepare("UPDATE swarm_sessions SET status = 'active', updated_at = ? WHERE id = ?")
       .run(new Date().toISOString(), sessionId);
 
-    if (result.changes === 0) {
+    if (resultValue.changes === 0) {
       throw new McpGraphError(`Swarm session not found: ${sessionId}`);
     }
 
@@ -102,11 +102,11 @@ export class SwarmCoordinator {
       throw new McpGraphError(`maxAgents ceiling is 32, got ${newMax}`);
     }
 
-    const result = this.db
+    const resultValue = this.db
       .prepare("UPDATE swarm_sessions SET max_agents = ?, updated_at = ? WHERE id = ?")
       .run(newMax, new Date().toISOString(), sessionId);
 
-    if (result.changes === 0) {
+    if (resultValue.changes === 0) {
       throw new McpGraphError(`Swarm session not found: ${sessionId}`);
     }
 

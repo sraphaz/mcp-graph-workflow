@@ -31,6 +31,7 @@ export interface UseDreamReturn {
   refresh: () => void;
 }
 
+/** useDream — auto-generated description placeholder. */
 export function useDream(): UseDreamReturn {
   const [status, setStatus] = useState<DreamStatus | null>(null);
   const [history, setHistory] = useState<DreamCycleResult[]>([]);

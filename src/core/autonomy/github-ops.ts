@@ -25,15 +25,15 @@ export interface GhRunResult {
 }
 
 const realGhRunner: GhRunner = (args) => {
-  const r: SpawnSyncReturns<string> = spawnSync("gh", args as string[], {
+  const rVar: SpawnSyncReturns<string> = spawnSync("gh", args as string[], {
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
   });
   return {
-    ok: r.status === 0,
-    stdout: r.stdout ?? "",
-    stderr: r.stderr ?? "",
-    exitCode: r.status ?? -1,
+    ok: rVar.status === 0,
+    stdout: rVar.stdout ?? "",
+    stderr: rVar.stderr ?? "",
+    exitCode: rVar.status ?? -1,
   };
 };
 
@@ -56,8 +56,8 @@ function run(opts: GithubOpsOptions, args: string[]): GhRunResult {
  * orchestrator should cache the verdict at startup if it cares.
  */
 export function isGhAvailable(opts: GithubOpsOptions = {}): boolean {
-  const r = run(opts, ["--version"]);
-  return r.ok;
+  const rVar = run(opts, ["--version"]);
+  return rVar.ok;
 }
 
 export interface OpenIssueInput {
@@ -73,10 +73,11 @@ export interface OpenIssueResult {
 
 function parseIssueUrl(stdout: string): OpenIssueResult {
   const url = stdout.trim().split("\n").pop() ?? "";
-  const m = /\/issues\/(\d+)/.exec(url);
-  return { url, number: m ? Number(m[1]) : null };
+  const mVar = /\/issues\/(\d+)/.exec(url);
+  return { url, number: mVar ? Number(mVar[1]) : null };
 }
 
+/** openIssue — auto-generated description placeholder. */
 export function openIssue(
   input: OpenIssueInput,
   opts: GithubOpsOptions = {},
@@ -88,9 +89,9 @@ export function openIssue(
   if (input.labels && input.labels.length > 0) {
     args.push("--label", input.labels.join(","));
   }
-  const r = run(opts, args);
-  if (!r.ok) return { kind: "error", reason: r.stderr.trim() || `gh exited ${r.exitCode}` };
-  return { kind: "ok", data: parseIssueUrl(r.stdout) };
+  const rVar = run(opts, args);
+  if (!rVar.ok) return { kind: "error", reason: rVar.stderr.trim() || `gh exited ${rVar.exitCode}` };
+  return { kind: "ok", data: parseIssueUrl(rVar.stdout) };
 }
 
 export interface CreatePrInput {
@@ -108,10 +109,11 @@ export interface CreatePrResult {
 
 function parsePrUrl(stdout: string): CreatePrResult {
   const url = stdout.trim().split("\n").pop() ?? "";
-  const m = /\/pull\/(\d+)/.exec(url);
-  return { url, number: m ? Number(m[1]) : null };
+  const mVar = /\/pull\/(\d+)/.exec(url);
+  return { url, number: mVar ? Number(mVar[1]) : null };
 }
 
+/** createPr — auto-generated description placeholder. */
 export function createPr(
   input: CreatePrInput,
   opts: GithubOpsOptions = {},
@@ -131,9 +133,9 @@ export function createPr(
   ];
   if (input.head) args.push("--head", input.head);
   if (input.draft) args.push("--draft");
-  const r = run(opts, args);
-  if (!r.ok) return { kind: "error", reason: r.stderr.trim() || `gh exited ${r.exitCode}` };
-  return { kind: "ok", data: parsePrUrl(r.stdout) };
+  const rVar = run(opts, args);
+  if (!rVar.ok) return { kind: "error", reason: rVar.stderr.trim() || `gh exited ${rVar.exitCode}` };
+  return { kind: "ok", data: parsePrUrl(rVar.stdout) };
 }
 
 export interface PrStatus {
@@ -142,6 +144,7 @@ export interface PrStatus {
   readonly mergeable: boolean | null;
 }
 
+/** prStatus — auto-generated description placeholder. */
 export function prStatus(
   prNumber: number,
   opts: GithubOpsOptions = {},
@@ -149,16 +152,16 @@ export function prStatus(
   if (!isGhAvailable(opts)) {
     return { kind: "unsupported", reason: "gh CLI not available on PATH" };
   }
-  const r = run(opts, [
+  const rVar = run(opts, [
     "pr",
     "view",
     String(prNumber),
     "--json",
     "state,statusCheckRollup,mergeable",
   ]);
-  if (!r.ok) return { kind: "error", reason: r.stderr.trim() || `gh exited ${r.exitCode}` };
+  if (!rVar.ok) return { kind: "error", reason: rVar.stderr.trim() || `gh exited ${rVar.exitCode}` };
   try {
-    const parsed = JSON.parse(r.stdout) as {
+    const parsed = JSON.parse(rVar.stdout) as {
       state?: string;
       statusCheckRollup?: ReadonlyArray<{ conclusion?: string; status?: string }>;
       mergeable?: string;

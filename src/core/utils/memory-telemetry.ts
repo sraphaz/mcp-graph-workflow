@@ -33,6 +33,7 @@ interface BuildOptions {
   rejectThresholdMb?: number;
 }
 
+/** buildMemoryHealthReport — auto-generated description placeholder. */
 export function buildMemoryHealthReport(opts: BuildOptions = {}): MemoryHealthReport {
   const warnMb = opts.warnThresholdMb ?? 600;
   const rejectMb = opts.rejectThresholdMb ?? 800;

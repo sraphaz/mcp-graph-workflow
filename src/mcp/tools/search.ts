@@ -23,6 +23,7 @@ import { SessionRecallStore } from "../../core/context/session-recall.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerSearch — auto-generated description placeholder. */
 export function registerSearch(server: McpServer, store: SqliteStore): void {
   server.tool(
     "search",

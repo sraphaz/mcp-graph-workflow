@@ -25,6 +25,7 @@ import { detectCycles } from "../planner/dependency-chain.js";
 import { TASK_TYPES, REQUIREMENT_TYPES } from "../utils/node-type-sets.js";
 import { logger } from "../utils/logger.js";
 
+/** analyzeScope — auto-generated description placeholder. */
 export function analyzeScope(doc: GraphDocument): ScopeAnalysis {
   const { nodes, edges } = doc;
   const orphans: OrphanNode[] = [];

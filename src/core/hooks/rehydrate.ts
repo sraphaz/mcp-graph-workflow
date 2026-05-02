@@ -30,7 +30,7 @@ export function configToHandler(config: HookHandlerConfig): HookHandler | null {
     return null;
   }
   return async (event: HookEvent): Promise<void> => {
-    const result = await runShellHandler(
+    const resultValue = await runShellHandler(
       {
         id: config.id,
         command: config.command as string,
@@ -40,11 +40,11 @@ export function configToHandler(config: HookHandlerConfig): HookHandler | null {
       },
       event,
     );
-    if (result.decision === "block") {
-      throw new OperationError(result.stderr || `hook "${config.id}" blocked`);
+    if (resultValue.decision === "block") {
+      throw new OperationError(resultValue.stderr || `hook "${config.id}" blocked`);
     }
-    if (result.decision === "warn") {
-      logger.warn("hooks:rehydrated:warn", { id: config.id, exitCode: result.exitCode, timedOut: result.timedOut });
+    if (resultValue.decision === "warn") {
+      logger.warn("hooks:rehydrated:warn", { id: config.id, exitCode: resultValue.exitCode, timedOut: resultValue.timedOut });
     }
   };
 }

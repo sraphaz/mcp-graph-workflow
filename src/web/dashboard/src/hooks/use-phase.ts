@@ -35,6 +35,7 @@ interface UsePhaseResult {
   refresh: () => Promise<void>;
 }
 
+/** usePhase — auto-generated description placeholder. */
 export function usePhase(): UsePhaseResult {
   const [phase, setPhase] = useState<PhaseData | null>(null);
   const [loading, setLoading] = useState(true);

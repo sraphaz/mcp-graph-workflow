@@ -24,6 +24,7 @@ import { buildEnrichedContext } from "../../core/integrations/enriched-context.j
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { KnowledgeSourceTypeSchema } from "../../schemas/knowledge.schema.js";
 
+/** createIntegrationsRouter — auto-generated description placeholder. */
 export function createIntegrationsRouter(storeRef: StoreRef, getBasePath: () => string): Router {
   const router = Router();
 

@@ -29,6 +29,7 @@ interface ProjectFileDetailProps {
   loading?: boolean;
 }
 
+/** ProjectFileDetail — auto-generated description placeholder. */
 export function ProjectFileDetail({
   file,
   prompt,

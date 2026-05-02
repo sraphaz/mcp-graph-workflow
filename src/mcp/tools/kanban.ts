@@ -71,18 +71,19 @@ function formatBoard(board: KanbanBoard): string {
   }
 
   // Metrics
-  const m = board.metrics;
+  const mVar = board.metrics;
   lines.push("## Metrics");
-  lines.push(`  Throughput: ${m.throughput} done`);
-  lines.push(`  Avg Cycle Time: ${m.avgCycleTime > 0 ? `${m.avgCycleTime}h` : "—"}`);
-  lines.push(`  Blocked: ${m.blockedPercentage}%`);
-  if (m.wipViolations.length > 0) {
-    lines.push(`  WIP Violations: ${m.wipViolations.map((v) => `${COLUMN_TITLES[v.column]} ${v.actual}/${v.limit}`).join(", ")}`);
+  lines.push(`  Throughput: ${mVar.throughput} done`);
+  lines.push(`  Avg Cycle Time: ${mVar.avgCycleTime > 0 ? `${mVar.avgCycleTime}h` : "—"}`);
+  lines.push(`  Blocked: ${mVar.blockedPercentage}%`);
+  if (mVar.wipViolations.length > 0) {
+    lines.push(`  WIP Violations: ${mVar.wipViolations.map((v) => `${COLUMN_TITLES[v.column]} ${v.actual}/${v.limit}`).join(", ")}`);
   }
 
   return lines.join("\n");
 }
 
+/** registerKanban — auto-generated description placeholder. */
 export function registerKanban(server: McpServer, store: SqliteStore): void {
   server.tool(
     "kanban",
@@ -118,16 +119,16 @@ export function registerKanban(server: McpServer, store: SqliteStore): void {
           return mcpText({ ok: false, error: "nodeId and newStatus are required for 'move' action" });
         }
 
-        const result = validateMove(store, nodeId, newStatus, config);
-        if (!result.success) {
-          return mcpText({ ok: false, ...result });
+        const resultValue = validateMove(store, nodeId, newStatus, config);
+        if (!resultValue.success) {
+          return mcpText({ ok: false, ...resultValue });
         }
 
         store.updateNodeStatus(nodeId, newStatus);
         return mcpText({
           ok: true,
           action: "move",
-          ...result,
+          ...resultValue,
         });
       }
 

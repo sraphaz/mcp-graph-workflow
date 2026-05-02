@@ -28,8 +28,8 @@ export function getRingOrder(agentIds: string[]): RingRoute[] {
 export function buildRingRoutes(agentIds: string[]): Record<string, string> {
   const routes: Record<string, string> = {};
   const ring = getRingOrder(agentIds);
-  for (const r of ring) {
-    routes[r.from] = r.to;
+  for (const rVar of ring) {
+    routes[rVar.from] = rVar.to;
   }
   return routes;
 }
@@ -37,8 +37,8 @@ export function buildRingRoutes(agentIds: string[]): Record<string, string> {
 /** Convenience re-export: star routing (workers → hub) usable from ring module. */
 export function buildStarRoutes(hub: string, workers: string[]): Record<string, string> {
   const routes: Record<string, string> = {};
-  for (const w of workers) {
-    routes[w] = hub;
+  for (const wVar of workers) {
+    routes[wVar] = hub;
   }
   return routes;
 }

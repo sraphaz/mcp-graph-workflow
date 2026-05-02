@@ -57,15 +57,15 @@ export async function readDocxContent(filePath: string): Promise<string> {
   // Dynamic import — mammoth is heavy, lazy-load
   const mammoth = await import("mammoth");
 
-  const result = await mammoth.convertToHtml({ buffer });
+  const resultValue = await mammoth.convertToHtml({ buffer });
 
   // Convert HTML output to plain text with markdown-like headings
-  const text = htmlToText(result.value);
+  const text = htmlToText(resultValue.value);
 
-  if (result.messages.length > 0) {
+  if (resultValue.messages.length > 0) {
     logger.debug("DOCX parse messages", {
       filePath,
-      messages: result.messages.map((m: { type: string; message: string }) => m.message).join("; "),
+      messages: resultValue.messages.map((m: { type: string; message: string }) => m.message).join("; "),
     });
   }
 

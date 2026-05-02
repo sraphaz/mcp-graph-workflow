@@ -62,6 +62,7 @@ function InsightsSkeleton(): React.JSX.Element {
   );
 }
 
+/** InsightsTab — auto-generated description placeholder. */
 export function InsightsTab(): React.JSX.Element {
   const { data, loading, error, refresh } = useInsights();
   const [statusFilter, setStatusFilter] = useState<NodeStatus | null>(null);

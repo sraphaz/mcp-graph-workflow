@@ -36,10 +36,12 @@ export interface SessionSnapshotPayload {
   harness: { score: number; grade: string };
 }
 
+/** isSessionSnapshotDisabled — auto-generated description placeholder. */
 export function isSessionSnapshotDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_SESSION_SNAPSHOT === "off";
 }
 
+/** buildSnapshotPayload — auto-generated description placeholder. */
 export function buildSnapshotPayload(input: SessionMetricsInput): SessionSnapshotPayload {
   return {
     schemaVersion: 1,
@@ -55,6 +57,7 @@ export function buildSnapshotPayload(input: SessionMetricsInput): SessionSnapsho
   };
 }
 
+/** snapshotFilename — auto-generated description placeholder. */
 export function snapshotFilename(sessionId: string, endedAtMs: number): string {
   const ts = new Date(endedAtMs).toISOString().replace(/[:.]/g, "-");
   return `${SNAPSHOT_FILENAME_PREFIX}${ts}-${sessionId}.json`;

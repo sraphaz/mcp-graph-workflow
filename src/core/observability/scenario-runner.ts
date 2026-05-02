@@ -107,15 +107,15 @@ export class ScenarioRunner {
       for (let i = 0; i < scenario.steps.length; i++) {
         const step = scenario.steps[i];
         if (!step) continue;
-        let result: unknown;
+        let resultValue: unknown;
 
         try {
-          result = step.execute(db);
+          resultValue = step.execute(db);
         } catch (err) {
-          result = { error: err instanceof Error ? err.message : String(err) };
+          resultValue = { error: err instanceof Error ? err.message : String(err) };
         }
 
-        stepResults.push(result);
+        stepResults.push(resultValue);
         stepsExecuted++;
 
         // Check assertions for this step
@@ -125,7 +125,7 @@ export class ScenarioRunner {
 
         for (const assertion of relevantAssertions) {
           try {
-            assertion.check(db, result);
+            assertion.check(db, resultValue);
           } catch (err) {
             failedAssertions.push({
               stepIndex: i,

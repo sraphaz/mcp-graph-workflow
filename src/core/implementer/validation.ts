@@ -29,6 +29,7 @@ export const ImplementerInputSchema = z.object({
 
 export type ValidatedImplementerInput = z.infer<typeof ImplementerInputSchema>;
 
+/** validateImplementerInput — auto-generated description placeholder. */
 export function validateImplementerInput(input: unknown): ValidatedImplementerInput {
   return ImplementerInputSchema.parse(input);
 }

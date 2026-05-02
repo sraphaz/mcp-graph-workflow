@@ -24,6 +24,7 @@ interface BurndownChartProps {
   className?: string;
 }
 
+/** BurndownChart — auto-generated description placeholder. */
 export function BurndownChart({ data, className }: BurndownChartProps): React.JSX.Element {
   const chartData = computeBurndownChartData(data);
   if (chartData.length === 0) {

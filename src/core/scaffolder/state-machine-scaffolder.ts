@@ -61,6 +61,7 @@ export interface StateMachineScaffoldResult {
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
+/** scaffoldStateMachine — auto-generated description placeholder. */
 export function scaffoldStateMachine(
   spec: StateMachineSpec,
   options: StateMachineScaffoldOptions = {},
@@ -120,6 +121,7 @@ export class InvalidTransitionError extends Error {
   }
 }
 
+/** reduce$ — auto-generated description placeholder. */
 export function reduce${machineName}(
   state: ${machineName}State,
   event: ${machineName}Event | string,
@@ -138,13 +140,13 @@ function generateTestMatrix(spec: StateMachineSpec, slug: string): string {
   const importPath = `../../core/generated/${slug}-reducer.js`;
 
   const transitionMap = new Map<string, Map<string, string>>();
-  for (const t of spec.transitions) {
-    let inner = transitionMap.get(t.from);
+  for (const tVar of spec.transitions) {
+    let inner = transitionMap.get(tVar.from);
     if (!inner) {
       inner = new Map();
-      transitionMap.set(t.from, inner);
+      transitionMap.set(tVar.from, inner);
     }
-    inner.set(t.event, t.to);
+    inner.set(tVar.event, tVar.to);
   }
 
   const testCases: string[] = [];

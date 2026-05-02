@@ -71,11 +71,11 @@ export function getAdaptiveBudgetSplit(
 
   try {
     const policy = new TokenBudgetPolicy(db);
-    const result = policy.getDistribution(phase, grade);
-    const dist = result.distribution;
+    const resultValue = policy.getDistribution(phase, grade);
+    const dist = resultValue.distribution;
 
     logger.debug("adaptive-budget:split", {
-      phase, grade, preset: result.preset, source: result.source,
+      phase, grade, preset: resultValue.preset, source: resultValue.source,
     });
 
     return applyRatios(
@@ -84,8 +84,8 @@ export function getAdaptiveBudgetSplit(
       dist.knowledge,
       dist.code,
       dist.history,
-      result.preset,
-      result.source,
+      resultValue.preset,
+      resultValue.source,
     );
   } catch (err) {
     logger.warn("adaptive-budget:fallback", { error: String(err) });

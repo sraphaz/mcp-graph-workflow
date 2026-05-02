@@ -88,9 +88,9 @@ function checkNaming(
   if (checkable.length === 0) return undefined;
 
   const violations: string[] = [];
-  for (const obj of checkable) {
-    if (!obj.name.startsWith(prefix)) {
-      violations.push(obj.name);
+  for (const objValue of checkable) {
+    if (!objValue.name.startsWith(prefix)) {
+      violations.push(objValue.name);
     }
   }
 
@@ -148,10 +148,10 @@ function checkBcFields(
 
   // Build BC field index from repo
   const bcFields = new Map<string, Set<string>>();
-  for (const obj of [...repository, ...targets]) {
-    if (obj.type === "business_component") {
-      const fields = new Set(obj.children.filter((c) => c.type === "field").map((c) => c.name));
-      bcFields.set(obj.name, fields);
+  for (const objValue of [...repository, ...targets]) {
+    if (objValue.type === "business_component") {
+      const fields = new Set(objValue.children.filter((c) => c.type === "field").map((c) => c.name));
+      bcFields.set(objValue.name, fields);
     }
   }
 
@@ -187,12 +187,12 @@ function checkLockConflicts(
 ): ReadyCheck {
   const conflicts: string[] = [];
 
-  for (const obj of targets) {
-    const locked = obj.properties.find((p) => p.name === "OBJECT_LOCKED")?.value;
-    const lockedBy = obj.properties.find((p) => p.name === "LOCKED_BY")?.value;
+  for (const objValue of targets) {
+    const locked = objValue.properties.find((p) => p.name === "OBJECT_LOCKED")?.value;
+    const lockedBy = objValue.properties.find((p) => p.name === "LOCKED_BY")?.value;
 
     if (locked === "Y" && lockedBy && lockedBy !== currentUser) {
-      conflicts.push(`${obj.name} locked by ${lockedBy}`);
+      conflicts.push(`${objValue.name} locked by ${lockedBy}`);
     }
   }
 
@@ -207,6 +207,7 @@ function checkLockConflicts(
 
 // --- Main function ---
 
+/** checkSiebelReady — auto-generated description placeholder. */
 export function checkSiebelReady(request: ReadyCheckRequest): ReadyCheckResult {
   const { targetObjects, repository, prefix, currentUser, availableWsdls = [] } = request;
 

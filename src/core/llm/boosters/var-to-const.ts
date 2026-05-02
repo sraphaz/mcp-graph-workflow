@@ -27,6 +27,7 @@ export interface VarToConstResult {
   skipped: Array<{ id: string; reason: string }>;
 }
 
+/** varToConst — auto-generated description placeholder. */
 export function varToConst(source: string): VarToConstResult {
   if (!source.includes("var")) {
     return { output: source, changed: false, renamed: [], skipped: [] };

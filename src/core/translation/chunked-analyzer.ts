@@ -103,8 +103,8 @@ export function analyzeChunked(
 
   // Small file — single-pass analysis
   if (codeSizeBytes <= threshold) {
-    const result = analyzeFn(code, hints);
-    return { ...result, chunked: false, chunkCount: 1 };
+    const resultValue = analyzeFn(code, hints);
+    return { ...resultValue, chunked: false, chunkCount: 1 };
   }
 
   // Detect language for boundary splitting
@@ -157,14 +157,14 @@ function mergeAnalyses(
 
   for (const analysis of analyses) {
     totalConstructs += analysis.totalConstructs;
-    for (const c of analysis.constructs) {
-      const existing = constructMap.get(c.canonicalName);
+    for (const cVar of analysis.constructs) {
+      const existing = constructMap.get(cVar.canonicalName);
       if (existing) {
-        existing.count += c.count;
+        existing.count += cVar.count;
         // Keep max confidence for this construct
-        existing.confidence = Math.max(existing.confidence, c.confidence);
+        existing.confidence = Math.max(existing.confidence, cVar.confidence);
       } else {
-        constructMap.set(c.canonicalName, { count: c.count, confidence: c.confidence });
+        constructMap.set(cVar.canonicalName, { count: cVar.count, confidence: cVar.confidence });
       }
     }
   }

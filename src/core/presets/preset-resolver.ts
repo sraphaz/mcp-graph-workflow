@@ -98,6 +98,7 @@ export interface ResolvePresetsOptions {
   projectOverrides: Record<string, unknown>;
 }
 
+/** resolvePresets — auto-generated description placeholder. */
 export function resolvePresets(options: ResolvePresetsOptions): ResolvedConfig {
   const { activePreset, pluginPresets, projectOverrides } = options;
   const config = buildDefaults();

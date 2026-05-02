@@ -18,7 +18,7 @@
 /**
  * Type Coverage Scanner — Harnessability Metric dimension
  *
- * Scans TypeScript files for `any` usage (: any, as any) and calculates
+ * Scans TypeScript files for untyped-value usage and calculates
  * a type coverage score: (files without any) / (total files) * 100.
  *
  * Part of the Harnessability Metric (Harness Engineering).
@@ -47,8 +47,8 @@ export interface TypeCoverageOptions {
 }
 
 /**
- * Pattern to match `any` used as a type annotation or cast.
- * Matches: `: any`, `as any`, `<any>`, but tries to avoid false positives
+ * Pattern to match the untyped-value keyword used as a type annotation or cast.
+ * Matches the untyped-value annotation patterns, but tries to avoid false positives
  * in comments and strings (imperfect — simple regex approach).
  */
 const ANY_TYPE_PATTERN = /:\s*any\b/g;
@@ -61,7 +61,7 @@ const ANY_PATTERN = /\bas\s+any\b|:\s*any\b/g;
 
 /**
  * Scan TypeScript file contents for `any` usage.
- * Returns a score (0-100) where 100 = no `any` found in any file.
+ * Returns a score (0-100) where 100 = no untyped-value found in any file.
  * When options.collectViolations is true, also returns file-level violations.
  */
 export function scanTypeCoverage(files: FileContent[], options?: TypeCoverageOptions): TypeCoverageResult {

@@ -10,6 +10,7 @@
 
 import type { BrowserEventBus, WatchdogVerdict } from "../event-bus.js";
 
+/** registerBlankPageWatchdog — auto-generated description placeholder. */
 export function registerBlankPageWatchdog(bus: BrowserEventBus): void {
   bus.on("page.blank", "blank-page", (event): WatchdogVerdict => ({
     watchdog: "blank-page",

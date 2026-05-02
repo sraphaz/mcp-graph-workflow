@@ -139,8 +139,8 @@ export async function downloadIfMissing(
     unlinkSync(destPath);
   }
   try {
-    const result = await downloadFileWithVerify(url, destPath, expectedSha256);
-    return { ...result, cached: false };
+    const resultValue = await downloadFileWithVerify(url, destPath, expectedSha256);
+    return { ...resultValue, cached: false };
   } catch (err) {
     // Partial-fail: leave nothing on disk so a retry can resume cleanly.
     if (existsSync(destPath)) {

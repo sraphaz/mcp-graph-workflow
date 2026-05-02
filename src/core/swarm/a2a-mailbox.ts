@@ -129,10 +129,10 @@ export class A2AMailbox {
 
   ack<T = unknown>(messageId: string): A2AMessage<T> | null {
     const ackedAt = now();
-    const result = this.db
+    const resultValue = this.db
       .prepare(`UPDATE a2a_mailbox SET status = 'acked', acked_at = ? WHERE id = ?`)
       .run(ackedAt, messageId);
-    if (result.changes === 0) return null;
+    if (resultValue.changes === 0) return null;
     const row = this.db
       .prepare(`SELECT * FROM a2a_mailbox WHERE id = ?`)
       .get(messageId) as MailboxRow | undefined;

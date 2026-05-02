@@ -92,6 +92,7 @@ function suggestTests(keywords: string[]): string[] {
   return tests;
 }
 
+/** analyzeConcurrencyRisk — auto-generated description placeholder. */
 export function analyzeConcurrencyRisk(doc: GraphDocument): ConcurrencyRiskReport {
   const tasks = doc.nodes.filter((n) => n.type === "task" || n.type === "subtask");
 

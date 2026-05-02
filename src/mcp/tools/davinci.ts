@@ -126,36 +126,36 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
     }
   }
 
-  const result = await runMavenBuild(projectDir);
+  const resultValue = await runMavenBuild(projectDir);
 
   // Validate build result
-  const buildValidation = validateBuildResult(result);
+  const buildValidation = validateBuildResult(resultValue);
 
   // Update job with build outcome
   if (jobId) {
     try {
       const davinciStore = new DaVinciStore(store.getDb());
       davinciStore.updateJob(jobId, {
-        status: result.success ? "done" : "failed",
-        jarPath: result.jarPath,
-        buildOutput: result.stdout.slice(0, 5000),
+        status: resultValue.success ? "done" : "failed",
+        jarPath: resultValue.jarPath,
+        buildOutput: resultValue.stdout.slice(0, 5000),
       });
-      logger.info("davinci: job build updated", { jobId, success: result.success });
+      logger.info("davinci: job build updated", { jobId, success: resultValue.success });
     } catch (err) {
       logger.warn("davinci: failed to update job after build", { jobId, error: String(err) });
     }
   }
 
   return mcpText(JSON.stringify({
-    ok: result.success,
+    ok: resultValue.success,
     action: "build_complete",
     jobId,
     buildResult: {
-      success: result.success,
-      jarPath: result.jarPath,
-      durationMs: result.durationMs,
-      stdout: result.stdout.slice(0, 2000),
-      stderr: result.stderr.slice(0, 2000),
+      success: resultValue.success,
+      jarPath: resultValue.jarPath,
+      durationMs: resultValue.durationMs,
+      stdout: resultValue.stdout.slice(0, 2000),
+      stderr: resultValue.stderr.slice(0, 2000),
     },
     validation: buildValidation.issues,
     environment: env,
@@ -273,8 +273,8 @@ function handleConvert(params: DavinciParams, store: SqliteStore): ReturnType<ty
   logger.info("davinci: converting code", { pluginName, targetSdk });
 
   const sdk: TargetSdk = targetSdk ?? "pingfederate";
-  const result = convertSingle(code, pluginName, packageName, className, sdk, pluginType, store);
-  return mcpText(JSON.stringify(result));
+  const resultValue = convertSingle(code, pluginName, packageName, className, sdk, pluginType, store);
+  return mcpText(JSON.stringify(resultValue));
 }
 
 function handleBatchConvert(params: DavinciParams, store: SqliteStore): ReturnType<typeof mcpText> {
@@ -291,7 +291,7 @@ function handleBatchConvert(params: DavinciParams, store: SqliteStore): ReturnTy
 
   for (const file of files) {
     const sdk: TargetSdk = file.targetSdk ?? "pingfederate";
-    const result = convertSingle(
+    const resultValue = convertSingle(
       file.code,
       file.pluginName,
       file.packageName,
@@ -300,12 +300,12 @@ function handleBatchConvert(params: DavinciParams, store: SqliteStore): ReturnTy
       file.pluginType,
       store,
     );
-    if (result.ok) {
+    if (resultValue.ok) {
       successCount++;
     } else {
       failCount++;
     }
-    results.push(result);
+    results.push(resultValue);
   }
 
   return mcpText(JSON.stringify({

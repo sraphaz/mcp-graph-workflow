@@ -111,35 +111,35 @@ export class LspCache {
 
   /** Invalidate all cache entries for a file (both entries FROM and REFERENCING the file). */
   invalidateFile(projectId: string, filePath: string): number {
-    const result = this.db
+    const resultValue = this.db
       .prepare(
         `DELETE FROM lsp_cache
          WHERE project_id = ? AND (file_path = ? OR result_json LIKE '%' || ? || '%')`,
       )
       .run(projectId, filePath, filePath);
 
-    logger.debug("lsp-cache:invalidateFile", { projectId, filePath, deleted: result.changes });
-    return result.changes;
+    logger.debug("lsp-cache:invalidateFile", { projectId, filePath, deleted: resultValue.changes });
+    return resultValue.changes;
   }
 
   /** Invalidate all cache entries for a language. */
   invalidateLanguage(projectId: string, languageId: string): number {
-    const result = this.db
+    const resultValue = this.db
       .prepare(`DELETE FROM lsp_cache WHERE project_id = ? AND language_id = ?`)
       .run(projectId, languageId);
 
-    logger.debug("lsp-cache:invalidateLanguage", { projectId, languageId, deleted: result.changes });
-    return result.changes;
+    logger.debug("lsp-cache:invalidateLanguage", { projectId, languageId, deleted: resultValue.changes });
+    return resultValue.changes;
   }
 
   /** Invalidate all cache entries for a project. */
   invalidateAll(projectId: string): number {
-    const result = this.db
+    const resultValue = this.db
       .prepare(`DELETE FROM lsp_cache WHERE project_id = ?`)
       .run(projectId);
 
-    logger.debug("lsp-cache:invalidateAll", { projectId, deleted: result.changes });
-    return result.changes;
+    logger.debug("lsp-cache:invalidateAll", { projectId, deleted: resultValue.changes });
+    return resultValue.changes;
   }
 
   /* ------------------------------------------------------------------ */
@@ -148,15 +148,15 @@ export class LspCache {
 
   /** Remove expired/old entries. Returns count of pruned rows. */
   prune(maxAgeDays: number = 7): number {
-    const result = this.db
+    const resultValue = this.db
       .prepare(
         `DELETE FROM lsp_cache
          WHERE created_at < datetime('now', '-' || ? || ' days')`,
       )
       .run(maxAgeDays);
 
-    logger.info("lsp-cache:prune", { maxAgeDays, pruned: result.changes });
-    return result.changes;
+    logger.info("lsp-cache:prune", { maxAgeDays, pruned: resultValue.changes });
+    return resultValue.changes;
   }
 
   /* ------------------------------------------------------------------ */

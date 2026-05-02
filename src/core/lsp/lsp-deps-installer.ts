@@ -165,8 +165,8 @@ export async function installLspDeps(detectedLanguages: string[]): Promise<LspDe
     const command = getServerCommand(lang);
     if (!command) continue;
 
-    const result = await checkLspDep(lang, command);
-    results.push(result);
+    const resultValue = await checkLspDep(lang, command);
+    results.push(resultValue);
   }
 
   const available = results.filter((r) => r.status === "already_available").length;

@@ -24,6 +24,7 @@ export interface ConsensusResult<T> {
   tally: Record<string, number>;
 }
 
+/** majorityThreshold — auto-generated description placeholder. */
 export function majorityThreshold(n: number): number {
   if (n <= 0) {
     throw new McpGraphError(`majorityThreshold requires n > 0, got ${n}`);
@@ -31,24 +32,26 @@ export function majorityThreshold(n: number): number {
   return Math.floor(n / 2) + 1;
 }
 
+/** tallyVotes — auto-generated description placeholder. */
 export function tallyVotes<T>(votes: Vote<T>[]): Map<T, number> {
   const counts = new Map<T, number>();
-  for (const v of votes) {
-    counts.set(v.value, (counts.get(v.value) ?? 0) + 1);
+  for (const vVar of votes) {
+    counts.set(vVar.value, (counts.get(vVar.value) ?? 0) + 1);
   }
   return counts;
 }
 
+/** computeMajorityConsensus — auto-generated description placeholder. */
 export function computeMajorityConsensus<T>(votes: Vote<T>[]): ConsensusResult<T> {
   if (votes.length === 0) {
     throw new McpGraphError("computeMajorityConsensus requires at least one vote");
   }
   const seen = new Set<string>();
-  for (const v of votes) {
-    if (seen.has(v.agentId)) {
-      throw new McpGraphError(`Duplicate vote from agent: ${v.agentId}`);
+  for (const vVar of votes) {
+    if (seen.has(vVar.agentId)) {
+      throw new McpGraphError(`Duplicate vote from agent: ${vVar.agentId}`);
     }
-    seen.add(v.agentId);
+    seen.add(vVar.agentId);
   }
 
   const counts = tallyVotes(votes);

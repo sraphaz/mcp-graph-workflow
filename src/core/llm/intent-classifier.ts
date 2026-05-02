@@ -65,10 +65,11 @@ function combineWeights(weights: number[]): number {
   // Probabilistic OR: 1 - product(1 - w). Caps near 1 without ever crossing.
   if (weights.length === 0) return 0;
   let inverse = 1;
-  for (const w of weights) inverse *= 1 - Math.max(0, Math.min(1, w));
+  for (const wVar of weights) inverse *= 1 - Math.max(0, Math.min(1, wVar));
   return 1 - inverse;
 }
 
+/** classifyIntent — auto-generated description placeholder. */
 export function classifyIntent(input: ClassifyInput): IntentClassification {
   const corpus = `${input.description ?? ""} ${input.code ?? ""}`.trim();
   const matched: IntentClassification["matched"] = [];
@@ -108,6 +109,7 @@ export function classifyIntent(input: ClassifyInput): IntentClassification {
   };
 }
 
+/** shouldFallthrough — auto-generated description placeholder. */
 export function shouldFallthrough(c: IntentClassification): boolean {
   return c.fallthrough || c.intent === "unknown";
 }

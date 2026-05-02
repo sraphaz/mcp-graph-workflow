@@ -57,6 +57,7 @@ async function runParallelByWorkers<T>(
   return performance.now() - start;
 }
 
+/** runCycleTimeBench — auto-generated description placeholder. */
 export async function runCycleTimeBench<T>(
   opts: CycleTimeBenchOptions<T>,
 ): Promise<CycleTimeBenchResult> {

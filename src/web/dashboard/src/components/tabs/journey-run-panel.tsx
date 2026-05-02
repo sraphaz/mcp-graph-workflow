@@ -27,6 +27,7 @@ type Mode = "idle" | "live" | "done";
 
 const API_BASE = "/api/v1/journey";
 
+/** JourneyRunPanel — auto-generated description placeholder. */
 export function JourneyRunPanel({ map }: Props): React.JSX.Element {
   const [endpoint, setEndpoint] = useState("ws://127.0.0.1:9222/devtools/browser/");
   const [variantId, setVariantId] = useState<string | null>(map.variants[0]?.id ?? null);

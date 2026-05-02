@@ -71,8 +71,8 @@ export function checkTddAdherence(doc: GraphDocument, nodeId?: string): TddCheck
     const suggestedTests: SuggestedTestSpec[] = [];
     for (let i = 0; i < acs.length; i++) {
       const ac = acs[i];
-      const p = parsed[i];
-      const specs = generateTestSpecsFromAc(ac, p);
+      const pVar = parsed[i];
+      const specs = generateTestSpecsFromAc(ac, pVar);
       suggestedTests.push(...specs);
     }
 

@@ -40,6 +40,7 @@ export function hasAssociatedTests(testFiles: string[]): boolean {
   return testFiles.length > 0;
 }
 
+/** runBooster — auto-generated description placeholder. */
 export function runBooster<T>(input: RunBoosterInput<T>): BoosterRunOutcome<T> {
   const start = Date.now();
   const hasTests = hasAssociatedTests(input.testFiles);

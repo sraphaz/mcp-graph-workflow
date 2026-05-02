@@ -191,13 +191,13 @@ export function autoDecomposeLarge(
       continue;
     }
 
-    const result = smartDecompose(store, node.id);
-    if (!result) {
+    const resultValue = smartDecompose(store, node.id);
+    if (!resultValue) {
       skipped.push({ parentId: node.id, reason: "decompose_failed" });
       continue;
     }
 
-    const persisted = persistDecomposition(store, result);
+    const persisted = persistDecomposition(store, resultValue);
     decomposed.push({ parentId: node.id, subtaskIds: persisted.createdNodeIds });
   }
 

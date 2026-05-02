@@ -46,6 +46,7 @@ interface UseSiebelDataReturn {
   refresh: () => Promise<void>;
 }
 
+/** useSiebelData — auto-generated description placeholder. */
 export function useSiebelData(): UseSiebelDataReturn {
   const [objects, setObjects] = useState<SiebelObject[]>([]);
   const [templates, setTemplates] = useState<SifTemplate[]>([]);

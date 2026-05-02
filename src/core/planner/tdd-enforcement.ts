@@ -85,6 +85,7 @@ function testCoversFile(testFile: string, codeFile: string): boolean {
   return testBase.endsWith(codeBase) || testBase === codeBase || testStem.includes(codeBase);
 }
 
+/** checkTddEnforcement — auto-generated description placeholder. */
 export function checkTddEnforcement(ctx: TddEnforcementContext): TddEnforcementResult {
   const { touchedFiles, commitHistory, mode, declarativeWhitelist = [] } = ctx;
 

@@ -82,6 +82,7 @@ const COPILOT_EVENT: Record<CanonicalEvent, string> = {
   "subagent-stop": "SubagentStop",
 };
 
+/** emitCodex — auto-generated description placeholder. */
 export function emitCodex(specs: CanonicalHookSpec[]): CodexHookFile {
   return {
     hooks: filterByCli(specs, "codex").map((s) => ({
@@ -93,6 +94,7 @@ export function emitCodex(specs: CanonicalHookSpec[]): CodexHookFile {
   };
 }
 
+/** emitOpenCode — auto-generated description placeholder. */
 export function emitOpenCode(specs: CanonicalHookSpec[]): OpenCodeHookFile {
   return {
     triggers: filterByCli(specs, "opencode").map((s) => ({
@@ -104,6 +106,7 @@ export function emitOpenCode(specs: CanonicalHookSpec[]): OpenCodeHookFile {
   };
 }
 
+/** emitCopilot — auto-generated description placeholder. */
 export function emitCopilot(specs: CanonicalHookSpec[]): CopilotHookFile {
   return {
     hooks: filterByCli(specs, "copilot").map((s) => ({

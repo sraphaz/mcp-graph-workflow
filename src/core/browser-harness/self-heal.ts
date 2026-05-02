@@ -137,8 +137,8 @@ export class SelfHealService {
       maxBytes: policy.maxSourceBytes,
       extraBannedIdentifiers: policy.forbiddenApis.filter((a) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(a)),
     });
-    for (const v of astResult.violations) {
-      errors.push(`ast ${v.kind}: ${v.message}${v.loc ? ` @${v.loc}` : ""}`);
+    for (const vVar of astResult.violations) {
+      errors.push(`ast ${vVar.kind}: ${vVar.message}${vVar.loc ? ` @${vVar.loc}` : ""}`);
     }
 
     return errors;

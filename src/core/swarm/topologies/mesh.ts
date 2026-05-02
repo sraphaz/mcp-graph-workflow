@@ -20,6 +20,7 @@ export interface MeshLayout {
   edgeCount: number;
 }
 
+/** buildMeshLayout — auto-generated description placeholder. */
 export function buildMeshLayout(agentIds: string[]): MeshLayout {
   if (agentIds.length === 0) {
     throw new McpGraphError("Mesh topology requires at least one agent");
@@ -34,8 +35,8 @@ export function buildMeshLayout(agentIds: string[]): MeshLayout {
 
   const agents = [...agentIds].sort();
   const peers: Record<string, string[]> = {};
-  for (const a of agents) {
-    peers[a] = agents.filter((other) => other !== a);
+  for (const aVar of agents) {
+    peers[aVar] = agents.filter((other) => other !== aVar);
   }
   return { agents, peers, edgeCount: agents.length * (agents.length - 1) };
 }

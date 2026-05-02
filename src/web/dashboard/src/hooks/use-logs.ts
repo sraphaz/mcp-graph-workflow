@@ -26,6 +26,7 @@ interface UseLogsResult {
   refresh: () => Promise<void>;
 }
 
+/** useLogs — auto-generated description placeholder. */
 export function useLogs(): UseLogsResult {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);

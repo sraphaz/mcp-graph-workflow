@@ -99,7 +99,7 @@ export function analyzeImpact(
 
   // Seed BFS with target symbol IDs
   let frontier: Array<{ id: string; depth: number }> = targets.map((t) => ({ id: t.id, depth: 0 }));
-  for (const t of targets) visited.add(t.id);
+  for (const tVar of targets) visited.add(tVar.id);
 
   while (frontier.length > 0) {
     // Guard: max affected nodes limit

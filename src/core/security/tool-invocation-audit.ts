@@ -53,6 +53,7 @@ const SECRET_FIELD_NAMES = new Set([
   "authorization",
 ]);
 
+/** redactSecrets — auto-generated description placeholder. */
 export function redactSecrets(value: unknown, depth = 0): unknown {
   if (depth > 6) return "[deep]";
   if (value == null) return value;
@@ -63,15 +64,15 @@ export function redactSecrets(value: unknown, depth = 0): unknown {
   }
   if (Array.isArray(value)) return value.map((v) => redactSecrets(v, depth + 1));
   if (typeof value === "object") {
-    const result: Record<string, unknown> = {};
+    const resultValue: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       if (SECRET_FIELD_NAMES.has(k.toLowerCase())) {
-        result[k] = typeof v === "string" && v.length > 0 ? "***" : v;
+        resultValue[k] = typeof v === "string" && v.length > 0 ? "***" : v;
       } else {
-        result[k] = redactSecrets(v, depth + 1);
+        resultValue[k] = redactSecrets(v, depth + 1);
       }
     }
-    return result;
+    return resultValue;
   }
   return value;
 }
@@ -84,6 +85,7 @@ function previewArgs(args: unknown, maxBytes: number): unknown {
   return `${serialized.slice(0, maxBytes - 8)}…[trunc]`;
 }
 
+/** wrapToolHandler — auto-generated description placeholder. */
 export function wrapToolHandler<A, R>(
   tool: string,
   handler: ToolHandler<A, R>,
@@ -108,7 +110,7 @@ export function wrapToolHandler<A, R>(
     const started = Date.now();
     const argsPreview = previewArgs(args, previewMax);
     try {
-      const result = await handler(args);
+      const resultValue = await handler(args);
       await sink.record({
         tool,
         at: started,
@@ -116,7 +118,7 @@ export function wrapToolHandler<A, R>(
         ok: true,
         argsPreview,
       });
-      return result;
+      return resultValue;
     } catch (err) {
       await sink.record({
         tool,

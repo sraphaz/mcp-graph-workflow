@@ -65,6 +65,7 @@ function getRuntime(storeRef: StoreRef, basePath: string): BrowserHarnessRuntime
   return bundle;
 }
 
+/** createBrowserHarnessRouter — auto-generated description placeholder. */
 export function createBrowserHarnessRouter(
   storeRef: StoreRef,
   getBasePath: () => string,

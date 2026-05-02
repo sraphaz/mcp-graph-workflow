@@ -132,14 +132,15 @@ function checkCase(name: string, pattern: CaseRule["pattern"]): boolean {
 }
 
 function stripPrefix(name: string, prefixes: readonly string[]): string {
-  for (const p of prefixes) {
-    if (name.startsWith(p)) {
-      return name.slice(p.length);
+  for (const pVar of prefixes) {
+    if (name.startsWith(pVar)) {
+      return name.slice(pVar.length);
     }
   }
   return name;
 }
 
+/** validateNamingConventions — auto-generated description placeholder. */
 export function validateNamingConventions(
   objects: readonly SiebelObject[],
   ruleSet: NamingRuleSet,
@@ -171,10 +172,10 @@ export function validateNamingConventions(
     }
   }
 
-  for (const obj of objects) {
+  for (const objValue of objects) {
     // Check if this object type has any rules
-    const applicablePrefixes = prefixesByType.get(obj.type);
-    const applicableCaseRules = caseRulesByType.get(obj.type);
+    const applicablePrefixes = prefixesByType.get(objValue.type);
+    const applicableCaseRules = caseRulesByType.get(objValue.type);
 
     if (!applicablePrefixes && !applicableCaseRules) {
       skippedCount++;
@@ -182,7 +183,7 @@ export function validateNamingConventions(
     }
 
     // Check if object is excepted
-    if (exceptionNames.has(obj.name)) {
+    if (exceptionNames.has(objValue.name)) {
       exceptedCount++;
       continue;
     }
@@ -191,14 +192,14 @@ export function validateNamingConventions(
 
     // Check prefix
     if (applicablePrefixes && applicablePrefixes.length > 0) {
-      const hasValidPrefix = applicablePrefixes.some((p) => obj.name.startsWith(p));
+      const hasValidPrefix = applicablePrefixes.some((p) => objValue.name.startsWith(p));
       if (!hasValidPrefix) {
         violations.push({
-          objectName: obj.name,
-          objectType: obj.type,
+          objectName: objValue.name,
+          objectType: objValue.type,
           rule: "prefix",
           expected: `One of: ${applicablePrefixes.join(", ")}`,
-          actual: obj.name.split(/[\s_]/)[0] + "_",
+          actual: objValue.name.split(/[\s_]/)[0] + "_",
           severity: "warning",
         });
       }
@@ -207,14 +208,14 @@ export function validateNamingConventions(
     // Check case
     if (applicableCaseRules && applicableCaseRules.length > 0) {
       const nameToCheck = stripPrefix(
-        obj.name,
+        objValue.name,
         applicablePrefixes ?? [],
       );
       for (const casePattern of applicableCaseRules) {
         if (!checkCase(nameToCheck, casePattern)) {
           violations.push({
-            objectName: obj.name,
-            objectType: obj.type,
+            objectName: objValue.name,
+            objectType: objValue.type,
             rule: "case",
             expected: `${casePattern} (after prefix removal)`,
             actual: nameToCheck,

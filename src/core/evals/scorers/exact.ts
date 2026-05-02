@@ -28,9 +28,9 @@ export const exactScorer: Scorer<ExactInput> = {
   score(input: ExactInput): ScorerResult {
     const trim = input.trim !== false;
     const caseSensitive = input.caseSensitive !== false;
-    const a = normalize(input.output, trim, caseSensitive);
-    const b = normalize(input.expected, trim, caseSensitive);
-    const matched = a === b;
+    const aVar = normalize(input.output, trim, caseSensitive);
+    const bVar = normalize(input.expected, trim, caseSensitive);
+    const matched = aVar === bVar;
     return { score: matched ? 1 : 0, passed: matched };
   },
 };

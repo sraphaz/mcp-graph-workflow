@@ -31,6 +31,7 @@ function getJourneyStore(store: SqliteStore): JourneyStore {
   return new JourneyStore(store.getDb(), project.id);
 }
 
+/** registerJourney — auto-generated description placeholder. */
 export function registerJourney(server: McpServer, store: SqliteStore): void {
   server.tool(
     "journey",
@@ -182,14 +183,14 @@ export function registerJourney(server: McpServer, store: SqliteStore): void {
 
         case "index": {
           const knowledgeStore = new KnowledgeStore(store.getDb());
-          const result = indexJourneyMaps(knowledgeStore, journeyStore);
+          const resultValue = indexJourneyMaps(knowledgeStore, journeyStore);
           indexEntitiesForSource(store.getDb(), "journey");
-          logger.info("tool:journey:index", { mapsIndexed: result.mapsIndexed, documentsIndexed: result.documentsIndexed });
+          logger.info("tool:journey:index", { mapsIndexed: resultValue.mapsIndexed, documentsIndexed: resultValue.documentsIndexed });
           return mcpText({
             action: "index",
-            mapsIndexed: result.mapsIndexed,
-            documentsIndexed: result.documentsIndexed,
-            message: `Indexed ${result.mapsIndexed} journey map(s) into knowledge store (${result.documentsIndexed} documents). Journey data is now searchable via RAG queries.`,
+            mapsIndexed: resultValue.mapsIndexed,
+            documentsIndexed: resultValue.documentsIndexed,
+            message: `Indexed ${resultValue.mapsIndexed} journey map(s) into knowledge store (${resultValue.documentsIndexed} documents). Journey data is now searchable via RAG queries.`,
           });
         }
       }

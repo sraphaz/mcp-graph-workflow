@@ -100,6 +100,7 @@ function ExpandedJobDetails({ job }: { job: TranslationJob }): React.JSX.Element
   );
 }
 
+/** HistorySection — auto-generated description placeholder. */
 export function HistorySection({ state, actions, showInsights }: HistorySectionProps): React.JSX.Element {
   const { jobs, stats, loading, error } = state;
   const [expandedId, setExpandedId] = useState<string | null>(null);

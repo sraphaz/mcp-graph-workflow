@@ -37,6 +37,7 @@ export interface AppFactoryOptions {
   storeManager?: StoreManager;
 }
 
+/** createApp — auto-generated description placeholder. */
 export function createApp(options: AppFactoryOptions): Express {
   const { store, basePath, eventBus, mcp, storeManager } = options;
 

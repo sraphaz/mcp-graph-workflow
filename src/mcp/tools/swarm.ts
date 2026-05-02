@@ -26,6 +26,7 @@ export const swarmInputSchema = z.object({
 
 export type SwarmToolInput = z.infer<typeof swarmInputSchema>;
 
+/** buildSwarmHandler — auto-generated description placeholder. */
 export function buildSwarmHandler(db: Database.Database): (input: SwarmToolInput) => Promise<McpToolResponse> {
   const coordinator = new SwarmCoordinator(db);
 
@@ -76,6 +77,7 @@ export function buildSwarmHandler(db: Database.Database): (input: SwarmToolInput
 /** Actions that do not mutate state — used for future gate bypass. */
 export const SWARM_READ_ONLY_ACTIONS: ReadonlySet<SwarmToolInput["action"]> = new Set(["status"]);
 
+/** registerSwarm — auto-generated description placeholder. */
 export function registerSwarm(server: McpServer, store: SqliteStore): void {
   const db: Database.Database = store.getDb();
   const handler = buildSwarmHandler(db);

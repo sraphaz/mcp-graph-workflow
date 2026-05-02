@@ -171,7 +171,7 @@ function findCycleFromStart(
       // current is already in the current path → cycle found
       const cycle = path.slice(cycleStart);
       // Mark all nodes in the path as globally visited
-      for (const n of path) globalVisited.add(n);
+      for (const nVar of path) globalVisited.add(nVar);
       return cycle;
     }
     posInPath.set(current, path.length);
@@ -180,6 +180,6 @@ function findCycleFromStart(
   }
 
   // No cycle — mark all as visited
-  for (const n of path) globalVisited.add(n);
+  for (const nVar of path) globalVisited.add(nVar);
   return [];
 }

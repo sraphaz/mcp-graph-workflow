@@ -51,6 +51,7 @@ export interface RevocationResult {
   readonly revokedAcIds: readonly string[];
 }
 
+/** propagateRevocation — auto-generated description placeholder. */
 export function propagateRevocation(link: AxiomLink, isPrincipleRevoked: boolean): RevocationResult {
   if (!isPrincipleRevoked) {
     return { link, revokedAcIds: [] };

@@ -24,6 +24,7 @@ import type { NodeStatus, NodeType } from "../../core/graph/graph-types.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerExport — auto-generated description placeholder. */
 export function registerExport(server: McpServer, store: SqliteStore): void {
   server.tool(
     "export",
@@ -55,9 +56,9 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
           const filteredChildrenByParent: Record<string, string[]> = {};
           const filteredIncomingByNode: Record<string, string[]> = {};
           const filteredOutgoingByNode: Record<string, string[]> = {};
-          for (const n of filteredNodes) {
-            if (n.parentId && nodeIds.has(n.parentId)) {
-              (filteredChildrenByParent[n.parentId] ??= []).push(n.id);
+          for (const nVar of filteredNodes) {
+            if (nVar.parentId && nodeIds.has(nVar.parentId)) {
+              (filteredChildrenByParent[nVar.parentId] ??= []).push(nVar.id);
             }
           }
           for (const e of filteredEdges) {

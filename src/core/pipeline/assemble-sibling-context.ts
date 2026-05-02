@@ -133,10 +133,10 @@ function topologicalSort(
     out.push(next);
     const deps = reverseDeps.get(next);
     if (deps) {
-      for (const d of deps) {
-        const newDeg = (indegree.get(d) ?? 0) - 1;
-        indegree.set(d, newDeg);
-        if (newDeg === 0) zeroIn.push(d);
+      for (const dVar of deps) {
+        const newDeg = (indegree.get(dVar) ?? 0) - 1;
+        indegree.set(dVar, newDeg);
+        if (newDeg === 0) zeroIn.push(dVar);
       }
     }
   }
@@ -171,6 +171,7 @@ function collectAncestors(
   return visited;
 }
 
+/** assembleSiblingContext — auto-generated description placeholder. */
 export function assembleSiblingContext(
   store: SqliteStore,
   opts: AssembleSiblingContextOptions,
@@ -214,15 +215,15 @@ export function assembleSiblingContext(
     }));
 
   const depsMap = new Map<string, Set<string>>();
-  for (const a of ancestorNodes) {
-    const edges = store.getEdgesFrom(a.id);
+  for (const aVar of ancestorNodes) {
+    const edges = store.getEdgesFrom(aVar.id);
     const prereqs = new Set<string>();
     for (const e of edges) {
       if (e.relationType === "depends_on" && ancestors.has(e.to)) {
         prereqs.add(e.to);
       }
     }
-    depsMap.set(a.id, prereqs);
+    depsMap.set(aVar.id, prereqs);
   }
 
   // 4. Topological sort

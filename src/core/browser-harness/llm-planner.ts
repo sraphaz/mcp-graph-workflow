@@ -85,9 +85,9 @@ export class LlmPlanner {
         const parsed = parseJsonLoose(text);
         const safe = PlanResponseSchema.parse(parsed);
         const knownNames = new Set(this.options.helpers.map((h) => h.name));
-        for (const s of safe.steps) {
-          if (!knownNames.has(s.helper)) {
-            throw new OperationError(`plan references unknown helper "${s.helper}"`);
+        for (const sVar of safe.steps) {
+          if (!knownNames.has(sVar.helper)) {
+            throw new OperationError(`plan references unknown helper "${sVar.helper}"`);
           }
         }
         return safe.steps.map((s, i) =>

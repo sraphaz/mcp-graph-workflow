@@ -63,8 +63,8 @@ function refKey(ref: SiebelObjectRef): string {
 
 function buildObjectIndex(objects: readonly SiebelObject[]): Map<string, SiebelObject> {
   const index = new Map<string, SiebelObject>();
-  for (const obj of objects) {
-    index.set(refKey({ name: obj.name, type: obj.type }), obj);
+  for (const objValue of objects) {
+    index.set(refKey({ name: objValue.name, type: objValue.type }), objValue);
   }
   return index;
 }
@@ -244,6 +244,7 @@ function generateReport(
 
 // --- Main function ---
 
+/** autoWireDependencies — auto-generated description placeholder. */
 export function autoWireDependencies(request: AutoWireRequest): AutoWireResult {
   const { newObjects, repository } = request;
 
@@ -262,9 +263,9 @@ export function autoWireDependencies(request: AutoWireRequest): AutoWireResult {
   // Detect structural dependencies for each new object
   const detectors = [detectAppletDeps, detectViewDeps, detectBODeps, detectScreenDeps];
 
-  for (const obj of newObjects) {
+  for (const objValue of newObjects) {
     for (const detect of detectors) {
-      const deps = detect(obj);
+      const deps = detect(objValue);
       for (const dep of deps) {
         const targetKey = refKey(dep.to);
         if (allKnown.has(targetKey)) {
@@ -288,7 +289,7 @@ export function autoWireDependencies(request: AutoWireRequest): AutoWireResult {
     }
 
     // BC → Table suggestion (separate logic)
-    const tableDep = detectBCTableDep(obj, repository);
+    const tableDep = detectBCTableDep(objValue, repository);
     if (tableDep) {
       missingDependencies.push(tableDep);
     }

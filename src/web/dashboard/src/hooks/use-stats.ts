@@ -24,6 +24,7 @@ interface UseStatsReturn {
   refresh: () => Promise<void>;
 }
 
+/** useStats — auto-generated description placeholder. */
 export function useStats(): UseStatsReturn {
   const [stats, setStats] = useState<GraphStats | null>(null);
 

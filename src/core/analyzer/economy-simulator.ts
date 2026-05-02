@@ -60,6 +60,7 @@ const ECONOMY_KEYWORDS = [
 const INFLOW_PATTERN = /\b(reward|drop|income|earn|loot|quest\s*reward)\b/;
 const OUTFLOW_PATTERN = /\b(cost|price|sink|tax|fee|buy|repair|craft)\b/;
 
+/** simulateEconomy — auto-generated description placeholder. */
 export function simulateEconomy(
   doc: GraphDocument,
   params: EconomySimulationParams,

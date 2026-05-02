@@ -39,11 +39,11 @@ function toDottedIpv4(hostname: string): string | undefined {
     if (!Number.isSafeInteger(asNumber) || asNumber < 0 || asNumber > 0xFFFFFFFF) {
       return undefined;
     }
-    const a = (asNumber >>> 24) & 0xFF;
-    const b = (asNumber >>> 16) & 0xFF;
-    const c = (asNumber >>> 8) & 0xFF;
-    const d = asNumber & 0xFF;
-    return `${a}.${b}.${c}.${d}`;
+    const aVar = (asNumber >>> 24) & 0xFF;
+    const bVar = (asNumber >>> 16) & 0xFF;
+    const cVar = (asNumber >>> 8) & 0xFF;
+    const dVar = asNumber & 0xFF;
+    return `${aVar}.${bVar}.${cVar}.${dVar}`;
   }
 
   if (/^0x[0-9a-f]+$/i.test(hostname)) {
@@ -51,11 +51,11 @@ function toDottedIpv4(hostname: string): string | undefined {
     if (!Number.isSafeInteger(asNumber) || asNumber < 0 || asNumber > 0xFFFFFFFF) {
       return undefined;
     }
-    const a = (asNumber >>> 24) & 0xFF;
-    const b = (asNumber >>> 16) & 0xFF;
-    const c = (asNumber >>> 8) & 0xFF;
-    const d = asNumber & 0xFF;
-    return `${a}.${b}.${c}.${d}`;
+    const aVar = (asNumber >>> 24) & 0xFF;
+    const bVar = (asNumber >>> 16) & 0xFF;
+    const cVar = (asNumber >>> 8) & 0xFF;
+    const dVar = asNumber & 0xFF;
+    return `${aVar}.${bVar}.${cVar}.${dVar}`;
   }
 
   return undefined;

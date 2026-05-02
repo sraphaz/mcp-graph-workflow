@@ -24,6 +24,7 @@ const InitProjectBodySchema = z.object({
   name: z.string().min(1).optional(),
 });
 
+/** createProjectRouter — auto-generated description placeholder. */
 export function createProjectRouter(storeRef: StoreRef): Router {
   const router = Router();
 

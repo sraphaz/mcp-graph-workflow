@@ -23,11 +23,13 @@
 const CITATION_RE = /§[A-Za-z][A-Za-z0-9]*(?:[-.][A-Za-z0-9]+)+/g;
 const CITATION_TEST_RE = /§[A-Za-z][A-Za-z0-9]*(?:[-.][A-Za-z0-9]+)+/;
 
+/** extractCitations — auto-generated description placeholder. */
 export function extractCitations(text: string): string[] {
   const matches = text.match(CITATION_RE);
   return matches ? [...matches] : [];
 }
 
+/** hasCitation — auto-generated description placeholder. */
 export function hasCitation(text: string): boolean {
   return CITATION_TEST_RE.test(text);
 }

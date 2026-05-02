@@ -122,10 +122,12 @@ const dagAcyclicity: PropertyInvariant = {
 
 // ── Public API ──────────────────────────────────────────
 
+/** getBuiltInInvariants — auto-generated description placeholder. */
 export function getBuiltInInvariants(): PropertyInvariant[] {
   return [referentialIntegrity, statusMonotonicity, dagAcyclicity];
 }
 
+/** checkInvariants — auto-generated description placeholder. */
 export function checkInvariants(
   doc: GraphDocument,
   invariants: PropertyInvariant[],

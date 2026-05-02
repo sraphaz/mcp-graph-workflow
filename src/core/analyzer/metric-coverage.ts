@@ -35,6 +35,7 @@ export interface MetricCoverageReport {
   coveragePercent: number;
 }
 
+/** analyzeMetricCoverage — auto-generated description placeholder. */
 export function analyzeMetricCoverage(doc: GraphDocument): MetricCoverageReport {
   const metricNodes = doc.nodes.filter((n) => n.type === "metric");
   const highRisks = doc.nodes.filter((n) => n.type === "risk" && n.priority <= 2);

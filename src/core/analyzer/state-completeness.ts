@@ -53,6 +53,7 @@ function getTransitions(value: unknown): Transition[] {
   );
 }
 
+/** analyzeStateCompleteness — auto-generated description placeholder. */
 export function analyzeStateCompleteness(doc: GraphDocument): StateCompletenessReport {
   const machineNodes = doc.nodes.filter((n) => n.type === "state_machine");
 

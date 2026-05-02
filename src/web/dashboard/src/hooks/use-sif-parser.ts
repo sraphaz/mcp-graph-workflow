@@ -58,6 +58,7 @@ interface UseSifParserReturn {
   reset: () => void;
 }
 
+/** useSifParser — auto-generated description placeholder. */
 export function useSifParser(): UseSifParserReturn {
   const [result, setResult] = useState<SifParseResult | null>(null);
   const [progress, setProgress] = useState(0);

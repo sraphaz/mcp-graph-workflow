@@ -26,6 +26,7 @@ interface OpenFolderModalProps {
   onFolderChanged: () => void;
 }
 
+/** OpenFolderModal — auto-generated description placeholder. */
 export function OpenFolderModal({ open, onClose, onFolderChanged }: OpenFolderModalProps): React.JSX.Element | null {
   const [folderPath, setFolderPath] = useState("");
   const [currentPath, setCurrentPath] = useState("");

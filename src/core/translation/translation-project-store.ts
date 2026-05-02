@@ -178,11 +178,11 @@ export class TranslationProjectStore {
   deleteProject(id: string): boolean {
     // CASCADE: delete files first, then project
     this.db.prepare("DELETE FROM translation_project_files WHERE translation_project_id = ?").run(id);
-    const result = this.db.prepare("DELETE FROM translation_projects WHERE id = ?").run(id);
-    if (result.changes > 0) {
+    const resultValue = this.db.prepare("DELETE FROM translation_projects WHERE id = ?").run(id);
+    if (resultValue.changes > 0) {
       logger.info("translation-project:delete", { projectId: id });
     }
-    return result.changes > 0;
+    return resultValue.changes > 0;
   }
 
   addFile(input: AddTranslationProjectFileInput): TranslationProjectFile {

@@ -55,6 +55,7 @@ export interface CopilotImportOptions {
   source?: string; // path to .github/hooks/ dir
 }
 
+/** importCopilotSettings — auto-generated description placeholder. */
 export function importCopilotSettings(opts: CopilotImportOptions = {}): ImportEnvelope {
   const source = opts.source ?? join(process.cwd(), ".github", "hooks");
   const envelope: ImportEnvelope = {
@@ -88,11 +89,11 @@ export function importCopilotSettings(opts: CopilotImportOptions = {}): ImportEn
     }
     const entries = normalizeEntries(file.data);
     for (const entry of entries) {
-      const result = entryToHandler(entry, entryIdx);
-      if ("skip" in result) {
-        envelope.skipped.push({ event: entry.event ?? filename, reason: result.skip });
+      const resultValue = entryToHandler(entry, entryIdx);
+      if ("skip" in resultValue) {
+        envelope.skipped.push({ event: entry.event ?? filename, reason: resultValue.skip });
       } else {
-        envelope.imported.push(result);
+        envelope.imported.push(resultValue);
       }
       entryIdx++;
     }

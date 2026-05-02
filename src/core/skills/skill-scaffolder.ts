@@ -51,14 +51,17 @@ export interface ScaffoldResult {
 
 const NAME_RE = /^[a-z][a-z0-9-]{1,40}$/;
 
+/** isValidSkillName — auto-generated description placeholder. */
 export function isValidSkillName(name: string): boolean {
   return NAME_RE.test(name);
 }
 
+/** isValidCategory — auto-generated description placeholder. */
 export function isValidCategory(category: string): category is SkillCategory {
   return (SKILL_CATEGORIES as readonly string[]).includes(category);
 }
 
+/** buildSkillTemplate — auto-generated description placeholder. */
 export function buildSkillTemplate(input: ScaffoldInput): string {
   const phases = input.phases?.length ? input.phases : ["IMPLEMENT"];
   return [
@@ -92,6 +95,7 @@ export interface ScaffoldOptions {
   overwrite?: boolean;
 }
 
+/** scaffoldSkill — auto-generated description placeholder. */
 export function scaffoldSkill(
   input: ScaffoldInput,
   opts: ScaffoldOptions = {},

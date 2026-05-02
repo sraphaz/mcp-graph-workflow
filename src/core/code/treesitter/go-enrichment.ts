@@ -110,10 +110,10 @@ export function extractInterfaceMethods(node: GoSyntaxNodeLike): string[] {
   if (node.type === INTERFACE_TYPE) {
     interfaceNode = node;
   } else if (node.type === TYPE_SPEC_TYPE) {
-    const t =
+    const tVar =
       node.childForFieldName?.("type") ??
       node.namedChildren?.find((c) => c.type === INTERFACE_TYPE);
-    interfaceNode = t && t.type === INTERFACE_TYPE ? t : null;
+    interfaceNode = tVar && tVar.type === INTERFACE_TYPE ? tVar : null;
   }
   if (!interfaceNode) return [];
 

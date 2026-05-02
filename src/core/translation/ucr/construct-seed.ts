@@ -42,16 +42,16 @@ export function seedRegistryFromFile(registry: ConstructRegistry, filePath: stri
 
   const validated = UcrSeedDataSchema.parse(parsed);
 
-  const result = registry.seedFromJson(validated);
+  const resultValue = registry.seedFromJson(validated);
 
   logger.info("ucr:seed:file", {
     file: filePath,
-    categories: result.categories,
-    constructs: result.constructs,
-    mappings: result.mappings,
+    categories: resultValue.categories,
+    constructs: resultValue.constructs,
+    mappings: resultValue.mappings,
   });
 
-  return result;
+  return resultValue;
 }
 
 /** Parse and validate seed data without inserting (dry-run). */

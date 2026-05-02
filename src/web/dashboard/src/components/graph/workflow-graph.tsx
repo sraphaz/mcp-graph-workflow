@@ -52,6 +52,7 @@ interface PendingConnection {
   toId: string;
 }
 
+/** WorkflowGraph — auto-generated description placeholder. */
 export function WorkflowGraph({ graph }: WorkflowGraphProps): React.JSX.Element {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<WorkflowNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<WorkflowEdgeData>>([]);

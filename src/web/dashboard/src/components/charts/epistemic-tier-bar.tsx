@@ -63,6 +63,7 @@ interface EpistemicTierBarProps {
   className?: string;
 }
 
+/** EpistemicTierBar — auto-generated description placeholder. */
 export function EpistemicTierBar({
   distribution,
   groupedNodes,

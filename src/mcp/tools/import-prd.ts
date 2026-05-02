@@ -75,6 +75,7 @@ export function ensureSprintMilestones(store: SqliteStore, sprintLabels: Readonl
   return created;
 }
 
+/** registerImportPrd — auto-generated description placeholder. */
 export function registerImportPrd(server: McpServer, store: SqliteStore): void {
   server.tool(
     "import_prd",

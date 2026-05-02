@@ -38,6 +38,7 @@ const DEFAULT_ALLOWED_COMMANDS = ["node", "npx", "deno", "bun"];
 const PINNED_SEMVER = /^(@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*@\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const PINNED_GIT_SHA = /#[0-9a-f]{40}$/;
 
+/** isPinnedNpmSpec — auto-generated description placeholder. */
 export function isPinnedNpmSpec(spec: string): boolean {
   if (typeof spec !== "string" || spec.length === 0) return false;
   if (PINNED_SEMVER.test(spec)) return true;
@@ -53,6 +54,7 @@ export interface ParsedNpxCommand {
   readonly name: string;
 }
 
+/** parseNpxCommand — auto-generated description placeholder. */
 export function parseNpxCommand(command: string, args: readonly string[]): ParsedNpxCommand | null {
   if (command !== "npx") return null;
   const spec = args.find((a, i) => {
@@ -71,6 +73,7 @@ export function parseNpxCommand(command: string, args: readonly string[]): Parse
   return { spec, scope, name };
 }
 
+/** assertTrustedMcpServer — auto-generated description placeholder. */
 export function assertTrustedMcpServer(spec: McpServerSpec, options: AllowlistOptions = {}): void {
   const allowedCommands = new Set([...DEFAULT_ALLOWED_COMMANDS, ...(options.allowedCommands ?? [])]);
   if (!allowedCommands.has(spec.command)) {

@@ -119,18 +119,18 @@ function validateEditRange(edit: LspTextEdit, lines: string[]): string | null {
  * Handles both LF and CRLF line endings.
  */
 function applyEditsToContent(content: string, edits: LspTextEdit[]): string {
-  let result = content;
+  let resultValue = content;
   const separator = detectLineSeparator(content);
 
   for (const edit of edits) {
     // Recalculate lines from current result for each edit
-    const currentLines = splitLines(result);
+    const currentLines = splitLines(resultValue);
     const startOffset = positionToOffset(currentLines, edit.startLine, edit.startCharacter, separator);
     const endOffset = positionToOffset(currentLines, edit.endLine, edit.endCharacter, separator);
-    result = result.slice(0, startOffset) + edit.newText + result.slice(endOffset);
+    resultValue = resultValue.slice(0, startOffset) + edit.newText + resultValue.slice(endOffset);
   }
 
-  return result;
+  return resultValue;
 }
 
 export class LspEditApplier {

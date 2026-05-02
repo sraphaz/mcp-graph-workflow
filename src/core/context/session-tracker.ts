@@ -180,16 +180,16 @@ export class SessionTracker {
   cleanupStaleDb(maxAgeMs?: number): number {
     const ttl = maxAgeMs ?? this.ttlMs;
     const cutoffIso = new Date(Date.now() - ttl).toISOString();
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM session_chunks WHERE tracked_at < ?")
       .run(cutoffIso);
-    if (result.changes > 0) {
+    if (resultValue.changes > 0) {
       logger.debug("session-tracker:cleanupStaleDb", {
         cutoffIso,
-        rowsDeleted: result.changes,
+        rowsDeleted: resultValue.changes,
       });
     }
-    return result.changes;
+    return resultValue.changes;
   }
 
   /**

@@ -111,8 +111,8 @@ export function validatePostGeneration(result: GeneratePluginResult): Validation
   }
 
   // Propagate warnings from generation
-  for (const w of result.warnings) {
-    issues.push({ severity: "warning", code: "generation_warning", message: w });
+  for (const wVar of result.warnings) {
+    issues.push({ severity: "warning", code: "generation_warning", message: wVar });
   }
 
   return {

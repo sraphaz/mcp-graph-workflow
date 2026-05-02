@@ -60,6 +60,7 @@ async function realDownloadModel(modelsDir: string): Promise<DownloadModelResult
   }
 }
 
+/** installNeuralCommand — auto-generated description placeholder. */
 export function installNeuralCommand(): Command {
   return new Command("install-neural")
     .description("Opt-in to ONNX neural embeddings (downloads runtime + model ~30s)")
@@ -76,28 +77,28 @@ export function installNeuralCommand(): Command {
         isOnnxAvailable,
       };
 
-      const result = await runInstallNeural(
+      const resultValue = await runInstallNeural(
         { dryRun: opts.dryRun, modelsDir: opts.modelsDir },
         deps,
       );
 
       logger.info("install-neural", {
-        status: result.status,
-        steps: result.steps,
+        status: resultValue.status,
+        steps: resultValue.steps,
         modelsDir: opts.modelsDir,
-        ...(result.plannedActions ? { plannedActions: result.plannedActions } : {}),
-        ...(result.error ? { error: result.error } : {}),
+        ...(resultValue.plannedActions ? { plannedActions: resultValue.plannedActions } : {}),
+        ...(resultValue.error ? { error: resultValue.error } : {}),
       });
 
-      if (result.status === "ready") {
+      if (resultValue.status === "ready") {
         process.stdout.write("\n✓ ONNX neural embeddings ready.\n");
-      } else if (result.status === "dry-run") {
+      } else if (resultValue.status === "dry-run") {
         process.stdout.write("\nPlanned actions:\n");
-        for (const action of result.plannedActions ?? []) {
+        for (const action of resultValue.plannedActions ?? []) {
           process.stdout.write(`  - ${action}\n`);
         }
-      } else if (result.status === "degraded" || result.status === "failed") {
-        process.stderr.write(`\n✗ install-neural ${result.status}: ${result.error ?? ""}\n`);
+      } else if (resultValue.status === "degraded" || resultValue.status === "failed") {
+        process.stderr.write(`\n✗ install-neural ${resultValue.status}: ${resultValue.error ?? ""}\n`);
         process.exit(1);
       }
     });

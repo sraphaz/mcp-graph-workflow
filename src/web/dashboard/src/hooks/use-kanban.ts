@@ -20,6 +20,7 @@ import { apiClient } from "@/lib/api-client";
 import { useSSE } from "@/hooks/use-sse";
 import type { KanbanBoard, KanbanSuggestion, SwimlaneMode } from "@/lib/types";
 
+/** useKanbanBoard — auto-generated description placeholder. */
 export function useKanbanBoard(swimlane?: SwimlaneMode) {
   const [board, setBoard] = useState<KanbanBoard | null>(null);
   const [suggestions, setSuggestions] = useState<KanbanSuggestion[]>([]);

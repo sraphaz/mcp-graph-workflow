@@ -116,8 +116,8 @@ export function rankChunksByBm25(
 
     // Term frequency map
     const tf = new Map<string, number>();
-    for (const t of tokens) {
-      tf.set(t, (tf.get(t) ?? 0) + 1);
+    for (const tVar of tokens) {
+      tf.set(tVar, (tf.get(tVar) ?? 0) + 1);
     }
 
     for (const term of queryTerms) {

@@ -37,18 +37,18 @@ export function generateGuiDescriptor(
   const registrations: string[] = [];
   const instanceFields: string[] = [];
 
-  for (const v of configVars) {
-    if (seen.has(v.fieldName)) continue;
-    seen.add(v.fieldName);
+  for (const vVar of configVars) {
+    if (seen.has(vVar.fieldName)) continue;
+    seen.add(vVar.fieldName);
 
     declarations.push(
-      `        TextFieldDescriptor ${v.fieldName}Field = new TextFieldDescriptor("${v.fieldName}", "DaVinci variable: ${v.fieldName}");`,
+      `        TextFieldDescriptor ${vVar.fieldName}Field = new TextFieldDescriptor("${vVar.fieldName}", "DaVinci variable: ${vVar.fieldName}");`,
     );
     registrations.push(
-      `        guiDescriptor.addField(${v.fieldName}Field);`,
+      `        guiDescriptor.addField(${vVar.fieldName}Field);`,
     );
     instanceFields.push(
-      `    private String ${v.fieldName};`,
+      `    private String ${vVar.fieldName};`,
     );
   }
 

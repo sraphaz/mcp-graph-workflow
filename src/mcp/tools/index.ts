@@ -34,6 +34,7 @@ import { isToolVisibleForProfile, type ProfileFilter } from "./taxonomy.js";
 // still deferred — RAM/time savings come from the deferred top-level
 // side-effects (logger registration, regex compilation, schema parsing).
 
+/** registerAllTools — auto-generated description placeholder. */
 export async function registerAllTools(
   server: McpServer,
   store: SqliteStore,

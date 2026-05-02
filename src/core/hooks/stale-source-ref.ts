@@ -36,6 +36,7 @@ export interface StaleCheckResult {
   reason?: string;
 }
 
+/** detectStaleSourceRef — auto-generated description placeholder. */
 export function detectStaleSourceRef(
   input: StaleCheckInput,
   opts: StaleCheckOptions = {},

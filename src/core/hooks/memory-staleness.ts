@@ -25,10 +25,12 @@ export interface StaleMemoryReport {
   ageDays: number;
 }
 
+/** isMemoryStalenessDisabled — auto-generated description placeholder. */
 export function isMemoryStalenessDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.MCP_GRAPH_MEMORY_STALENESS === "off";
 }
 
+/** findStaleMemories — auto-generated description placeholder. */
 export function findStaleMemories(
   memories: MemoryRef[],
   nowMs: number = Date.now(),

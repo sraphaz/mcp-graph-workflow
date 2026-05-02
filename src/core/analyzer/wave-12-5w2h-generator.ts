@@ -282,15 +282,15 @@ export function generateWave125W2HAnalysis(): Wave125W2HAnalysis {
 export function validate5W2HAnalysis(
   data: unknown
 ): { valid: true; data: Wave125W2HAnalysis } | { valid: false; errors: string[] } {
-  const result = validateWave125W2HAnalysis(data);
+  const resultValue = validateWave125W2HAnalysis(data);
 
-  if (!result.valid) {
+  if (!resultValue.valid) {
     logger.error('5W2H validation failed', {
-      errors: result.errors,
+      errors: resultValue.errors,
     });
   }
 
-  return result;
+  return resultValue;
 }
 
 /**

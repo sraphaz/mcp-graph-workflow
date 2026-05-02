@@ -49,6 +49,7 @@ function isTestableAc(ac: string): boolean {
   return TESTABLE_PATTERN.test(ac);
 }
 
+/** validateInvest — auto-generated description placeholder. */
 export function validateInvest(candidate: InvestCandidate): InvestResult {
   const reasons: string[] = [];
 

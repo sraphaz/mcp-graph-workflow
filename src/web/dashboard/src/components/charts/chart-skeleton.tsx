@@ -20,6 +20,7 @@ interface ChartSkeletonProps {
   className?: string;
 }
 
+/** ChartSkeleton — auto-generated description placeholder. */
 export function ChartSkeleton({ type, className }: ChartSkeletonProps): React.JSX.Element {
   const base = `animate-pulse ${className ?? ""}`;
 

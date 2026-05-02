@@ -43,6 +43,7 @@ function mapErrorToStatus(err: Error): number {
   return 500;
 }
 
+/** errorHandler — auto-generated description placeholder. */
 export function errorHandler(
   err: Error,
   req: Request,

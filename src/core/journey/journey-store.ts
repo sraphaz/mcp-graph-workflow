@@ -261,13 +261,13 @@ export class JourneyStore {
   }
 
   deleteMap(id: string): boolean {
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM journey_maps WHERE id = ? AND project_id = ?")
       .run(id, this.projectId);
-    if (result.changes > 0) {
+    if (resultValue.changes > 0) {
       logger.info("journey:map:deleted", { id });
     }
-    return result.changes > 0;
+    return resultValue.changes > 0;
   }
 
   // ── Screens ─────────────────────────────────────────
@@ -346,10 +346,10 @@ export class JourneyStore {
   }
 
   deleteScreen(id: string): boolean {
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM journey_screens WHERE id = ? AND project_id = ?")
       .run(id, this.projectId);
-    return result.changes > 0;
+    return resultValue.changes > 0;
   }
 
   // ── Edges ───────────────────────────────────────────
@@ -377,10 +377,10 @@ export class JourneyStore {
   }
 
   deleteEdge(id: string): boolean {
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM journey_edges WHERE id = ? AND project_id = ?")
       .run(id, this.projectId);
-    return result.changes > 0;
+    return resultValue.changes > 0;
   }
 
   // ── Variants ────────────────────────────────────────

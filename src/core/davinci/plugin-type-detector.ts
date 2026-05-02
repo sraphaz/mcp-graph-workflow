@@ -37,6 +37,7 @@ export interface DetectionOptions {
 
 // ── Main Entry Point ──────────────────────────────────────────────────
 
+/** detectPluginType — auto-generated description placeholder. */
 export function detectPluginType(
   analysis: DaVinciAnalysis,
   mode: TargetSdkMode,
@@ -137,16 +138,16 @@ function detectPingAccessType(analysis: DaVinciAnalysis, sourceCode: string): De
 function reconstructCode(analysis: DaVinciAnalysis): string {
   // Use variables and other analysis data to reconstruct code context
   const parts: string[] = [];
-  for (const v of analysis.variables) {
-    parts.push(v.rawTemplate);
+  for (const vVar of analysis.variables) {
+    parts.push(vVar.rawTemplate);
   }
   for (const call of analysis.apiCalls) {
     parts.push(call.url ?? "");
     parts.push(call.method);
   }
   // Also check warnings for additional context
-  for (const w of analysis.warnings) {
-    parts.push(w);
+  for (const wVar of analysis.warnings) {
+    parts.push(wVar);
   }
   return parts.join(" ");
 }

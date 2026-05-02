@@ -48,12 +48,12 @@ export class HandoffMetrics {
   summary(opts: SummaryOptions = {}): HandoffMetricsSummary {
     let graphTokens = 0;
     let a2aSavedTokens = 0;
-    for (const r of this.records) {
-      if (r.path === "a2a") {
-        a2aSavedTokens += r.contextTokens;
+    for (const rVar of this.records) {
+      if (rVar.path === "a2a") {
+        a2aSavedTokens += rVar.contextTokens;
       } else {
         // graph and graph-fallback both incur re-read cost.
-        graphTokens += r.contextTokens;
+        graphTokens += rVar.contextTokens;
       }
     }
     const total = a2aSavedTokens + graphTokens;

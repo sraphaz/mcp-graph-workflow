@@ -127,9 +127,9 @@ export class AgentPool {
 
   drain(): void {
     this.stopHeartbeat();
-    for (const w of this.waiters.splice(0)) {
-      clearTimeout(w.timer);
-      w.reject(new Error("agent-pool:drained"));
+    for (const wVar of this.waiters.splice(0)) {
+      clearTimeout(wVar.timer);
+      wVar.reject(new Error("agent-pool:drained"));
     }
   }
 }

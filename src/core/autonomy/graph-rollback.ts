@@ -94,20 +94,20 @@ export function rollbackToCheckpoint(
   const start = performance.now();
 
   try {
-    const result = store.restoreSnapshot(checkpoint?.snapshotId);
+    const resultValue = store.restoreSnapshot(checkpoint?.snapshotId);
     const mttrMs = Math.round(performance.now() - start);
 
     logger.info("graph-rollback:restored", {
       nodeId: checkpoint?.nodeId ?? "",
       snapshotId: checkpoint?.snapshotId ?? 0,
-      nodesRestored: result?.nodesValid ?? 0,
-      edgesRestored: result?.edgesRestored ?? 0,
+      nodesRestored: resultValue?.nodesValid ?? 0,
+      edgesRestored: resultValue?.edgesRestored ?? 0,
       mttrMs,
     });
 
     return {
       success: true,
-      nodesRestored: result?.nodesValid ?? 0,
+      nodesRestored: resultValue?.nodesValid ?? 0,
       mttrMs,
     };
   } catch (err) {

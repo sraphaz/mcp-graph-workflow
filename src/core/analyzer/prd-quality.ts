@@ -46,6 +46,7 @@ function assessQuality(ratio: number): SectionQuality {
   return "strong";
 }
 
+/** analyzePrdQuality — auto-generated description placeholder. */
 export function analyzePrdQuality(doc: GraphDocument): PrdQualityReport {
   const { nodes } = doc;
   const sections: PrdQualitySection[] = [];

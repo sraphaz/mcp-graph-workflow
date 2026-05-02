@@ -29,6 +29,7 @@ export const ValidationInputSchema = z.object({
 
 export type ValidatedValidationInput = z.infer<typeof ValidationInputSchema>;
 
+/** validateValidationInput — auto-generated description placeholder. */
 export function validateValidationInput(input: unknown): ValidatedValidationInput {
   return ValidationInputSchema.parse(input);
 }

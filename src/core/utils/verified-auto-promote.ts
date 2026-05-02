@@ -70,9 +70,9 @@ async function verifyParent(
 
   // 2. each testFiles entry must exist (when defined)
   const testFiles = parent.testFiles ?? [];
-  for (const t of testFiles) {
-    const ok = await fileExists(t);
-    if (!ok) reasons.push(`testFile missing on disk: ${t}`);
+  for (const tVar of testFiles) {
+    const ok = await fileExists(tVar);
+    if (!ok) reasons.push(`testFile missing on disk: ${tVar}`);
   }
 
   // 3. tests must pass (only when there are testFiles to run)
@@ -100,7 +100,7 @@ export async function verifyAndPromote(
   nodeId: string,
   options: VerifyOptions = {},
 ): Promise<VerifyAndPromoteResult> {
-  const result: VerifyAndPromoteResult = { promoted: [], rejected: [] };
+  const resultValue: VerifyAndPromoteResult = { promoted: [], rejected: [] };
   const runTestGate = options.runTestGate ?? ((s, id) => defaultRunTestGate(s, id, "strict"));
 
   let cursor = nodeId;
@@ -117,7 +117,7 @@ export async function verifyAndPromote(
 
     const verdict = await verifyParent(store, parent.id, parent.title, runTestGate);
     if (!verdict.ok) {
-      result.rejected.push({ nodeId: parent.id, title: parent.title, reasons: verdict.reasons });
+      resultValue.rejected.push({ nodeId: parent.id, title: parent.title, reasons: verdict.reasons });
       logger.warn("verified-auto-promote:rejected", {
         nodeId: parent.id,
         title: parent.title,
@@ -127,7 +127,7 @@ export async function verifyAndPromote(
     }
 
     store.updateNodeStatus(parent.id, "done");
-    result.promoted.push(parent.id);
+    resultValue.promoted.push(parent.id);
     logger.info("verified-auto-promote:promoted", {
       nodeId: parent.id,
       title: parent.title,
@@ -138,5 +138,5 @@ export async function verifyAndPromote(
     cursor = parent.id;
   }
 
-  return result;
+  return resultValue;
 }

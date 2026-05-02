@@ -58,10 +58,10 @@ function statsForHandler(records: HandlerCallRecord[]): Omit<HandlerStats, "hand
 /** Aggregates raw records into per-handler HandlerStats sorted by callCount DESC. */
 export function aggregateHandlerStats(input: HandlerStatsInput): HandlerStats[] {
   const byHandler = new Map<string, HandlerCallRecord[]>();
-  for (const r of input.records) {
-    const arr = byHandler.get(r.handlerId);
-    if (arr) arr.push(r);
-    else byHandler.set(r.handlerId, [r]);
+  for (const rVar of input.records) {
+    const arr = byHandler.get(rVar.handlerId);
+    if (arr) arr.push(rVar);
+    else byHandler.set(rVar.handlerId, [rVar]);
   }
   const out: HandlerStats[] = [];
   for (const [handlerId, recs] of byHandler) {

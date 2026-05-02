@@ -26,6 +26,7 @@ export interface UseContextBudgetReturn {
   refresh: () => void;
 }
 
+/** useContextBudget — auto-generated description placeholder. */
 export function useContextBudget(): UseContextBudgetReturn {
   const [budget, setBudget] = useState<ContextBudget | null>(null);
   const [loading, setLoading] = useState(true);

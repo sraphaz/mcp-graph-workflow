@@ -131,9 +131,9 @@ export function reciprocalRankFusion(
 
   for (const list of rankedLists) {
     for (let rank = 0; rank < list.length; rank++) {
-      const item = list[rank];
-      const current = scores.get(item.id) ?? 0;
-      scores.set(item.id, current + 1 / (RRF_K + rank + 1));
+      const itemValue = list[rank];
+      const current = scores.get(itemValue.id) ?? 0;
+      scores.set(itemValue.id, current + 1 / (RRF_K + rank + 1));
     }
   }
 
@@ -155,9 +155,9 @@ export function weightedReciprocalRankFusion(
   for (const strategy of strategyResults) {
     const weight = weights[strategy.name] ?? DEFAULT_WEIGHT;
     for (let rank = 0; rank < strategy.results.length; rank++) {
-      const item = strategy.results[rank];
-      const current = scores.get(item.id) ?? 0;
-      scores.set(item.id, current + weight / (RRF_K + rank + 1));
+      const itemValue = strategy.results[rank];
+      const current = scores.get(itemValue.id) ?? 0;
+      scores.set(itemValue.id, current + weight / (RRF_K + rank + 1));
     }
   }
 
@@ -306,8 +306,8 @@ export async function multiStrategySearch(
   if (shouldRun("exec_graph") && options?.store) {
     try {
       const graphRagResults = executionGraphSearch(db, options.store, query, { limit: limit * 2 });
-      for (const result of graphRagResults) {
-        execGraphResults.push({ id: result.id, score: result.score });
+      for (const resultValue of graphRagResults) {
+        execGraphResults.push({ id: resultValue.id, score: resultValue.score });
       }
     } catch {
       logger.debug("Multi-strategy execution graph search returned no results");
@@ -417,17 +417,17 @@ export async function multiStrategySearch(
     strategyMap.set(or.id, strategies);
   }
 
-  for (const item of merged.slice(0, limit)) {
-    const doc = knowledgeStore.getById(item.id);
+  for (const itemValue of merged.slice(0, limit)) {
+    const doc = knowledgeStore.getById(itemValue.id);
     if (!doc) continue;
 
     const row = db
       .prepare("SELECT quality_score, recency_score FROM knowledge_documents WHERE id = ?")
-      .get(item.id) as { quality_score: number; recency_score: number | null } | undefined;
+      .get(itemValue.id) as { quality_score: number; recency_score: number | null } | undefined;
     const qualityScore = row?.quality_score ?? 0.5;
     const recencyScore = row?.recency_score ?? 1.0;
 
-    const finalScore = computeFinalScore(item.rrfScore, qualityScore, recencyScore);
+    const finalScore = computeFinalScore(itemValue.rrfScore, qualityScore, recencyScore);
 
     results.push({
       id: doc.id,
@@ -456,9 +456,9 @@ export async function multiStrategySearch(
         (r, i) => i >= 3 && !topSourceTypes.has(r.sourceType),
       );
       if (differentIdx > 0) {
-        const temp = results[2];
+        const tempValue = results[2];
         results[2] = results[differentIdx];
-        results[differentIdx] = temp;
+        results[differentIdx] = tempValue;
       }
     }
   }

@@ -54,6 +54,7 @@ export interface InstallNeuralResult {
   readonly error?: string;
 }
 
+/** runInstallNeural — auto-generated description placeholder. */
 export async function runInstallNeural(
   opts: InstallNeuralOptions,
   deps: InstallNeuralDeps,

@@ -84,6 +84,7 @@ function checkPath(filePath: string): ApprovalCheckResult {
 
 const MUTATING_FILE_TOOLS = new Set(["write", "edit", "notebookedit", "multiedit"]);
 
+/** checkApproval — auto-generated description placeholder. */
 export function checkApproval(req: ApprovalCheckInput): ApprovalCheckResult {
   const tool = (req.tool ?? "").toLowerCase();
   const input = req.input ?? {};

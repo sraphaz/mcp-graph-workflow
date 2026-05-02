@@ -95,13 +95,19 @@ export function scanErrorHandling(files: FileContent[], options?: ErrorHandlingO
       }
     }
 
-    // Swallowed catches — detect empty catch blocks
-    if (collect) {
-      collectPatternViolations(file, EMPTY_CATCH_PATTERN, 'swallowed_catch', violations);
-    }
-    const emptyCatches = file.content.match(EMPTY_CATCH_PATTERN);
-    if (emptyCatches) {
-      swallowedCatches += emptyCatches.length;
+    // Swallowed catches — detect empty catch blocks. Skip test files: their
+    // fixtures legitimately contain empty-catch literals as string inputs to
+    // other scanners (see error-handling-scanner.test.ts around line 86).
+    // Counting those produces phantom violations that no production fix can
+    // resolve.
+    if (!isTest) {
+      if (collect) {
+        collectPatternViolations(file, EMPTY_CATCH_PATTERN, 'swallowed_catch', violations);
+      }
+      const emptyCatches = file.content.match(EMPTY_CATCH_PATTERN);
+      if (emptyCatches) {
+        swallowedCatches += emptyCatches.length;
+      }
     }
 
     // console.error/warn — only in non-test files

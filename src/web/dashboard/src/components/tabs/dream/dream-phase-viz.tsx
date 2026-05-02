@@ -48,6 +48,7 @@ function getPhaseState(
   return "pending";
 }
 
+/** DreamPhaseViz — auto-generated description placeholder. */
 export function DreamPhaseViz({ status }: DreamPhaseVizProps): React.JSX.Element {
   return (
     <div className="flex items-center gap-2">

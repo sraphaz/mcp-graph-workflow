@@ -23,6 +23,7 @@ import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
+/** registerShow — auto-generated description placeholder. */
 export function registerShow(server: McpServer, store: SqliteStore): void {
   server.tool(
     "show",
@@ -44,7 +45,7 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
       const edgesTo = store.getEdgesTo(id);
       const children = store.getChildNodes(id);
 
-      const result: Record<string, unknown> = {
+      const resultValue: Record<string, unknown> = {
         node,
         outgoingEdges: edgesFrom,
         incomingEdges: edgesTo,
@@ -57,7 +58,7 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
       };
 
       if (includeHistory) {
-        result.changelog = store.getNodeHistory(id);
+        resultValue.changelog = store.getNodeHistory(id);
       }
 
       // Add lock info when teamTask mode is on
@@ -68,7 +69,7 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
           const lockInfo = lm.listActive().find((l) => l.resourceId === `task:${id}`);
           if (lockInfo) {
             const ttlMs = new Date(lockInfo.expiresAt).getTime() - Date.now();
-            result.lock = {
+            resultValue.lock = {
               agentId: lockInfo.agentId,
               expiresAt: lockInfo.expiresAt,
               ttlRemainingMs: Math.max(0, ttlMs),
@@ -79,7 +80,7 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
       }
 
       logger.info("tool:show:ok", { id, edgesOut: edgesFrom.length, edgesIn: edgesTo.length, children: children.length, includeHistory: !!includeHistory });
-      return mcpText(result);
+      return mcpText(resultValue);
     },
   );
 }

@@ -50,6 +50,7 @@ const FinalizeSchema = z.object({
   generatedCode: z.string(),
 });
 
+/** createTranslationRouter — auto-generated description placeholder. */
 export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEventBus): Router {
   const router = Router();
 
@@ -129,7 +130,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
 
       const { sourceCode, sourceLanguage, targetLanguage, scope } = parsed.data;
       const projectId = requireProjectId();
-      const result = await getOrchestrator().prepareTranslation({
+      const resultValue = await getOrchestrator().prepareTranslation({
         projectId,
         sourceCode,
         sourceLanguage,
@@ -137,8 +138,8 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
         scope,
       });
 
-      eventBus?.emit({ type: "translation:job_created", timestamp: new Date().toISOString(), payload: { jobId: result.jobId, targetLanguage, scope } });
-      res.status(201).json(result);
+      eventBus?.emit({ type: "translation:job_created", timestamp: new Date().toISOString(), payload: { jobId: resultValue.jobId, targetLanguage, scope } });
+      res.status(201).json(resultValue);
     } catch (err) {
       const status = errorStatus(err);
       logger.error("Translation job creation failed", { error: err });
@@ -183,12 +184,12 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
         return;
       }
 
-      const result = getOrchestrator().finalizeTranslation(req.params.id, parsed.data.generatedCode);
+      const resultValue = getOrchestrator().finalizeTranslation(req.params.id, parsed.data.generatedCode);
 
       // Index translation evidence into knowledge store for RAG
       try {
         const job = getStore().getJob(req.params.id);
-        if (job && result.evidence) {
+        if (job && resultValue.evidence) {
           const ks = getKnowledgeStore();
           indexTranslationEvidence(ks, {
             jobId: req.params.id,
@@ -197,18 +198,18 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
             sourceCode: job.sourceCode,
             targetCode: parsed.data.generatedCode,
             scope: job.scope,
-            confidenceScore: result.evidence.confidenceScore,
-            translatedConstructs: result.evidence.translatedConstructs,
-            risks: result.evidence.risks,
-            humanReviewPoints: result.evidence.humanReviewPoints,
+            confidenceScore: resultValue.evidence.confidenceScore,
+            translatedConstructs: resultValue.evidence.translatedConstructs,
+            risks: resultValue.evidence.risks,
+            humanReviewPoints: resultValue.evidence.humanReviewPoints,
           });
         }
       } catch (indexErr) {
         logger.error("Translation evidence indexing failed (non-blocking)", { error: indexErr });
       }
 
-      eventBus?.emit({ type: "translation:finalized", timestamp: new Date().toISOString(), payload: { jobId: req.params.id, confidence: result.evidence?.confidenceScore } });
-      res.json(result);
+      eventBus?.emit({ type: "translation:finalized", timestamp: new Date().toISOString(), payload: { jobId: req.params.id, confidence: resultValue.evidence?.confidenceScore } });
+      res.json(resultValue);
     } catch (err) {
       const status = errorStatus(err);
       logger.error("Translation finalize failed", { error: err });

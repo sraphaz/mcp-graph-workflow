@@ -53,9 +53,9 @@ function fnBodyAlreadyLogs(source: string, openBraceIdx: number): boolean {
   // Walk forward to find the matching closing brace.
   let depth = 1;
   for (let i = openBraceIdx + 1; i < source.length; i++) {
-    const c = source[i];
-    if (c === "{") depth++;
-    else if (c === "}") {
+    const cVar = source[i];
+    if (cVar === "{") depth++;
+    else if (cVar === "}") {
       depth--;
       if (depth === 0) {
         const body = source.slice(openBraceIdx + 1, i);
@@ -70,6 +70,7 @@ function hasLoggerImport(source: string): boolean {
   return source.includes(LOGGER_IMPORT_PREFIX);
 }
 
+/** addLogging — auto-generated description placeholder. */
 export function addLogging(
   source: string,
   opts: AddLoggingOptions = {},
@@ -83,10 +84,10 @@ export function addLogging(
 
   EXPORTED_ASYNC_FN_RE.lastIndex = 0;
   const matches = [...source.matchAll(EXPORTED_ASYNC_FN_RE)];
-  for (const m of matches) {
-    if (m.index === undefined) continue;
-    const groups = m.groups as { indent: string; name: string; params: string };
-    const fullStart = m.index + offset;
+  for (const mVar of matches) {
+    if (mVar.index === undefined) continue;
+    const groups = mVar.groups as { indent: string; name: string; params: string };
+    const fullStart = mVar.index + offset;
     const braceIdx = out.indexOf("{", fullStart);
     if (braceIdx < 0) continue;
     if (fnBodyAlreadyLogs(out, braceIdx)) continue;

@@ -335,3 +335,50 @@ export function pruneOrphanWorktrees(options?: PruneOptions): PruneResult {
     return { pruned: false, reapedBranches, reapedWorktrees, error };
   }
 }
+
+/**
+ * Reap any shadow worktrees + branches whose name starts with
+ * `ai-shadow/${nodeId}-`. Handle-less safety net invoked from the
+ * `task:post-complete` and `task:error` hooks: the caller forgot
+ * (or couldn't) round-trip the original ShadowBranchHandle, so we
+ * recover the worktree path by scanning `git worktree list`.
+ *
+ * Idempotent (re-running on a cleaned tree returns reaped=0). Never
+ * throws — branch-level failures are logged at debug and counted as
+ * un-reaped, so the hook bus stays healthy.
+ */
+export function reapShadowForNode(nodeId: string, cwd?: string): PruneResult {
+  if (!nodeId) {
+    return { pruned: true, reapedBranches: 0, reapedWorktrees: 0 };
+  }
+  const execOpts = {
+    cwd: cwd ?? process?.cwd() ?? ".",
+    encoding: "utf-8" as const,
+    timeout: 10000,
+  };
+  const prefix = `ai-shadow/${nodeId}-`;
+  const wtMap = listShadowWorktrees(execOpts);
+  let reapedBranches = 0;
+  let reapedWorktrees = 0;
+
+  for (const [branch, wtPath] of wtMap) {
+    if (!branch.startsWith(prefix)) continue;
+    try {
+      execSync(`git worktree remove --force ${wtPath}`, execOpts);
+      reapedWorktrees += 1;
+    } catch (err) {
+      logger.debug("shadow-branch:reap:wt-remove-failed", { branch, wtPath, error: String(err) });
+    }
+    try {
+      execSync(`git branch -D ${branch}`, execOpts);
+      reapedBranches += 1;
+    } catch (err) {
+      logger.debug("shadow-branch:reap:branch-delete-failed", { branch, error: String(err) });
+    }
+  }
+
+  if (reapedBranches > 0 || reapedWorktrees > 0) {
+    logger.info("shadow-branch:reap-ok", { nodeId, reapedBranches, reapedWorktrees });
+  }
+  return { pruned: true, reapedBranches, reapedWorktrees };
+}

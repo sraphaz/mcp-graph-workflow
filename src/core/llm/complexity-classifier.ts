@@ -62,6 +62,7 @@ export interface ComplexityDecision {
   override: boolean;
 }
 
+/** classifyComplexity — auto-generated description placeholder. */
 export function classifyComplexity(input: ComplexityInput): ComplexityDecision {
   if (input.override) {
     return { tier: input.override, reason: "operator-override", override: true };

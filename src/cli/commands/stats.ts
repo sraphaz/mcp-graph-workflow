@@ -24,6 +24,7 @@ function output(msg: string): void {
   process.stdout.write(msg + "\n");
 }
 
+/** statsCommand — auto-generated description placeholder. */
 export function statsCommand(): Command {
   return new Command("stats")
     .description("Show graph statistics")

@@ -124,9 +124,9 @@ function searchExistingObjects(
   for (const type of request.objectTypes) {
     try {
       const results = knowledgeStore.search(type.replace(/_/g, " "), 5);
-      for (const r of results) {
-        if (r.sourceType === "siebel_sif" || r.sourceType === "siebel_generated") {
-          summaries.push(docToSummary(r));
+      for (const rVar of results) {
+        if (rVar.sourceType === "siebel_sif" || rVar.sourceType === "siebel_generated") {
+          summaries.push(docToSummary(rVar));
         }
       }
     } catch {
@@ -142,10 +142,10 @@ function searchExistingObjects(
   for (const word of descWords) {
     try {
       const results = knowledgeStore.search(word, 5);
-      for (const r of results) {
-        if (r.sourceType === "siebel_sif" || r.sourceType === "siebel_generated") {
-          if (!summaries.some((s) => s.title === r.title)) {
-            summaries.push(docToSummary(r));
+      for (const rVar of results) {
+        if (rVar.sourceType === "siebel_sif" || rVar.sourceType === "siebel_generated") {
+          if (!summaries.some((s) => s.title === rVar.title)) {
+            summaries.push(docToSummary(rVar));
           }
         }
       }
@@ -188,9 +188,9 @@ function searchRelatedDocs(
   for (const word of words) {
     try {
       const results = knowledgeStore.search(word, 5);
-      for (const r of results) {
-        if (docTypes.has(r.sourceType) && !summaries.some((s) => s.title === r.title)) {
-          summaries.push(docToSummary(r));
+      for (const rVar of results) {
+        if (docTypes.has(rVar.sourceType) && !summaries.some((s) => s.title === rVar.title)) {
+          summaries.push(docToSummary(rVar));
         }
       }
     } catch {
@@ -202,9 +202,9 @@ function searchRelatedDocs(
   for (const type of request.objectTypes) {
     try {
       const results = knowledgeStore.search(type.replace(/_/g, " "), 5);
-      for (const r of results) {
-        if (docTypes.has(r.sourceType) && !summaries.some((s) => s.title === r.title)) {
-          summaries.push(docToSummary(r));
+      for (const rVar of results) {
+        if (docTypes.has(rVar.sourceType) && !summaries.some((s) => s.title === rVar.title)) {
+          summaries.push(docToSummary(rVar));
         }
       }
     } catch {
@@ -298,9 +298,9 @@ function buildPrompt(
     parts.push("");
     parts.push("## Existing Siebel Objects (for reference)");
     parts.push("");
-    for (const obj of existingObjects.slice(0, 5)) {
-      parts.push(`### ${obj.title}`);
-      parts.push(obj.content.slice(0, 500));
+    for (const objValue of existingObjects.slice(0, 5)) {
+      parts.push(`### ${objValue.title}`);
+      parts.push(objValue.content.slice(0, 500));
       parts.push("");
     }
   }

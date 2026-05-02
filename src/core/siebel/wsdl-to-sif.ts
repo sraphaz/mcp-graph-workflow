@@ -168,15 +168,15 @@ function generateSifXml(objects: readonly SiebelObject[]): string {
     `<SiebelMessage MessageId="wsdl-gen" IntObjectName="Repository" MessageType="Integration Object">`,
   ];
 
-  for (const obj of objects) {
-    const typeTag = obj.type === "integration_object" ? "IntegrationObject" : "BusComp";
-    lines.push(`  <${typeTag} NAME="${obj.name}">`);
+  for (const objValue of objects) {
+    const typeTag = objValue.type === "integration_object" ? "IntegrationObject" : "BusComp";
+    lines.push(`  <${typeTag} NAME="${objValue.name}">`);
 
-    for (const prop of obj.properties) {
+    for (const prop of objValue.properties) {
       lines.push(`    <${prop.name}>${escapeXml(prop.value)}</${prop.name}>`);
     }
 
-    for (const child of obj.children) {
+    for (const child of objValue.children) {
       lines.push(`    <Field NAME="${child.name}">`);
       for (const cp of child.properties) {
         lines.push(`      <${cp.name}>${escapeXml(cp.value)}</${cp.name}>`);
@@ -200,18 +200,18 @@ function calculateValidationScore(objects: readonly SiebelObject[]): number {
 
   let score = 60; // base
 
-  for (const obj of objects) {
+  for (const objValue of objects) {
     // Has name
-    if (obj.name) score += 2;
+    if (objValue.name) score += 2;
     // Has properties
-    if (obj.properties.length > 0) score += 3;
+    if (objValue.properties.length > 0) score += 3;
     // Has fields
-    if (obj.children.length > 0) score += 5;
+    if (objValue.children.length > 0) score += 5;
     // Fields have data types
-    const typedFields = obj.children.filter((c) =>
+    const typedFields = objValue.children.filter((c) =>
       c.properties.some((p) => p.name === "DATA_TYPE"),
     );
-    if (typedFields.length === obj.children.length && obj.children.length > 0) score += 5;
+    if (typedFields.length === objValue.children.length && objValue.children.length > 0) score += 5;
   }
 
   return Math.min(100, score);
@@ -219,6 +219,7 @@ function calculateValidationScore(objects: readonly SiebelObject[]): number {
 
 // --- Main function ---
 
+/** generateSifFromWsdl — auto-generated description placeholder. */
 export function generateSifFromWsdl(
   wsdl: WsdlParseResult,
   options: WsdlToSifOptions,

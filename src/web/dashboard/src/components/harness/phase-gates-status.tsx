@@ -44,6 +44,7 @@ const PHASE_GATES: PhaseGate[] = [
   { phase: "LISTENING", label: "Listening", minScore: null, minGrade: null },
 ];
 
+/** PhaseGatesStatus — auto-generated description placeholder. */
 export function PhaseGatesStatus(): React.JSX.Element {
   const [data, setData] = useState<ScoreResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -20,6 +20,7 @@ import type { StoreRef } from "../../core/store/store-manager.js";
 import type { NodeStatus, NodeType } from "../../core/graph/graph-types.js";
 import { graphToMermaid } from "../../core/graph/mermaid-export.js";
 
+/** createGraphRouter — auto-generated description placeholder. */
 export function createGraphRouter(storeRef: StoreRef): Router {
   const router = Router();
 

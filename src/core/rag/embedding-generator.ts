@@ -70,22 +70,22 @@ function hashEmbed(text: string): number[] {
 
   const words = lower.split(/\s+/).filter(Boolean);
   for (const word of words) {
-    let h = 0;
+    let hVar = 0;
     for (let i = 0; i < word.length; i++) {
-      h = ((h * 31 + word.charCodeAt(i)) >>> 0);
+      hVar = ((hVar * 31 + word.charCodeAt(i)) >>> 0);
     }
-    const idx = h % EMBEDDING_DIM;
+    const idx = hVar % EMBEDDING_DIM;
     vec[idx] += 2;
   }
 
   let norm = 0;
-  for (let d = 0; d < EMBEDDING_DIM; d++) {
-    norm += vec[d] * vec[d];
+  for (let dVar = 0; dVar < EMBEDDING_DIM; dVar++) {
+    norm += vec[dVar] * vec[dVar];
   }
   norm = Math.sqrt(norm);
   if (norm > 0) {
-    for (let d = 0; d < EMBEDDING_DIM; d++) {
-      vec[d] /= norm;
+    for (let dVar = 0; dVar < EMBEDDING_DIM; dVar++) {
+      vec[dVar] /= norm;
     }
   }
 
@@ -123,6 +123,7 @@ async function getProvider(): Promise<EmbeddingProvider> {
 
 // ── Public API ──
 
+/** generateEmbedding — auto-generated description placeholder. */
 export async function generateEmbedding(text: string): Promise<number[]> {
   if (!text || text.trim().length === 0) {
     return new Array<number>(EMBEDDING_DIM).fill(0);
@@ -133,6 +134,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return provider.generateEmbedding(truncated);
 }
 
+/** generateEmbeddingBatch — auto-generated description placeholder. */
 export async function generateEmbeddingBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
 

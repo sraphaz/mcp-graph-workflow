@@ -179,8 +179,8 @@ function assessKnowledgeCoverage(store: SqliteStore, node: GraphNode): number {
 
     // Score: proportion of terms that got matches, capped at 1
     const matchedTerms = new Set<string>();
-    for (const result of results) {
-      const contentLower = (result.title + " " + result.content).toLowerCase();
+    for (const resultValue of results) {
+      const contentLower = (resultValue.title + " " + resultValue.content).toLowerCase();
       for (const term of terms) {
         if (contentLower.includes(term.toLowerCase())) {
           matchedTerms.add(term.toLowerCase());

@@ -81,8 +81,8 @@ export function isDunderName(name: string): boolean {
  * definition, never to nested ones.
  */
 export function findDecoratedWrapper(node: PySyntaxNodeLike): PySyntaxNodeLike | null {
-  const p = node.parent;
-  if (p && p.type === DECORATED_DEFINITION_TYPE) return p;
+  const pVar = node.parent;
+  if (pVar && pVar.type === DECORATED_DEFINITION_TYPE) return pVar;
   return null;
 }
 

@@ -31,6 +31,7 @@ interface MetricsData {
   lockedObjects: Array<{ name: string; type: string; lockedBy: string }>;
 }
 
+/** MetricsSection — auto-generated description placeholder. */
 export function MetricsSection(): React.JSX.Element {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);

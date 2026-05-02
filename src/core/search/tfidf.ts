@@ -93,8 +93,8 @@ export class TfIdfIndex {
     const queryTokens = tokenize(query);
     if (queryTokens.length === 0) return [];
 
-    const n = this.docs.length;
-    if (n === 0) return [];
+    const nVar = this.docs.length;
+    if (nVar === 0) return [];
 
     const results: Array<{ id: string; score: number }> = [];
 
@@ -108,7 +108,7 @@ export class TfIdfIndex {
         if (df === 0) continue;
 
         // IDF with smoothing: log(1 + N/df)
-        const idf = Math.log(1 + n / df);
+        const idf = Math.log(1 + nVar / df);
         score += tf * idf;
       }
 
@@ -133,8 +133,8 @@ export function rerankWithTfIdf(
   limit: number = 20,
 ): Array<{ id: string; score: number }> {
   const index = new TfIdfIndex();
-  for (const c of candidates) {
-    index.addDocument(c.id, c.text);
+  for (const cVar of candidates) {
+    index.addDocument(cVar.id, cVar.text);
   }
   return index.search(query, limit);
 }

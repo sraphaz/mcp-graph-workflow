@@ -36,6 +36,7 @@ import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
 import { indexNodeAsKnowledge, removeNodeFromKnowledge } from "../../core/rag/node-indexer.js";
 import { extractAgentId } from "../agent-identity.js";
 
+/** registerNode — auto-generated description placeholder. */
 export function registerNode(server: McpServer, store: SqliteStore): void {
   server.tool(
     "node",
@@ -321,16 +322,16 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
             blocked: entry.blocked,
             // Sprint 7.6 #7.6.8 — same auto-fill as the single-add branch.
             metadata: ((): GraphNode["metadata"] => {
-              const m = entry.metadata as Record<string, unknown> | undefined;
-              if (m && typeof m.provenance === "object" && m.provenance !== null) {
-                return m as GraphNode["metadata"];
+              const mVar = entry.metadata as Record<string, unknown> | undefined;
+              if (mVar && typeof mVar.provenance === "object" && mVar.provenance !== null) {
+                return mVar as GraphNode["metadata"];
               }
               const provenance = {
                 source: "mcp" as const,
                 actor: agentId ?? process.env.USER ?? "unknown",
                 ts: timestamp,
               };
-              return { ...(m ?? {}), provenance } as GraphNode["metadata"];
+              return { ...(mVar ?? {}), provenance } as GraphNode["metadata"];
             })(),
             createdAt: timestamp,
             updatedAt: timestamp,

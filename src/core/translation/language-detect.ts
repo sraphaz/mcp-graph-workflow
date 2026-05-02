@@ -291,6 +291,7 @@ const UNIQUE_WEIGHT = 3;
 const STRONG_WEIGHT = 1.5;
 const WEAK_WEIGHT = 0.5;
 
+/** detectLanguageFromCode — auto-generated description placeholder. */
 export function detectLanguageFromCode(code: string): LanguageDetectionResult {
   if (!code.trim()) {
     return { languageId: "unknown", confidence: 0, indicators: [] };

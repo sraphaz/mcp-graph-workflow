@@ -65,11 +65,11 @@ export class OcrService {
 
   async terminate(): Promise<void> {
     if (!this.worker) return;
-    const w = this.worker;
+    const wVar = this.worker;
     this.worker = null;
     this.loading = null;
     try {
-      await w.terminate();
+      await wVar.terminate();
     } catch (err) {
       logger.debug("journey:ocr:terminate:fail", { error: err instanceof Error ? err.message : String(err) });
     }

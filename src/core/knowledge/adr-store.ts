@@ -35,6 +35,7 @@ export interface AdrEntry {
 
 const SLUG_INVALID = /[^a-z0-9]+/g;
 
+/** slugify — auto-generated description placeholder. */
 export function slugify(title: string): string {
   return title
     .toLowerCase()
@@ -52,16 +53,17 @@ function isoDate(date: Date = new Date()): string {
 /** Pure: determines next adr-NNNN number based on existing files in dir. */
 export function nextAdrNumber(existingFiles: string[]): number {
   let max = 0;
-  for (const f of existingFiles) {
-    const match = f.match(/adr-(\d+)/);
+  for (const fVar of existingFiles) {
+    const match = fVar.match(/adr-(\d+)/);
     if (match) {
-      const n = Number(match[1]);
-      if (n > max) max = n;
+      const nVar = Number(match[1]);
+      if (nVar > max) max = nVar;
     }
   }
   return max + 1;
 }
 
+/** buildAdrBody — auto-generated description placeholder. */
 export function buildAdrBody(input: AdrInput, number: number): string {
   const status = input.status ?? "Proposed";
   const date = isoDate(input.date);
@@ -100,6 +102,7 @@ export interface AdrCreateResult {
   filename: string;
 }
 
+/** adrCreate — auto-generated description placeholder. */
 export function adrCreate(input: AdrInput, dir: string = DEFAULT_ADR_DIR): AdrCreateResult {
   if (!input.title.trim()) throw new InvalidArgumentError("adr-store:create — title required");
   if (!input.decision.trim()) throw new InvalidArgumentError("adr-store:create — decision required");
@@ -131,17 +134,18 @@ function parseFrontmatter(content: string): Record<string, string> {
   return out;
 }
 
+/** adrList — auto-generated description placeholder. */
 export function adrList(dir: string = DEFAULT_ADR_DIR): AdrEntry[] {
   if (!existsSync(dir)) return [];
   const files = readdirSync(dir).filter((f) => f.endsWith(".md"));
   const entries: AdrEntry[] = [];
-  for (const f of files) {
-    const path = join(dir, f);
+  for (const fVar of files) {
+    const path = join(dir, fVar);
     const content = readFileSync(path, "utf-8");
     const fm = parseFrontmatter(content);
-    const number = Number(fm.number ?? f.match(/adr-(\d+)/)?.[1] ?? 0);
-    const title = fm.title ?? f.replace(/\.md$/, "");
-    const date = fm.date ?? f.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? "0000-00-00";
+    const number = Number(fm.number ?? fVar.match(/adr-(\d+)/)?.[1] ?? 0);
+    const title = fm.title ?? fVar.replace(/\.md$/, "");
+    const date = fm.date ?? fVar.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? "0000-00-00";
     const status = fm.status ?? "Proposed";
     entries.push({ number, title, date, path, status });
   }

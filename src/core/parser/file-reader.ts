@@ -74,8 +74,8 @@ export async function readFileContent(
 
   switch (ext) {
     case ".pdf": {
-      const result = await readPdfBuffer(buffer);
-      text = result.text;
+      const resultValue = await readPdfBuffer(buffer);
+      text = resultValue.text;
       break;
     }
     case ".html":

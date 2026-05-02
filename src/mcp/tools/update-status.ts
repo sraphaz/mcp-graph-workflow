@@ -37,6 +37,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   done: ["in_progress"],  // allow reopen
 };
 
+/** registerUpdateStatus — auto-generated description placeholder. */
 export function registerUpdateStatus(server: McpServer, store: SqliteStore): void {
   server.tool(
     "update_status",
@@ -69,9 +70,9 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
           }
         }
 
-        const result = store.bulkUpdateStatus(ids, status as NodeStatus);
-        logger.info("tool:update_status:ok", { count: ids.length, status, updated: result.updated.length });
-        const bulkResult: Record<string, unknown> = { ok: true, ...result };
+        const resultValue = store.bulkUpdateStatus(ids, status as NodeStatus);
+        logger.info("tool:update_status:ok", { count: ids.length, status, updated: resultValue.updated.length });
+        const bulkResult: Record<string, unknown> = { ok: true, ...resultValue };
         if (bulkWarnings.length > 0) bulkResult.warnings = bulkWarnings;
         return mcpText(bulkResult);
       }
@@ -115,10 +116,10 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
         }
       }
 
-      const result: Record<string, unknown> = { ok: true, node: updated };
-      if (transitionWarning) result.warning = transitionWarning;
+      const resultValue: Record<string, unknown> = { ok: true, node: updated };
+      if (transitionWarning) resultValue.warning = transitionWarning;
       if (status === "done" && !rationale) {
-        result.hint = "Tip: provide a 'rationale' parameter when marking tasks done to capture learnings for future RAG context.";
+        resultValue.hint = "Tip: provide a 'rationale' parameter when marking tasks done to capture learnings for future RAG context.";
       }
 
       // Auto-promote parent epic when all children are done + cascade down
@@ -126,16 +127,16 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
         const nodeId = ids[0];
         const cascadeResult = cascadeDownOnDone(store, nodeId);
         if (cascadeResult.cascaded.length > 0) {
-          result.cascadedDown = cascadeResult.cascaded;
+          resultValue.cascadedDown = cascadeResult.cascaded;
         }
 
         const promoteResult = autoPromoteEpic(store, nodeId);
         if (promoteResult.promoted.length > 0) {
-          result.autoPromoted = promoteResult.promoted;
+          resultValue.autoPromoted = promoteResult.promoted;
         }
       }
 
-      return mcpText(result);
+      return mcpText(resultValue);
     },
   );
 }

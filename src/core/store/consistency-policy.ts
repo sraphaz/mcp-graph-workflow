@@ -71,7 +71,7 @@ export function resolveGraphMemoryConflict(
 ): ConflictResolution {
   const STALE_SENTINEL = 999;
 
-  const result = db
+  const resultValue = db
     .prepare(
       `UPDATE knowledge_documents
        SET staleness_days = ?, updated_at = datetime('now')
@@ -81,14 +81,14 @@ export function resolveGraphMemoryConflict(
 
   logger.debug("consistency:graph_memory_conflict_resolved", {
     nodeId,
-    memoryDocsAffected: result.changes,
+    memoryDocsAffected: resultValue.changes,
   });
 
   return {
     winner: "graph",
     nodeId,
     staleness: "stale",
-    memoryDocsAffected: result.changes,
+    memoryDocsAffected: resultValue.changes,
   };
 }
 

@@ -27,6 +27,7 @@ const CreateEdgeBodySchema = GraphEdgeSchema.omit({ id: true, createdAt: true })
   id: z.string().optional(),
 });
 
+/** createEdgesRouter — auto-generated description placeholder. */
 export function createEdgesRouter(storeRef: StoreRef): Router {
   const router = Router();
 

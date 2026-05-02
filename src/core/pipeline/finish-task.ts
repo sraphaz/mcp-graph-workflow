@@ -197,13 +197,13 @@ export async function finishTask(
       // epic_id = first ancestor epic (derived from parentId chain); fallback to parentId or nodeId
       const epicId = node?.parentId ?? nodeId;
       const artifactsStore = new SubtaskArtifactsStore(store);
-      for (const a of artifacts) {
+      for (const aVar of artifacts) {
         const id = artifactsStore.insert({
           nodeId,
           epicId,
-          kind: a.kind,
-          path: a.path ?? null,
-          content: a.content,
+          kind: aVar.kind,
+          path: aVar.path ?? null,
+          content: aVar.content,
         });
         artifactIds.push(id);
       }
@@ -263,16 +263,16 @@ export async function finishTask(
         scanDir(srcDir);
 
         if (files.length > 0) {
-          const result = validateFiles(files);
-          const errors = result.violations.filter((v) => v.severity === "error");
-          const warnings = result.violations.filter((v) => v.severity === "warning");
+          const resultValue = validateFiles(files);
+          const errors = resultValue.violations.filter((v) => v.severity === "error");
+          const warnings = resultValue.violations.filter((v) => v.severity === "warning");
 
           contractGate = {
             mode: contractMode,
-            violationCount: result.violationCount,
+            violationCount: resultValue.violationCount,
             errorCount: errors.length,
             warningCount: warnings.length,
-            violations: result.violations.slice(0, 20), // limit to 20 to avoid bloat
+            violations: resultValue.violations.slice(0, 20), // limit to 20 to avoid bloat
             blocked: contractMode === "strict" && errors.length > 0,
           };
         } else {
@@ -562,6 +562,94 @@ export async function finishTask(
       decisionIndexed = true;
     } catch (err) {
       logger.warn("pipeline:finish_task:decision_index_failed", { error: String(err) });
+    }
+  }
+
+  // 3a-success. Strategy-based experiential memory (paper §4.2.2 + §5.1.2).
+  //     When ≥3 grade-A finishes share a pattern key (tag set or parent
+  //     epic), distill a strategy_<key>_<date>.md memory. Mirrors the
+  //     existing failure-side IssuePatternTracker for symmetry.
+  if (status === "done" && rationale && dodReport.grade === "A" && (testGate?.status ?? "skipped") === "passed") {
+    try {
+      const node = store.getNodeById(nodeId);
+      if (node) {
+        const { SuccessPatternTracker, derivePatternKey, buildStrategyMemory } = await import("../harness/success-pattern-tracker.js");
+        const tracker = new SuccessPatternTracker(store.getDb());
+        const patternKey = derivePatternKey(node);
+        const resultValue = tracker.recordSuccess(patternKey, nodeId, rationale);
+        if (resultValue.shouldEmit && resultValue.patternKey) {
+          const payload = buildStrategyMemory({
+            patternKey: resultValue.patternKey,
+            nodeIds: resultValue.contributingNodeIds,
+            rationales: resultValue.contributingRationales,
+          });
+          const { writeMemory } = await import("../memory/memory-reader.js");
+          await writeMemory(process.cwd(), payload.name, payload.content);
+          logger.info("pipeline:finish_task:strategy_memory_written", { nodeId, name: payload.name, patternKey: resultValue.patternKey, count: resultValue.count });
+        }
+      }
+    } catch (err) {
+      logger.warn("pipeline:finish_task:strategy_memory_failed", { error: String(err) });
+    }
+  }
+
+  // 3a. Case-based experiential memory distillation (paper §4.2.1 + §5.1.1
+  //     — Hu et al. 2026). On grade-A finish with non-trivial rationale and
+  //     observed test files, write a case_<nodeId>_<date>.md memory so the
+  //     next similar task can replay the working approach.
+  if (status === "done" && rationale) {
+    try {
+      const node = store.getNodeById(nodeId);
+      const observedTestFiles = Array.from(new Set([
+        ...(testFiles ?? []),
+        ...(discoveredTestFiles ?? []),
+      ]));
+      if (node) {
+        const { buildCaseMemory } = await import("../memory/case-distillation.js");
+        const caseResult = buildCaseMemory({
+          node,
+          grade: dodReport.grade,
+          rationale,
+          testFiles: observedTestFiles,
+        });
+        if (caseResult.shouldWrite && caseResult.name && caseResult.content) {
+          const { writeMemory } = await import("../memory/memory-reader.js");
+          await writeMemory(process.cwd(), caseResult.name, caseResult.content);
+          logger.info("pipeline:finish_task:case_memory_written", { nodeId, name: caseResult.name });
+        } else {
+          logger.debug("pipeline:finish_task:case_memory_skipped", { nodeId, reason: caseResult.reason });
+        }
+      }
+    } catch (err) {
+      logger.warn("pipeline:finish_task:case_memory_failed", { error: String(err) });
+    }
+  }
+
+  // 3b. RAG-citation → quality feedback loop (paper §7.3 — Hu et al. 2026).
+  //     Derive a signal from DoD grade + test gate, apply to every docId
+  //     start_task surfaced. Closes the loop the survey calls out as the
+  //     standing open problem in agent-memory dynamics.
+  if (status === "done") {
+    try {
+      const taskNode = store.getNodeById(nodeId);
+      const meta = taskNode?.metadata as Record<string, unknown> | undefined;
+      const ragOffered = Array.isArray(meta?.ragOffered) ? (meta.ragOffered as string[]) : [];
+      if (ragOffered.length > 0) {
+        const { applyRagFeedback, deriveFeedbackSignal } = await import("../rag/rag-feedback.js");
+        const signal = deriveFeedbackSignal(
+          dodReport.grade,
+          (testGate?.status ?? "skipped") as "passed" | "failed" | "skipped" | "blocked",
+          testGate?.failed ?? 0,
+        );
+        const resultValue = applyRagFeedback(store.getDb(), ragOffered, signal, taskNode?.title ?? nodeId);
+        logger.info("pipeline:finish_task:rag_feedback_applied", {
+          nodeId,
+          signal,
+          ...resultValue,
+        });
+      }
+    } catch (err) {
+      logger.warn("pipeline:finish_task:rag_feedback_failed", { error: String(err) });
     }
   }
 

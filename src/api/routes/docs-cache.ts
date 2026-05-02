@@ -30,6 +30,7 @@ function getFreshness(fetchedAt: string): "fresh" | "aging" | "stale" {
   return "stale";
 }
 
+/** createDocsCacheRouter — auto-generated description placeholder. */
 export function createDocsCacheRouter(storeRef: StoreRef): Router {
   const router = Router();
 

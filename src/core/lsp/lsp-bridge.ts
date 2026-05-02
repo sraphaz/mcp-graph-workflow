@@ -605,15 +605,15 @@ export class LspBridge {
 
     // 4. Send LSP request
     try {
-      const result = await client.sendRequest<T>(lspMethod, params);
+      const resultValue = await client.sendRequest<T>(lspMethod, params);
 
       // 5. Cache result
-      if (this.cache && mtime && result != null) {
+      if (this.cache && mtime && resultValue != null) {
         const languageId = this.inferLanguageId(file);
-        this.cache.set("default", cacheKey, operation, languageId, file, result, mtime);
+        this.cache.set("default", cacheKey, operation, languageId, file, resultValue, mtime);
       }
 
-      return result;
+      return resultValue;
     } catch (err) {
       logger.error("lsp-bridge:request-failed", {
         operation,
@@ -818,7 +818,7 @@ export class LspBridge {
 
   private normalizeDocumentSymbol(file: string, raw: RawDocumentSymbol): LspDocumentSymbol {
     if (!raw) return { name: "", kind: "Unknown", file: file ?? "", startLine: 0, endLine: 0 };
-    const result: LspDocumentSymbol = {
+    const resultValue: LspDocumentSymbol = {
       name: raw?.name ?? "",
       kind: SYMBOL_KIND_MAP[raw?.kind] ?? `Unknown(${raw?.kind ?? 0})`,
       file: file ?? "",
@@ -827,11 +827,11 @@ export class LspBridge {
     };
 
     if (raw?.children && (raw?.children?.length ?? 0) > 0) {
-      result.children = raw?.children?.map((child) =>
+      resultValue.children = raw?.children?.map((child) =>
         this.normalizeDocumentSymbol(file, child),
       ) ?? [];
     }
 
-    return result;
+    return resultValue;
   }
 }

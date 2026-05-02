@@ -92,6 +92,7 @@ function cloneDeep(
   }
 }
 
+/** registerCloneNode — auto-generated description placeholder. */
 export function registerCloneNode(server: McpServer, store: SqliteStore): void {
   server.tool(
     "clone_node",
@@ -131,8 +132,8 @@ export function registerCloneNode(server: McpServer, store: SqliteStore): void {
           cloneDeep(store, id, parentForClone, timestamp, nodes);
           return nodes;
         })();
-        for (const c of cloned) {
-          indexNodeAsKnowledge(store.getDb(), c);
+        for (const cVar of cloned) {
+          indexNodeAsKnowledge(store.getDb(), cVar);
         }
         logger.info("tool:clone_node:ok", { sourceId: id, deep: true, clonedCount: cloned.length });
         return mcpText({ ok: true, clonedCount: cloned.length, nodes: cloned });

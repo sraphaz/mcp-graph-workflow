@@ -78,10 +78,10 @@ export class LlmClient {
 
   async probe(): Promise<ProbeResult> {
     try {
-      const result = await this.withRetry(() =>
+      const resultValue = await this.withRetry(() =>
         this.generate([{ role: "user", content: "." }]),
       );
-      return { ok: true, status: 200, message: result.text.slice(0, 32) };
+      return { ok: true, status: 200, message: resultValue.text.slice(0, 32) };
     } catch (err) {
       const status = (err as { status?: number }).status ?? 0;
       return { ok: false, status, message: err instanceof Error ? err.message : String(err) };
@@ -102,7 +102,7 @@ export class LlmClient {
     };
 
     const response = await this.withRetry(async () => {
-      const res = await this.fetch(url, {
+      const resValue = await this.fetch(url, {
         method: "POST",
         headers: {
           "x-api-key": this.options.apiKey,
@@ -111,11 +111,11 @@ export class LlmClient {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const err = await readError(res);
-        throw withStatus(new Error(`anthropic ${res.status}: ${err}`), res.status);
+      if (!resValue.ok) {
+        const err = await readError(resValue);
+        throw withStatus(new Error(`anthropic ${resValue.status}: ${err}`), resValue.status);
       }
-      return (await res.json()) as {
+      return (await resValue.json()) as {
         content: Array<{ type: string; text?: string }>;
         usage?: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number };
       };
@@ -149,7 +149,7 @@ export class LlmClient {
     };
 
     const response = await this.withRetry(async () => {
-      const res = await this.fetch(url, {
+      const resValue = await this.fetch(url, {
         method: "POST",
         headers: {
           authorization: `Bearer ${this.options.apiKey}`,
@@ -158,11 +158,11 @@ export class LlmClient {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const err = await readError(res);
-        throw withStatus(new Error(`copilot ${res.status}: ${err}`), res.status);
+      if (!resValue.ok) {
+        const err = await readError(resValue);
+        throw withStatus(new Error(`copilot ${resValue.status}: ${err}`), resValue.status);
       }
-      return (await res.json()) as {
+      return (await resValue.json()) as {
         choices: Array<{ message?: { content?: string } }>;
         usage?: { prompt_tokens: number; completion_tokens: number };
       };

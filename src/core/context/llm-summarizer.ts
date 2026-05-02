@@ -32,12 +32,14 @@ export interface CompactOptions {
 
 const DEFAULT_CHUNK_CHARS = 4000;
 
+/** totalTokens — auto-generated description placeholder. */
 export function totalTokens(messages: ChatMessage[], counter: TokenCounter): number {
   let sum = 0;
-  for (const m of messages) sum += counter(m.content);
+  for (const mVar of messages) sum += counter(mVar.content);
   return sum;
 }
 
+/** shouldCompact — auto-generated description placeholder. */
 export function shouldCompact(
   messages: ChatMessage[],
   counter: TokenCounter,
@@ -87,12 +89,12 @@ export async function llmCompact(
   const chunkChars = opts.chunkChars ?? DEFAULT_CHUNK_CHARS;
   const maxRecursion = opts.maxRecursion ?? DEFAULT_MAX_RECURSION;
   const out: ChatMessage[] = [];
-  for (const m of messages) {
-    if (m.role !== "tool-result") {
-      out.push(m);
+  for (const mVar of messages) {
+    if (mVar.role !== "tool-result") {
+      out.push(mVar);
       continue;
     }
-    const compacted = await recursiveCompactText(m.content, summarize, chunkChars, maxRecursion);
+    const compacted = await recursiveCompactText(mVar.content, summarize, chunkChars, maxRecursion);
     out.push({ role: "tool-result", content: compacted });
   }
   return out;

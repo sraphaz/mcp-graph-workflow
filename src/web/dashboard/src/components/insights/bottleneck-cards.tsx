@@ -36,6 +36,7 @@ const CATEGORIES: CategoryConfig[] = [
   { key: "oversizedTasks", label: "Oversized", color: "#8b5cf6", bgColor: "#8b5cf620" },
 ];
 
+/** BottleneckCards — auto-generated description placeholder. */
 export function BottleneckCards({ bottlenecks, className }: BottleneckCardsProps): React.JSX.Element {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const hasCriticalPath = bottlenecks.criticalPath && bottlenecks.criticalPath.length > 0;

@@ -28,6 +28,7 @@ export interface MemoryTreeNode {
   memory?: { name: string; content: string };
 }
 
+/** buildMemoryTree — auto-generated description placeholder. */
 export function buildMemoryTree(
   memories: Array<{ name: string; content: string }>,
 ): MemoryTreeNode[] {

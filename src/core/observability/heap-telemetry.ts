@@ -27,16 +27,18 @@ export interface MemoryHealth extends MemorySnapshot {
 
 export type HeapSampler = () => MemorySnapshot;
 
+/** defaultSampler — auto-generated description placeholder. */
 export function defaultSampler(now: number = Date.now()): MemorySnapshot {
-  const m = process.memoryUsage();
+  const mVar = process.memoryUsage();
   return {
-    heapMB: m.heapUsed / MB,
-    externalMB: m.external / MB,
-    rssMB: m.rss / MB,
+    heapMB: mVar.heapUsed / MB,
+    externalMB: mVar.external / MB,
+    rssMB: mVar.rss / MB,
     ts: now,
   };
 }
 
+/** recommendForSnapshot — auto-generated description placeholder. */
 export function recommendForSnapshot(snapshot: MemorySnapshot): string[] {
   const out: string[] = [];
   if (snapshot.heapMB > HEAP_HIGH_MB) {
@@ -52,6 +54,7 @@ export function recommendForSnapshot(snapshot: MemorySnapshot): string[] {
   return out;
 }
 
+/** memoryHealth — auto-generated description placeholder. */
 export function memoryHealth(sampler: HeapSampler = defaultSampler): MemoryHealth {
   const snap = sampler();
   return { ...snap, recommendations: recommendForSnapshot(snap) };

@@ -17,6 +17,7 @@
 
 import { useAutonomyStatus, useAutonomySession, useAutonomyBudget } from "@/hooks/use-autonomy";
 
+/** AutopilotTab — auto-generated description placeholder. */
 export function AutopilotTab(): React.JSX.Element {
   const { data: status, loading: statusLoading, error } = useAutonomyStatus();
   const { data: session, loading: sessionLoading } = useAutonomySession();

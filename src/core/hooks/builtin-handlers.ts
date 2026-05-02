@@ -138,17 +138,17 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
     const tool = event.payload["toolName"];
     const input = event.payload["toolInput"];
     if (typeof tool !== "string") return;
-    const result = checkApproval({
+    const resultValue = checkApproval({
       tool,
       input: (input && typeof input === "object") ? (input as Record<string, unknown>) : null,
     });
-    if (result.requires_approval) {
+    if (resultValue.requires_approval) {
       logger.warn("hook:approval-required:detected", {
         tool,
         nodeId: event.payload["nodeId"],
-        severity: result.severity,
-        reason: result.reason,
-        matched: result.matchedPatterns,
+        severity: resultValue.severity,
+        reason: resultValue.reason,
+        matched: resultValue.matchedPatterns,
       });
       await bus.emit({
         channel: "approval:required",
@@ -156,9 +156,9 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
         payload: {
           nodeId: event.payload["nodeId"],
           tool,
-          severity: result.severity,
-          reason: result.reason,
-          matched: result.matchedPatterns,
+          severity: resultValue.severity,
+          reason: resultValue.reason,
+          matched: resultValue.matchedPatterns,
         },
       });
     }
@@ -174,17 +174,17 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
       const nodeId = event.payload["nodeId"];
       if (typeof nodeId !== "string" || nodeId.length === 0) return;
       try {
-        const result = await verifyAndPromote(store, nodeId);
-        if (result.promoted.length > 0) {
+        const resultValue = await verifyAndPromote(store, nodeId);
+        if (resultValue.promoted.length > 0) {
           logger.info("hook:verified-auto-promote:done", {
             triggeredBy: nodeId,
-            promoted: result.promoted,
+            promoted: resultValue.promoted,
           });
         }
-        if (result.rejected.length > 0) {
+        if (resultValue.rejected.length > 0) {
           logger.warn("hook:verified-auto-promote:rejected", {
             triggeredBy: nodeId,
-            rejected: result.rejected,
+            rejected: resultValue.rejected,
           });
         }
       } catch (err) {

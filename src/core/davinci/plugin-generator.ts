@@ -50,6 +50,7 @@ export function validateJavaIdentifiers(opts: { className: string; packageName: 
   }
 }
 
+/** validateAttributeContract — auto-generated description placeholder. */
 export function validateAttributeContract(attributes: readonly string[]): void {
   for (const attribute of attributes) {
     if (!/^[A-Za-z][A-Za-z0-9_.-]*$/.test(attribute)) {
@@ -93,6 +94,7 @@ export interface GeneratePluginResult {
 
 // ── Main Entry Point ──────────────────────────────────────────────────
 
+/** generatePlugin — auto-generated description placeholder. */
 export function generatePlugin(options: GeneratePluginOptions): GeneratePluginResult {
   const {
     code,

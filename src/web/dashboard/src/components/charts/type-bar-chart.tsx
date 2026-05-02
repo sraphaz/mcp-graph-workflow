@@ -24,6 +24,7 @@ interface TypeBarChartProps {
   className?: string;
 }
 
+/** TypeBarChart — auto-generated description placeholder. */
 export function TypeBarChart({ data, className }: TypeBarChartProps): React.JSX.Element {
   const filtered = data.filter((d) => d.count > 0);
 

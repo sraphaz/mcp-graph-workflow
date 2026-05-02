@@ -29,6 +29,7 @@ const HEALTH_COLORS: Record<string, { bg: string; text: string; border: string }
   red: { bg: "bg-red-500/10", text: "text-red-500", border: "border-red-500/30" },
 };
 
+/** ContextTab — auto-generated description placeholder. */
 export function ContextTab(): React.JSX.Element {
   const { budget, loading, error, refresh } = useContextBudget();
   const dream = useDream();

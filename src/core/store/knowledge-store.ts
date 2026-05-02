@@ -113,7 +113,7 @@ export class KnowledgeStore {
 
     // Bug #E1-T05: use INSERT OR IGNORE with UNIQUE(content_hash, source_id) constraint
     // to prevent race condition — no SELECT+INSERT gap where duplicates can sneak in
-    const result = this.db.prepare(
+    const resultValue = this.db.prepare(
       `INSERT OR IGNORE INTO knowledge_documents
         (id, source_type, source_id, title, content, content_hash, chunk_index, metadata, quality_score, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -131,7 +131,7 @@ export class KnowledgeStore {
       timestamp,
     );
 
-    if (result.changes === 0) {
+    if (resultValue.changes === 0) {
       // Dedup hit — return existing document
       logger.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
       const existing = this.db
@@ -277,21 +277,21 @@ export class KnowledgeStore {
    * Delete a knowledge document by ID.
    */
   delete(id: string): boolean {
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM knowledge_documents WHERE id = ?")
       .run(id);
-    return result.changes > 0;
+    return resultValue.changes > 0;
   }
 
   /**
    * Delete all documents from a specific source.
    */
   deleteBySource(sourceType: KnowledgeSourceType, sourceId: string): number {
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM knowledge_documents WHERE source_type = ? AND source_id = ?")
       .run(sourceType, sourceId);
-    logger.info("Knowledge docs deleted by source", { sourceType, sourceId, count: result.changes });
-    return result.changes;
+    logger.info("Knowledge docs deleted by source", { sourceType, sourceId, count: resultValue.changes });
+    return resultValue.changes;
   }
 
   /**
@@ -345,7 +345,7 @@ export class KnowledgeStore {
     if (ids.length === 0) return { removed: 0, removedIds: [] };
     const stmt = this.db.prepare("DELETE FROM knowledge_documents WHERE id = ?");
     const tx = this.db.transaction((rows: Array<{ id: string }>) => {
-      for (const r of rows) stmt.run(r.id);
+      for (const rVar of rows) stmt.run(rVar.id);
     });
     tx(ids);
     const removedIds = ids.map((r) => r.id);

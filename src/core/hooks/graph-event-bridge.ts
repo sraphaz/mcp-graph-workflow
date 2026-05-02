@@ -24,6 +24,7 @@ export interface BridgeOptions {
   mapping: Record<string, HookChannel[]>;
 }
 
+/** installGraphEventBridge — auto-generated description placeholder. */
 export function installGraphEventBridge(
   graphBus: GraphEventBus,
   hookBus: HookBus,

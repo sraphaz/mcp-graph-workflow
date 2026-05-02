@@ -58,23 +58,23 @@ function deepCloneObject(obj: SiebelObject): SiebelObject {
 // --- Rename logic ---
 
 function applyRenames(value: string, renames: Readonly<Record<string, string>>): string {
-  let result = value;
+  let resultValue = value;
   for (const [from, to] of Object.entries(renames)) {
     // Use global replace to catch all occurrences
-    result = replaceAll(result, from, to);
+    resultValue = replaceAll(resultValue, from, to);
   }
-  return result;
+  return resultValue;
 }
 
 function replaceAll(str: string, search: string, replacement: string): string {
   if (search.length === 0) return str;
-  let result = str;
-  let idx = result.indexOf(search);
+  let resultValue = str;
+  let idx = resultValue.indexOf(search);
   while (idx !== -1) {
-    result = result.slice(0, idx) + replacement + result.slice(idx + search.length);
-    idx = result.indexOf(search, idx + replacement.length);
+    resultValue = resultValue.slice(0, idx) + replacement + resultValue.slice(idx + search.length);
+    idx = resultValue.indexOf(search, idx + replacement.length);
   }
-  return result;
+  return resultValue;
 }
 
 function renameObjectTree(
@@ -145,9 +145,9 @@ function renameChild(
 
   // Recursive for nested children
   const renamedChildren = child.children.map((c) => {
-    const result = renameChild(c, newChildName, renames);
-    renamesApplied += result.renamesApplied;
-    return result.object;
+    const resultValue = renameChild(c, newChildName, renames);
+    renamesApplied += resultValue.renamesApplied;
+    return resultValue.object;
   });
 
   return {
@@ -166,6 +166,7 @@ function renameChild(
 
 // --- Main function ---
 
+/** cloneAndAdapt — auto-generated description placeholder. */
 export function cloneAndAdapt(request: CloneAdaptRequest): CloneAdaptResult {
   const { source, newName, renames, addChildren, removeChildren } = request;
 
@@ -180,14 +181,14 @@ export function cloneAndAdapt(request: CloneAdaptRequest): CloneAdaptResult {
 
   // 2. Apply renames throughout the tree
   const renamed = renameObjectTree(cloned, newName, source.name, renames);
-  let result = renamed.object;
+  let resultValue = renamed.object;
 
   // 3. Remove specified children
   if (removeChildren && removeChildren.length > 0) {
     const removeSet = new Set(removeChildren);
-    result = {
-      ...result,
-      children: result.children.filter((c) => !removeSet.has(c.name)),
+    resultValue = {
+      ...resultValue,
+      children: resultValue.children.filter((c) => !removeSet.has(c.name)),
     };
   }
 
@@ -197,17 +198,17 @@ export function cloneAndAdapt(request: CloneAdaptRequest): CloneAdaptResult {
       ...deepCloneObject(c),
       parentName: newName,
     }));
-    result = {
-      ...result,
-      children: [...result.children, ...newChildren],
+    resultValue = {
+      ...resultValue,
+      children: [...resultValue.children, ...newChildren],
     };
   }
 
   // 5. Generate diff between original and clone
-  const diff = diffSifObjects([source], [result]);
+  const diff = diffSifObjects([source], [resultValue]);
 
   logger.info("clone-adapt:complete", {
-    childCount: String(result.children.length),
+    childCount: String(resultValue.children.length),
     renamesApplied: String(renamed.renamesApplied),
     diffAdded: String(diff.summary.addedCount),
     diffRemoved: String(diff.summary.removedCount),
@@ -215,7 +216,7 @@ export function cloneAndAdapt(request: CloneAdaptRequest): CloneAdaptResult {
   });
 
   return {
-    cloned: result,
+    cloned: resultValue,
     diff,
     renamesApplied: renamed.renamesApplied,
   };

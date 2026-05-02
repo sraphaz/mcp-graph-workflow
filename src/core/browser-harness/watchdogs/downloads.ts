@@ -16,6 +16,7 @@ export interface DownloadsWatchdogOptions {
 
 const DEFAULT_SUSPICIOUS = [".exe", ".dmg", ".pkg", ".msi", ".apk", ".bat", ".cmd"];
 
+/** registerDownloadsWatchdog — auto-generated description placeholder. */
 export function registerDownloadsWatchdog(bus: BrowserEventBus, opts: DownloadsWatchdogOptions = {}): void {
   const suspicious = (opts.suspiciousSuffixes ?? DEFAULT_SUSPICIOUS).map((s) => s.toLowerCase());
 

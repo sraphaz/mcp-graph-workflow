@@ -28,10 +28,12 @@ export interface CitationValidationResult {
 
 const CORE_PATH_RE = /(^|\/)src\/core\//;
 
+/** isCorePath — auto-generated description placeholder. */
 export function isCorePath(path: string): boolean {
   return CORE_PATH_RE.test(path);
 }
 
+/** validateFilesCitations — auto-generated description placeholder. */
 export function validateFilesCitations(files: CitationFile[]): CitationValidationResult {
   const violations: CitationViolation[] = [];
   let checkedCount = 0;

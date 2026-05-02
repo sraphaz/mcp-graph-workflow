@@ -88,7 +88,7 @@ export async function learnFromProject(
     }
 
     // Import into target
-    const result = await importKnowledge(targetDb, targetBasePath, pkg);
+    const resultValue = await importKnowledge(targetDb, targetBasePath, pkg);
 
     // Count by category
     const catCounts: Record<string, number> = {};
@@ -99,14 +99,14 @@ export async function learnFromProject(
 
     logger.info("cross-project:learned", {
       sourcePath,
-      imported: result.documentsImported,
-      skipped: result.documentsSkipped,
+      imported: resultValue.documentsImported,
+      skipped: resultValue.documentsSkipped,
       categories: Object.keys(catCounts).length,
     });
 
     return {
-      imported: result.documentsImported,
-      skipped: result.documentsSkipped,
+      imported: resultValue.documentsImported,
+      skipped: resultValue.documentsSkipped,
       categories: catCounts,
       sourceProject: sourcePath,
     };

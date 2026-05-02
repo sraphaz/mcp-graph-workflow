@@ -40,10 +40,12 @@ export function handleAgentListFormats(): { ok: boolean; formats: Array<{ name: 
   return { ok: true, formats: listFormats() };
 }
 
+/** handleAgentListAgents — auto-generated description placeholder. */
 export function handleAgentListAgents(): { ok: boolean; agents: Array<{ name: string; description: string; defaultFormat: string }> } {
   return { ok: true, agents: listAgents() };
 }
 
+/** handleAgentGenerate — auto-generated description placeholder. */
 export function handleAgentGenerate(params: {
   agentName: string;
   format: string;

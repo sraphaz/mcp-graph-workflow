@@ -210,7 +210,7 @@ export async function importKnowledge(
     projectName: pkg.manifest.projectName,
   });
 
-  const result: ImportResult = {
+  const resultValue: ImportResult = {
     documentsImported: 0,
     documentsSkipped: 0,
     memoriesImported: 0,
@@ -230,7 +230,7 @@ export async function importKnowledge(
 
       if (existing) {
         hashToNewId.set(doc.contentHash, existing.id);
-        result.documentsSkipped++;
+        resultValue.documentsSkipped++;
         continue;
       }
 
@@ -256,7 +256,7 @@ export async function importKnowledge(
         timestamp,
       );
 
-      result.documentsImported++;
+      resultValue.documentsImported++;
     }
   })();
 
@@ -288,7 +288,7 @@ export async function importKnowledge(
            VALUES (?, ?, ?, ?, ?, ?)`,
         ).run(id, fromId, toId, rel.relation, rel.score, timestamp);
 
-        result.relationsImported++;
+        resultValue.relationsImported++;
       }
     })();
   }
@@ -299,12 +299,12 @@ export async function importKnowledge(
 
     for (const mem of pkg.memories) {
       if (existingMemories.has(mem.name)) {
-        result.memoriesSkipped++;
+        resultValue.memoriesSkipped++;
         continue;
       }
 
       await writeMemory(basePath, mem.name, mem.content);
-      result.memoriesImported++;
+      resultValue.memoriesImported++;
     }
   }
 
@@ -337,21 +337,21 @@ export async function importKnowledge(
           timestamp,
         );
 
-        result.translationEntriesImported++;
+        resultValue.translationEntriesImported++;
       }
     })();
   }
 
   logger.info("knowledge-packager:import:done", {
-    documentsImported: result.documentsImported,
-    documentsSkipped: result.documentsSkipped,
-    memoriesImported: result.memoriesImported,
-    memoriesSkipped: result.memoriesSkipped,
-    relationsImported: result.relationsImported,
-    translationEntriesImported: result.translationEntriesImported,
+    documentsImported: resultValue.documentsImported,
+    documentsSkipped: resultValue.documentsSkipped,
+    memoriesImported: resultValue.memoriesImported,
+    memoriesSkipped: resultValue.memoriesSkipped,
+    relationsImported: resultValue.relationsImported,
+    translationEntriesImported: resultValue.translationEntriesImported,
   });
 
-  return result;
+  return resultValue;
 }
 
 // ── Preview ────────────────────────────────────────────

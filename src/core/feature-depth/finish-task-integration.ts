@@ -125,8 +125,8 @@ function readFileWithTest(absPath: string): {
 
 /** Extract module name from `src/core/<module>/...`, else "" */
 function moduleOf(relPath: string): string {
-  const m = /^src\/core\/([^/]+)/.exec(relPath);
-  return m?.[1] ?? "";
+  const mVar = /^src\/core\/([^/]+)/.exec(relPath);
+  return mVar?.[1] ?? "";
 }
 
 /** Best-effort write of a memory entry for an upward crossing. Never throws. */
@@ -211,7 +211,7 @@ export async function runFeatureDepthCheck(
       else downwardCrossings++;
     }
 
-    const result: FeatureDepthFileResult = {
+    const resultValue: FeatureDepthFileResult = {
       relPath: rel,
       module: mod,
       before,
@@ -220,7 +220,7 @@ export async function runFeatureDepthCheck(
       regression: regression.regressed ? regression : null,
       crossing,
     };
-    files.push(result);
+    files.push(resultValue);
 
     // UPSERT baseline (best-effort, non-blocking).
     upsertBaseline(input.store.getDb(), {
@@ -234,7 +234,7 @@ export async function runFeatureDepthCheck(
 
     // Memory write for upward crossings (best-effort, non-blocking).
     if (crossing?.direction === "up") {
-      void writeCrossingMemory(input.projectRoot, result, input.nodeId);
+      void writeCrossingMemory(input.projectRoot, resultValue, input.nodeId);
     }
   }
 

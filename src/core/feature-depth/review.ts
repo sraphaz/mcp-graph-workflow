@@ -71,9 +71,9 @@ export function evaluateReview(input: ReviewInput): ReviewResult {
   const netDelta = sumImprovers + sumRegressions;
 
   let worstRegression: FileDelta | null = null;
-  for (const r of input.regressions) {
-    if (worstRegression === null || r.delta < worstRegression.delta) {
-      worstRegression = r;
+  for (const rVar of input.regressions) {
+    if (worstRegression === null || rVar.delta < worstRegression.delta) {
+      worstRegression = rVar;
     }
   }
 

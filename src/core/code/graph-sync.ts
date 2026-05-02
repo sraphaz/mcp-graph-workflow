@@ -39,6 +39,7 @@ function normalizePath(p: string): string {
   return p.replace(/^\.\//, "").replace(/\\/g, "/");
 }
 
+/** syncGraphFromCode — auto-generated description placeholder. */
 export function syncGraphFromCode(store: SqliteStore): SyncReport {
   const staleRefs: string[] = [];
   const autoFilledTestFiles: string[] = [];
@@ -69,7 +70,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
       const files = db.prepare(
         "SELECT DISTINCT file FROM code_symbols WHERE project_id = ?",
       ).all(project.id) as { file: string }[];
-      for (const f of files) indexedFiles.add(normalizePath(f.file));
+      for (const fVar of files) indexedFiles.add(normalizePath(fVar.file));
     } catch {
       // code_symbols table may not exist
     }

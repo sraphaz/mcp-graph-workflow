@@ -159,6 +159,7 @@ const BC_SCRIPT_BOILERPLATE = `function BusComp_PreSetFieldValue (FieldName, Fie
 
 // --- Main function ---
 
+/** scaffoldSiebelObjects — auto-generated description placeholder. */
 export function scaffoldSiebelObjects(request: ScaffoldRequest): ScaffoldResult {
   const { description, prefix, projectName, referenceObjects, includeScriptBoilerplate } = request;
 
@@ -340,16 +341,16 @@ function calculateScaffoldScore(
   let totalScore = 0;
   let scored = 0;
 
-  for (const obj of objects) {
-    if (obj.parentName) continue; // skip children
+  for (const objValue of objects) {
+    if (objValue.parentName) continue; // skip children
 
-    const template = findBestTemplate(templates, obj.type);
+    const template = findBestTemplate(templates, objValue.type);
     if (template) {
-      totalScore += template.computeAdherence(obj);
+      totalScore += template.computeAdherence(objValue);
       scored++;
     } else {
       // No template available — check basic properties exist
-      totalScore += basicPropertyScore(obj);
+      totalScore += basicPropertyScore(objValue);
       scored++;
     }
   }

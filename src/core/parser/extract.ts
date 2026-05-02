@@ -110,15 +110,15 @@ export function extractEntities(rawText: string): ExtractionResult {
   // Promote items inside task-sections to subtask if they're generic or tasks
   for (const block of blocks) {
     if (block.type === "task" || block.type === "epic") {
-      for (const item of block.items) {
-        if (item.type === "acceptance_criteria" || item.type === "constraint") {
+      for (const itemValue of block.items) {
+        if (itemValue.type === "acceptance_criteria" || itemValue.type === "constraint") {
           continue; // Already classified with higher confidence — don't demote
         }
-        if (item.type === "unknown" || item.type === "task") {
+        if (itemValue.type === "unknown" || itemValue.type === "task") {
           // Items inside a task/epic section are subtasks
           if (block.type === "task") {
-            item.type = "subtask";
-            item.confidence = Math.max(item.confidence, 0.6);
+            itemValue.type = "subtask";
+            itemValue.confidence = Math.max(itemValue.confidence, 0.6);
           }
         }
       }
@@ -129,12 +129,12 @@ export function extractEntities(rawText: string): ExtractionResult {
   // (e.g., "Entregas" sections with numbered action items)
   for (const block of blocks) {
     if (block.type === "unknown") {
-      for (const item of block.items) {
-        if (item.type === "unknown") {
-          const reclassified = classifyText(item.text);
+      for (const itemValue of block.items) {
+        if (itemValue.type === "unknown") {
+          const reclassified = classifyText(itemValue.text);
           if (reclassified.type !== "unknown") {
-            item.type = reclassified.type;
-            item.confidence = reclassified.confidence;
+            itemValue.type = reclassified.type;
+            itemValue.confidence = reclassified.confidence;
           }
         }
       }

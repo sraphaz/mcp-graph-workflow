@@ -55,6 +55,7 @@ const CATEGORY_BADGES: Record<string, string> = {
   refactor: "bg-blue-900/50 text-blue-300",
 };
 
+/** RemediationPanel — auto-generated description placeholder. */
 export function RemediationPanel(): React.JSX.Element {
   const [data, setData] = useState<RemediateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

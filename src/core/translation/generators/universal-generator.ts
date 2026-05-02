@@ -162,9 +162,9 @@ export class UniversalGenerator implements GeneratorAdapter {
     }
 
     // Track all constructs (including filtered children) as mapped
-    for (const c of enriched) {
-      if (!topLevel.includes(c) && !unmapped.includes(c.constructId)) {
-        mapped.push(c.constructId);
+    for (const cVar of enriched) {
+      if (!topLevel.includes(cVar) && !unmapped.includes(cVar.constructId)) {
+        mapped.push(cVar.constructId);
       }
     }
 
@@ -187,21 +187,21 @@ function substituteValues(
   resolved: Record<string, string>,
   targetLanguageId: string,
 ): string {
-  let result = pattern;
+  let resultValue = pattern;
 
   // First pass: substitute resolved values
   for (const [key, value] of Object.entries(resolved)) {
     // eslint-disable-next-line security/detect-non-literal-regexp
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
+    resultValue = resultValue.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
   }
 
   // Second pass: replace remaining unresolved {{...}} with defaults
   const defaults = DEFAULTS_BY_LANGUAGE[targetLanguageId] ?? DEFAULTS_BY_LANGUAGE._default;
-  result = result.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
+  resultValue = resultValue.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
     return defaults[key] ?? `/* ${key} */`;
   });
 
-  return result;
+  return resultValue;
 }
 
 // ── Hierarchy Filter ──────────────────────────────

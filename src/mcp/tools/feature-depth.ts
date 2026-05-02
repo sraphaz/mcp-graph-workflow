@@ -53,27 +53,27 @@ async function runGoOrError(opts: RunGoOpts): Promise<{
   if (!(await isGoAvailable())) {
     return { ok: false, error: GO_INSTALL_HINT };
   }
-  const result = await runFeatureDepthGo({
+  const resultValue = await runFeatureDepthGo({
     cwd: opts.cwd,
     toolPath: join(opts.cwd, "tools/feature-depth"),
     args: opts.args,
   });
-  if (!result.ok) {
+  if (!resultValue.ok) {
     return {
       ok: false,
-      error: result.error ?? `go run failed (exit ${result.exitCode ?? "null"})`,
+      error: resultValue.error ?? `go run failed (exit ${resultValue.exitCode ?? "null"})`,
     };
   }
   // Tool emits JSON to stdout when -output=json. Parse defensively.
-  const trimmed = result.stdout.trim();
+  const trimmed = resultValue.stdout.trim();
   if (trimmed === "") {
-    return { ok: true, data: { stdout: result.stdout, stderr: result.stderr } };
+    return { ok: true, data: { stdout: resultValue.stdout, stderr: resultValue.stderr } };
   }
   try {
     return { ok: true, data: JSON.parse(trimmed) };
   } catch {
     // Non-JSON output (e.g. table mode) — pass through as-is.
-    return { ok: true, data: { output: result.stdout } };
+    return { ok: true, data: { output: resultValue.stdout } };
   }
 }
 
@@ -88,6 +88,7 @@ export async function handleFeatureDepthScore(cwd: string): Promise<unknown> {
   });
 }
 
+/** handleFeatureDepthAudit — auto-generated description placeholder. */
 export async function handleFeatureDepthAudit(cwd: string): Promise<unknown> {
   return runGoOrError({
     cwd,
@@ -95,6 +96,7 @@ export async function handleFeatureDepthAudit(cwd: string): Promise<unknown> {
   });
 }
 
+/** handleFeatureDepthGrowth — auto-generated description placeholder. */
 export async function handleFeatureDepthGrowth(cwd: string): Promise<unknown> {
   return runGoOrError({
     cwd,
@@ -102,6 +104,7 @@ export async function handleFeatureDepthGrowth(cwd: string): Promise<unknown> {
   });
 }
 
+/** handleFeatureDepthDiff — auto-generated description placeholder. */
 export async function handleFeatureDepthDiff(
   cwd: string,
   baselinePath: string,
@@ -117,6 +120,7 @@ export async function handleFeatureDepthDiff(
   });
 }
 
+/** handleFeatureDepthTrend — auto-generated description placeholder. */
 export async function handleFeatureDepthTrend(
   store: SqliteStore,
   cwd: string,
@@ -124,6 +128,7 @@ export async function handleFeatureDepthTrend(
   return writeTrendMemory(store.getDb(), cwd);
 }
 
+/** handleFeatureDepthBaselines — auto-generated description placeholder. */
 export function handleFeatureDepthBaselines(
   store: SqliteStore,
   filter?: { relPath?: string; module?: string },

@@ -19,6 +19,7 @@ import type { PluginGenerationConfig } from "./davinci-types.js";
 
 export type TargetSdk = "pingfederate" | "pingaccess";
 
+/** generatePom — auto-generated description placeholder. */
 export function generatePom(
   config: PluginGenerationConfig,
   targetSdk: TargetSdk,

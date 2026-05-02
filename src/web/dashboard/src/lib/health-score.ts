@@ -33,6 +33,7 @@ export interface HealthScoreInput {
   oversizedCount: number;
 }
 
+/** computeHealthScore — auto-generated description placeholder. */
 export function computeHealthScore(input: HealthScoreInput): number {
   const { completionRate, totalNodes, blockedCount, missingACCount, oversizedCount } = input;
 

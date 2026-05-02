@@ -50,6 +50,7 @@ export interface RuntimeSpec {
   readonly configFileContent: string;
 }
 
+/** buildRuntimeSpec — auto-generated description placeholder. */
 export function buildRuntimeSpec(
   config: BrowserUseRuntimeConfig,
 ): RuntimeSpec {
@@ -95,6 +96,7 @@ export interface PreparedRuntime {
   readonly tmpDir: string;
 }
 
+/** prepareRuntimeFiles — auto-generated description placeholder. */
 export async function prepareRuntimeFiles(
   spec: RuntimeSpec,
   deps: PrepareRuntimeDeps,

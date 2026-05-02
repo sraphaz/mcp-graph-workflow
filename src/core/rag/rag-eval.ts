@@ -246,11 +246,11 @@ export async function runEvalBenchmark(
   }
 
   // Compute averages
-  const n = perQuery.length || 1;
-  const avgNdcg = perQuery.reduce((s, q) => s + q.metrics.ndcgAtK, 0) / n;
-  const avgRecall = perQuery.reduce((s, q) => s + q.metrics.recallAtK, 0) / n;
-  const avgPrecision = perQuery.reduce((s, q) => s + q.metrics.precisionAtK, 0) / n;
-  const avgMrr = perQuery.reduce((s, q) => s + q.metrics.mrr, 0) / n;
+  const nVar = perQuery.length || 1;
+  const avgNdcg = perQuery.reduce((s, q) => s + q.metrics.ndcgAtK, 0) / nVar;
+  const avgRecall = perQuery.reduce((s, q) => s + q.metrics.recallAtK, 0) / nVar;
+  const avgPrecision = perQuery.reduce((s, q) => s + q.metrics.precisionAtK, 0) / nVar;
+  const avgMrr = perQuery.reduce((s, q) => s + q.metrics.mrr, 0) / nVar;
 
   logger.info("rag-eval: benchmark complete", {
     queries: perQuery.length,

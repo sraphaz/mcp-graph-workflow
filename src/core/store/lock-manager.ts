@@ -113,11 +113,11 @@ export class LockManager {
    * Release a lock by lease token. Throws if token not found.
    */
   release(leaseToken: string): void {
-    const result = this.db
+    const resultValue = this.db
       .prepare("DELETE FROM resource_locks WHERE lease_token = ?")
       .run(leaseToken);
 
-    if (result.changes === 0) {
+    if (resultValue.changes === 0) {
       throw new Error(`No lock found for lease token "${leaseToken}"`);
     }
 
@@ -131,11 +131,11 @@ export class LockManager {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + ttlSeconds * 1000);
 
-    const result = this.db
+    const resultValue = this.db
       .prepare("UPDATE resource_locks SET expires_at = ? WHERE lease_token = ?")
       .run(expiresAt.toISOString(), leaseToken);
 
-    if (result.changes === 0) {
+    if (resultValue.changes === 0) {
       throw new Error(`No lock found for lease token "${leaseToken}"`);
     }
 

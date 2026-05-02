@@ -168,8 +168,8 @@ export class TranslationOrchestrator {
     if (filePath && projectId && this.codeStore) {
       const preIndexed = analyzeFromIndex(this.codeStore, projectId, filePath);
       if (preIndexed) {
-        const result = { ...preIndexed.analysis, cacheHit: false };
-        return result;
+        const resultValue = { ...preIndexed.analysis, cacheHit: false };
+        return resultValue;
       }
     }
 
@@ -206,13 +206,13 @@ export class TranslationOrchestrator {
 
     // Build construct info
     const constructMap = new Map<string, { count: number; confidence: number }>();
-    for (const p of parsed) {
-      const existing = constructMap.get(p.constructId);
-      const matchScore = scores.find((s) => s.constructId === p.constructId);
+    for (const pVar of parsed) {
+      const existing = constructMap.get(pVar.constructId);
+      const matchScore = scores.find((s) => s.constructId === pVar.constructId);
       if (existing) {
         existing.count++;
       } else {
-        constructMap.set(p.constructId, {
+        constructMap.set(pVar.constructId, {
           count: 1,
           confidence: matchScore?.finalConfidence ?? 0,
         });
@@ -230,7 +230,7 @@ export class TranslationOrchestrator {
       ? scores.reduce((sum, s) => sum + s.finalConfidence, 0) / scores.length
       : 0;
 
-    const result: TranslationAnalysis & { cacheHit: boolean } = {
+    const resultValue: TranslationAnalysis & { cacheHit: boolean } = {
       detectedLanguage: lang,
       detectedConfidence: confidence,
       constructs,
@@ -242,10 +242,10 @@ export class TranslationOrchestrator {
     };
 
     // Store in cache
-    analysisCache.set(cacheKey, { result, timestamp: Date.now() });
+    analysisCache.set(cacheKey, { result: resultValue, timestamp: Date.now() });
     evictOldestIfNeeded();
 
-    return result;
+    return resultValue;
   }
 
   /**

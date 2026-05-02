@@ -55,6 +55,7 @@ const INSTALL_HINT =
   "  claude mcp add browser-use uvx browser-use-mcp\n" +
   "Then set OPENAI_API_KEY or ANTHROPIC_API_KEY in env.";
 
+/** buildExploreWebPlan — auto-generated description placeholder. */
 export function buildExploreWebPlan(input: ExploreWebInput): ExploreWebResult {
   if (!input.goal || input.goal.trim().length === 0) {
     return { ok: false, error: "goal must not be empty" };
@@ -94,6 +95,7 @@ export function buildExploreWebPlan(input: ExploreWebInput): ExploreWebResult {
   return { ok: true, plan: parsed.data };
 }
 
+/** registerGraphExploreWeb — auto-generated description placeholder. */
 export function registerGraphExploreWeb(server: McpServer): void {
   server.tool(
     "graph_explore_web",
@@ -105,9 +107,9 @@ export function registerGraphExploreWeb(server: McpServer): void {
       rubric: z.string().min(1).describe("Success criterion for the agent loop (e.g. 'numeric price extracted from a *.com domain')"),
     },
     async (args) => {
-      const r = buildExploreWebPlan(args);
-      logger.debug("tool:graph_explore_web", { ok: r.ok, nodeId: args.nodeId });
-      return mcpText(r);
+      const rVar = buildExploreWebPlan(args);
+      logger.debug("tool:graph_explore_web", { ok: rVar.ok, nodeId: args.nodeId });
+      return mcpText(rVar);
     },
   );
 }

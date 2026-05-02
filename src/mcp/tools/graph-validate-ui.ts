@@ -56,6 +56,7 @@ const PLAYWRIGHT_TOOLS = {
   networkRequests: "mcp__playwright__browser_network_requests",
 } as const;
 
+/** buildValidateUiPlan — auto-generated description placeholder. */
 export function buildValidateUiPlan(input: ValidateUiInput): ValidateUiResult {
   if (input.checks.length === 0) {
     return { ok: false, error: "checks must not be empty" };
@@ -93,6 +94,7 @@ export function buildValidateUiPlan(input: ValidateUiInput): ValidateUiResult {
   return { ok: true, plan: parsed.data };
 }
 
+/** registerGraphValidateUi — auto-generated description placeholder. */
 export function registerGraphValidateUi(server: McpServer): void {
   server.tool(
     "graph_validate_ui",
@@ -103,9 +105,9 @@ export function registerGraphValidateUi(server: McpServer): void {
       checks: z.array(z.enum(CHECK_KINDS)).min(1).describe("Checks to run: a11y (browser_snapshot), console-errors (browser_console_messages), network-requests (browser_network_requests)"),
     },
     async (args) => {
-      const r = buildValidateUiPlan(args as ValidateUiInput);
-      logger.debug("tool:graph_validate_ui", { ok: r.ok, nodeId: args.nodeId, checks: args.checks });
-      return mcpText(r);
+      const rVar = buildValidateUiPlan(args as ValidateUiInput);
+      logger.debug("tool:graph_validate_ui", { ok: rVar.ok, nodeId: args.nodeId, checks: args.checks });
+      return mcpText(rVar);
     },
   );
 }

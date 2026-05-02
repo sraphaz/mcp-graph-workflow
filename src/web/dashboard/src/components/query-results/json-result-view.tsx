@@ -21,6 +21,7 @@ interface JsonResultViewProps {
   data: unknown;
 }
 
+/** JsonResultView — auto-generated description placeholder. */
 export function JsonResultView({ data }: JsonResultViewProps): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);

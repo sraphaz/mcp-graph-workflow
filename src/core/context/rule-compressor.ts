@@ -143,7 +143,7 @@ export function compressSteps(text: string, maxTokens: number): string {
     return "";
   }
 
-  const result: string[] = [];
+  const resultValue: string[] = [];
   let totalTokens = 0;
 
   for (const step of steps) {
@@ -153,11 +153,11 @@ export function compressSteps(text: string, maxTokens: number): string {
       break;
     }
 
-    result.push(step);
+    resultValue.push(step);
     totalTokens += lineTokens;
   }
 
-  return result.join("\n");
+  return resultValue.join("\n");
 }
 
 /**

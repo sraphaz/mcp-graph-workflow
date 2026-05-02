@@ -72,6 +72,7 @@ function makeNodeId(type: string, name: string): string {
 
 // ── Conversion ──
 
+/** toSiebelFlowNodes — auto-generated description placeholder. */
 export function toSiebelFlowNodes(
   objects: SiebelObjectData[],
   filters?: { types?: Set<string>; showInactive?: boolean },
@@ -111,6 +112,7 @@ export function toSiebelFlowNodes(
     });
 }
 
+/** toSiebelFlowEdges — auto-generated description placeholder. */
 export function toSiebelFlowEdges(
   dependencies: SiebelDependencyData[],
   visibleNodeIds: Set<string>,
@@ -159,6 +161,7 @@ function computeKey(nodeIds: string[], edgePairs: string[], direction: string): 
   return hash;
 }
 
+/** applySiebelDagreLayout — auto-generated description placeholder. */
 export function applySiebelDagreLayout(
   nodes: Node<SiebelNodeData>[],
   edges: Edge<SiebelEdgeData>[],
@@ -209,6 +212,7 @@ export function applySiebelDagreLayout(
 
 // ── Impact Analysis (client-side BFS) ──
 
+/** computeImpact — auto-generated description placeholder. */
 export function computeImpact(
   dependencies: SiebelDependencyData[],
   targetType: string,

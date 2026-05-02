@@ -73,8 +73,8 @@ export function analyzePatterns(objects: SiebelObject[]): PatternAnalysisResult 
 function extractNamingPatterns(objects: SiebelObject[]): NamingPattern[] {
   const prefixMap = new Map<string, { count: number; projects: Set<string> }>();
 
-  for (const obj of objects) {
-    const parts = obj.name.split(" ");
+  for (const objValue of objects) {
+    const parts = objValue.name.split(" ");
     if (parts.length < 2) continue;
 
     const prefix = parts[0];
@@ -84,10 +84,10 @@ function extractNamingPatterns(objects: SiebelObject[]): NamingPattern[] {
     const existing = prefixMap.get(prefix);
     if (existing) {
       existing.count++;
-      if (obj.project) existing.projects.add(obj.project);
+      if (objValue.project) existing.projects.add(objValue.project);
     } else {
       const projects = new Set<string>();
-      if (obj.project) projects.add(obj.project);
+      if (objValue.project) projects.add(objValue.project);
       prefixMap.set(prefix, { count: 1, projects });
     }
   }
@@ -107,16 +107,16 @@ function extractRequiredProperties(objects: SiebelObject[]): RequiredPropertyPat
   const byType = new Map<SiebelObjectType, Map<string, number>>();
   const countByType = new Map<SiebelObjectType, number>();
 
-  for (const obj of objects) {
-    if (obj.parentName) continue; // skip children
-    const typeMap = byType.get(obj.type) ?? new Map<string, number>();
-    const count = (countByType.get(obj.type) ?? 0) + 1;
-    countByType.set(obj.type, count);
+  for (const objValue of objects) {
+    if (objValue.parentName) continue; // skip children
+    const typeMap = byType.get(objValue.type) ?? new Map<string, number>();
+    const count = (countByType.get(objValue.type) ?? 0) + 1;
+    countByType.set(objValue.type, count);
 
-    for (const prop of obj.properties) {
+    for (const prop of objValue.properties) {
       typeMap.set(prop.name, (typeMap.get(prop.name) ?? 0) + 1);
     }
-    byType.set(obj.type, typeMap);
+    byType.set(objValue.type, typeMap);
   }
 
   const results: RequiredPropertyPattern[] = [];

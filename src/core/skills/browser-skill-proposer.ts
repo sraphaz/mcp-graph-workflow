@@ -40,8 +40,8 @@ export interface BrowserSkillProposal {
 
 function hostFromUrl(url: string): string {
   try {
-    const u = new URL(url);
-    return u.hostname.replace(/^www\./, "");
+    const uVar = new URL(url);
+    return uVar.hostname.replace(/^www\./, "");
   } catch {
     return "unknown-site";
   }
@@ -141,6 +141,7 @@ export interface WriteBrowserSkillResult {
   reason: "ok" | "env_off" | "already_exists" | "low_confidence";
 }
 
+/** writeBrowserSkillIfAbsent — auto-generated description placeholder. */
 export function writeBrowserSkillIfAbsent(
   proposal: BrowserSkillProposal,
   options: { rootDir?: string; env?: NodeJS.ProcessEnv } = {},
@@ -177,6 +178,7 @@ export interface BrowserHookOutcome {
   reason: "ok" | "env_off" | "already_exists" | "low_confidence" | "no_metadata";
 }
 
+/** proposeBrowserSkillFromNode — auto-generated description placeholder. */
 export function proposeBrowserSkillFromNode(
   node: { metadata?: Record<string, unknown> | null } | null | undefined,
   options: { rootDir?: string; env?: NodeJS.ProcessEnv } = {},
@@ -187,8 +189,8 @@ export function proposeBrowserSkillFromNode(
     return { written: false, reason: "no_metadata" };
   }
   const proposal = proposeBrowserSkill(raw as BrowserSkillInput);
-  const result = writeBrowserSkillIfAbsent(proposal, options);
-  return { written: result.written, path: result.path, reason: result.reason };
+  const resultValue = writeBrowserSkillIfAbsent(proposal, options);
+  return { written: resultValue.written, path: resultValue.path, reason: resultValue.reason };
 }
 
 /**
@@ -214,6 +216,7 @@ export interface DeriveOptions {
   verdict: "pass" | "fail" | "error";
 }
 
+/** deriveBrowserSkillInput — auto-generated description placeholder. */
 export function deriveBrowserSkillInput(opts: DeriveOptions): BrowserSkillInput | null {
   if (opts.verdict !== "pass") return null;
   if (opts.plan.length === 0) return null;

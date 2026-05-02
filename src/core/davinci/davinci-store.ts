@@ -187,7 +187,7 @@ export class DaVinciStore {
   }
 
   deleteJob(id: string): boolean {
-    const result = this.db.prepare("DELETE FROM davinci_jobs WHERE id = ?").run(id);
-    return result.changes > 0;
+    const resultValue = this.db.prepare("DELETE FROM davinci_jobs WHERE id = ?").run(id);
+    return resultValue.changes > 0;
   }
 }

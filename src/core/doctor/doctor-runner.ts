@@ -39,9 +39,9 @@ function buildSummary(checks: CheckResult[]): DoctorReport["summary"] {
   let ok = 0;
   let warning = 0;
   let error = 0;
-  for (const c of checks) {
-    if (c.level === "ok") ok++;
-    else if (c.level === "warning") warning++;
+  for (const cVar of checks) {
+    if (cVar.level === "ok") ok++;
+    else if (cVar.level === "warning") warning++;
     else error++;
   }
   return { ok, warning, error };

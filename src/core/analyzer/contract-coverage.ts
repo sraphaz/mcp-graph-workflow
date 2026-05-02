@@ -34,6 +34,7 @@ export interface ContractCoverageReport {
   coveragePercent: number;
 }
 
+/** analyzeContractCoverage — auto-generated description placeholder. */
 export function analyzeContractCoverage(doc: GraphDocument): ContractCoverageReport {
   const contractNodes = doc.nodes.filter((n) => n.type === "contract");
 

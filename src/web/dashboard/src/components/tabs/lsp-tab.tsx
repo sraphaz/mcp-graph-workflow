@@ -673,6 +673,7 @@ function SymbolsSection({ getSymbols, operationLoading, symbols }: {
 // ---------------------------------------------------------------------------
 // Main LSP Tab
 // ---------------------------------------------------------------------------
+/** LspTab — auto-generated description placeholder. */
 export function LspTab(): React.JSX.Element {
   const {
     languages,

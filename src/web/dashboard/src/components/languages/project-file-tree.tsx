@@ -216,6 +216,7 @@ const TreeItem = memo(function TreeItem({
 // Main component
 // ---------------------------------------------------------------------------
 
+/** ProjectFileTree — auto-generated description placeholder. */
 export function ProjectFileTree({ files, selectedFileId, onSelectFile }: ProjectFileTreeProps) {
   const [search, setSearch] = useState("");
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());

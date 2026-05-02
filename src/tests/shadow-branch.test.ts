@@ -27,6 +27,7 @@ import {
   discardShadowBranch,
   getShadowBranchName,
   pruneOrphanWorktrees,
+  reapShadowForNode,
 } from "../core/autonomy/shadow-branch.js";
 import { execSync } from "node:child_process";
 
@@ -268,6 +269,106 @@ describe("shadow-branch (worktree-based)", () => {
       const r = pruneOrphanWorktrees({ ttlMs: 60 * 60 * 1000 });
       expect(r.pruned).toBe(true);
       expect(r.reapedBranches).toBe(1); // only b succeeded
+    });
+  });
+
+  describe("reapShadowForNode (handle-less safety net)", () => {
+    it("removes worktree + branch given only nodeId (no handle round-trip)", () => {
+      const ts = Date.now();
+      const branch = `ai-shadow/node_42-${ts}`;
+      const wtPath = `/tmp/mcpg-wt-node_42-${ts}`;
+
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("worktree list --porcelain")) {
+          return Buffer.from(`worktree ${wtPath}\nHEAD abc123\nbranch refs/heads/${branch}\n\n`);
+        }
+        return Buffer.from("");
+      });
+
+      const r = reapShadowForNode("node_42");
+
+      expect(r.reapedBranches).toBe(1);
+      expect(r.reapedWorktrees).toBe(1);
+      const all = calls().join("\n");
+      expect(all).toContain(`git worktree remove --force ${wtPath}`);
+      expect(all).toContain(`git branch -D ${branch}`);
+    });
+
+    it("matches multiple worktrees for the same nodeId (retry scenario)", () => {
+      const ts1 = Date.now() - 1000;
+      const ts2 = Date.now();
+      const wt1 = `/tmp/mcpg-wt-node_42-${ts1}`;
+      const wt2 = `/tmp/mcpg-wt-node_42-${ts2}`;
+      const b1 = `ai-shadow/node_42-${ts1}`;
+      const b2 = `ai-shadow/node_42-${ts2}`;
+
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("worktree list --porcelain")) {
+          return Buffer.from(
+            `worktree ${wt1}\nHEAD a\nbranch refs/heads/${b1}\n\n` +
+            `worktree ${wt2}\nHEAD b\nbranch refs/heads/${b2}\n\n`,
+          );
+        }
+        return Buffer.from("");
+      });
+
+      const r = reapShadowForNode("node_42");
+      expect(r.reapedBranches).toBe(2);
+      expect(r.reapedWorktrees).toBe(2);
+    });
+
+    it("is idempotent — second call reaps nothing (no worktree remains)", () => {
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        if (String(cmd).includes("worktree list --porcelain")) return Buffer.from("");
+        return Buffer.from("");
+      });
+      const r = reapShadowForNode("node_42");
+      expect(r.reapedBranches).toBe(0);
+      expect(r.reapedWorktrees).toBe(0);
+    });
+
+    it("does not match other nodes' shadow worktrees (prefix isolation)", () => {
+      const ts = Date.now();
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("worktree list --porcelain")) {
+          return Buffer.from(
+            `worktree /tmp/mcpg-wt-node_99-${ts}\nHEAD a\nbranch refs/heads/ai-shadow/node_99-${ts}\n\n`,
+          );
+        }
+        return Buffer.from("");
+      });
+      const r = reapShadowForNode("node_42");
+      expect(r.reapedBranches).toBe(0);
+      expect(r.reapedWorktrees).toBe(0);
+      // Must not have removed node_99
+      expect(calls().some((c) => c.includes("node_99"))).toBe(false);
+    });
+
+    it("rejects empty nodeId without invoking git", () => {
+      const r = reapShadowForNode("");
+      expect(r.reapedBranches).toBe(0);
+      expect(r.reapedWorktrees).toBe(0);
+      expect(execSync).not.toHaveBeenCalled();
+    });
+
+    it("tolerates worktree-remove failure and still tries branch -D", () => {
+      const ts = Date.now();
+      const branch = `ai-shadow/node_42-${ts}`;
+      const wtPath = `/tmp/mcpg-wt-node_42-${ts}`;
+      vi.mocked(execSync).mockImplementation((cmd: unknown) => {
+        const c = String(cmd);
+        if (c.includes("worktree list --porcelain")) {
+          return Buffer.from(`worktree ${wtPath}\nHEAD a\nbranch refs/heads/${branch}\n\n`);
+        }
+        if (c.includes("worktree remove")) throw new Error("locked");
+        return Buffer.from("");
+      });
+      const r = reapShadowForNode("node_42");
+      expect(r.reapedWorktrees).toBe(0);
+      expect(r.reapedBranches).toBe(1);
     });
   });
 

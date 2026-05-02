@@ -118,6 +118,7 @@ function getTopicContent(topic: HelpTopic, phase?: string): string {
   }
 }
 
+/** registerHelp — auto-generated description placeholder. */
 export function registerHelp(server: McpServer): void {
   server.tool(
     "help",

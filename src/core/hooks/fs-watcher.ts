@@ -47,6 +47,7 @@ const DEFAULT_IGNORE = [
   /\.log$/,
 ];
 
+/** installFsWatcher — auto-generated description placeholder. */
 export function installFsWatcher(opts: FsWatcherOptions): () => void {
   if (!existsSync(opts.basePath)) {
     logger.warn("hooks:fs-watcher:basepath_missing", { basePath: opts.basePath });

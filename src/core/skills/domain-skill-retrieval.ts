@@ -54,6 +54,7 @@ function scoreSkill(skill: DomainSkill, queryTokens: Set<string>): { score: numb
   return { score, matched: [...matched] };
 }
 
+/** findRelevantDomainSkills — auto-generated description placeholder. */
 export function findRelevantDomainSkills(
   rootDir: string,
   query: string,
@@ -80,13 +81,14 @@ export function findRelevantDomainSkills(
   return options.limit !== undefined ? matches.slice(0, options.limit) : matches;
 }
 
+/** formatDomainSkillsBlock — auto-generated description placeholder. */
 export function formatDomainSkillsBlock(matches: DomainSkillMatch[]): string {
   if (matches.length === 0) return "";
 
   const lines = ["Domain skills relevantes:"];
-  for (const m of matches) {
-    const triggers = m.matchedTriggers.length > 0 ? ` [${m.matchedTriggers.join(", ")}]` : "";
-    lines.push(`  - ${m.skill.domain}/${m.skill.topic}${triggers} (confidence ${m.skill.confidence})`);
+  for (const mVar of matches) {
+    const triggers = mVar.matchedTriggers.length > 0 ? ` [${mVar.matchedTriggers.join(", ")}]` : "";
+    lines.push(`  - ${mVar.skill.domain}/${mVar.skill.topic}${triggers} (confidence ${mVar.skill.confidence})`);
   }
   return lines.join("\n");
 }

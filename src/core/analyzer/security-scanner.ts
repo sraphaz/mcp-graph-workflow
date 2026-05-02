@@ -117,7 +117,7 @@ function checkDependencyAudit(projectPath: string): { check: SecurityCheck; find
   const findings: SecurityFinding[] = [];
 
   try {
-    const result = execSync("npm audit --audit-level=high --json 2>/dev/null || true", {
+    const resultValue = execSync("npm audit --audit-level=high --json 2>/dev/null || true", {
       cwd: projectPath,
       timeout: 15000,
       encoding: "utf-8",
@@ -125,9 +125,9 @@ function checkDependencyAudit(projectPath: string): { check: SecurityCheck; find
 
     let audit: Record<string, unknown>;
     try {
-      audit = JSON.parse(result) as Record<string, unknown>;
+      audit = JSON.parse(resultValue) as Record<string, unknown>;
     } catch {
-      logger.warn("security-scanner:audit-parse-failed", { resultLen: result?.length });
+      logger.warn("security-scanner:audit-parse-failed", { resultLen: resultValue?.length });
       audit = {};
     }
     const vulns = audit.vulnerabilities ?? {};

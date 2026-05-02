@@ -64,7 +64,7 @@ function applyLayer<K extends keyof ConfigLayer>(
 /** Resolve config by merging defaults, project, local, and env layers. */
 export function resolveLayeredConfig(options: ResolveOptions): LayeredConfigResult {
   // Start with defaults
-  const result: Record<string, ConfigField<unknown>> = {
+  const resultValue: Record<string, ConfigField<unknown>> = {
     port: { value: DEFAULTS.port ?? 3000, source: "default" },
     dbPath: { value: DEFAULTS.dbPath ?? "workflow-graph", source: "default" },
     contextMode: { value: DEFAULTS.contextMode ?? "lean", source: "default" },
@@ -74,18 +74,18 @@ export function resolveLayeredConfig(options: ResolveOptions): LayeredConfigResu
 
   // Layer 2: Project config
   for (const key of fields) {
-    applyLayer(result, key, options.projectConfig, "project");
+    applyLayer(resultValue, key, options.projectConfig, "project");
   }
 
   // Layer 3: Local overrides
   for (const key of fields) {
-    applyLayer(result, key, options.localConfig, "local");
+    applyLayer(resultValue, key, options.localConfig, "local");
   }
 
   // Layer 4: Environment variables
   for (const key of fields) {
-    applyLayer(result, key, options.envOverrides, "env");
+    applyLayer(resultValue, key, options.envOverrides, "env");
   }
 
-  return result as unknown as LayeredConfigResult;
+  return resultValue as unknown as LayeredConfigResult;
 }

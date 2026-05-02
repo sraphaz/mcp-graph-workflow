@@ -46,6 +46,7 @@ export interface FileDiffPayload {
   byteCount: number;
 }
 
+/** useAgentWork — auto-generated description placeholder. */
 export function useAgentWork(agentId: string | null): {
   data: AgentWorkPayload | null;
   loading: boolean;
@@ -107,6 +108,7 @@ export function useAgentWork(agentId: string | null): {
   return { data, loading, error, refresh: load };
 }
 
+/** fetchFileDiff — auto-generated description placeholder. */
 export async function fetchFileDiff(
   agentId: string,
   path: string,
@@ -131,6 +133,7 @@ export interface AgentEventsPayload {
   limit: number;
 }
 
+/** useAgentEvents — auto-generated description placeholder. */
 export function useAgentEvents(
   agentId: string | null,
   limit: number = 20,

@@ -20,6 +20,7 @@ const SummaryQuery = z.object({
   topFailingLimit: z.coerce.number().int().positive().max(100).optional(),
 });
 
+/** createEvalsRouter — auto-generated description placeholder. */
 export function createEvalsRouter(storeRef: StoreRef): Router {
   const router = Router();
 

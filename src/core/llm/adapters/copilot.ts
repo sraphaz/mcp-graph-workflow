@@ -76,7 +76,7 @@ export class CopilotAdapter implements ProviderAdapter {
     };
 
     const response = await withRetry(async () => {
-      const res = await this.fetch(url, {
+      const resValue = await this.fetch(url, {
         method: "POST",
         headers: {
           authorization: `Bearer ${this.options.apiKey}`,
@@ -85,21 +85,21 @@ export class CopilotAdapter implements ProviderAdapter {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const text = await readBody(res);
-        if (res.status === 401 || res.status === 403) {
-          throw new LlmAuthError("copilot", `${res.status}: ${text}`);
+      if (!resValue.ok) {
+        const text = await readBody(resValue);
+        if (resValue.status === 401 || resValue.status === 403) {
+          throw new LlmAuthError("copilot", `${resValue.status}: ${text}`);
         }
-        if (res.status === 429) {
-          throw new LlmRateLimitError("copilot", parseRetryAfter(res.headers));
+        if (resValue.status === 429) {
+          throw new LlmRateLimitError("copilot", parseRetryAfter(resValue.headers));
         }
-        const err = new LlmTransportError("copilot", `${res.status}: ${text}`) as LlmTransportError & {
+        const err = new LlmTransportError("copilot", `${resValue.status}: ${text}`) as LlmTransportError & {
           status: number;
         };
-        err.status = res.status;
+        err.status = resValue.status;
         throw err;
       }
-      return (await res.json()) as ChatCompletionBody;
+      return (await resValue.json()) as ChatCompletionBody;
     }, this.retry);
 
     const content = response.choices[0]?.message?.content ?? "";

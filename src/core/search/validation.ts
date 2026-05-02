@@ -30,6 +30,7 @@ export const SearchQuerySchema = z.object({
 
 export type ValidatedSearchQuery = z.infer<typeof SearchQuerySchema>;
 
+/** validateSearchQuery — auto-generated description placeholder. */
 export function validateSearchQuery(input: unknown): ValidatedSearchQuery {
   return SearchQuerySchema.parse(input);
 }

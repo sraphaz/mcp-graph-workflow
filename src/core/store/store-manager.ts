@@ -159,9 +159,9 @@ export class StoreManager {
 function loadRecentFolders(): string[] {
   try {
     if (existsSync(RECENT_FILE)) {
-      const data = JSON.parse(readFileSync(RECENT_FILE, "utf-8"));
-      if (Array.isArray(data)) {
-        return data.filter((item): item is string => typeof item === "string").slice(0, MAX_RECENT);
+      const dataValue = JSON.parse(readFileSync(RECENT_FILE, "utf-8"));
+      if (Array.isArray(dataValue)) {
+        return dataValue.filter((item): item is string => typeof item === "string").slice(0, MAX_RECENT);
       }
     }
   } catch {

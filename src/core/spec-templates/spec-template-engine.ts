@@ -85,12 +85,12 @@ export function generateSpecDocument(
   }
 
   // Replace any remaining variables in the full document
-  let result = lines.join("\n");
+  let resultValue = lines.join("\n");
   for (const [key, value] of Object.entries(variables)) {
-    result = replaceVariable(result, key, value);
+    resultValue = replaceVariable(resultValue, key, value);
   }
 
-  return result;
+  return resultValue;
 }
 
 /**

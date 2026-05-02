@@ -43,13 +43,13 @@ function violationKey(file: string, violationType: string): string {
 /** Count violations per (file, violationType) pair */
 function countByPair(violations: ViolationDetail[]): Map<string, { file: string; violationType: string; count: number }> {
   const counts = new Map<string, { file: string; violationType: string; count: number }>();
-  for (const v of violations) {
-    const key = violationKey(v.file, v.violationType);
+  for (const vVar of violations) {
+    const key = violationKey(vVar.file, vVar.violationType);
     const existing = counts.get(key);
     if (existing) {
       existing.count++;
     } else {
-      counts.set(key, { file: v.file, violationType: v.violationType, count: 1 });
+      counts.set(key, { file: vVar.file, violationType: vVar.violationType, count: 1 });
     }
   }
   return counts;

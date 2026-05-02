@@ -22,6 +22,7 @@ import { PhaseGatesStatus } from "@/components/harness/phase-gates-status";
 import { HarnessEventsLog } from "@/components/harness/harness-events-log";
 import { RemediationPanel } from "@/components/harness/remediation-panel";
 
+/** HarnessTab — auto-generated description placeholder. */
 export function HarnessTab(): React.JSX.Element {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 overflow-y-auto h-full">

@@ -109,6 +109,7 @@ export async function runSyncStackDocs(
       });
 }
 
+/** registerSyncStackDocs — auto-generated description placeholder. */
 export function registerSyncStackDocs(server: McpServer, store: SqliteStore): void {
   server.tool(
     "sync_stack_docs",

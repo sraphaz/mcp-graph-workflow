@@ -44,12 +44,13 @@ import { indexSkills } from "../../core/rag/skill-indexer.js";
 import { indexJourneyMaps } from "../../core/rag/journey-indexer.js";
 import { JourneyStore } from "../../core/journey/journey-store.js";
 import { indexAllEmbeddings } from "../../core/rag/rag-pipeline.js";
-import { decayStaleKnowledge } from "../../core/rag/knowledge-quality.js";
+import { decayStaleKnowledge, consolidateDuplicates, forgetContradictions } from "../../core/rag/knowledge-quality.js";
 import { linkBySharedContext } from "../../core/rag/knowledge-linker.js";
 import { runSynthesisCycle } from "../../core/rag/knowledge-synthesizer.js";
 import { reindexAll as reindexEntities } from "../../core/rag/entity-indexer.js";
 import { indexAllNodes } from "../../core/rag/node-indexer.js";
 import { indexCodeAnalysis } from "../../core/rag/code-context-indexer.js";
+import { reindexCodeForProject } from "../../core/code/code-indexer.js";
 import { invalidateRagCache } from "./context.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
@@ -173,7 +174,7 @@ async function handleExport(
   const subAction = exportAction ?? "export";
 
   if (subAction === "export") {
-    const result = await exportKnowledge(db, basePath, {
+    const resultValue = await exportKnowledge(db, basePath, {
       sources,
       minQuality: minQuality ?? 0,
       includeMemories: includeMemories ?? true,
@@ -182,14 +183,14 @@ async function handleExport(
     });
 
     const absolutePath = assertPathInsideProject(targetPath);
-    writeFileSync(absolutePath, JSON.stringify(result.package, null, 2), "utf-8");
+    writeFileSync(absolutePath, JSON.stringify(resultValue.package, null, 2), "utf-8");
 
-    logger.info("tool:knowledge:export:ok", { path: absolutePath, ...result.stats });
+    logger.info("tool:knowledge:export:ok", { path: absolutePath, ...resultValue.stats });
     return mcpText({
       ok: true,
       action: "export",
       filePath: absolutePath,
-      stats: result.stats,
+      stats: resultValue.stats,
     });
   }
 
@@ -209,18 +210,18 @@ async function handleExport(
       return mcpError(`Invalid knowledge package: ${errorMsg}`);
     }
 
-    const result = await importKnowledge(db, basePath, parsed.data);
+    const resultValue = await importKnowledge(db, basePath, parsed.data);
 
     logger.info("tool:knowledge:export:import:ok", {
-      documentsImported: result.documentsImported,
-      documentsSkipped: result.documentsSkipped,
-      memoriesImported: result.memoriesImported,
+      documentsImported: resultValue.documentsImported,
+      documentsSkipped: resultValue.documentsSkipped,
+      memoriesImported: resultValue.memoriesImported,
     });
     return mcpText({
       ok: true,
       action: "import",
       filePath: absolutePath,
-      result,
+      resultValue,
     });
   }
 
@@ -296,14 +297,14 @@ function handleBatchFeedback(
   const db = store.getDb();
   const results: Array<{ docId: string; feedbackType: string; ok: boolean; error?: string }> = [];
 
-  for (const item of feedbackItems) {
+  for (const itemValue of feedbackItems) {
     try {
-      const contextObj = item.context ? { note: item.context } : undefined;
-      applyFeedback(db, item.docId, item.query || "", item.feedbackType, contextObj);
-      results.push({ docId: item.docId, feedbackType: item.feedbackType, ok: true });
+      const contextObj = itemValue.context ? { note: itemValue.context } : undefined;
+      applyFeedback(db, itemValue.docId, itemValue.query || "", itemValue.feedbackType, contextObj);
+      results.push({ docId: itemValue.docId, feedbackType: itemValue.feedbackType, ok: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      results.push({ docId: item.docId, feedbackType: item.feedbackType, ok: false, error: message });
+      results.push({ docId: itemValue.docId, feedbackType: itemValue.feedbackType, ok: false, error: message });
     }
   }
 
@@ -330,9 +331,9 @@ function handlePrune(
   if (strategy === "budget") {
     const ks = new KnowledgeStore(db);
     const budgetLimit = maxDocs ?? 100;
-    const result = ks.autoprune(budgetLimit, isDryRun);
-    logger.info("tool:knowledge:prune:budget", { pruned: result.removed, budget: budgetLimit, dryRun: isDryRun });
-    return mcpText({ strategy: "budget", pruned: result.removed, prunedIds: result.removedIds, dryRun: isDryRun, budget: budgetLimit, remaining: ks.count() });
+    const resultValue = ks.autoprune(budgetLimit, isDryRun);
+    logger.info("tool:knowledge:prune:budget", { pruned: resultValue.removed, budget: budgetLimit, dryRun: isDryRun });
+    return mcpText({ strategy: "budget", pruned: resultValue.removed, prunedIds: resultValue.removedIds, dryRun: isDryRun, budget: budgetLimit, remaining: ks.count() });
   }
 
   if (strategy === "dedup") {
@@ -340,31 +341,31 @@ function handlePrune(
     const contradictions = findContradictions(db);
 
     // Dedup now deletes older docs in each pair (unless dryRun)
-    const result = pruneKnowledge(db, { strategy: "dedup", dryRun: isDryRun });
+    const resultValue = pruneKnowledge(db, { strategy: "dedup", dryRun: isDryRun });
 
     logger.info("tool:knowledge:prune:dedup", {
       duplicates: duplicates.length,
       contradictions: contradictions.length,
-      deleted: result.pruned,
+      deleted: resultValue.pruned,
       dryRun: isDryRun,
     });
 
     return mcpText({
       strategy: "dedup",
-      pruned: result.pruned,
-      prunedIds: result.prunedIds,
+      pruned: resultValue.pruned,
+      prunedIds: resultValue.prunedIds,
       dryRun: isDryRun,
       duplicates: isDryRun ? duplicates : undefined,
       contradictions,
       summary: {
         duplicatePairs: duplicates.length,
         contradictionPairs: contradictions.length,
-        deleted: result.pruned,
+        deleted: resultValue.pruned,
       },
     });
   }
 
-  const result = pruneKnowledge(db, {
+  const resultValue = pruneKnowledge(db, {
     strategy,
     maxAgeDays,
     minQuality,
@@ -373,14 +374,15 @@ function handlePrune(
 
   logger.info("tool:knowledge:prune:ok", {
     strategy,
-    pruned: result.pruned,
+    pruned: resultValue.pruned,
     dryRun: isDryRun,
   });
 
-  return mcpText(result);
+  return mcpText(resultValue);
 }
 
-async function handleReindex(
+/** handleReindex — auto-generated description placeholder. */
+export async function handleReindex(
   store: SqliteStore,
   basePath: string | undefined,
   reindexSources: Array<"memory" | "serena" | "docs" | "skills" | "journey" | "embeddings" | "quality" | "relations" | "synthesis" | "entities" | "graph" | "code" | "community"> | undefined,
@@ -420,7 +422,15 @@ async function handleReindex(
   }
 
   if (allSources || reindexSources?.includes("quality")) {
-    results.quality = decayStaleKnowledge(store.getDb());
+    const decay = decayStaleKnowledge(store.getDb());
+    const consolidation = consolidateDuplicates(store.getDb());
+    const forgetting = forgetContradictions(store.getDb());
+    results.quality = {
+      ...decay,
+      consolidated: consolidation.consolidated,
+      forgotten: forgetting.forgotten,
+      skippedHigherHelpful: forgetting.skippedHigherHelpful,
+    };
   }
 
   if (allSources || reindexSources?.includes("relations")) {
@@ -443,27 +453,34 @@ async function handleReindex(
 
   if (allSources || reindexSources?.includes("code")) {
     try {
+      // Step 1: rebuild the code-symbol index from disk. This refreshes
+      // code_symbols / code_relations and updates code_index_meta
+      // (last_indexed, git_hash, counts) — which is what detectStaleIndex()
+      // reads to clear the stale-index advisory.
+      const symbolIndex = await reindexCodeForProject(store, projectPath);
+
+      // Step 2: refresh the RAG context layer from the just-rebuilt symbols.
       const symbols = store.getDb()
         .prepare("SELECT name, kind, file, exported, language, docstring FROM code_symbols LIMIT 10000")
         .all() as Array<{ name: string; kind: string; file: string; exported: number; language: string | null; docstring: string | null }>;
-      if (symbols.length > 0) {
-        results.code = indexCodeAnalysis(
-          new KnowledgeStore(store.getDb()),
-          {
-            symbols: symbols.map((s) => ({
-              name: s.name,
-              kind: s.kind,
-              file: s.file,
-              exported: s.exported === 1,
-              language: s.language ?? undefined,
-              docstring: s.docstring ?? undefined,
-            })),
-            flows: [],
-          },
-        );
-      } else {
-        results.code = { documentsIndexed: 0, note: "No code symbols found. Run code indexer first." };
-      }
+      const ragContext = symbols.length > 0
+        ? indexCodeAnalysis(
+            new KnowledgeStore(store.getDb()),
+            {
+              symbols: symbols.map((s) => ({
+                name: s.name,
+                kind: s.kind,
+                file: s.file,
+                exported: s.exported === 1,
+                language: s.language ?? undefined,
+                docstring: s.docstring ?? undefined,
+              })),
+              flows: [],
+            },
+          )
+        : { documentsIndexed: 0 };
+
+      results.code = { symbolIndex, ragContext };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.warn("code-indexer:reindex-failed", { error: errorMsg });

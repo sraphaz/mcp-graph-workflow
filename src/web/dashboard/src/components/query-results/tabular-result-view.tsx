@@ -22,6 +22,7 @@ interface TabularResultViewProps {
   pageSize?: number;
 }
 
+/** TabularResultView — auto-generated description placeholder. */
 export function TabularResultView({ data, pageSize = 50 }: TabularResultViewProps): React.JSX.Element {
   const [page, setPage] = useState(0);
 

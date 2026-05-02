@@ -126,7 +126,7 @@ export function substituteTemplateVariables(code: string): SubstituteResult {
     },
   );
 
-  // Second pass: any remaining `{{...}}` fragments (mid-string concat or
+  // Second pass: every remaining `{{...}}` fragments (mid-string concat or
   // local/flow vars). For globals we still emit the getter inline; for
   // local/flow we leave a TODO marker.
   out = out.replace(TEMPLATE_VAR_REGEX, (_match, raw: string) => {
@@ -191,6 +191,7 @@ function detectUnsupported(code: string): string[] {
   return warnings;
 }
 
+/** translateDaVinciToJavaBody — auto-generated description placeholder. */
 export function translateDaVinciToJavaBody(code: string): TranslationResult {
   if (!code || !code.trim()) {
     return {
@@ -226,7 +227,7 @@ export function translateDaVinciToJavaBody(code: string): TranslationResult {
 
   if (unsupported.length > 0) {
     lines.push(`// PARTIAL TRANSLATION — the original body uses constructs that need manual review:`);
-    for (const w of unsupported) lines.push(`//   - ${w}`);
+    for (const wVar of unsupported) lines.push(`//   - ${wVar}`);
     lines.push("");
   }
 

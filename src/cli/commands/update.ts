@@ -39,6 +39,7 @@ function formatStep(step: UpdateStepResult): string {
   return `  ${icon} ${step.step.padEnd(12)} ${step.message}`;
 }
 
+/** updateCommand — auto-generated description placeholder. */
 export function updateCommand(): Command {
   return new Command("update")
     .description("Update mcp-graph configuration to latest version")

@@ -21,6 +21,7 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 
+/** registerSnapshot — auto-generated description placeholder. */
 export function registerSnapshot(server: McpServer, store: SqliteStore): void {
   server.tool(
     "snapshot",

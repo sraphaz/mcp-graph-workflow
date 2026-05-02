@@ -124,8 +124,8 @@ function computeVerdict(
     if (belowThreshold) {
       blockers.push(`Composite fitness score ${fitness.composite} is below threshold ${PASS_THRESHOLD}`);
     }
-    for (const f of criticalFindings) {
-      blockers.push(f.message);
+    for (const fVar of criticalFindings) {
+      blockers.push(fVar.message);
     }
 
     return {
@@ -212,14 +212,14 @@ function serializeStandard(report: ChallengeReport): string {
 
   if (report.preMortemFindings.length > 0) {
     const bySev = { critical: 0, warning: 0, info: 0 };
-    for (const f of report.preMortemFindings) bySev[f.severity]++;
+    for (const fVar of report.preMortemFindings) bySev[fVar.severity]++;
     lines.push(`**Findings:** ${bySev.critical} critical, ${bySev.warning} warning, ${bySev.info} info`);
   }
 
   if (report.overallVerdict.criticalBlockers.length > 0) {
     lines.push("", "**Blockers:**");
-    for (const b of report.overallVerdict.criticalBlockers) {
-      lines.push(`- ${b}`);
+    for (const bVar of report.overallVerdict.criticalBlockers) {
+      lines.push(`- ${bVar}`);
     }
   }
 
@@ -248,15 +248,15 @@ function serializeDeep(report: ChallengeReport): string {
 
   if (report.preMortemFindings.length > 0) {
     lines.push("## Pre-Mortem Findings");
-    for (const f of report.preMortemFindings) {
-      lines.push(`- [${f.severity.toUpperCase()}] ${f.message} (${f.source}/${f.dimension})`);
+    for (const fVar of report.preMortemFindings) {
+      lines.push(`- [${fVar.severity.toUpperCase()}] ${fVar.message} (${fVar.source}/${fVar.dimension})`);
     }
     lines.push("");
   }
 
   lines.push("## Challenge Questions");
-  for (const q of report.challengeQuestions) {
-    lines.push(`- ${q}`);
+  for (const qVar of report.challengeQuestions) {
+    lines.push(`- ${qVar}`);
   }
   lines.push("");
 
@@ -264,14 +264,14 @@ function serializeDeep(report: ChallengeReport): string {
   lines.push(`**${report.overallVerdict.verdict}**`);
   if (report.overallVerdict.criticalBlockers.length > 0) {
     lines.push("Critical blockers:");
-    for (const b of report.overallVerdict.criticalBlockers) {
-      lines.push(`  - ${b}`);
+    for (const bVar of report.overallVerdict.criticalBlockers) {
+      lines.push(`  - ${bVar}`);
     }
   }
   if (report.overallVerdict.warnings.length > 0) {
     lines.push("Warnings:");
-    for (const w of report.overallVerdict.warnings) {
-      lines.push(`  - ${w}`);
+    for (const wVar of report.overallVerdict.warnings) {
+      lines.push(`  - ${wVar}`);
     }
   }
 

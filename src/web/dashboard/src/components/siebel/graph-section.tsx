@@ -57,6 +57,7 @@ interface GraphSectionProps {
   dependencies: SiebelDependencyData[];
 }
 
+/** GraphSection — auto-generated description placeholder. */
 export function GraphSection({ objects, dependencies }: GraphSectionProps): React.JSX.Element {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<SiebelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<SiebelEdgeData>>([]);

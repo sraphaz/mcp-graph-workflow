@@ -41,6 +41,7 @@ interface SnapshotRow {
   taken_on: string;
 }
 
+/** createLifecycleHealthRouter — auto-generated description placeholder. */
 export function createLifecycleHealthRouter(storeRef: StoreRef): Router {
   const router = Router();
 
@@ -52,11 +53,11 @@ export function createLifecycleHealthRouter(storeRef: StoreRef): Router {
         return;
       }
       const { window, epicId } = parsed.data;
-      const result = computeSuccessRate(storeRef.current.getDb(), {
+      const resultValue = computeSuccessRate(storeRef.current.getDb(), {
         window: window ?? 10,
         epicId: epicId ?? null,
       });
-      res.json(result);
+      res.json(resultValue);
     } catch (err) {
       next(err);
     }

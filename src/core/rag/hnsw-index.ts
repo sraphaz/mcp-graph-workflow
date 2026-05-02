@@ -212,18 +212,18 @@ export class HNSWIndex {
 
   /** Deserialize an index from JSON. */
   static fromJSON(json: string): HNSWIndex {
-    const data = JSON.parse(json) as SerializedIndex;
+    const dataValue = JSON.parse(json) as SerializedIndex;
     const index = new HNSWIndex({
-      dimension: data.dimension,
-      M: data.M,
-      efConstruction: data.efConstruction,
-      linearThreshold: data.linearThreshold,
+      dimension: dataValue.dimension,
+      M: dataValue.M,
+      efConstruction: dataValue.efConstruction,
+      linearThreshold: dataValue.linearThreshold,
     });
 
-    index.entryPointId = data.entryPointId;
-    index.maxLevel = data.maxLevel;
+    index.entryPointId = dataValue.entryPointId;
+    index.maxLevel = dataValue.maxLevel;
 
-    for (const nodeData of data.nodes) {
+    for (const nodeData of dataValue.nodes) {
       const node: HNSWNode = {
         id: nodeData.id,
         vector: nodeData.vector,
@@ -253,11 +253,11 @@ export class HNSWIndex {
     if (!node) return;
 
     // Remove from neighbors' connection lists
-    for (let l = 0; l <= node.level; l++) {
-      for (const neighborId of node.layers[l].keys()) {
+    for (let lVar = 0; lVar <= node.level; lVar++) {
+      for (const neighborId of node.layers[lVar].keys()) {
         const neighbor = this.nodes.get(neighborId);
-        if (neighbor && neighbor.layers[l]) {
-          neighbor.layers[l].delete(id);
+        if (neighbor && neighbor.layers[lVar]) {
+          neighbor.layers[lVar].delete(id);
         }
       }
     }
@@ -309,16 +309,16 @@ export class HNSWIndex {
     let currentBest = this.entryPointId;
 
     // Phase 1: Greedy traverse from top to node.level + 1
-    for (let l = this.maxLevel; l > node.level; l--) {
-      currentBest = this.greedyClosest(node.vector, currentBest, l);
+    for (let lVar = this.maxLevel; lVar > node.level; lVar--) {
+      currentBest = this.greedyClosest(node.vector, currentBest, lVar);
     }
 
     // Phase 2: Insert at each level from node.level down to 0
-    for (let l = Math.min(node.level, this.maxLevel); l >= 0; l--) {
-      const mMax = l === 0 ? this.mMax0 : this.M;
+    for (let lVar = Math.min(node.level, this.maxLevel); lVar >= 0; lVar--) {
+      const mMax = lVar === 0 ? this.mMax0 : this.M;
 
       // Find neighbors at this level
-      const candidates = this.searchLayer(node.vector, currentBest, this.efConstruction, l);
+      const candidates = this.searchLayer(node.vector, currentBest, this.efConstruction, lVar);
 
       // Select M closest
       const neighbors = candidates.slice(0, mMax);
@@ -328,15 +328,15 @@ export class HNSWIndex {
         if (neighbor.id === node.id) continue;
 
         const sim = neighbor.score;
-        node.layers[l].set(neighbor.id, sim);
+        node.layers[lVar].set(neighbor.id, sim);
 
         const nNode = this.nodes.get(neighbor.id);
-        if (nNode && nNode.layers[l]) {
-          nNode.layers[l].set(node.id, sim);
+        if (nNode && nNode.layers[lVar]) {
+          nNode.layers[lVar].set(node.id, sim);
 
           // Prune if too many connections
-          if (nNode.layers[l].size > mMax) {
-            this.pruneConnections(nNode, l, mMax);
+          if (nNode.layers[lVar].size > mMax) {
+            this.pruneConnections(nNode, lVar, mMax);
           }
         }
       }
@@ -423,10 +423,10 @@ export class HNSWIndex {
         if (!neighbor) continue;
 
         const sim = cosineSimilarity(query, neighbor.vector);
-        const result = { id: neighborId, score: sim };
+        const resultValue = { id: neighborId, score: sim };
 
-        candidates.push(result);
-        working.push(result);
+        candidates.push(resultValue);
+        working.push(resultValue);
       }
     }
 
@@ -450,8 +450,8 @@ export class HNSWIndex {
     let currentBest = this.entryPointId;
 
     // Traverse from top layer to layer 1
-    for (let l = this.maxLevel; l >= 1; l--) {
-      currentBest = this.greedyClosest(query, currentBest, l);
+    for (let lVar = this.maxLevel; lVar >= 1; lVar--) {
+      currentBest = this.greedyClosest(query, currentBest, lVar);
     }
 
     // Search at layer 0 with ef = max(k, efConstruction)

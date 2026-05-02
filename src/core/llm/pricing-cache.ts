@@ -44,6 +44,7 @@ function safe(n: number | undefined): number {
   return Number.isFinite(n) && (n ?? 0) > 0 ? (n as number) : 0;
 }
 
+/** computeCachedCost — auto-generated description placeholder. */
 export function computeCachedCost(
   inputs: CostInputs,
   rates: PricingRates,

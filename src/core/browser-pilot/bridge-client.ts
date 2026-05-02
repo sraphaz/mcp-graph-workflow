@@ -81,9 +81,9 @@ export function computeBackoffSchedule(opts: BackoffOptions): number[] {
 
 /** Joins a base URL with a path, tolerant of trailing slash on either side. */
 function joinUrl(base: string, path: string): string {
-  const b = base.endsWith("/") ? base.slice(0, -1) : base;
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${b}${p}`;
+  const bVar = base.endsWith("/") ? base.slice(0, -1) : base;
+  const pVar = path.startsWith("/") ? path : `/${path}`;
+  return `${bVar}${pVar}`;
 }
 
 export class BridgeClient {
@@ -103,11 +103,11 @@ export class BridgeClient {
   /** GET /health — returns parsed body or throws structured error. */
   async health(): Promise<BridgeHealth> {
     const url = joinUrl(this.bridgeUrl, "/health");
-    const res = await this.fetchImpl(url, { method: "GET" });
-    if (!res.ok) {
-      throw new OperationError(`bridge health ${res.status} at ${url}`);
+    const resValue = await this.fetchImpl(url, { method: "GET" });
+    if (!resValue.ok) {
+      throw new OperationError(`bridge health ${resValue.status} at ${url}`);
     }
-    const body = (await res.json()) as Partial<BridgeHealth>;
+    const body = (await resValue.json()) as Partial<BridgeHealth>;
     return {
       ok: body.ok === true,
       models: Array.isArray(body.models) ? body.models : [],

@@ -95,9 +95,9 @@ export class SpecStore {
 
     logger.info("Spec document registered", { id, name: params.name });
 
-    const result = this.get(id);
-    if (!result) throw new McpGraphError(`Failed to retrieve spec document after register: ${id}`);
-    return result;
+    const resultValue = this.get(id);
+    if (!resultValue) throw new McpGraphError(`Failed to retrieve spec document after register: ${id}`);
+    return resultValue;
   }
 
   update(specId: string, newContent: string, diffSummary: string): void {

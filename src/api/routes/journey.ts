@@ -146,6 +146,7 @@ function getJourneyRuntime(storeRef: StoreRef, basePath: string): JourneyRuntime
   return bundle;
 }
 
+/** createJourneyRouter — auto-generated description placeholder. */
 export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => string): Router {
   const router = Router();
 
@@ -285,9 +286,9 @@ export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => strin
   router.post("/maps/import", validateBody(ImportJourneySchema), (req, res, next) => {
     try {
       const journeyStore = getJourneyStore(storeRef);
-      const data = req.body as z.infer<typeof ImportJourneySchema>;
-      const result = journeyStore.importJourneyMap(data);
-      res.status(201).json(result);
+      const dataValue = req.body as z.infer<typeof ImportJourneySchema>;
+      const resultValue = journeyStore.importJourneyMap(dataValue);
+      res.status(201).json(resultValue);
     } catch (err) {
       next(err);
     }
@@ -421,13 +422,13 @@ export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => strin
           }
         }
         const value = (await bundle.runtime.invoke(cdp, helper, args)) as Record<string, unknown> | null | undefined;
-        const obj = value ?? {};
+        const objValue = value ?? {};
         return {
-          ok: (obj.ok as boolean | undefined) ?? true,
-          base64: obj.base64 as string | undefined,
-          text: obj.text as string | undefined,
-          error: obj.error as string | undefined,
-          ...obj,
+          ok: (objValue.ok as boolean | undefined) ?? true,
+          base64: objValue.base64 as string | undefined,
+          text: objValue.text as string | undefined,
+          error: objValue.error as string | undefined,
+          ...objValue,
         };
       };
 

@@ -79,6 +79,7 @@ function topValues(values: Map<string, number>, max: number): string[] {
 
 // --- Main function ---
 
+/** learnTemplates — auto-generated description placeholder. */
 export function learnTemplates(objects: readonly SiebelObject[]): LearnedTemplate[] {
   // Only consider top-level objects (not children)
   const topLevel = objects.filter((o) => !o.parentName);
@@ -90,14 +91,14 @@ export function learnTemplates(objects: readonly SiebelObject[]): LearnedTemplat
   // Group by type + subType
   const accumulators = new Map<string, TemplateAccumulator>();
 
-  for (const obj of topLevel) {
-    const subType = getSubType(obj);
-    const key = buildKey(obj.type, subType);
+  for (const objValue of topLevel) {
+    const subType = getSubType(objValue);
+    const key = buildKey(objValue.type, subType);
 
     let acc = accumulators.get(key);
     if (!acc) {
       acc = {
-        objectType: obj.type,
+        objectType: objValue.type,
         subType,
         objects: [],
         properties: new Map(),
@@ -107,10 +108,10 @@ export function learnTemplates(objects: readonly SiebelObject[]): LearnedTemplat
       accumulators.set(key, acc);
     }
 
-    acc.objects.push(obj);
+    acc.objects.push(objValue);
 
     // Accumulate properties
-    for (const prop of obj.properties) {
+    for (const prop of objValue.properties) {
       let propAcc = acc.properties.get(prop.name);
       if (!propAcc) {
         propAcc = { count: 0, values: new Map() };
@@ -123,8 +124,8 @@ export function learnTemplates(objects: readonly SiebelObject[]): LearnedTemplat
     }
 
     // Accumulate child type distribution
-    acc.totalChildCount += obj.children.length;
-    for (const child of obj.children) {
+    acc.totalChildCount += objValue.children.length;
+    for (const child of objValue.children) {
       acc.childTypeCounts.set(
         child.type,
         (acc.childTypeCounts.get(child.type) ?? 0) + 1,

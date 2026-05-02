@@ -53,6 +53,7 @@ export interface OpenAiChatCompletionResponse {
 
 // ── Conversions ────────────────────────────────────────────────
 
+/** toLlmRequest — auto-generated description placeholder. */
 export function toLlmRequest(body: OpenAiChatCompletionRequest): LlmRequest {
   if (body.stream === true) {
     throw new OperationError("streaming not supported in v1 (ADR-proxy-04)");
@@ -75,6 +76,7 @@ export function toLlmRequest(body: OpenAiChatCompletionRequest): LlmRequest {
   };
 }
 
+/** toOpenAiResponse — auto-generated description placeholder. */
 export function toOpenAiResponse(res: LlmResponse): OpenAiChatCompletionResponse {
   const id = `chatcmpl-${cryptoRandomId()}`;
   const promptTokens = res.usage.inputTokens;
@@ -103,8 +105,8 @@ function cryptoRandomId(): string {
   // Lightweight: 16 hex chars; collision-resistant enough for chat completion ids.
   const arr = new Uint8Array(8);
   // Node 24+ globalThis.crypto is available; fallback for older runtimes via crypto module.
-  const c = (globalThis as { crypto?: Crypto }).crypto;
-  if (c?.getRandomValues) c.getRandomValues(arr);
+  const cVar = (globalThis as { crypto?: Crypto }).crypto;
+  if (cVar?.getRandomValues) cVar.getRandomValues(arr);
   else {
     for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(Math.random() * 256);
   }

@@ -93,12 +93,12 @@ export function searchCodeSymbols(
     const symbolMap = new Map(filtered.map((r) => [r.symbol.id, r]));
 
     results = [];
-    for (const r of reranked) {
-      const match = symbolMap.get(r.id);
+    for (const rVar of reranked) {
+      const match = symbolMap.get(rVar.id);
       if (!match) continue;
       results.push({
         symbol: match.symbol,
-        score: r.score,
+        score: rVar.score,
         modulePath: match.symbol.modulePath,
       });
     }

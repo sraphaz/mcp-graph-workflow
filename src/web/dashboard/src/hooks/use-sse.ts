@@ -32,6 +32,7 @@ type SSEEvent =
 const INITIAL_BACKOFF_MS = 1000;
 const MAX_BACKOFF_MS = 30000;
 
+/** useSSE — auto-generated description placeholder. */
 export function useSSE(onEvent: (event: SSEEvent, data: unknown) => void): void {
   const callbackRef = useRef(onEvent);
   callbackRef.current = onEvent;

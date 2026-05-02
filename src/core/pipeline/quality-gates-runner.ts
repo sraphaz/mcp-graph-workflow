@@ -39,20 +39,20 @@ type GateRunner = (projectPath: string) => { score: number; grade: string; passe
 
 const GATE_RUNNERS: Record<string, GateRunner> = {
   security_scan: (p) => {
-    const r = checkSecurityScan(p);
-    return { score: r.score, grade: r.grade, passed: r.passed };
+    const rVar = checkSecurityScan(p);
+    return { score: rVar.score, grade: rVar.grade, passed: rVar.passed };
   },
   code_quality: (p) => {
-    const r = checkCodeQuality(p);
-    return { score: r.score, grade: r.grade, passed: r.passed };
+    const rVar = checkCodeQuality(p);
+    return { score: rVar.score, grade: rVar.grade, passed: rVar.passed };
   },
   test_coverage: (p) => {
-    const r = checkTestCoverage(p);
-    return { score: r.score, grade: r.grade, passed: r.passed };
+    const rVar = checkTestCoverage(p);
+    return { score: rVar.score, grade: rVar.grade, passed: rVar.passed };
   },
   observability_check: (p) => {
-    const r = checkObservability(p);
-    return { score: r.score, grade: r.grade, passed: r.passed };
+    const rVar = checkObservability(p);
+    return { score: rVar.score, grade: rVar.grade, passed: rVar.passed };
   },
 };
 
@@ -79,11 +79,11 @@ export function runQualityGates(
     }
 
     try {
-      const result = runner(projectPath);
-      scores[gate] = result.score;
+      const resultValue = runner(projectPath);
+      scores[gate] = resultValue.score;
 
-      if (result.score < 50) {
-        warnings.push(`Quality gate '${gate}' scored ${result.score}/100 (${result.grade}) — below advisory threshold`);
+      if (resultValue.score < 50) {
+        warnings.push(`Quality gate '${gate}' scored ${resultValue.score}/100 (${resultValue.grade}) — below advisory threshold`);
       }
     } catch (err) {
       scores[gate] = 0;

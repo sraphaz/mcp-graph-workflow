@@ -43,6 +43,7 @@ export interface AxiomGateResult {
   snapshotToken?: string;
 }
 
+/** checkAxiomGate — auto-generated description placeholder. */
 export function checkAxiomGate(ctx: AxiomGateContext): AxiomGateResult {
   const { activePrincipleIds, axiomLinks, mode } = ctx;
 

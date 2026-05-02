@@ -24,6 +24,7 @@ import { generateTddHints, generateTddHintsFromTexts } from "../../core/implemen
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerNext — auto-generated description placeholder. */
 export function registerNext(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
   server.tool(
     "next",
@@ -34,9 +35,9 @@ export function registerNext(server: McpServer, store: SqliteStore, lockManager?
     async ({ agentId }) => {
       logger.debug("tool:next", { agentId });
       const doc = store.toGraphDocument();
-      const result = findEnhancedNextTask(doc, store, { lockManager, agentId });
+      const resultValue = findEnhancedNextTask(doc, store, { lockManager, agentId });
 
-      if (!result) {
+      if (!resultValue) {
         logger.info("tool:next:ok", { found: false });
         return mcpText({
           message: "No actionable tasks found. All tasks are either done or blocked.",
@@ -45,29 +46,29 @@ export function registerNext(server: McpServer, store: SqliteStore, lockManager?
 
       // Collect AC from both inline and child nodes
       const acChildNodes = doc.nodes.filter(
-        (n) => n.type === "acceptance_criteria" && n.parentId === result.task.node.id,
+        (n) => n.type === "acceptance_criteria" && n.parentId === resultValue.task.node.id,
       );
       const acTexts = [
-        ...(result.task.node.acceptanceCriteria ?? []),
+        ...(resultValue.task.node.acceptanceCriteria ?? []),
         ...acChildNodes.map((n) => n.title),
       ];
       const tddHints = acTexts.length > 0
         ? generateTddHintsFromTexts(acTexts)
-        : generateTddHints(result.task.node);
+        : generateTddHints(resultValue.task.node);
 
       logger.info("tool:next:ok", {
         found: true,
-        nodeId: result.task.node.id,
-        knowledgeCoverage: result.knowledgeCoverage,
+        nodeId: resultValue.task.node.id,
+        knowledgeCoverage: resultValue.knowledgeCoverage,
         tddHints: tddHints.length,
       });
 
       return mcpText({
-        node: result.task.node,
-        reason: result.task.reason,
-        knowledgeCoverage: result.knowledgeCoverage,
-        velocityContext: result.velocityContext,
-        enhancedReason: result.enhancedReason,
+        node: resultValue.task.node,
+        reason: resultValue.task.reason,
+        knowledgeCoverage: resultValue.knowledgeCoverage,
+        velocityContext: resultValue.velocityContext,
+        enhancedReason: resultValue.enhancedReason,
         tddHints,
       });
     },

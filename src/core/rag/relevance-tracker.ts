@@ -173,20 +173,20 @@ export class RelevanceTracker {
       if (!stats.has(row.document_id)) {
         stats.set(row.document_id, { positive: 0, negative: 0 });
       }
-      const s = stats.get(row.document_id);
-      if (!s) continue;
-      if (row.signal === "positive") s.positive += row.cnt;
-      else if (row.signal === "negative") s.negative += row.cnt;
+      const sVar = stats.get(row.document_id);
+      if (!sVar) continue;
+      if (row.signal === "positive") sVar.positive += row.cnt;
+      else if (row.signal === "negative") sVar.negative += row.cnt;
     }
 
     for (const docId of documentIds) {
-      const s = stats.get(docId);
-      if (!s) {
+      const sVar = stats.get(docId);
+      if (!sVar) {
         boosts.set(docId, 0);
         continue;
       }
-      const total = s.positive + s.negative;
-      const boost = total > 0 ? ((s.positive - s.negative) / total) * BOOST_FACTOR : 0;
+      const total = sVar.positive + sVar.negative;
+      const boost = total > 0 ? ((sVar.positive - sVar.negative) / total) * BOOST_FACTOR : 0;
       boosts.set(docId, boost);
     }
 

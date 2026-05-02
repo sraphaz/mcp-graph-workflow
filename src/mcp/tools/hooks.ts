@@ -103,15 +103,18 @@ export function getSharedHookRegistry(): HookRegistry {
   return sharedRegistry;
 }
 
+/** setSharedHookStatsStore — auto-generated description placeholder. */
 export function setSharedHookStatsStore(store: HookStatsStore | null): void {
   sharedStatsStore = store;
   if (store) sharedRegistry.attachStatsStore(store);
 }
 
+/** getSharedHookStatsStore — auto-generated description placeholder. */
 export function getSharedHookStatsStore(): HookStatsStore | null {
   return sharedStatsStore;
 }
 
+/** buildHooksHandler — auto-generated description placeholder. */
 export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (input: HooksInput) => Promise<McpToolResponse> {
   return async (input: HooksInput): Promise<McpToolResponse> => {
     try {
@@ -167,13 +170,13 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
                   timeoutMs: input.timeoutMs,
                 };
             const handler = async (event: Parameters<Parameters<HookRegistry["register"]>[0]["handler"]>[0]): Promise<void> => {
-              const result = await runShellHandler(shellConfig, event);
-              if (result.decision === "block") {
-                logger.warn("hooks:shell:block", { id, channel: event.channel, stderr: result.stderr });
-                throw new OperationError(result.stderr || `hook "${id}" blocked`);
+              const resultValue = await runShellHandler(shellConfig, event);
+              if (resultValue.decision === "block") {
+                logger.warn("hooks:shell:block", { id, channel: event.channel, stderr: resultValue.stderr });
+                throw new OperationError(resultValue.stderr || `hook "${id}" blocked`);
               }
-              if (result.decision === "warn") {
-                logger.warn("hooks:shell:warn", { id, exitCode: result.exitCode, timedOut: result.timedOut, stderr: result.stderr });
+              if (resultValue.decision === "warn") {
+                logger.warn("hooks:shell:warn", { id, exitCode: resultValue.exitCode, timedOut: resultValue.timedOut, stderr: resultValue.stderr });
               }
             };
             registry.register({ id, channel, handler, priority: 0 });
@@ -215,98 +218,98 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
         }
 
         case "import_claude_code": {
-          const result = importClaudeCodeSettings({ source: input.source });
+          const resultValue = importClaudeCodeSettings({ source: input.source });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            handlers: result.imported.map((h) => ({ id: h.id, channel: h.channel, matcher: h.matcher })),
-            skippedDetails: result.skipped,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            handlers: resultValue.imported.map((h) => ({ id: h.id, channel: h.channel, matcher: h.matcher })),
+            skippedDetails: resultValue.skipped,
           });
         }
 
         case "import_codex": {
-          const result = importCodexSettings({ source: input.source });
+          const resultValue = importCodexSettings({ source: input.source });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            handlers: result.imported.map((h) => ({ id: h.id, channel: h.channel })),
-            skippedDetails: result.skipped,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            handlers: resultValue.imported.map((h) => ({ id: h.id, channel: h.channel })),
+            skippedDetails: resultValue.skipped,
           });
         }
 
         case "import_opencode": {
-          const result = importOpenCodeSettings({ source: input.source });
+          const resultValue = importOpenCodeSettings({ source: input.source });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            handlers: result.imported.map((h) => ({ id: h.id, channel: h.channel })),
-            skippedDetails: result.skipped,
-            pluginsDiscovered: result.pluginsDiscovered,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            handlers: resultValue.imported.map((h) => ({ id: h.id, channel: h.channel })),
+            skippedDetails: resultValue.skipped,
+            pluginsDiscovered: resultValue.pluginsDiscovered,
           });
         }
 
         case "import_copilot": {
-          const result = importCopilotSettings({ source: input.source });
+          const resultValue = importCopilotSettings({ source: input.source });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            handlers: result.imported.map((h) => ({ id: h.id, channel: h.channel, kind: h.kind })),
-            skippedDetails: result.skipped,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            handlers: resultValue.imported.map((h) => ({ id: h.id, channel: h.channel, kind: h.kind })),
+            skippedDetails: resultValue.skipped,
           });
         }
 
         case "import_aider": {
-          const result = importAiderSettings({ source: input.source });
+          const resultValue = importAiderSettings({ source: input.source });
           const bridge = installAiderBridge({
             basePath: input.basePath ?? process.cwd(),
             apply: input.apply ?? false,
           });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            handlers: result.imported.map((h) => ({ id: h.id, channel: h.channel })),
-            skippedDetails: result.skipped,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            handlers: resultValue.imported.map((h) => ({ id: h.id, channel: h.channel })),
+            skippedDetails: resultValue.skipped,
             gitHooks: bridge,
           });
         }
 
         case "import_continue": {
-          const result = importContinueSettings({ source: input.source });
+          const resultValue = importContinueSettings({ source: input.source });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            mcpServers: result.mcpServers,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            mcpServers: resultValue.mcpServers,
             note: "Continue.dev: tool calls already captured via MCP path (Sprint 1.2). No native hooks to import.",
           });
         }
 
         case "import_cline": {
-          const result = importClineSettings({ source: input.source });
+          const resultValue = importClineSettings({ source: input.source });
           return mcpText({
             ok: true,
-            provider: result.provider,
-            source: result.source,
-            imported: result.imported.length,
-            skipped: result.skipped.length,
-            mcpServers: result.mcpServers,
+            provider: resultValue.provider,
+            source: resultValue.source,
+            imported: resultValue.imported.length,
+            skipped: resultValue.skipped.length,
+            mcpServers: resultValue.mcpServers,
             note: "Cline: tool calls already captured via MCP path (Sprint 1.2). No native hooks to import.",
           });
         }
@@ -318,6 +321,7 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
   };
 }
 
+/** registerHooks — auto-generated description placeholder. */
 export function registerHooks(server: McpServer): void {
   server.tool(
     "hooks",

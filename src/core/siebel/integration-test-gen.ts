@@ -159,6 +159,7 @@ function buildHttpScript(
 
 // --- Main function ---
 
+/** generateIntegrationTests — auto-generated description placeholder. */
 export function generateIntegrationTests(wsdl: WsdlParseResult): IntegrationTestSuite {
   logger.debug("integration-test-gen: generating", {
     operations: wsdl.operations.length,

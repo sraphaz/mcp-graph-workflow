@@ -132,9 +132,9 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
   }
   try {
     const db = new Database(dbPath, { readonly: true });
-    const result = db.pragma("integrity_check") as Array<{ integrity_check: string }>;
+    const resultValue = db.pragma("integrity_check") as Array<{ integrity_check: string }>;
     db.close();
-    const isOk = result.length === 1 && result[0].integrity_check === "ok";
+    const isOk = resultValue.length === 1 && resultValue[0].integrity_check === "ok";
     if (isOk) {
       return {
         name: "db-integrity",
@@ -145,7 +145,7 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
     return {
       name: "db-integrity",
       level: "error",
-      message: `Database integrity issues: ${result.map((r) => r.integrity_check).join(", ")}`,
+      message: `Database integrity issues: ${resultValue.map((r) => r.integrity_check).join(", ")}`,
       suggestion: "Restore from a snapshot: mcp-graph snapshot --restore <id>",
     };
   } catch (err) {

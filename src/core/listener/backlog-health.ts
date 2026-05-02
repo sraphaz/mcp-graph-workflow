@@ -101,9 +101,9 @@ export function analyzeBacklogHealth(doc: GraphDocument): BacklogHealthReport {
   const activePool = [...backlogTasks, ...readyTasks];
   const typeDistribution: Record<string, number> = {};
   const priorityDistribution: Record<string, number> = {};
-  for (const t of activePool) {
-    typeDistribution[t.type] = (typeDistribution[t.type] ?? 0) + 1;
-    const pKey = String(t.priority);
+  for (const tVar of activePool) {
+    typeDistribution[tVar.type] = (typeDistribution[tVar.type] ?? 0) + 1;
+    const pKey = String(tVar.priority);
     priorityDistribution[pKey] = (priorityDistribution[pKey] ?? 0) + 1;
   }
 

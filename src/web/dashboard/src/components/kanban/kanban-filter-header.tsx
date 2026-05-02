@@ -53,6 +53,7 @@ export interface KanbanFilterHeaderProps {
 
 // ── Pure filter logic ─────────────────────────────────────────────
 
+/** applyKanbanFilters — auto-generated description placeholder. */
 export function applyKanbanFilters(
   items: KanbanFilterItem[],
   filters: KanbanFilters,
@@ -70,6 +71,7 @@ const EMPTY_FILTERS: KanbanFilters = { agent: "", status: "", sprint: "", text: 
 
 // ── Component ─────────────────────────────────────────────────────
 
+/** KanbanFilterHeader — auto-generated description placeholder. */
 export function KanbanFilterHeader({
   agents = [],
   statuses = [],

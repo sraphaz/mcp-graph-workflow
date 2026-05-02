@@ -16,6 +16,7 @@ function reject(kind: StdioSanitizationKind, reason: string, value: string): nev
   throw new StdioSanitizationError(kind, reason, value);
 }
 
+/** safeArg — auto-generated description placeholder. */
 export function safeArg(value: string, kind: StdioSanitizationKind): string {
   if (typeof value !== "string") reject(kind, "not a string", String(value));
   if (value.length > 4096) reject(kind, "too long (>4096 bytes)", value.slice(0, 64));
@@ -55,6 +56,7 @@ export function safeArg(value: string, kind: StdioSanitizationKind): string {
   }
 }
 
+/** safeArgv — auto-generated description placeholder. */
 export function safeArgv(values: readonly string[], kind: StdioSanitizationKind): string[] {
   return values.map((v) => safeArg(v, kind));
 }
@@ -88,6 +90,7 @@ const CDP_DENIED_METHODS = new Set<string>([
   "Target.disposeBrowserContext",
 ]);
 
+/** assertCdpMethod — auto-generated description placeholder. */
 export function assertCdpMethod(method: string): void {
   if (typeof method !== "string" || method.length === 0) {
     reject("cdp-method", "empty or non-string method", String(method));

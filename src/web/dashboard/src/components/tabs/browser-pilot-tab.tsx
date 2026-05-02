@@ -42,6 +42,7 @@ interface SessionState {
 
 const API_BASE = "/api/v1/browser-harness";
 
+/** BrowserPilotTab — auto-generated description placeholder. */
 export function BrowserPilotTab(): React.JSX.Element {
   const [endpoint, setEndpoint] = useState("ws://127.0.0.1:9222/devtools/browser/");
   const [session, setSession] = useState<SessionState | null>(null);

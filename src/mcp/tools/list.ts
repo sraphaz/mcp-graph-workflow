@@ -24,6 +24,7 @@ import { LockManager } from "../../core/store/lock-manager.js";
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerList — auto-generated description placeholder. */
 export function registerList(server: McpServer, store: SqliteStore): void {
   server.tool(
     "list",
@@ -105,11 +106,11 @@ export function registerList(server: McpServer, store: SqliteStore): void {
 
       logger.info("tool:list:ok", { total, limit, offset, returned: paginatedNodes.length });
       // Bug #065: warn when offset exceeds total
-      const result: Record<string, unknown> = { total, limit, offset, hasMore: offset + limit < total, nodes: summary };
+      const resultValue: Record<string, unknown> = { total, limit, offset, hasMore: offset + limit < total, nodes: summary };
       if (offset >= total && total > 0) {
-        result.warning = `offset (${offset}) exceeds total results (${total})`;
+        resultValue.warning = `offset (${offset}) exceeds total results (${total})`;
       }
-      return mcpText(result);
+      return mcpText(resultValue);
     },
   );
 }

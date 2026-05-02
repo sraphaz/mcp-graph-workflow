@@ -24,6 +24,7 @@ import { AmbiguityAuditSchema } from "../../core/decisions/ambiguity-audit-types
 import { logger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 
+/** registerStartTask — auto-generated description placeholder. */
 export function registerStartTask(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
   server.tool(
     "start_task",
@@ -40,7 +41,7 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
     async ({ nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, ambiguityAudit }) => {
       logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, hasAmbiguityAudit: !!ambiguityAudit });
 
-      const result = startTask(store, {
+      const resultValue = startTask(store, {
         nodeId, contextDetail, ragBudget, autoStart,
         agentId,
         lockManager,
@@ -48,7 +49,7 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
         ambiguityAudit,
       });
 
-      if (!result) {
+      if (!resultValue) {
         logger.info("tool:start_task:no_tasks");
         return mcpText({
           message: "No actionable tasks found. All tasks are either done or blocked.",
@@ -56,31 +57,32 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
       }
 
       logger.info("tool:start_task:ok", {
-        nodeId: result.task.task.node.id,
-        title: result.task.task.node.title,
-        autoStart: result.startedAt !== null,
-        tddHints: result.tddHints.length,
+        nodeId: resultValue.task.task.node.id,
+        title: resultValue.task.task.node.title,
+        autoStart: resultValue.startedAt !== null,
+        tddHints: resultValue.tddHints.length,
       });
 
       return mcpText({
-        node: result.task.task.node,
-        reason: result.task.task.reason,
-        knowledgeCoverage: result.task.knowledgeCoverage,
-        velocityContext: result.task.velocityContext,
-        enhancedReason: result.task.enhancedReason,
-        tddHints: result.tddHints,
-        context: result.context,
-        ragContext: result.ragContext,
-        startedAt: result.startedAt,
-        ...(result.harnessWarning ? { harnessWarning: result.harnessWarning } : {}),
-        ...(result.leaseToken ? { leaseToken: result.leaseToken } : {}),
-        ...(result.checkpoint ? { checkpoint: { snapshotId: result.checkpoint.snapshotId } } : {}),
-        ...(result.shadowBranch ? { shadowBranch: result.shadowBranch } : {}),
-        ...(result.modelHint ? { modelHint: result.modelHint } : {}),
-        siblingContext: result.siblingContext,
-        ...(result.siblingTruncatedCount > 0 ? { siblingTruncatedCount: result.siblingTruncatedCount } : {}),
-        ...(result.domainSkills.length > 0 ? { domainSkills: result.domainSkills } : {}),
-        ...(result.ambiguityAuditWarning ? { ambiguityAuditWarning: result.ambiguityAuditWarning } : {}),
+        node: resultValue.task.task.node,
+        reason: resultValue.task.task.reason,
+        knowledgeCoverage: resultValue.task.knowledgeCoverage,
+        velocityContext: resultValue.task.velocityContext,
+        enhancedReason: resultValue.task.enhancedReason,
+        tddHints: resultValue.tddHints,
+        context: resultValue.context,
+        ragContext: resultValue.ragContext,
+        startedAt: resultValue.startedAt,
+        ...(resultValue.harnessWarning ? { harnessWarning: resultValue.harnessWarning } : {}),
+        ...(resultValue.leaseToken ? { leaseToken: resultValue.leaseToken } : {}),
+        ...(resultValue.checkpoint ? { checkpoint: { snapshotId: resultValue.checkpoint.snapshotId } } : {}),
+        ...(resultValue.shadowBranch ? { shadowBranch: resultValue.shadowBranch } : {}),
+        ...(resultValue.modelHint ? { modelHint: resultValue.modelHint } : {}),
+        siblingContext: resultValue.siblingContext,
+        ...(resultValue.siblingTruncatedCount > 0 ? { siblingTruncatedCount: resultValue.siblingTruncatedCount } : {}),
+        ...(resultValue.domainSkills.length > 0 ? { domainSkills: resultValue.domainSkills } : {}),
+        ...(resultValue.ambiguityAuditWarning ? { ambiguityAuditWarning: resultValue.ambiguityAuditWarning } : {}),
+        ...(resultValue.memoryDynamicsTick ? { _memoryDynamicsTick: resultValue.memoryDynamicsTick } : {}),
       });
     },
   );

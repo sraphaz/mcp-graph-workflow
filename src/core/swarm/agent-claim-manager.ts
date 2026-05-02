@@ -43,7 +43,7 @@ export class AgentClaimManager {
       payload: { agentId, resourceId },
     });
     try {
-      const result = this.locks.acquire(resourceId, agentId, ttlSeconds);
+      const resultValue = this.locks.acquire(resourceId, agentId, ttlSeconds);
       logger.debug("swarm:claim", { resourceId, agentId });
       void getSharedHookBus().emit({
         channel: "agent:post-spawn",
@@ -51,10 +51,10 @@ export class AgentClaimManager {
         payload: { agentId, resourceId, status: "success" },
       });
       return {
-        resourceId: result.resourceId,
-        agentId: result.agentId,
-        leaseToken: result.leaseToken,
-        expiresAt: result.expiresAt,
+        resourceId: resultValue.resourceId,
+        agentId: resultValue.agentId,
+        leaseToken: resultValue.leaseToken,
+        expiresAt: resultValue.expiresAt,
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

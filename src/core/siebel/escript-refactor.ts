@@ -319,6 +319,7 @@ function escapeRegex(str: string): string {
 
 // --- Main function ---
 
+/** refactorEscript — auto-generated description placeholder. */
 export function refactorEscript(code: string): RefactorResult {
   if (!code || code.trim().length === 0) {
     return { original: code, refactored: code, issues: [], diff: [] };

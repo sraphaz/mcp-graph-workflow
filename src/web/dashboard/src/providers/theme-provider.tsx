@@ -29,6 +29,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggleTheme: () => {},
 });
 
+/** ThemeProvider — auto-generated description placeholder. */
 export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("mcp-graph-theme");
@@ -51,6 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.
   );
 }
 
+/** useTheme — auto-generated description placeholder. */
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }

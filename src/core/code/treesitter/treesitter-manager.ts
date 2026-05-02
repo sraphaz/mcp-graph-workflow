@@ -72,9 +72,9 @@ async function loadWebTreeSitter(): Promise<TreeSitterModule | null> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod: any = await import("web-tree-sitter");
+    const mod = (await import("web-tree-sitter")) as Record<string, unknown> & { default?: unknown };
     // web-tree-sitter exports { Parser, Language, ... } — init() is on Parser
-    const ParserClass = mod.Parser ?? mod.default;
+    const ParserClass = (mod.Parser ?? mod.default) as { init: () => Promise<void> };
     const LanguageClass = mod.Language;
     await ParserClass.init();
     tsModule = { ParserClass, LanguageClass };
@@ -91,8 +91,8 @@ async function loadWebTreeSitter(): Promise<TreeSitterModule | null> {
 
 /** Check if web-tree-sitter is available at runtime. */
 export async function isTreeSitterAvailable(): Promise<boolean> {
-  const result = await loadWebTreeSitter();
-  return result !== null;
+  const resultValue = await loadWebTreeSitter();
+  return resultValue !== null;
 }
 
 /** Reset loader state (for testing). */

@@ -107,8 +107,8 @@ export function getLayerDistribution(): Record<DeterministicLayer, number> {
     L3_PropertyBased: 0,
     L4_MetaRule: 0,
   };
-  for (const c of CLASSIFICATIONS) {
-    dist[c.layer]++;
+  for (const cVar of CLASSIFICATIONS) {
+    dist[cVar.layer]++;
   }
   return dist;
 }

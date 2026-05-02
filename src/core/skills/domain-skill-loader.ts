@@ -59,7 +59,7 @@ export interface LoadDomainSkillsResult {
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 function parseFrontmatterRaw(yamlText: string): Record<string, unknown> {
-  const obj: Record<string, unknown> = {};
+  const objValue: Record<string, unknown> = {};
   for (const rawLine of yamlText.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith("#")) continue;
@@ -70,22 +70,23 @@ function parseFrontmatterRaw(yamlText: string): Record<string, unknown> {
 
     if (valueRaw.startsWith("[") && valueRaw.endsWith("]")) {
       const inner = valueRaw.slice(1, -1).trim();
-      obj[key] = inner.length === 0
+      objValue[key] = inner.length === 0
         ? []
         : inner.split(",").map((s) => s.trim().replace(/^["']|["']$/g, ""));
       continue;
     }
 
     if (/^-?\d+(\.\d+)?$/.test(valueRaw)) {
-      obj[key] = Number(valueRaw);
+      objValue[key] = Number(valueRaw);
       continue;
     }
 
-    obj[key] = valueRaw.replace(/^["']|["']$/g, "");
+    objValue[key] = valueRaw.replace(/^["']|["']$/g, "");
   }
-  return obj;
+  return objValue;
 }
 
+/** parseDomainSkillMarkdown — auto-generated description placeholder. */
 export function parseDomainSkillMarkdown(content: string, path: string): ParseDomainSkillResult {
   const match = FRONTMATTER_RE.exec(content);
   if (!match) {
@@ -117,6 +118,7 @@ export interface LoadDomainSkillsOptions {
   platform?: NodeJS.Platform;
 }
 
+/** loadDomainSkills — auto-generated description placeholder. */
 export function loadDomainSkills(
   rootDir: string,
   options: LoadDomainSkillsOptions = {},
@@ -156,15 +158,15 @@ export function loadDomainSkills(
       const relPath = `${area}/${basename(file)}`;
       try {
         const content = readFileSync(fullPath, "utf-8");
-        const result = parseDomainSkillMarkdown(content, relPath);
-        if (result.ok && result.skill) {
-          const platforms = result.skill.platforms;
+        const resultValue = parseDomainSkillMarkdown(content, relPath);
+        if (resultValue.ok && resultValue.skill) {
+          const platforms = resultValue.skill.platforms;
           if (platforms && platforms.length > 0 && !platforms.includes(currentPlatform as typeof PLATFORM_VALUES[number])) {
             continue;
           }
-          skills.push(result.skill);
+          skills.push(resultValue.skill);
         } else {
-          errors.push({ path: relPath, error: result.error ?? "unknown error" });
+          errors.push({ path: relPath, error: resultValue.error ?? "unknown error" });
         }
       } catch (err) {
         errors.push({ path: relPath, error: String(err) });

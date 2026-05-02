@@ -37,6 +37,7 @@ const METHOD_COLORS: Record<string, string> = {
   delete: "bg-red-600/30 text-red-300",
 };
 
+/** DocsTab — auto-generated description placeholder. */
 export function DocsTab(): React.JSX.Element {
   const { tools, routes, docs, stats, loading, error, fetchDocContent } = useDocs();
   const [section, setSection] = useState<DocsSection>("overview");

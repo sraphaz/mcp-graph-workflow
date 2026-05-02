@@ -22,6 +22,7 @@ export interface EmbeddingCacheOptions {
   maxSize?: number;
 }
 
+/** hashTextKey — auto-generated description placeholder. */
 export function hashTextKey(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
@@ -49,10 +50,10 @@ export class EmbeddingCache {
   }
 
   get(text: string): number[] | undefined {
-    const v = this.lru.get(hashTextKey(text));
-    if (v === undefined) this.misses++;
+    const vVar = this.lru.get(hashTextKey(text));
+    if (vVar === undefined) this.misses++;
     else this.hits++;
-    return v;
+    return vVar;
   }
 
   set(text: string, vector: number[]): void {
