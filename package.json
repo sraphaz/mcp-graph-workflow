@@ -138,7 +138,7 @@
     "commander": "^14.0.3",
     "express": "^5.2.1",
     "fast-xml-parser": "^5.5.11",
-    "glob": "^10.5.0",
+    "glob": "^13.0.6",
     "lru-cache": "^11.2.7",
     "mammoth": "^1.12.0",
     "multer": "^2.1.1",
