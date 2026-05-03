@@ -163,14 +163,15 @@ describe("Config layer", () => {
     expect(() => ConfigSchema.parse({ contextMode: "invalid" })).toThrow();
   });
 
-  it("should handle malformed JSON gracefully and use defaults", () => {
+  it("should refuse to boot with malformed JSON config (B23)", () => {
+    // Updated 2026-05-03: previous behaviour (silently fall back to defaults)
+    // was filed as B23 — users were running with a config that wasn't actually
+    // applied. loadConfig now throws on JSON parse failure.
     writeFileSync(
       path.join(tmpDir, "mcp-graph.config.json"),
       "{ invalid json",
     );
 
-    const config = loadConfig(tmpDir);
-
-    expect(config.port).toBe(3000);
+    expect(() => loadConfig(tmpDir)).toThrow(/invalid config/i);
   });
 });

@@ -314,6 +314,17 @@ export async function finishTask(
     .filter((c) => c?.severity === "required" && !c?.passed)
     .map((c) => `${c?.name ?? "unknown"}: ${c?.details ?? "no details"}`);
 
+  // B31 (node_423b60dc9dbc): if the node doesn't exist, dodReport returns
+  // grade F with an empty checks array — the filter above produces zero
+  // blockers, so status would silently become "done" on a non-existent
+  // node. Surface it as a blocker so the response is status:"blocked".
+  const nodeMissing =
+    !doc.nodes.some((n) => n.id === nodeId) ||
+    (dodReport.grade === "F" && (dodReport.checks?.length ?? 0) === 0);
+  if (nodeMissing) {
+    blockers.push(`node_not_found: ${dodReport.summary ?? `Node "${nodeId}" not found`}`);
+  }
+
   // 2.0a. Add contract gate blockers (strict mode only)
   if (contractGate?.blocked) {
     blockers.push(`contract_gate: ${contractGate.errorCount} architecture violation(s) found`);

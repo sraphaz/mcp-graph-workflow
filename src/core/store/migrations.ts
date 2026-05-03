@@ -2276,7 +2276,29 @@ const migrations: Migration[] = [
 
 /** Apply pending schema migrations to the database. */
 export function runMigrations(db: Database.Database): void {
-  // Create migrations tracking table
+  // B29 (node_ffe8d0eb034c): if data tables exist (e.g. nodes) but
+  // _migrations was dropped, naively re-running migrations from v1 fails
+  // with raw SqliteError ("duplicate column") that bubbles up as an
+  // uncaught Node stack trace. Detect the orphaned-schema state and
+  // refuse with a friendly error so the user knows to re-init or restore.
+  const migrationsTableExists =
+    db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='_migrations'")
+      .get() !== undefined;
+  if (!migrationsTableExists) {
+    const dataTableExists =
+      db
+        .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nodes'")
+        .get() !== undefined;
+    if (dataTableExists) {
+      throw new Error(
+        "Database has data tables but the _migrations tracking table is missing — orphaned schema. " +
+          "Re-initialize with 'mcp-graph init' or restore from a snapshot.",
+      );
+    }
+  }
+
+  // Create migrations tracking table (no-op if it already exists)
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       version     INTEGER PRIMARY KEY,
@@ -2291,6 +2313,22 @@ export function runMigrations(db: Database.Database): void {
       .all()
       .map((row) => (row as { version: number }).version),
   );
+
+  // B30 (node_0490b58b326c): warn if the DB has migration rows for
+  // versions newer than this build knows about — typical downgrade
+  // scenario where an older mcp-graph runs against a newer DB. Surface
+  // it instead of silently behaving as if the DB were current.
+  const knownMaxVersion = migrations.reduce((m, x) => Math.max(m, x.version), 0);
+  let appliedMax = 0;
+  for (const v of applied) appliedMax = Math.max(appliedMax, v);
+  if (appliedMax > knownMaxVersion) {
+    logger.warn("migration:newer-db", {
+      appliedMax,
+      knownMaxVersion,
+      message:
+        "Database has migrations newer than this mcp-graph build supports — possible downgrade",
+    });
+  }
 
   // Migrations that delete large amounts of data and benefit from VACUUM
   const VACUUM_AFTER_VERSIONS = new Set([10, 17, 30]);

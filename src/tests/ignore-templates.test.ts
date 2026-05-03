@@ -24,6 +24,8 @@ import {
   getIgnoreTemplate,
   ensureClaudeIgnore,
   ensureCopilotIgnore,
+  updateClaudeIgnore,
+  updateCopilotIgnore,
 } from "../core/config/ignore-templates.js";
 
 describe("ignore-templates", () => {
@@ -117,5 +119,84 @@ describe("ignore-templates", () => {
     expect(created).toBe(false);
     const content = readFileSync(filePath, "utf-8");
     expect(content).toBe("# my custom ignores\n");
+  });
+
+  // ── updateClaudeIgnore / updateCopilotIgnore ───────
+
+  it("updateClaudeIgnore creates the file if missing", () => {
+    const result = updateClaudeIgnore(tmpDir);
+
+    expect(result.status).toBe("created");
+    expect(readFileSync(path.join(tmpDir, ".claudeignore"), "utf-8")).toBe(getIgnoreTemplate());
+  });
+
+  it("updateClaudeIgnore overwrites stale content", () => {
+    const filePath = path.join(tmpDir, ".claudeignore");
+    writeFileSync(filePath, "# stale\nnode_modules/\n", "utf-8");
+
+    const result = updateClaudeIgnore(tmpDir);
+
+    expect(result.status).toBe("updated");
+    expect(readFileSync(filePath, "utf-8")).toBe(getIgnoreTemplate());
+  });
+
+  it("updateClaudeIgnore reports up-to-date when file matches template", () => {
+    writeFileSync(path.join(tmpDir, ".claudeignore"), getIgnoreTemplate(), "utf-8");
+
+    const result = updateClaudeIgnore(tmpDir);
+
+    expect(result.status).toBe("up-to-date");
+  });
+
+  it("updateClaudeIgnore in dryRun does not write but reports correct status", () => {
+    const filePath = path.join(tmpDir, ".claudeignore");
+    writeFileSync(filePath, "# stale\n", "utf-8");
+
+    const result = updateClaudeIgnore(tmpDir, true);
+
+    expect(result.status).toBe("updated");
+    expect(readFileSync(filePath, "utf-8")).toBe("# stale\n");
+  });
+
+  it("updateCopilotIgnore behaves identically to updateClaudeIgnore", () => {
+    const created = updateCopilotIgnore(tmpDir);
+    expect(created.status).toBe("created");
+
+    writeFileSync(path.join(tmpDir, ".copilotignore"), "# stale\n", "utf-8");
+    const updated = updateCopilotIgnore(tmpDir);
+    expect(updated.status).toBe("updated");
+
+    const upToDate = updateCopilotIgnore(tmpDir);
+    expect(upToDate.status).toBe("up-to-date");
+  });
+
+  // ── Anti-leak + new template invariants ────────────
+
+  it("template does not leak third-party project names", () => {
+    const template = getIgnoreTemplate();
+    expect(template).not.toMatch(/karpathy|hermes-agent|understand-anything|gitnexus|serena|browser-use/i);
+  });
+
+  it("template covers vendored siblings via generic globs", () => {
+    const template = getIgnoreTemplate();
+    expect(template).toContain("*-skills/");
+    expect(template).toContain("*-main/");
+    expect(template).toContain("hermes-*");
+    expect(template).toContain("understand-*");
+    expect(template).toContain("vendor/");
+  });
+
+  it("template includes ai-shadow/ and .mcp-graph/ in MCP block", () => {
+    const template = getIgnoreTemplate();
+    expect(template).toContain("ai-shadow/");
+    expect(template).toContain(".mcp-graph/");
+  });
+
+  it("template ignores tests (read on-demand via mcp-graph, not auto-loaded)", () => {
+    const template = getIgnoreTemplate();
+    expect(template).toMatch(/^src\/tests\/$/m);
+    expect(template).toMatch(/^\*\.test\.ts$/m);
+    expect(template).toMatch(/^\*\.spec\.ts$/m);
+    expect(template).toMatch(/^__tests__\/$/m);
   });
 });

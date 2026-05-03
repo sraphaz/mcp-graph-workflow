@@ -1,29 +1,24 @@
 # ========================================
-# CLAUDE CODE - OTIMIZAÇÃO DE CONTEXTO
-# Foco: carregar apenas código-fonte (src/),
-# CLAUDE.md, .claude/rules/, e package.json
+# LEAN CONTEXT (mcp-graph)
+# Filosofia: zero auto-load, tudo on-demand via MCP
+# Gerado por: npx mcp-graph init
 # ========================================
 
-# === DEPENDÊNCIAS ===
+# === DEPENDENCIAS ===
 node_modules/
 
-# === CLAUDE (exceto rules/) ===
-.claude/skills/
-.claude/docs/
-.claude/data/
-.claude/scripts/
-.claude/plans/
-.claude/lib/
-.claude/*.md
-.claude/*.json
-.claude/*.json.backup
+# === SIBLING REPOS / VENDORED FORKS ===
+*-skills/
+*-main/
+*-pilot/
+hermes-*
+understand-*
+vendor/
 
 # === GIT / GITHUB ===
 .git/
 .gitattributes
 .github/
-browser-*
-hermes-agent*
 
 # === BUILDS / COMPILADOS ===
 dist/
@@ -35,11 +30,14 @@ out/
 *.tsbuildinfo
 *.js.map
 *.d.ts.map
-src/web/dashboard/dist/
-sdk/
 
-# === TESTES (ler sob demanda, não carregar no contexto) ===
+# === TESTES + COVERAGE (use mcp-graph context para navegar testes) ===
 src/tests/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
 coverage/
 test-results/
 test-screenshots/
@@ -50,25 +48,18 @@ playwright-report/
 logs/
 *.log
 
-# === DOCS (contexto vem do CLAUDE.md e memórias) ===
+# === DOCS (mcp-graph serve como fonte de docs) ===
 docs/
-
-# === MARKDOWN NÃO-ESSENCIAL (manter apenas CLAUDE.md) ===
 *.md
 !CLAUDE.md
+!README.md
 
 # === SCRIPTS / TEMPLATES / DATA ===
 scripts/
 templates/
-skills/
 data/
 
-# === TRANSCRIÇÕES / PRD SOLTOS ===
-*.txt
-sample-prd.txt
-
 # === ARQUIVOS GERADOS ===
-next-env.d.ts
 **/prisma/migrations/
 **/prisma/generated/
 **/types/generated/
@@ -76,19 +67,14 @@ next-env.d.ts
 
 # === AMBIENTE / SECRETS ===
 .env*
-*.env
 !.env.example
 
-# === TEMP / UPLOADS / BACKUPS ===
+# === TEMP / BACKUPS ===
 **/uploads/
 **/temp/
 **/tmp/
-backups/
 *.backup
 *.bak
-*.original.backup.js
-*.backup.ts
-*.backup.tsx
 
 # === IDE ===
 .vscode/
@@ -99,25 +85,20 @@ backups/
 .DS_Store
 Thumbs.db
 
-# === DADOS MCP / SQLITE ===
-.playwright-mcp/
+# === DADOS MCP / SQLITE / GRAPH STORES ===
 .mcp-graph/
-.gitnexus/
-.serena/
+ai-shadow/
 workflow-graph/
 *.db
 *.db-shm
 *.db-wal
 
-# === MÍDIA / BINÁRIOS ===
+# === MIDIA / BINARIOS ===
 *.mp4
-*.avi
-*.mov
 *.pdf
 *.zip
 *.tar
 *.gz
-*.rar
 *.png
 *.jpg
 *.jpeg
@@ -126,49 +107,40 @@ workflow-graph/
 *.ico
 *.woff*
 *.ttf
-*.eot
 
 # === LOCKS ===
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+bun.lockb
 
-# === CACHE DE FERRAMENTAS ===
+# === CACHE ===
 .eslintcache
-.stylelintcache
 .husky/
 
-# === VENDOR / STATIC ASSETS ===
-src/web/public/vendor/
-
-# === CONFIGS (raramente relevantes, ler sob demanda) ===
+# === CONFIGS (ler sob demanda) ===
 **/tailwind.config.*
 **/postcss.config.*
-**/next.config.*
 **/tsconfig*.json
 **/eslint*
 **/.prettier*
-**/jest.config.*
 **/vitest.config.*
 **/playwright.config.*
 docker-compose*.yml
 Dockerfile*
-**/components.json
-**/vercel.json
-.editorconfig
-.npmrc
-.nvmrc
-.copilotignore
-.npmignore
-*.sh
 
-# === ROOT NÃO-ESSENCIAIS ===
+# === CLAUDE (exceto rules/) ===
+.claude/skills/
+.claude/plans/
+.claude/docs/
+.claude/data/
+.claude/*.md
+.claude/*.json
+.claude/*.json.backup
+
+# === ROOT NAO-ESSENCIAIS ===
 CHANGELOG.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
-CODEOWNERS
 LICENSE
-SECURITY.md
-SUPPORT.md
-NOTEBOOK.md
 release-please-config.json

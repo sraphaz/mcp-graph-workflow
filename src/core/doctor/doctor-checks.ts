@@ -15,7 +15,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { access, constants } from "node:fs/promises";
 import path from "node:path";
 import Database from "better-sqlite3";
@@ -59,6 +59,16 @@ export function checkNodeVersionWith(version: string): CheckResult {
  * Check write permissions on the store directory.
  */
 export async function checkWritePermissions(basePath: string): Promise<CheckResult> {
+  // B18 (node_841f0b641e2a): distinguish "does not exist" from "exists but
+  // not writable" so users do not waste time on chmod when the path is wrong.
+  if (!existsSync(basePath)) {
+    return {
+      name: "write-permissions",
+      level: "error",
+      message: `Project directory does not exist: ${basePath}`,
+      suggestion: `Create it with 'mkdir -p "${basePath}"' or use --dir to point at the right project`,
+    };
+  }
   const storeDir = path.join(basePath, STORE_DIR);
   try {
     await access(storeDir, constants.W_OK);
@@ -68,7 +78,7 @@ export async function checkWritePermissions(basePath: string): Promise<CheckResu
       message: `Write access to ${STORE_DIR}/`,
     };
   } catch {
-    // If store dir doesn't exist, check parent
+    // If store dir doesn't exist, check parent (it does exist — verified above)
     try {
       await access(basePath, constants.W_OK);
       return {
@@ -100,9 +110,49 @@ export async function checkSqliteDatabase(basePath: string): Promise<CheckResult
       suggestion: "Run 'mcp-graph init' to create the database",
     };
   }
+  // B17 (node_aa136f814cfe): better-sqlite3 happily opens a 0-byte file as
+  // a fresh empty DB; PRAGMA integrity_check then returns "ok" on it. Catch
+  // empty / no-schema files BEFORE they slip through as healthy.
+  // B19 (node_22feb42001a1): a directory at the db path bubbles up as
+  // "disk I/O error" — name the real problem instead.
+  try {
+    const st = statSync(dbPath);
+    if (st.isDirectory()) {
+      return {
+        name: "sqlite-database",
+        level: "error",
+        message: `Path ${STORE_DIR}/${DB_FILE} is a directory, not a file`,
+        suggestion: `Remove or rename the directory at "${dbPath}" then run 'mcp-graph init'`,
+      };
+    }
+    if (st.size === 0) {
+      return {
+        name: "sqlite-database",
+        level: "error",
+        message: `Database file at ${STORE_DIR}/${DB_FILE} is empty (0 bytes) — likely truncated or uninitialized`,
+        suggestion: "Re-run 'mcp-graph init' or restore from a snapshot",
+      };
+    }
+  } catch {
+    // statSync race with deletion; fall through to open attempt
+  }
   try {
     const db = new Database(dbPath, { readonly: true });
-    db.close();
+    try {
+      const rows = db
+        .prepare("SELECT count(*) as n FROM sqlite_master WHERE type IN ('table','view')")
+        .get() as { n: number };
+      if (rows.n === 0) {
+        return {
+          name: "sqlite-database",
+          level: "error",
+          message: `Database at ${STORE_DIR}/${DB_FILE} has no schema — uninitialized or corrupt`,
+          suggestion: "Re-run 'mcp-graph init' or restore from a snapshot",
+        };
+      }
+    } finally {
+      db.close();
+    }
     return {
       name: "sqlite-database",
       level: "ok",
@@ -130,8 +180,43 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
       message: "Cannot check integrity — database not found",
     };
   }
+  // B17: PRAGMA integrity_check on a 0-byte/no-schema DB returns "ok" — that
+  // is technically true (no pages to corrupt) but actively misleading. Refuse
+  // to run integrity_check unless the file has at least the SQLite header
+  // (~100 bytes) and a non-empty schema.
+  try {
+    if (statSync(dbPath).size < 100) {
+      return {
+        name: "db-integrity",
+        level: "error",
+        message: "Database file is too small to be a valid SQLite database — skipping integrity_check",
+        suggestion: "Re-run 'mcp-graph init' or restore from a snapshot",
+      };
+    }
+  } catch {
+    // Fall through to open attempt
+  }
   try {
     const db = new Database(dbPath, { readonly: true });
+    let schemaCount = 0;
+    try {
+      schemaCount = (
+        db
+          .prepare("SELECT count(*) as n FROM sqlite_master WHERE type IN ('table','view')")
+          .get() as { n: number }
+      ).n;
+    } catch {
+      // Reading sqlite_master itself failed — DB is unreadable. Fall through.
+    }
+    if (schemaCount === 0) {
+      db.close();
+      return {
+        name: "db-integrity",
+        level: "error",
+        message: "Database has no schema — cannot run integrity_check",
+        suggestion: "Re-run 'mcp-graph init' or restore from a snapshot",
+      };
+    }
     const resultValue = db.pragma("integrity_check") as Array<{ integrity_check: string }>;
     db.close();
     const isOk = resultValue.length === 1 && resultValue[0].integrity_check === "ok";

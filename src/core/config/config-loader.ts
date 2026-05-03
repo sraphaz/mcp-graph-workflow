@@ -32,12 +32,17 @@ export function loadConfig(basePath?: string): McpGraphConfig {
 
   if (existsSync(configPath)) {
     try {
-      const raw = readFileSync(configPath, "utf-8");
+      // B24 (node_53b5f5463bf5): tolerate UTF-8 BOM prefix; many editors
+      // (Notepad on Windows, older VSCode) save JSON with BOM by default.
+      const raw = readFileSync(configPath, "utf-8").replace(/^\uFEFF/, "");
       fileConfig = JSON.parse(raw) as Record<string, unknown>;
       logger.info(`Config loaded from ${configPath}`);
     } catch (err) {
+      // B23 (node_873b627dab19): malformed JSON used to fall through to
+      // defaults silently — users were running with a config that wasn't
+      // actually applied. Refuse to boot instead.
       const msg = err instanceof Error ? err.message : String(err);
-      logger.error(`Failed to parse config at ${configPath}`, { error: new McpGraphError(`Invalid config: ${msg}`).message });
+      throw new McpGraphError(`Invalid config at ${configPath}: ${msg}`);
     }
   } else {
     logger.info("No config file found, using defaults");

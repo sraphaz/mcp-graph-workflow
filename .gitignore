@@ -4,110 +4,101 @@ logs/
 
 # Dependencies
 node_modules/
-docs/_internal/mestrado/
-karpathy-skills/
+
+# Sibling repos / vendored forks (never commit) — generic patterns
+*-skills/
+*-main/
+*-pilot/
+hermes-*
+understand-*
+vendor/
+sdk/
+tools/copilot-bridge/
+tools/copilot-bridge-cli/
 
 # Build
 dist/
 build/
-# TypeScript incremental build cache — regenerated on every `tsc` run
+out/
+.next/
+.turbo/
+.cache/
 *.tsbuildinfo
 # Exception: the static landing site is shipped from presentation/dist/ (Vercel)
 !presentation/dist/
 !presentation/dist/**
-skills-graph/
-workflow-graph/
-CLAUDE.md
-# IDE
+
+# IDE / OS
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
-.claude/rules
+.DS_Store
+Thumbs.db
+
+# Claude Code (everything except hooks + selected skills)
 .claude/*
-# Ship the hook scripts so tests in src/tests/{block-dangerous-git,
-# graph-wip-check}-hook.test.ts can validate them in CI.
 !.claude/hooks
 !.claude/hooks/**
-# Project-level skills that ship with the repo so future maintainers get
-# the same agentic recipes the author relied on. Git requires unignoring
-# parent dirs before files; we then re-ignore everything under skills/
-# and only un-ignore the specific skills meant to ship.
 !.claude/skills
 .claude/skills/*
 !.claude/skills/mcp-graph-release-monitor/
-# OS
-.DS_Store
-Thumbs.db
-sdk/
-# Environment
-.env
-.env.local
-.env.*
+.claude/settings.local.json
+
+# Environment / Secrets
+.env*
+.secrets
+!.env.example
+
+# Local notes / scratch / raw inputs
 raw-*
 raw.md
 notas.md
+
+# Docs (internal trees stay local — design rationale, PRDs, research, baselines, benchmarks)
 docs/raw/
 docs/prd/
-docs/_internal/prd/
-docs/_internal/SKILLS-HIVE-INTEGRATION-PRD.md
+docs/_internal/
+docs/_research/
 docs/architecture/
 docs/reference/
-knowledge-export.json
+docs/BENCHMARK-*.md
+
+# Local-only baselines / planning notes / cached metric outputs
+.*-baseline.*
+.*-cache.json
+baseline-*
+
+# Browser-* sources (project src/ allow-rules below override)
 browser-*
 !src/core/browser-pilot/
 !src/core/browser-pilot/**
 !src/core/browser-harness/
 !src/core/browser-harness/**
 !src/mcp/tools/browser-pilot.ts
-!src/tests/browser-use-runtime.test.ts
-!src/tests/browser-watchdogs.test.ts
 !src/core/skills/browser-skill-proposer.ts
-!src/tests/browser-harness-bus-integration.test.ts
-!src/tests/finish-task-browser-skill.test.ts
-!src/tests/browser-skill-derive.test.ts
-!src/tests/browser-event-translator.test.ts
+!src/tests/browser-*.test.ts
 !src/tests/extracta-tdd-integration.test.ts
-hermes-agent*
+!src/tests/finish-task-browser-skill.test.ts
 
-# MCP / Local Tools
-workflow-graph/
+# MCP / Local Tools / SQLite / Graph stores
 .mcp-graph/
+ai-shadow/
+.serena/
+.playwright-mcp/
+.gitnexus/
+skills-graph/
+workflow-graph/
 *.db
 *.db-shm
 *.db-wal
 
-# Serena (local memories and config)
-.serena/
-
-# Claude Code local settings
-.claude/settings.local.json
-
-# Playwright MCP
-.playwright-mcp/
-
-# Dashboard build artifacts
-src/web/dashboard/.next/
-src/web/dashboard/out/
-src/web/dashboard/dist/
-src/web/dashboard/node_modules/
-
-# Vendored Copilot Bridge forks — separate workspaces with their own
-# package.json + node_modules; tracked elsewhere via the Copilot Bridge
-# audit epic (node_26f1f82e064b). Excluded here so the main repo PR
-# surface stays slim (236MB combined).
-tools/copilot-bridge/
-tools/copilot-bridge-cli/
-
-# Local-only baselines / planning notes (per memory rule
-# feedback_no_public_design_exposure — design rationale stays local).
-.fase-b-baseline.md
-.coverage-baseline.txt
-.harness-baseline.txt
-.feature-depth-baseline.json
-.feature-depth-cache.json
-baseline-*.png
+# Generated documents / exports / reports
+CLAUDE.md
+knowledge-export.json
+scripts/*-report.json
+scripts/speckit-*.json
 
 # Test artifacts
 test-results/
@@ -115,28 +106,7 @@ test-screenshots/
 playwright-report/
 coverage/
 .nyc_output/
-.gitnexus
+
+# Presentation site (workspace siblings)
 presentation/public/video/*.mov
 presentation/node_modules/
-presentation/dist/.DS_Store
-presentation/.DS_Store
-
-# act local CI runner — secrets file is gitignored; the runner itself is
-# configured via .actrc (tracked).
-.secrets
-
-# Sibling repos accidentally cloned into this tree — never commit
-hermes-*/
-browser-*-main/
-
-# Real benchmark data + experiment artifacts — design-sensitive, local-only
-docs/BENCHMARK-*.md
-workflow-graph/h9v2-debug/
-
-# Internal analysis reports + graph exports — design-sensitive
-scripts/*-report.json
-scripts/speckit-*.json
-knowledge-export.json
-
-# Internal research/RAD findings — design rationale stays local
-docs/_research/

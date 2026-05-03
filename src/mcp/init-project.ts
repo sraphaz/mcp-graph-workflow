@@ -33,7 +33,12 @@ import {
   applySection,
 } from "../core/config/ai-memory-generator.js";
 import { loadConfig } from "../core/config/config-loader.js";
-import { ensureClaudeIgnore, ensureCopilotIgnore } from "../core/config/ignore-templates.js";
+import {
+  ensureClaudeIgnore,
+  ensureCopilotIgnore,
+  updateClaudeIgnore,
+  updateCopilotIgnore,
+} from "../core/config/ignore-templates.js";
 import { introspectTools } from "../core/docs/tool-introspector.js";
 import { introspectRoutes } from "../core/docs/route-introspector.js";
 import { generateReadmeStats, generateArchToolSection, generateArchRouteSection, generateToolRefSummary } from "../core/docs/doc-generator.js";
@@ -521,10 +526,13 @@ export async function runUpdate(
   if (shouldRun("codex-md")) steps.push(generateAndWriteCodexAgentsMd(projectDir, options.dryRun, ctxMode));
   if (shouldRun("codex-skills")) steps.push(generateAndWriteCodexSkills(projectDir, options.dryRun));
 
-  // 5. Ignore files (create if missing, never overwrite)
-  if (shouldRun("ignore-files") && !options.dryRun) {
-    ensureClaudeIgnore(projectDir);
-    ensureCopilotIgnore(projectDir);
+  // 5. Ignore files — always rewrite to match latest template so
+  // template improvements reach existing projects on `update`.
+  if (shouldRun("ignore-files")) {
+    const claudeResult = updateClaudeIgnore(projectDir, options.dryRun);
+    steps.push({ step: "ignore-files", status: claudeResult.status, message: claudeResult.message });
+    const copilotResult = updateCopilotIgnore(projectDir, options.dryRun);
+    steps.push({ step: "ignore-files", status: copilotResult.status, message: copilotResult.message });
   }
 
   // 6. Auto-docs (only inside mcp-graph repo)
