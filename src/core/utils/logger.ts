@@ -16,6 +16,13 @@
  */
 
 import type { LogEntry, LogLayer, LogLevel } from "../../schemas/log.schema.js";
+import { extractErrorContext } from "./ecs-formatter.js";
+
+export interface BusinessEvent {
+  action: string;
+  category: string;
+  outcome: "success" | "failure" | "unknown";
+}
 
 const MAX_BUFFER_SIZE = 1000;
 
@@ -106,12 +113,14 @@ export const logger = {
     writeStderr(`[INFO] ${msg}${formatCtx(ctx)}`);
   },
   warn(msg: string, ctx?: Record<string, unknown>): void {
-    appendToBuffer("warn", msg, ctx);
-    writeStderr(`[WARN] ${msg}${formatCtx(ctx)}`);
+    const normalized = extractErrorContext(ctx);
+    appendToBuffer("warn", msg, normalized);
+    writeStderr(`[WARN] ${msg}${formatCtx(normalized)}`);
   },
   error(msg: string, ctx?: Record<string, unknown>): void {
-    appendToBuffer("error", msg, ctx);
-    writeStderr(`[ERROR] ${msg}${formatCtx(ctx)}`);
+    const normalized = extractErrorContext(ctx);
+    appendToBuffer("error", msg, normalized);
+    writeStderr(`[ERROR] ${msg}${formatCtx(normalized)}`);
   },
   success(msg: string, ctx?: Record<string, unknown>): void {
     appendToBuffer("success", msg, ctx);
@@ -122,5 +131,16 @@ export const logger = {
       appendToBuffer("debug", msg, ctx);
       writeStderr(`[DEBUG] ${msg}${formatCtx(ctx)}`);
     }
+  },
+  event(event: BusinessEvent, msg: string, ctx?: Record<string, unknown>): void {
+    const normalized = extractErrorContext(ctx) ?? {};
+    const merged: Record<string, unknown> = {
+      ...normalized,
+      eventAction: event.action,
+      eventCategory: event.category,
+      eventOutcome: event.outcome,
+    };
+    appendToBuffer("info", msg, merged);
+    writeStderr(`[INFO] ${msg}${formatCtx(merged)}`);
   },
 };

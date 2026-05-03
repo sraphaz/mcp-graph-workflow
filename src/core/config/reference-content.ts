@@ -20,6 +20,8 @@
  * Shared between the generator (full mode) and the help MCP tool (on-demand).
  */
 
+import { SERVICE_NAME, SERVICE_VERSION } from "../utils/ecs-formatter.js";
+
 export const TOOL_TABLE_FULL = `### Ferramentas MCP disponíveis (40 tools — v8.0 consolidated + spec-kit)
 
 #### Pipeline Tools (v8.0 — recommended)
@@ -1014,6 +1016,39 @@ export function getHarnessReference(): string {
 }
 
 /**
+ * Get version reference: which mcp-graph binary the MCP client spawned, plus
+ * drift-check guidance. Reuses SERVICE_NAME/SERVICE_VERSION (loaded from
+ * package.json at module init in ecs-formatter.ts) so the value is the version
+ * compiled into the running binary, not whatever happens to be on disk.
+ */
+export function getVersionReference(): string {
+  return `## mcp-graph — Versão em execução
+
+| Campo | Valor |
+|-------|-------|
+| Pacote | \`${SERVICE_NAME}\` |
+| Versão | \`${SERVICE_VERSION}\` |
+
+> Esta é a versão **compilada no binário** que o cliente MCP spawnou. Se você atualizou o pacote globalmente após o cliente iniciar, este valor continua o antigo até reiniciar o cliente.
+
+### Verificar drift contra o npm
+
+\`\`\`bash
+mcp-graph --version                                    # versão do binário global
+npm view ${SERVICE_NAME} version                       # última publicada no registry
+npm outdated -g ${SERVICE_NAME}                        # current / wanted / latest lado a lado
+\`\`\`
+
+### Atualizar
+
+\`\`\`bash
+npm i -g ${SERVICE_NAME}@latest
+\`\`\`
+
+Depois do upgrade, **reinicie o cliente MCP** (Claude Code, Cursor, etc.) — o servidor MCP é processo filho do cliente; o binário antigo continua em memória até o respawn.`;
+}
+
+/**
  * Get all reference content combined.
  */
 export function getFullReference(): string {
@@ -1035,5 +1070,6 @@ export function getFullReference(): string {
     AGENT_ANTIPATTERNS_SECTION,
     CLI_COMMANDS,
     HARNESS_SECTION,
+    getVersionReference(),
   ].join("\n\n");
 }

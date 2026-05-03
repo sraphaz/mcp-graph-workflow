@@ -18,6 +18,7 @@
 import { Router, type Request } from "express";
 import { z } from "zod/v4";
 import { getLogBuffer, clearLogBuffer, logger } from "../../core/utils/logger.js";
+import { toEcs } from "../../core/utils/ecs-formatter.js";
 import { LogLevelSchema, type LogEntry } from "../../schemas/log.schema.js";
 
 const IngestEntrySchema = z.object({
@@ -116,12 +117,12 @@ export function createLogsRouter(): Router {
   /**
    * GET /logs
    * Returns buffered log entries with optional filters.
-   * Query params: level, since (id), search (text)
+   * Query params: level, since (id), search (text), format ("ecs" for ECS shape)
    */
   router.get("/", (req, res) => {
     let logs = getLogBuffer();
 
-    const { level, since, search } = req.query;
+    const { level, since, search, format } = req.query;
 
     if (typeof level === "string" && level.length > 0) {
       logs = logs.filter((entry) => entry.level === level);
@@ -139,7 +140,12 @@ export function createLogsRouter(): Router {
       logs = logs.filter((entry) => entry.message.toLowerCase().includes(term));
     }
 
-    res.json({ logs: logs.map(sanitizeLogEntry), total: logs.length });
+    const sanitized = logs.map(sanitizeLogEntry);
+    if (format === "ecs") {
+      res.json({ logs: sanitized.map(toEcs), total: sanitized.length });
+      return;
+    }
+    res.json({ logs: sanitized, total: sanitized.length });
   });
 
   /**

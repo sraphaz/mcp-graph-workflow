@@ -104,6 +104,22 @@ describe("Logs API", () => {
       expect(res.body.logs[0].message).toContain("database");
       expect(res.body.logs[1].message).toContain("database");
     });
+
+    it("should return ECS-shaped entries when format=ecs", async () => {
+      logger.info("ecs-shaped probe", { layer: "api", traceId: "trace-7" });
+
+      const res = await request(ctx.app).get("/api/v1/logs?format=ecs&search=ecs-shaped");
+
+      expect(res.status).toBe(200);
+      expect(res.body.logs.length).toBeGreaterThanOrEqual(1);
+      const entry = res.body.logs[0];
+      expect(entry["@timestamp"]).toEqual(expect.any(String));
+      expect(entry["log.level"]).toBe("info");
+      expect(entry["message"]).toBe("ecs-shaped probe");
+      expect(entry["service.name"]).toEqual(expect.any(String));
+      expect(entry["labels.layer"]).toBe("api");
+      expect(entry["trace.id"]).toBe("trace-7");
+    });
   });
 
   describe("DELETE /api/v1/logs", () => {

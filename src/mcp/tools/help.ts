@@ -34,6 +34,7 @@ import {
   getAgentAntipatterns,
   getPipelineTools,
   getHarnessReference,
+  getVersionReference,
   getFullReference,
 } from "../../core/config/reference-content.js";
 import { logger } from "../../core/utils/logger.js";
@@ -75,6 +76,7 @@ type HelpTopic =
   | "pipeline"
   | "antipatterns"
   | "harness"
+  | "version"
   | "all";
 
 function getTopicContent(topic: HelpTopic, phase?: string): string {
@@ -113,6 +115,8 @@ function getTopicContent(topic: HelpTopic, phase?: string): string {
       return getAgentAntipatterns();
     case "harness":
       return getHarnessReference();
+    case "version":
+      return getVersionReference();
     case "all":
       return getFullReference();
   }
@@ -143,6 +147,7 @@ export function registerHelp(server: McpServer): void {
           "pipeline",
           "antipatterns",
           "harness",
+          "version",
           "all",
         ])
         .describe("Reference topic to query"),
