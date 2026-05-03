@@ -1,13 +1,18 @@
 <p align="center">
-  <img src="docs/images/hero.jpg" alt="mcp-graph — From PRD to Execution Graph" width="900">
+  <img src="docs/images/graph-logo.jpg" alt="mcp-graph" width="700">
 </p>
 
 <h1 align="center">mcp-graph</h1>
 
 <p align="center">
-  <strong>AI-Driven Software Engineering, local-first.</strong><br/>
-  PRD vira grafo persistente. TDD obrigatório. Contexto sobrevive ao reload.<br/>
-  <em>O Claude Code não esquece mais o que vocês combinaram.</em>
+  <a href="README.md">Português</a> |
+  <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
+  <strong>Engenharia de software dirigida por IA. Local-first. Anti-vibe-coding por padrão.</strong><br/>
+  O Claude Code não esquece mais o que vocês combinaram.<br/>
+  PRD → grafo → TDD → produção. Tudo local, tudo rastreado.
 </p>
 
 <p align="center">
@@ -18,13 +23,17 @@
   <a href="COMMERCIAL.md"><img src="https://img.shields.io/badge/Commercial-available-informational" alt="Commercial license available"></a>
 </p>
 
----
-
 ## Em uma página
 
-**Categoria.** mcp-graph é uma camada de **engenharia de software dirigida por IA (AISE — AI-Driven Software Engineering)**: agentes entregando software com o mesmo rigor de time sênior — spec antes do código, TDD obrigatório, decisão rastreada, memória entre sessões. Sem vibe-coding.
+**Categoria:** mcp-graph é uma camada de **engenharia de software dirigida por IA (AISE — AI-Driven Software Engineering)**. Significa entregar software com agentes de IA aplicando o mesmo rigor de time sênior: spec antes do código, TDD obrigatório, decisão rastreada, memória entre sessões. Sem vibe-coding.
 
-**Como.** Implementa as duas metodologias canônicas da AISE: **Specification-Driven Development (SDD)**, em que PRD vira grafo de specs executáveis com critérios de aceite, e **Context-Driven Engineering (CDE)**, em que grafo + RAG + memory dão contexto persistente entre sessões. Tudo offline, em SQLite local, dentro do diretório do projeto.
+**Tecnicamente:** implementa as duas metodologias canônicas da AISE — **Specification-Driven Development (SDD)**, onde PRD vira grafo de specs executáveis com AC, e **Context-Driven Engineering (CDE)**, onde grafo + RAG + memory dão contexto persistente entre sessões. É a "capacidade de plataforma" que o [DORA Report 2025](https://www.infoq.com/news/2026/03/ai-dora-report/) cita como pré-requisito para AI converter produtividade em entrega.
+
+**O que entrega:**
+
+1. **Estrutura antes do código** — PRD vira grafo persistente em SQLite. Zero trabalho não-rastreado.
+2. **TDD não-negociável** — toda task tem teste antes da implementação. O agente recusa pular.
+3. **Memória que sobrevive ao reload** — contexto comprimido, RAG local, 50+ ferramentas MCP.
 
 **Como se diferencia:**
 
@@ -34,23 +43,25 @@
 | vs Linear / Jira | Grafo executável pelo agente, não só visual |
 | vs LangGraph e afins | Local-first, zero infra, CLI única |
 
-## Os três problemas que toda sessão de coding com IA tem
+## O que faz
+
+Três problemas que toda sessão de coding com IA tem:
 
 1. **Seu agente esquece** — todo chat novo começa do zero, ele reinventa o plano cada vez.
 2. **PRDs viram paredes de texto** — ninguém relê, o agente improvisa as features.
 3. **Zero rastreabilidade** — você não consegue dizer o que foi feito, o que travou nem por que uma decisão foi tomada.
 
-`mcp-graph` resolve isso. Pega seu PRD, transforma num grafo de tasks persistente que o agente **navega** em vez de **improvisar** — tudo guardado em SQLite local. Sem cloud, sem chave de API de LLM obrigatória.
+`mcp-graph` resolve isso. Pega seu PRD, transforma num grafo de tasks persistente que o agente **navega** em vez de **improvisar** — tudo guardado em SQLite local. Sem cloud, sem chave de API de LLM.
 
-> 💡 **MCP** = Model Context Protocol. É o padrão que faz seu agente de IA (Claude Code, Cursor, Copilot, Gemini CLI) enxergar ferramentas externas como o mcp-graph. Você não precisa entender o protocolo — só saber que `.mcp.json` é o arquivo onde o agente descobre quais ferramentas estão disponíveis.
+> 💡 **MCP** = Model Context Protocol. É o padrão que faz seu agente de IA (Claude Code, Cursor, Copilot) enxergar ferramentas externas como o mcp-graph. Você não precisa entender o protocolo — só saber que `.mcp.json` é o arquivo onde o agente descobre quais ferramentas estão disponíveis.
 
 ### Como ele se encaixa com sua CLI de IA
 
 ```
 Você (humano)
- └─ CLI de IA (Claude Code · Copilot · Cursor · Gemini CLI)   ← agente roda aqui, sem memória
-    └─ mcp-graph (servidor MCP + CLI unificado)               ← memória + porta humana + hooks + skills
-                                                              ↓
+ └─ CLI de IA (Claude Code · Copilot CLI · Cursor)        ← agente roda aqui, sem memória
+    └─ mcp-graph (servidor MCP + CLI unificado, v12)      ← memória + porta humana + hooks + skills
+                                                          ↓
                                   workflow-graph/graph.db (a "memória" persistente)
 ```
 
@@ -62,30 +73,28 @@ Você (humano)
 | Dois agentes em paralelo brigam | `unified-gate` mantém ambos sincronizados |
 | "Tá pronto?" → adivinhação | `mcp-graph status` responde em 200ms |
 
-## 🚀 Quick Start
-
-Quatro comandos, um ciclo completo:
+### Um ciclo completo em 4 comandos
 
 ```bash
 mcp-graph init                           # cria grafo + configs do IDE
-mcp-graph add task --title "fix login"   # ou: mcp-graph import <arquivo.md>
+mcp-graph add task --title "fix login"   # ou: importar PRD inteiro com 'mcp-graph import <arquivo>'
 mcp-graph start <id>                     # status → in_progress, mostra checklist TDD
 mcp-graph finish                         # status → done, sugere a próxima
 ```
 
-> Não tem PRD ainda? Use [este exemplo](docs/examples/sample-prd.md) (login básico, ~3 tasks) para testar `mcp-graph import` antes de escrever o seu.
+> Não tem PRD ainda? Use [este exemplo](docs/examples/sample-prd.md) (login básico, ~3 tasks) para testar `import_prd` antes de escrever o seu.
 
 100% offline. Determinístico. Reproduzível.
 
-## 📦 Instalação
+## Instalação
 
-Pacote único — servidor MCP + CLI no mesmo binário:
+Um único comando — pacote unificado v12 traz servidor MCP + CLI completo:
 
 ```bash
 npm install -g @mcp-graph-workflow/mcp-graph
 ```
 
-Para usar como ferramenta MCP dentro do agente, adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (Copilot):
+Pra usar como MCP tool dentro do agente, adicione ao `.mcp.json` (Claude Code, Cursor, IntelliJ) ou `.vscode/mcp.json` (Copilot):
 
 ```json
 {
@@ -98,7 +107,7 @@ Para usar como ferramenta MCP dentro do agente, adicione ao `.mcp.json` (Claude 
 }
 ```
 
-Para usar via terminal:
+Pra usar via terminal:
 
 ```bash
 cd seu-projeto
@@ -107,39 +116,9 @@ mcp-graph hooks install --profile balanced    # automação do Claude Code (opci
 mcp-graph repl                                # REPL interativo — digite /help para descobrir
 ```
 
-**Pré-requisitos:** Node.js ≥ 18. Sem Docker, sem infra externa, sem chave de API de LLM obrigatória.
+**Pré-requisitos:** Node.js ≥ 18. Sem Docker, sem infra externa, sem chave de API de LLM.
 
-## 🌐 Compatibilidade
-
-| Cliente | Como conecta | Status no repo |
-|---|---|---|
-| Claude Code | `.mcp.json` + `.claude/` (hooks, rules, skills) | ✅ Pré-configurado |
-| GitHub Copilot (VS Code) | `.vscode/mcp.json` | ✅ Pré-configurado |
-| Gemini CLI | `.gemini/settings.json` | ✅ Pré-configurado |
-| Cursor / IntelliJ / Codex / OpenCode | mesmo snippet `.mcp.json` acima | ⚠️ MCP-compatível, sem config dedicada |
-
-Qualquer cliente que fale MCP consome o servidor com o mesmo snippet — os ✅ acima são os que já têm config materializada neste repositório.
-
-## ✨ O que tem dentro
-
-| Capacidade | Onde mora |
-|---|---|
-| **PRD → grafo persistente** com sharding e classificação | [`src/core/importer/`](src/core/importer/) |
-| **65 ferramentas MCP** (analyze, context, plan_sprint, validate, …) | [`src/mcp/tools/`](src/mcp/tools/) · [`src/mcp/server.ts`](src/mcp/server.ts) |
-| **27 comandos de CLI** (init, add, start, finish, import, repl, doctor, …) | [`src/cli/commands/`](src/cli/commands/) · [mapa de superfície](docs/guides/cli-surface-map.md) |
-| **RAG local + knowledge store** (BM25 + TF-IDF + embeddings) | [`src/core/rag/`](src/core/rag/) · [`src/core/store/knowledge-store.ts`](src/core/store/knowledge-store.ts) |
-| **Harness Score** — agent-readiness em 8 dimensões (tipos, testes, arquitetura, docs, naming, errors, contexto, provenance) | [`src/core/harness/`](src/core/harness/) |
-| **Dashboard React** — 19 abas (graph, PRD, insights, journey, harness, …) | [`src/web/dashboard/`](src/web/dashboard/) |
-
-<p align="center">
-  <img src="docs/images/dashboard-graph.png" alt="Dashboard — execution graph" width="750">
-</p>
-
-<p align="center">
-  <img src="docs/images/dashboard-prd-backlog.png" alt="Dashboard — PRD backlog" width="750">
-</p>
-
-## 📚 Documentação
+## Documentação
 
 Comece por aqui:
 
@@ -153,9 +132,9 @@ Aprofunde:
 - **[Arquitetura local](docs/ARCHITECTURE.md)** — delimitação de AISE, SDD, CDE, stack e camadas do projeto
 - **[Troubleshooting](docs/getting-started/TROUBLESHOOTING.md)** — resolva problemas comuns
 - **[Glossário](docs/getting-started/GLOSSARY.md)** — vocabulário em linguagem clara
-- **[PRD de exemplo](docs/examples/sample-prd.md)** — para testar `mcp-graph import` sem precisar escrever um PRD do zero
+- **[PRD de exemplo](docs/examples/sample-prd.md)** — para testar `import_prd` sem precisar escrever um PRD do zero
 
-## 🔒 Rede & Privacidade
+## Rede & Privacidade
 
 **mcp-graph é 100% local-first.** Zero SaaS obrigatório, zero telemetria, zero phone-home automático. Roda completo em ambiente air-gapped depois de instalado.
 
@@ -171,11 +150,11 @@ Cinco integrações são opt-in e ficam desligadas por padrão:
 
 Detalhes completos, contratos de fallback e justificativas: [`docs/_internal/adr/0057-local-first-zero-saas.md`](docs/_internal/adr/0057-local-first-zero-saas.md).
 
-## 🎓 Pesquisa & Citação
+## Pesquisa & Citação
 
-Este projeto é um experimento ativo de pesquisa de Mestrado (UNOPAR). Para contexto acadêmico, citação (BibTeX/ABNT) e a hipótese de pesquisa: veja [`docs/_internal/authorship/RESEARCH.md`](docs/_internal/authorship/RESEARCH.md).
+Este projeto é um experimento ativo de pesquisa de Mestrado (UNOPAR). Para contexto acadêmico, citação (BibTeX/ABNT) e a hipótese de pesquisa: veja [`docs/_internal/RESEARCH.md`](docs/_internal/RESEARCH.md).
 
-## 📄 Licença
+## Licença
 
 **[GNU Affero General Public License v3.0 ou posterior (AGPL-3.0-or-later)](LICENSE)** — copyleft forte por padrão.
 
