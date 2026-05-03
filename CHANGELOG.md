@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.3.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.2...mcp-graph-v13.3.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **bug-hunt:** batch 2 — import + stats UX (B12, B13, B14, B15) ([#311](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/311)) ([ed1d88b](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ed1d88b1241b656274ef509c0268e670f3946e7e))
+
 ## [13.3.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.1...mcp-graph-v13.3.2) (2026-05-02)
 
 
