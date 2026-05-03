@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.3.4](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.3...mcp-graph-v13.3.4) (2026-05-03)
+
+
+### Bug Fixes
+
+* **bug-hunt:** batch 3 — close v13.3.1 hunt epic (B19/B23/B24/B29/B30/B31 + 8 hunt closures) ([#317](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/317)) ([f36c696](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f36c696320517df326985c1d3f6e2f822f0ece55))
+
 ## [13.3.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.2...mcp-graph-v13.3.3) (2026-05-03)
 
 
