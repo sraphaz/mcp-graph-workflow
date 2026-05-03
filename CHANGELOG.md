@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.4.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.4...mcp-graph-v13.4.0) (2026-05-03)
+
+
+### Features
+
+* **observability:** logs/ingest endpoint + layer tagging + LogLayer schema ([#319](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/319)) ([4b74acb](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4b74acbf4bb8b9b98c0967623152648d9980e5a3))
+
 ## [13.3.4](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.3...mcp-graph-v13.3.4) (2026-05-03)
 
 
