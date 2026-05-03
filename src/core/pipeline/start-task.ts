@@ -31,6 +31,7 @@ import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/t
 import { getTouchedFiles } from "../planner/touched-files.js";
 import { getBaseline } from "../feature-depth/baselines-store.js";
 import { buildTaskContext } from "../context/compact-context.js";
+import type { GraphSnapshot } from "../store/graph-snapshot-cache.js";
 import { assembleContext } from "../context/context-assembler.js";
 import { generateTddHints, generateTddHintsFromTexts } from "../implementer/tdd-checker.js";
 import { findRelevantDomainSkills, type DomainSkillMatch } from "../skills/domain-skill-retrieval.js";
@@ -202,10 +203,13 @@ export function startTask(
 
   const taskNode = enhanced.task.node;
 
-  // 2. Build task context
+  // 2. Build task context — reuse the doc snapshot already loaded above so
+  // buildTaskContext resolves neighbors O(1) per lookup against in-memory
+  // arrays instead of hitting SQLite via getChildNodes/getEdgesTo/getEdgesFrom.
   let context: TaskContext | null = null;
   try {
-    context = buildTaskContext(store, taskNode.id);
+    const snapshot: GraphSnapshot = { nodes: doc.nodes, edges: doc.edges };
+    context = buildTaskContext(store, taskNode.id, snapshot);
   } catch (err) {
     logger.warn("pipeline:start_task:context_failed", { error: String(err) });
   }

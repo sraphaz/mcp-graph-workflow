@@ -59,6 +59,7 @@ import { ToolResultStore } from "../core/store/tool-result-store.js";
 import { createHash } from "node:crypto";
 import { ConcurrentSemaphore, MAX_CONCURRENT_HEAVY, QUEUE_TIMEOUT_MS } from "../core/utils/concurrent-semaphore.js";
 import { getSharedHookBus } from "../core/hooks/shared-hook-bus.js";
+import { toolCache, type CachedToolResult } from "../core/economy/cache/tool-cache.js";
 
 // ── Re-exported types (backward compat for tests importing from old files) ──
 
@@ -673,6 +674,12 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
     return;
   }
 
+  // Wire the read-only tool cache to the event bus once per server boot —
+  // any graph/knowledge mutation drops every cached entry. Idempotent.
+  if (eventBus) {
+    toolCache.attachEventBus(eventBus);
+  }
+
   for (const [name, tool] of Object.entries(registeredTools)) {
     const originalHandler = tool.handler;
 
@@ -723,6 +730,24 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
         return {
           content: [{ type: "text" as const, text: JSON.stringify(buildRemovedResponse(`${name}({mode:'${argMode}'})`, modeDeprecation), null, 2) }],
         };
+      }
+
+      // ── PRE-EXECUTION: read-only tool cache lookup ──
+      // Phase transitions and graph mutations invalidate the cache via the
+      // event bus, so a hit is safe to return without re-running the gates.
+      // Errors and non-cacheable tools are filtered inside ToolCache.get.
+      const cachedHit = toolCache.get(name, args[0]);
+      if (cachedHit) {
+        recordToolCallTelemetry(
+          store,
+          name,
+          estimateTokens(JSON.stringify(args)),
+          0,
+          true,
+          0,
+          undefined,
+        );
+        return cachedHit;
       }
 
       // ── Single context load ──
@@ -1007,6 +1032,11 @@ export function wrapToolsWithGates(server: McpServer, store: SqliteStore, eventB
           logger.debug("unified-gate: code intelligence block skipped", { tool: name });
         }
       }
+
+      // ── Store in read-only tool cache (no-op for non-cacheable or errors) ──
+      // Cache the post-processed value so subsequent hits return the same
+      // _lifecycle / _code_intelligence / _deprecation_notice annotations.
+      toolCache.set(name, args[0], resultValue as CachedToolResult);
 
       return resultValue;
     };

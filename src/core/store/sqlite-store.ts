@@ -294,9 +294,24 @@ export class SqliteStore {
   private _eventBus: import("../events/event-bus.js").GraphEventBus | null = null;
   /** Serializes multi-step write sequences that span async boundaries. */
   readonly writeMutex = new AsyncMutex();
+  /** Cached prepared statements keyed by literal SQL text — avoids re-parsing on hot paths. */
+  private readonly statements = new Map<string, Database.Statement>();
 
   private constructor(db: Database.Database) {
     this.db = db;
+  }
+
+  /**
+   * Return a prepared statement for the given SQL, caching it for reuse.
+   * Only safe for queries with literal SQL text (no string interpolation per-call).
+   */
+  private getStmt(sql: string): Database.Statement {
+    let stmt = this.statements.get(sql);
+    if (!stmt) {
+      stmt = this.db.prepare(sql);
+      this.statements.set(sql, stmt);
+    }
+    return stmt;
   }
 
   /** Attach an event bus to emit mutation events */
@@ -380,6 +395,7 @@ export class SqliteStore {
   }
 
   close(): void {
+    this.statements.clear();
     this.db.close();
   }
 
@@ -447,8 +463,7 @@ export class SqliteStore {
 
   getProject(): GraphProject | null {
     if (!this.projectId) return null;
-    const row = this.db
-      .prepare("SELECT * FROM projects WHERE id = ?")
+    const row = this.getStmt("SELECT * FROM projects WHERE id = ?")
       .get(this.projectId) as ProjectRow | undefined;
     if (!row) return null;
     return rowToProject(row);
@@ -588,16 +603,14 @@ export class SqliteStore {
 
   getNodeById(id: string): GraphNode | null {
     this.ensureProject();
-    const row = this.db
-      .prepare("SELECT * FROM nodes WHERE id = ? AND project_id = ?")
+    const row = this.getStmt("SELECT * FROM nodes WHERE id = ? AND project_id = ?")
       .get(id, this.projectId) as NodeRow | undefined;
     return row ? rowToNode(row) : null;
   }
 
   getAllNodes(): GraphNode[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare("SELECT * FROM nodes WHERE project_id = ? ORDER BY created_at")
+    const rows = this.getStmt("SELECT * FROM nodes WHERE project_id = ? ORDER BY created_at")
       .all(pid) as NodeRow[];
     return rows.map(rowToNode);
   }
@@ -653,31 +666,25 @@ export class SqliteStore {
 
   getNodesByType(type: NodeType): GraphNode[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare(
-        "SELECT * FROM nodes WHERE project_id = ? AND type = ? ORDER BY created_at",
-      )
-      .all(pid, type) as NodeRow[];
+    const rows = this.getStmt(
+      "SELECT * FROM nodes WHERE project_id = ? AND type = ? ORDER BY created_at",
+    ).all(pid, type) as NodeRow[];
     return rows.map(rowToNode);
   }
 
   getNodesByStatus(status: NodeStatus): GraphNode[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare(
-        "SELECT * FROM nodes WHERE project_id = ? AND status = ? ORDER BY created_at",
-      )
-      .all(pid, status) as NodeRow[];
+    const rows = this.getStmt(
+      "SELECT * FROM nodes WHERE project_id = ? AND status = ? ORDER BY created_at",
+    ).all(pid, status) as NodeRow[];
     return rows.map(rowToNode);
   }
 
   getChildNodes(parentId: string): GraphNode[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare(
-        "SELECT * FROM nodes WHERE project_id = ? AND parent_id = ? ORDER BY created_at",
-      )
-      .all(pid, parentId) as NodeRow[];
+    const rows = this.getStmt(
+      "SELECT * FROM nodes WHERE project_id = ? AND parent_id = ? ORDER BY created_at",
+    ).all(pid, parentId) as NodeRow[];
     return rows.map(rowToNode);
   }
 
@@ -1049,24 +1056,21 @@ export class SqliteStore {
 
   getEdgesFrom(nodeId: string): GraphEdge[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare("SELECT * FROM edges WHERE project_id = ? AND from_node = ?")
+    const rows = this.getStmt("SELECT * FROM edges WHERE project_id = ? AND from_node = ?")
       .all(pid, nodeId) as EdgeRow[];
     return rows.map(rowToEdge);
   }
 
   getEdgesTo(nodeId: string): GraphEdge[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare("SELECT * FROM edges WHERE project_id = ? AND to_node = ?")
+    const rows = this.getStmt("SELECT * FROM edges WHERE project_id = ? AND to_node = ?")
       .all(pid, nodeId) as EdgeRow[];
     return rows.map(rowToEdge);
   }
 
   getAllEdges(): GraphEdge[] {
     const pid = this.ensureProject();
-    const rows = this.db
-      .prepare("SELECT * FROM edges WHERE project_id = ? ORDER BY created_at")
+    const rows = this.getStmt("SELECT * FROM edges WHERE project_id = ? ORDER BY created_at")
       .all(pid) as EdgeRow[];
     return rows.map(rowToEdge);
   }
@@ -1078,11 +1082,9 @@ export class SqliteStore {
    */
   hasImport(sourceFile: string): boolean {
     const pid = this.ensureProject();
-    const row = this.db
-      .prepare(
-        "SELECT 1 FROM import_history WHERE project_id = ? AND source_file = ? LIMIT 1",
-      )
-      .get(pid, sourceFile) as unknown;
+    const row = this.getStmt(
+      "SELECT 1 FROM import_history WHERE project_id = ? AND source_file = ? LIMIT 1",
+    ).get(pid, sourceFile) as unknown;
     return row !== undefined;
   }
 
@@ -1285,31 +1287,25 @@ export class SqliteStore {
     const pid = this.ensureProject();
 
     const totalNodes = (
-      this.db
-        .prepare("SELECT COUNT(*) as c FROM nodes WHERE project_id = ?")
+      this.getStmt("SELECT COUNT(*) as c FROM nodes WHERE project_id = ?")
         .get(pid) as { c: number }
     ).c;
 
     const totalEdges = (
-      this.db
-        .prepare("SELECT COUNT(*) as c FROM edges WHERE project_id = ?")
+      this.getStmt("SELECT COUNT(*) as c FROM edges WHERE project_id = ?")
         .get(pid) as { c: number }
     ).c;
 
     const byType: Record<string, number> = {};
-    const typeRows = this.db
-      .prepare(
-        "SELECT type, COUNT(*) as c FROM nodes WHERE project_id = ? GROUP BY type",
-      )
-      .all(pid) as { type: string; c: number }[];
+    const typeRows = this.getStmt(
+      "SELECT type, COUNT(*) as c FROM nodes WHERE project_id = ? GROUP BY type",
+    ).all(pid) as { type: string; c: number }[];
     for (const rVar of typeRows) byType[rVar.type] = rVar.c;
 
     const byStatus: Record<string, number> = {};
-    const statusRows = this.db
-      .prepare(
-        "SELECT status, COUNT(*) as c FROM nodes WHERE project_id = ? GROUP BY status",
-      )
-      .all(pid) as { status: string; c: number }[];
+    const statusRows = this.getStmt(
+      "SELECT status, COUNT(*) as c FROM nodes WHERE project_id = ? GROUP BY status",
+    ).all(pid) as { status: string; c: number }[];
     for (const rVar of statusRows) byStatus[rVar.status] = rVar.c;
 
     return { totalNodes, totalEdges, byType, byStatus };
@@ -1319,8 +1315,7 @@ export class SqliteStore {
 
   getProjectSetting(key: string): string | null {
     const pid = this.ensureProject();
-    const row = this.db
-      .prepare("SELECT value FROM project_settings WHERE project_id = ? AND key = ?")
+    const row = this.getStmt("SELECT value FROM project_settings WHERE project_id = ? AND key = ?")
       .get(pid, key) as { value: string } | undefined;
     return row?.value ?? null;
   }
@@ -1500,17 +1495,13 @@ export class SqliteStore {
 
     // Collect source files from import history
     const pid = this.ensureProject();
-    const imports = this.db
-      .prepare(
-        "SELECT DISTINCT source_file FROM import_history WHERE project_id = ?",
-      )
-      .all(pid) as { source_file: string }[];
+    const imports = this.getStmt(
+      "SELECT DISTINCT source_file FROM import_history WHERE project_id = ?",
+    ).all(pid) as { source_file: string }[];
 
-    const lastImportRow = this.db
-      .prepare(
-        "SELECT imported_at FROM import_history WHERE project_id = ? ORDER BY imported_at DESC LIMIT 1",
-      )
-      .get(pid) as { imported_at: string } | undefined;
+    const lastImportRow = this.getStmt(
+      "SELECT imported_at FROM import_history WHERE project_id = ? ORDER BY imported_at DESC LIMIT 1",
+    ).get(pid) as { imported_at: string } | undefined;
 
     return {
       version: "1.0.0",
