@@ -15,7 +15,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import type { LogEntry, LogLevel } from "../../schemas/log.schema.js";
+import type { LogEntry, LogLayer, LogLevel } from "../../schemas/log.schema.js";
 
 const MAX_BUFFER_SIZE = 1000;
 
@@ -70,6 +70,34 @@ function formatCtx(ctx?: Record<string, unknown>): string {
 
 function writeStderr(line: string): void {
   process.stderr.write(`${line}\n`);
+}
+
+export interface ContextualLogger {
+  info(msg: string, ctx?: Record<string, unknown>): void;
+  warn(msg: string, ctx?: Record<string, unknown>): void;
+  error(msg: string, ctx?: Record<string, unknown>): void;
+  success(msg: string, ctx?: Record<string, unknown>): void;
+  debug(msg: string, ctx?: Record<string, unknown>): void;
+}
+
+/**
+ * Build a logger pre-tagged with `layer` + `source`. The factory's tags always
+ * win over caller-supplied context (treat `layer`/`source` as authoritative
+ * server-side metadata).
+ */
+export function createLogger(opts: { layer: LogLayer; source: string }): ContextualLogger {
+  const tag = (ctx?: Record<string, unknown>): Record<string, unknown> => ({
+    ...(ctx ?? {}),
+    layer: opts.layer,
+    source: opts.source,
+  });
+  return {
+    info: (msg, ctx) => logger.info(msg, tag(ctx)),
+    warn: (msg, ctx) => logger.warn(msg, tag(ctx)),
+    error: (msg, ctx) => logger.error(msg, tag(ctx)),
+    success: (msg, ctx) => logger.success(msg, tag(ctx)),
+    debug: (msg, ctx) => logger.debug(msg, tag(ctx)),
+  };
 }
 
 export const logger = {

@@ -15,9 +15,56 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { Router } from "express";
-import { getLogBuffer, clearLogBuffer } from "../../core/utils/logger.js";
-import type { LogEntry } from "../../schemas/log.schema.js";
+import { Router, type Request } from "express";
+import { z } from "zod/v4";
+import { getLogBuffer, clearLogBuffer, logger } from "../../core/utils/logger.js";
+import { LogLevelSchema, type LogEntry } from "../../schemas/log.schema.js";
+
+const IngestEntrySchema = z.object({
+  level: LogLevelSchema,
+  message: z.string().min(1).max(4096),
+  context: z.record(z.string(), z.unknown()).optional(),
+  timestamp: z.string().optional(),
+});
+
+const IngestPayloadSchema = z.object({
+  entries: z.array(IngestEntrySchema).min(1).max(100),
+});
+
+const RATE_LIMIT_MAX = 100;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
+function clientIp(req: Request): string {
+  const fwd = req.headers["x-forwarded-for"];
+  if (typeof fwd === "string" && fwd.length > 0) {
+    return fwd.split(",")[0]!.trim();
+  }
+  if (Array.isArray(fwd) && fwd.length > 0) {
+    return fwd[0]!.split(",")[0]!.trim();
+  }
+  return req.ip ?? req.socket.remoteAddress ?? "unknown";
+}
+
+interface RateLimiter {
+  check(ip: string, now: number): boolean;
+}
+
+function createRateLimiter(max: number, windowMs: number): RateLimiter {
+  const hits = new Map<string, number[]>();
+  return {
+    check(ip, now) {
+      const cutoff = now - windowMs;
+      const arr = (hits.get(ip) ?? []).filter((t) => t > cutoff);
+      if (arr.length >= max) {
+        hits.set(ip, arr);
+        return false;
+      }
+      arr.push(now);
+      hits.set(ip, arr);
+      return true;
+    },
+  };
+}
 
 /**
  * Remove the `stack` key from a log entry's context to prevent stack trace
@@ -38,6 +85,33 @@ function sanitizeLogEntry(entry: LogEntry): LogEntry {
 /** createLogsRouter — auto-generated description placeholder. */
 export function createLogsRouter(): Router {
   const router = Router();
+  const rateLimiter = createRateLimiter(RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS);
+
+  /**
+   * POST /logs/ingest
+   * Accepts a batch of client-side log entries. `layer` in context is forced
+   * to `"web"` server-side; rate-limited to 100 req/min per IP.
+   */
+  router.post("/ingest", (req, res) => {
+    const ip = clientIp(req);
+    if (!rateLimiter.check(ip, Date.now())) {
+      res.status(429).json({ error: "rate_limited" });
+      return;
+    }
+
+    const parsed = IngestPayloadSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid_payload", details: parsed.error.issues });
+      return;
+    }
+
+    for (const entry of parsed.data.entries) {
+      const context = { ...(entry.context ?? {}), layer: "web" };
+      logger[entry.level](entry.message, context);
+    }
+
+    res.status(202).json({ accepted: parsed.data.entries.length });
+  });
 
   /**
    * GET /logs
