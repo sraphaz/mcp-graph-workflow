@@ -22,8 +22,10 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { validateInvest, type InvestCandidate, type XpSize } from "./invest-validator.js";
+
+const log = createLogger({ layer: "core", source: "smart-decompose.ts" });
 
 export interface DecomposedSubtask {
   title: string;
@@ -100,7 +102,7 @@ export function smartDecompose(
 ): DecomposeResult | null {
   const node = store.getNodeById(nodeId);
   if (!node) {
-    logger.warn("smart-decompose:node_not_found", { nodeId });
+    log.warn("smart-decompose:node_not_found", { nodeId });
     return null;
   }
 
@@ -115,7 +117,7 @@ export function smartDecompose(
   ];
 
   if (acTexts.length === 0) {
-    logger.info("smart-decompose:no_ac", { nodeId });
+    log.info("smart-decompose:no_ac", { nodeId });
     return null;
   }
 
@@ -143,7 +145,7 @@ export function smartDecompose(
     });
   }
 
-  logger.info("smart-decompose:ok", {
+  log.info("smart-decompose:ok", {
     nodeId,
     subtasks: subtasks.length,
     edges: edges.length,
@@ -235,7 +237,7 @@ export function smartDecomposeWithInvest(
 ): SmartDecomposeInvestResult | null {
   const node = store.getNodeById(nodeId);
   if (!node) {
-    logger.warn("smart-decompose-invest:node_not_found", { nodeId });
+    log.warn("smart-decompose-invest:node_not_found", { nodeId });
     return null;
   }
 
@@ -278,7 +280,7 @@ export function smartDecomposeWithInvest(
     }
   }
 
-  logger.info("smart-decompose-invest:ok", {
+  log.info("smart-decompose-invest:ok", {
     nodeId,
     accepted: accepted.length,
     rejected: rejected.length,

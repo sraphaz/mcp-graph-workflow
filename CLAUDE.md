@@ -163,6 +163,7 @@ Detailed rules per directory are in `.claude/rules/`:
 | `schemas.md` | `src/schemas/**/*.ts` — Zod v4 patterns |
 | `tests.md` | `tests/**/*.test.ts` — Vitest, arrange-act-assert |
 | `karpathy.md` | global — behavioral guidelines (think / simplicity / surgical / goal-driven) |
+| `git-workflow.md` | global — branch lifecycle, CI triage, audit fixes, logger migration patterns |
 
 ## XP Anti-Vibe-Coding Workflow
 

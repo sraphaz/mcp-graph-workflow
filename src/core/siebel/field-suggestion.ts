@@ -25,7 +25,9 @@
  */
 
 import type { SiebelObject } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "field-suggestion.ts" });
 
 // --- Public types ---
 
@@ -56,7 +58,7 @@ export interface FieldSuggestionResult {
 export function suggestFields(request: FieldSuggestionRequest): FieldSuggestionResult {
   const { targetBcName, repository, requiredThreshold = 0.6 } = request;
 
-  logger.debug("field-suggestion: analyzing", { targetBcName, repoSize: repository.length });
+  log.debug("field-suggestion: analyzing", { targetBcName, repoSize: repository.length });
 
   // Find the target BC
   const targetBc = repository.find(
@@ -64,7 +66,7 @@ export function suggestFields(request: FieldSuggestionRequest): FieldSuggestionR
   );
 
   if (!targetBc) {
-    logger.debug("field-suggestion: BC not found", { targetBcName });
+    log.debug("field-suggestion: BC not found", { targetBcName });
     return {
       targetBcName,
       suggestions: [],
@@ -87,7 +89,7 @@ export function suggestFields(request: FieldSuggestionRequest): FieldSuggestionR
   );
 
   if (applets.length === 0) {
-    logger.debug("field-suggestion: no applets for BC", { targetBcName });
+    log.debug("field-suggestion: no applets for BC", { targetBcName });
     return {
       targetBcName,
       suggestions: [],
@@ -150,7 +152,7 @@ export function suggestFields(request: FieldSuggestionRequest): FieldSuggestionR
     return a.fieldName.localeCompare(b.fieldName);
   });
 
-  logger.info("field-suggestion: complete", {
+  log.info("field-suggestion: complete", {
     targetBcName,
     applets: applets.length,
     suggestions: suggestions.length,

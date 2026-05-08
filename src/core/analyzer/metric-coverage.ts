@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "metric-coverage.ts" });
 
 export interface MetricCoverageReport {
   totalMetrics: number;
@@ -69,7 +71,7 @@ export function analyzeMetricCoverage(doc: GraphDocument): MetricCoverageReport 
     ? Math.round((coveredRisks.length / highRisks.length) * 100)
     : 100;
 
-  logger.debug("analyzer:metric-coverage", {
+  log.debug("analyzer:metric-coverage", {
     totalMetrics: metricNodes.length,
     totalHighRisks: highRisks.length,
     covered: coveredRisks.length,

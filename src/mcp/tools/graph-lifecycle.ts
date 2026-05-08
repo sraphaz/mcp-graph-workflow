@@ -35,9 +35,11 @@ import {
   type LifecyclePhase,
   getModesForPhase,
 } from "../../core/planner/lifecycle-phase.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 import { OperationError } from "../../core/utils/errors.js";
+
+const log = createLogger({ layer: "mcp", source: "graph-lifecycle.ts" });
 
 export type AnalyzeRunner = (mode: AnalyzeMode) => Promise<unknown>;
 
@@ -172,7 +174,7 @@ export function registerGraphLifecycle(server: McpServer, _store: SqliteStore): 
         runAnalyze,
         { subCheck: subCheck as AnalyzeMode | undefined },
       );
-      logger.debug("tool:graph_lifecycle", {
+      log.debug("tool:graph_lifecycle", {
         phase: rVar.phase,
         ok: rVar.ok,
         modeCount: "results" in rVar ? rVar.results?.length ?? 0 : 0,

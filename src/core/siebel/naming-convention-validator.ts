@@ -16,7 +16,9 @@
  */
 
 import type { SiebelObject, SiebelObjectType } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "naming-convention-validator.ts" });
 
 // --- Types ---
 
@@ -233,7 +235,7 @@ export function validateNamingConventions(
         ? "invalid"
         : "warnings";
 
-  logger.debug("naming-convention-validator", {
+  log.debug("naming-convention-validator", {
     ruleSet: ruleSet.name,
     checkedCount,
     skippedCount,

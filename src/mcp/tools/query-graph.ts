@@ -30,8 +30,10 @@ import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { ToolCallLog } from "../../core/store/tool-call-log.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "query-graph.ts" });
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
@@ -238,7 +240,7 @@ function audit(
       }),
     );
   } catch (err) {
-    logger.debug("query_graph: audit skipped", {
+    log.debug("query_graph: audit skipped", {
       reason: err instanceof Error ? err.message : String(err),
     });
   }
@@ -367,7 +369,7 @@ export function registerQueryGraph(server: McpServer, store: SqliteStore): void 
     },
     async ({ sql, params, limit }) => {
       const resultValue = executeQueryGraph(store, { sql, params, limit });
-      logger.debug("tool:query_graph", {
+      log.debug("tool:query_graph", {
         ok: resultValue.ok,
         durationMs: resultValue.durationMs,
         auditId: resultValue.auditId,

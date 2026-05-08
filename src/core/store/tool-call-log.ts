@@ -22,7 +22,9 @@
 
 import type Database from "better-sqlite3";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tool-call-log.ts" });
 
 export interface ToolCallEntry {
   id: number;
@@ -79,7 +81,7 @@ export class ToolCallLog {
       `INSERT INTO tool_call_log (project_id, node_id, tool_name, tool_args, called_at)
        VALUES (?, ?, ?, ?, ?)`,
     ).run(projectId, nodeId, toolName, toolArgs ?? null, now());
-    logger.debug("tool-call-log: recorded", { toolName, nodeId });
+    log.debug("tool-call-log: recorded", { toolName, nodeId });
   }
 
   /** Check if a tool was called for a node (or project-wide when nodeId is null). */
@@ -131,7 +133,7 @@ export class ToolCallLog {
   /** Clear all logs for a project. */
   clearProject(projectId: string): void {
     this.db.prepare("DELETE FROM tool_call_log WHERE project_id = ?").run(projectId);
-    logger.debug("tool-call-log: cleared project", { projectId });
+    log.debug("tool-call-log: cleared project", { projectId });
   }
 
   /**

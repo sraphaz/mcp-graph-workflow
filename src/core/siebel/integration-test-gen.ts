@@ -31,7 +31,9 @@ import type {
   WsdlMessage,
   WsdlField,
 } from "./wsdl-parser.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "integration-test-gen.ts" });
 
 // --- Public types ---
 
@@ -161,7 +163,7 @@ function buildHttpScript(
 
 /** generateIntegrationTests — auto-generated description placeholder. */
 export function generateIntegrationTests(wsdl: WsdlParseResult): IntegrationTestSuite {
-  logger.debug("integration-test-gen: generating", {
+  log.debug("integration-test-gen: generating", {
     operations: wsdl.operations.length,
     types: wsdl.types.length,
   });
@@ -203,7 +205,7 @@ export function generateIntegrationTests(wsdl: WsdlParseResult): IntegrationTest
     });
   }
 
-  logger.info("integration-test-gen: complete", {
+  log.info("integration-test-gen: complete", {
     service: serviceName,
     testCases: testCases.length,
   });

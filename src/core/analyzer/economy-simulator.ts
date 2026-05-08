@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "economy-simulator.ts" });
 
 export interface EconomySimulationParams {
   playerCount: number;
@@ -151,7 +153,7 @@ export function simulateEconomy(
   // Generate suggestions
   const suggestions = buildSuggestions(inflationRisk, inflationRatePercent, flows);
 
-  logger.info("economy-simulator", {
+  log.info("economy-simulator", {
     inflow: Math.round(totalInflowPerDay),
     outflow: Math.round(totalOutflowPerDay),
     net: Math.round(netFlowPerDay),

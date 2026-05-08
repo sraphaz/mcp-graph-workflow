@@ -22,10 +22,12 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
 import { SiebelEnvironmentSchema } from "../../schemas/siebel.schema.js";
 import type { SiebelEnvironment } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "core", source: "siebel-config.ts" });
 
 const CONFIG_FILE = "siebel-envs.json";
 
@@ -49,7 +51,7 @@ export function loadSiebelConfig(graphDir: string): SiebelEnvironment[] {
     const dataValue = JSON.parse(raw) as SiebelConfigFile;
     return dataValue.environments ?? [];
   } catch (err) {
-    logger.warn("Failed to load Siebel config", { path: filePath, error: String(err) });
+    log.warn("Failed to load Siebel config", { path: filePath, error: String(err) });
     return [];
   }
 }
@@ -69,7 +71,7 @@ export function saveSiebelConfig(graphDir: string, environments: SiebelEnvironme
   };
 
   writeFileSync(filePath, JSON.stringify(config, null, 2), "utf-8");
-  logger.info("Siebel config saved", { path: filePath, envCount: String(environments.length) });
+  log.info("Siebel config saved", { path: filePath, envCount: String(environments.length) });
 }
 
 /**
@@ -91,7 +93,7 @@ export function addEnvironment(graphDir: string, env: SiebelEnvironment): Siebel
   environments.push(env);
   saveSiebelConfig(graphDir, environments);
 
-  logger.info("Siebel environment added", { name: env.name, type: env.type });
+  log.info("Siebel environment added", { name: env.name, type: env.type });
   return environments;
 }
 
@@ -112,7 +114,7 @@ export function removeEnvironment(graphDir: string, name: string): SiebelEnviron
   environments.splice(idx, 1);
   saveSiebelConfig(graphDir, environments);
 
-  logger.info("Siebel environment removed", { name });
+  log.info("Siebel environment removed", { name });
   return environments;
 }
 

@@ -22,7 +22,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { runHarnessScan } from "../harness/harness-scan-runner.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "init-harness.ts" });
 
 export interface HarnessBaseline {
   score: number;
@@ -44,9 +46,9 @@ export function initWithHarnessBaseline(store: SqliteStore): InitHarnessResult {
   try {
     const scan = runHarnessScan(process.cwd(), store.getDb());
     harnessBaseline = { score: scan.score, grade: scan.grade };
-    logger.info("pipeline:init_harness:ok", { score: scan.score, grade: scan.grade });
+    log.info("pipeline:init_harness:ok", { score: scan.score, grade: scan.grade });
   } catch (err) {
-    logger.debug("pipeline:init_harness:scan_skipped", { error: String(err) });
+    log.debug("pipeline:init_harness:scan_skipped", { error: String(err) });
   }
 
   return {

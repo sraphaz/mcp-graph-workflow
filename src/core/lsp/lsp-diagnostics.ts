@@ -24,7 +24,9 @@
 
 import type { LspDiagnostic } from "./lsp-types.js";
 import { LspDiagnosticSeverity } from "./lsp-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "lsp-diagnostics.ts" });
 
 export interface DiagnosticsSummary {
   byLanguage: Record<string, { errors: number; warnings: number; info: number; hints: number }>;
@@ -49,7 +51,7 @@ export class LspDiagnosticsCollector {
       langMap.set(file, diagnostics);
     }
 
-    logger.debug("lsp-diagnostics:onDiagnostics", {
+    log.debug("lsp-diagnostics:onDiagnostics", {
       languageId,
       file,
       count: String(diagnostics.length),
@@ -143,12 +145,12 @@ export class LspDiagnosticsCollector {
   /** Clear all diagnostics for a language (e.g., when server restarts). */
   clearLanguage(languageId: string): void {
     this.store.delete(languageId);
-    logger.debug("lsp-diagnostics:clearLanguage", { languageId });
+    log.debug("lsp-diagnostics:clearLanguage", { languageId });
   }
 
   /** Clear everything. */
   clearAll(): void {
     this.store.clear();
-    logger.debug("lsp-diagnostics:clearAll");
+    log.debug("lsp-diagnostics:clearAll");
   }
 }

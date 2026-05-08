@@ -22,7 +22,9 @@ import { DreamCycleConfigSchema } from "../../core/dream/dream-types.js";
 import { getDreamCycle, listDreamCycles } from "../../core/dream/dream-store.js";
 import { GraphEventBus } from "../../core/events/event-bus.js";
 import { EmbeddingStore } from "../../core/rag/embedding-store.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "dream.ts" });
 
 /** createDreamRouter — auto-generated description placeholder. */
 export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus): Router {
@@ -58,7 +60,7 @@ export function createDreamRouter(storeRef: StoreRef, eventBus?: GraphEventBus):
 
       // Start cycle in background — runCycle sets cycleId synchronously before first await
       dreamEngine.runCycle(parseResult.data).catch((err) => {
-        logger.error("dream:cycle-failed", {
+        log.error("dream:cycle-failed", {
           cycleId: dreamEngine.getStatus().cycleId,
           error: err instanceof Error ? err.message : String(err),
         });

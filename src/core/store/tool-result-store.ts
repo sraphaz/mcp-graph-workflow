@@ -25,7 +25,9 @@ import type Database from "better-sqlite3";
 import { createHash } from "node:crypto";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tool-result-store.ts" });
 
 const MAX_RESULT_BYTES = 102_400; // 100KB
 
@@ -93,7 +95,7 @@ export class ToolResultStore {
     if (originalSize > MAX_RESULT_BYTES) {
       resultJson = resultJson.slice(0, MAX_RESULT_BYTES);
       truncated = true;
-      logger.debug("tool-result-store:truncated", { toolName, originalSize, truncatedTo: MAX_RESULT_BYTES });
+      log.debug("tool-result-store:truncated", { toolName, originalSize, truncatedTo: MAX_RESULT_BYTES });
     }
 
     const resultHash = createHash("sha256").update(resultJson).digest("hex").slice(0, 16);
@@ -103,7 +105,7 @@ export class ToolResultStore {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(id, projectId, traceId, toolName, argsJson, resultJson, resultHash, originalSize, truncated ? 1 : 0, now());
 
-    logger.debug("tool-result-store:recorded", { toolName, resultHash, sizeBytes: originalSize, truncated });
+    log.debug("tool-result-store:recorded", { toolName, resultHash, sizeBytes: originalSize, truncated });
     return id;
   }
 

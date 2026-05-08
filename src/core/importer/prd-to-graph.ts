@@ -26,7 +26,9 @@ import type { ClassifiedBlock } from "../parser/classify.js";
 import { isStructuralHeading } from "../parser/classify.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "prd-to-graph.ts" });
 
 interface ConversionResult {
   nodes: GraphNode[];
@@ -265,7 +267,7 @@ export function convertToGraph(
     const block = extraction.blocks[bi];
     const node = createNodeFromBlock(block, sourceFile);
     if (!node) {
-      logger.warn("prd-to-graph:skipped-block", {
+      log.warn("prd-to-graph:skipped-block", {
         blockIndex: bi,
         blockType: block.type,
         title: block.title?.slice(0, 80),
@@ -277,7 +279,7 @@ export function convertToGraph(
     // Validate node with Zod schema — skip malformed nodes instead of crashing downstream
     const parsed = GraphNodeSchema.safeParse(node);
     if (!parsed.success) {
-      logger.warn("prd-to-graph:invalid-node", { blockIndex: bi, title: block.title?.slice(0, 50), errors: parsed.error.issues.map((i) => i.message) });
+      log.warn("prd-to-graph:invalid-node", { blockIndex: bi, title: block.title?.slice(0, 50), errors: parsed.error.issues.map((i) => i.message) });
       continue;
     }
 
@@ -434,7 +436,7 @@ export function convertToGraph(
 
   const inferredDeps = edges.filter((e) => e.metadata?.inferred).length;
 
-  logger.debug("Graph conversion complete", {
+  log.debug("Graph conversion complete", {
     nodesCreated: nodes.length,
     edgesCreated: edges.length,
     blockedTasks,

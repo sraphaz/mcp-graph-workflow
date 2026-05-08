@@ -5,8 +5,10 @@
 
 import { parse as parseYaml } from "yaml";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { AgentDefinitionSchema, type AgentDefinition } from "../../schemas/agent.schema.js";
+
+const log = createLogger({ layer: "core", source: "agent-loader.ts" });
 
 export class AgentLoadError extends McpGraphError {
   constructor(message: string, public readonly filePath?: string) {
@@ -48,7 +50,7 @@ export function loadAgentFromContent(
   const parsed = AgentDefinitionSchema.safeParse(raw);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => i.message).join("; ");
-    logger.warn("agent-loader:schema-invalid", { filename, issues });
+    log.warn("agent-loader:schema-invalid", { filename, issues });
     throw new AgentLoadError(`Schema validation failed for "${filename}": ${issues}`, filename);
   }
 
@@ -57,7 +59,7 @@ export function loadAgentFromContent(
   // Filename guard: stem (without extension) must match frontmatter.name
   const stem = filename.replace(/\.md$/, "");
   if (stem !== agent.name) {
-    logger.warn("agent-loader:name-mismatch", { filename, frontmatterName: agent.name });
+    log.warn("agent-loader:name-mismatch", { filename, frontmatterName: agent.name });
     throw new AgentLoadError(
       `Filename stem "${stem}" does not match frontmatter.name "${agent.name}" in "${filename}"`,
       filename,
@@ -66,14 +68,14 @@ export function loadAgentFromContent(
 
   // Phase dir guard: parent directory must match frontmatter.phase
   if (phaseDir !== agent.phase) {
-    logger.warn("agent-loader:phase-mismatch", { phaseDir, frontmatterPhase: agent.phase, filename });
+    log.warn("agent-loader:phase-mismatch", { phaseDir, frontmatterPhase: agent.phase, filename });
     throw new AgentLoadError(
       `Phase directory "${phaseDir}" does not match frontmatter.phase "${agent.phase}" in "${filename}"`,
       filename,
     );
   }
 
-  logger.debug("agent-loader:loaded", { name: agent.name, phase: agent.phase });
+  log.debug("agent-loader:loaded", { name: agent.name, phase: agent.phase });
   return agent;
 }
 

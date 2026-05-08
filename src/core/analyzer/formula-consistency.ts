@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "formula-consistency.ts" });
 
 export interface FormulaConsistencyReport {
   formulas: Array<{ nodeId: string; title: string; valid: boolean; issues: string[] }>;
@@ -104,7 +106,7 @@ export function analyzeFormulaConsistency(doc: GraphDocument): FormulaConsistenc
     }
   }
 
-  logger.debug("analyzer:formula-consistency", {
+  log.debug("analyzer:formula-consistency", {
     totalFormulas: formulaNodes.length,
     validCount,
     conflicts: conflicts.length,

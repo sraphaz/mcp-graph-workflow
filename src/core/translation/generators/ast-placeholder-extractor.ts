@@ -30,7 +30,9 @@ import type { ParsedConstruct } from "../parsers/parser-adapter.js";
 import { TreeSitterManager } from "../../code/treesitter/treesitter-manager.js";
 import { extractSourceText } from "./source-text-extractor.js";
 import { resolvePlaceholders } from "./placeholder-resolver.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "ast-placeholder-extractor.ts" });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SyntaxNode = any;
@@ -82,7 +84,7 @@ export async function extractPlaceholdersFromAst(
         }
       }
     } catch (err) {
-      logger.warn("ast-extractor:fallback", {
+      log.warn("ast-extractor:fallback", {
         language: sourceLanguageId,
         error: String(err),
         message: "AST parsing failed, falling back to regex",

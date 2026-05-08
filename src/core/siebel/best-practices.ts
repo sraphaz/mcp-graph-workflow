@@ -20,7 +20,9 @@
  * Each rule has correct/incorrect examples and severity.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "best-practices.ts" });
 
 export interface BestPracticeRule {
   readonly id: string;
@@ -114,7 +116,7 @@ const RULES: BestPracticeRule[] = [
 
 /** Return all Siebel best practice rules (50+ rules across naming, config, scripting, etc.). */
 export function getSiebelBestPractices(): readonly BestPracticeRule[] {
-  logger.debug("best-practices: returning all rules", { count: RULES.length });
+  log.debug("best-practices: returning all rules", { count: RULES.length });
   return RULES;
 }
 
@@ -127,6 +129,6 @@ export function getBestPracticesByCategory(): Record<string, readonly BestPracti
     }
     categories[rule.category].push(rule);
   }
-  logger.debug("best-practices: by category", { categories: Object.keys(categories).length });
+  log.debug("best-practices: by category", { categories: Object.keys(categories).length });
   return categories;
 }

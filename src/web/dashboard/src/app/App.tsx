@@ -15,7 +15,8 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import React, { useState, useCallback, lazy, Suspense } from "react";
+import React, { useState, useCallback, lazy, Suspense, useEffect } from "react";
+import { clientLogger } from "@/lib/client-logger";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ProjectProvider } from "@/providers/project-provider";
 import { Sidebar, type TabId } from "@/components/layout/sidebar";
@@ -100,9 +101,9 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error): void {
-    // AC1: on chunk load failure, try a controlled reload once
+    clientLogger.reportError(error, { component: "ErrorBoundary" });
+
     if (isChunkLoadError(error) && !sessionStorage.getItem(CHUNK_RETRY_KEY)) {
-      console.warn("[ErrorBoundary] Chunk load failed, attempting reload:", error.message);
       sessionStorage.setItem(CHUNK_RETRY_KEY, "1");
       window.location.reload();
     }
@@ -144,6 +145,11 @@ function AppContent(): React.JSX.Element {
   const [importOpen, setImportOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [openFolderOpen, setOpenFolderOpen] = useState(false);
+
+  useEffect(() => {
+    clientLogger.installGlobalHandlers();
+    return () => clientLogger.destroy();
+  }, []);
 
   const { graph, loading, error, refresh } = useGraphData();
   const { stats, refresh: refreshStats } = useStats();

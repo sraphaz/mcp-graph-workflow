@@ -40,7 +40,9 @@ import type { StrategyName } from "./adaptive-router.js";
 import type { EmbeddingStore } from "./embedding-store.js";
 import { generateEmbedding } from "./embedding-generator.js";
 import { expandQuery } from "./query-expander.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "multi-strategy-retrieval.ts" });
 
 export interface RankedResult {
   id: string;
@@ -195,7 +197,7 @@ export async function multiStrategySearch(
     });
     if (expansion.expanded) {
       searchQuery = expansion.expandedQuery;
-      logger.info("query expanded", {
+      log.info("query expanded", {
         original: query,
         expanded: searchQuery,
         addedTerms: expansion.addedTerms.length,
@@ -209,7 +211,7 @@ export async function multiStrategySearch(
     const raw = knowledgeStore.search(searchQuery, limit * 2);
     ftsResults = raw.map((r) => ({ id: r.id, score: r.score }));
   } catch {
-    logger.debug("Multi-strategy FTS search returned no results");
+    log.debug("Multi-strategy FTS search returned no results");
   }
 
   // Strategy 2: Graph traversal — follow relations from FTS results
@@ -277,7 +279,7 @@ export async function multiStrategySearch(
       }
     }
   } catch {
-    logger.debug("Entity graph strategy skipped — KG not available");
+    log.debug("Entity graph strategy skipped — KG not available");
   }
 
   // Strategy 5: LSP Symbol Resolution — precise code lookups (weight 0.5)
@@ -297,7 +299,7 @@ export async function multiStrategySearch(
         }
       }
     } catch {
-      logger.debug("Multi-strategy LSP resolution returned no results");
+      log.debug("Multi-strategy LSP resolution returned no results");
     }
   }
 
@@ -310,7 +312,7 @@ export async function multiStrategySearch(
         execGraphResults.push({ id: resultValue.id, score: resultValue.score });
       }
     } catch {
-      logger.debug("Multi-strategy execution graph search returned no results");
+      log.debug("Multi-strategy execution graph search returned no results");
     }
   }
 
@@ -326,7 +328,7 @@ export async function multiStrategySearch(
         }
       }
     } catch {
-      logger.debug("Multi-strategy semantic search returned no results");
+      log.debug("Multi-strategy semantic search returned no results");
     }
   }
 
@@ -345,7 +347,7 @@ export async function multiStrategySearch(
         }
       }
     } catch {
-      logger.debug("Multi-strategy ONNX semantic search returned no results");
+      log.debug("Multi-strategy ONNX semantic search returned no results");
     }
   }
 
@@ -463,7 +465,7 @@ export async function multiStrategySearch(
     }
   }
 
-  logger.info("Multi-strategy search complete", {
+  log.info("Multi-strategy search complete", {
     query,
     ftsCount: ftsResults.length,
     graphCount: graphResults.length,

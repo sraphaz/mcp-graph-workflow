@@ -27,10 +27,12 @@
 
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync } from 'fs';
 import { join } from 'path';
-import { logger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 import { OnnxModelNotFoundError } from '../utils/errors.js';
 import { TensorBufferPool } from './tensor-buffer-pool.js';
 import { downloadFileWithVerify, ChecksumMismatchError, DownloadError } from './model-downloader.js';
+
+const log = createLogger({ layer: "rag", source: "onnx-embeddings.ts" });
 
 // ── Types ──
 
@@ -102,7 +104,7 @@ export async function isOnnxAvailable(): Promise<boolean> {
     onnxAvailableCache = true;
   } catch {
     onnxAvailableCache = false;
-    logger.warn('onnx:unavailable', { reason: 'onnxruntime-node not installed — RAG will use hash embeddings (degraded mode)' });
+    log.warn('onnx:unavailable', { reason: 'onnxruntime-node not installed — RAG will use hash embeddings (degraded mode)' });
   }
 
   return onnxAvailableCache;
@@ -119,9 +121,9 @@ export async function logEmbeddingModeOnBoot(
   isAvailable: () => Promise<boolean> = isOnnxAvailable,
   logFn: LogFn = (event, fields) => {
     if (fields.mode === 'neural') {
-      logger.info(event, fields);
+      log.info(event, fields);
     } else {
-      logger.warn(event, fields);
+      log.warn(event, fields);
     }
   },
 ): Promise<void> {
@@ -155,7 +157,7 @@ async function downloadFile(url: string, destPath: string): Promise<void> {
   // is captured); mismatch detection is still active when caller passes one.
   try {
     const resultValue = await downloadFileWithVerify(url, destPath);
-    logger.info('onnx:download:ok', {
+    log.info('onnx:download:ok', {
       dest: destPath,
       sizeBytes: resultValue.sizeBytes,
       sha256: resultValue.sha256,
@@ -182,7 +184,7 @@ async function ensureModelFiles(modelsDir: string): Promise<{ modelPath: string;
   if (existsSync(modelPath)) {
     const size = statSync(modelPath).size;
     if (size < MIN_MODEL_SIZE) {
-      logger.warn('onnx:corrupted-model', { modelPath, sizeBytes: size, minRequired: MIN_MODEL_SIZE });
+      log.warn('onnx:corrupted-model', { modelPath, sizeBytes: size, minRequired: MIN_MODEL_SIZE });
       unlinkSync(modelPath);
     }
   }
@@ -191,13 +193,13 @@ async function ensureModelFiles(modelsDir: string): Promise<{ modelPath: string;
       const raw = readFileSync(tokenizerPath, 'utf-8');
       JSON.parse(raw); // validate JSON integrity
     } catch {
-      logger.warn('onnx:corrupted-tokenizer', { tokenizerPath });
+      log.warn('onnx:corrupted-tokenizer', { tokenizerPath });
       unlinkSync(tokenizerPath);
     }
   }
 
   if (existsSync(modelPath) && existsSync(tokenizerPath)) {
-    logger.debug('onnx:cache-hit', { modelDir });
+    log.debug('onnx:cache-hit', { modelDir });
     return { modelPath, tokenizerPath };
   }
 
@@ -226,7 +228,7 @@ function loadTokenizer(tokenizerPath: string): TokenizerConfig | null {
     const raw = readFileSync(tokenizerPath, 'utf-8');
     return JSON.parse(raw) as TokenizerConfig;
   } catch (err) {
-    logger.warn('onnx:tokenizer-load-failed', { tokenizerPath, error: err instanceof Error ? err.message : String(err) });
+    log.warn('onnx:tokenizer-load-failed', { tokenizerPath, error: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }
@@ -282,7 +284,7 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
     }
     this.vocab = config.model?.vocab ?? {};
 
-    logger.info('onnx:session-created', { model: this.modelPath });
+    log.info('onnx:session-created', { model: this.modelPath });
     return this.session;
   }
 
@@ -352,7 +354,7 @@ const providerCache = new Map<string, Promise<EmbeddingProvider>>();
 export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvider | null> {
   const available = await isOnnxAvailable();
   if (!available) {
-    logger.warn('onnx:provider-degraded', { available: false, impact: 'RAG operates with hash embeddings instead of neural — lower search quality' });
+    log.warn('onnx:provider-degraded', { available: false, impact: 'RAG operates with hash embeddings instead of neural — lower search quality' });
     return null;
   }
 
@@ -376,8 +378,8 @@ export async function getOnnxProvider(modelsDir: string): Promise<EmbeddingProvi
     return await creation;
   } catch (err) {
     providerCache.delete(modelsDir);
-    logger.error('onnx:provider-init-failed', { error: err instanceof Error ? err.message : String(err) });
-    logger.warn('onnx:fallback', {
+    log.error('onnx:provider-init-failed', { error: err instanceof Error ? err.message : String(err) });
+    log.warn('onnx:fallback', {
       reason: err instanceof Error ? err.message : String(err),
       action: 'return-null-provider',
       modelsDir,

@@ -25,7 +25,9 @@
  * Part of the Autonomous Agent AAA+ pipeline — Pilar 3: Anti-Hallucination.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "contract-engine.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -151,7 +153,7 @@ export function compileRulesFromMarkdown(content: string, filename: string): Arc
     }
   }
 
-  logger.debug("contract-engine:compile", { filename, rulesExtracted: rules.length });
+  log.debug("contract-engine:compile", { filename, rulesExtracted: rules.length });
   return rules;
 }
 
@@ -250,7 +252,7 @@ export function validateImports(
     }
   }
 
-  logger.debug("contract-engine:validate", {
+  log.debug("contract-engine:validate", {
     filesChecked: files.length,
     violationsFound: violations.length,
   });

@@ -24,7 +24,9 @@
  */
 
 import type { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "knowledge-quality-radar.ts" });
 
 const LOW_QUALITY_THRESHOLD = 40;
 
@@ -45,7 +47,7 @@ export interface KnowledgeQualityMetric {
  * - isLow: true if avgQuality < 40
  */
 export function calculateKnowledgeQuality(knowledgeStore: KnowledgeStore): KnowledgeQualityMetric[] {
-  logger.debug("knowledge-quality-radar:calculate");
+  log.debug("knowledge-quality-radar:calculate");
 
   const { total, bySource } = knowledgeStore.countBySource();
 
@@ -91,7 +93,7 @@ export function calculateKnowledgeQuality(knowledgeStore: KnowledgeStore): Knowl
 
   metrics.sort((a, b) => a.sourceType.localeCompare(b.sourceType));
 
-  logger.info("knowledge-quality-radar:done", {
+  log.info("knowledge-quality-radar:done", {
     sourceTypes: metrics.length,
     totalDocs: total,
   });

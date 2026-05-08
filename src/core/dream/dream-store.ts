@@ -17,7 +17,9 @@
 
 import type Database from "better-sqlite3";
 import type { DreamCycleResult } from "./dream-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "dream-store.ts" });
 
 // ─── Archive entry shape ───
 
@@ -72,7 +74,7 @@ export function saveDreamCycle(db: Database.Database, cycle: DreamCycleResult): 
     cycle.completedAt || null,
     null,
   );
-  logger.debug("dream-store:save", { cycleId: cycle.id, status: cycle.status });
+  log.debug("dream-store:save", { cycleId: cycle.id, status: cycle.status });
 }
 
 // ─── Update an existing dream cycle ───
@@ -91,7 +93,7 @@ export function updateDreamCycle(db: Database.Database, cycle: DreamCycleResult)
     null,
     cycle.id,
   );
-  logger.debug("dream-store:update", { cycleId: cycle.id, status: cycle.status });
+  log.debug("dream-store:update", { cycleId: cycle.id, status: cycle.status });
 }
 
 // ─── Get a single dream cycle by ID ───
@@ -131,7 +133,7 @@ export function archiveDreamDoc(db: Database.Database, entry: DreamArchiveEntry)
     entry.archivedAt,
     entry.cycleId,
   );
-  logger.debug("dream-store:archive", { docId: entry.originalDocId, reason: entry.reason });
+  log.debug("dream-store:archive", { docId: entry.originalDocId, reason: entry.reason });
 }
 
 // ─── List archived docs for a cycle ───

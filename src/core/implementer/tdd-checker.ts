@@ -30,7 +30,9 @@ import type {
 } from "../../schemas/implementer-schema.js";
 import { parseAc } from "../analyzer/ac-parser.js";
 import { getNodeAcTexts } from "../utils/ac-helpers.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tdd-checker.ts" });
 
 const UNIT_KEYWORDS = [
   "retorna", "returns", "return", "status", "calcula", "calculates",
@@ -98,7 +100,7 @@ export function checkTddAdherence(doc: GraphDocument, nodeId?: string): TddCheck
     ? `TDD Check: ${taskReports.length} tasks analyzed, ${tasksAtRisk} at risk. Overall testability: ${overallTestability}%. ${allSuggested.length} test specs suggested.`
     : "Nenhuma task com acceptance criteria encontrada.";
 
-  logger.info("tdd-checker", { tasks: taskReports.length, tasksAtRisk, overallTestability });
+  log.info("tdd-checker", { tasks: taskReports.length, tasksAtRisk, overallTestability });
 
   return {
     tasks: taskReports,

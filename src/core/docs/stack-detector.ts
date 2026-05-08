@@ -22,7 +22,9 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "stack-detector.ts" });
 
 export interface DetectedStack {
   /** Detected language/runtime */
@@ -50,7 +52,7 @@ export async function detectStack(basePath: string): Promise<DetectedStack | nul
   const goModResult = await tryGoMod(basePath);
   if (goModResult) return goModResult;
 
-  logger.info("No stack manifest detected", { basePath });
+  log.info("No stack manifest detected", { basePath });
   return null;
 }
 
@@ -72,7 +74,7 @@ async function tryPackageJson(basePath: string): Promise<DetectedStack | null> {
       version: String(version).replace(/^\^|~/, ""),
     }));
 
-    logger.info("Stack detected: Node.js", { libraries: libraries.length });
+    log.info("Stack detected: Node.js", { libraries: libraries.length });
 
     return {
       runtime: "node",
@@ -80,7 +82,7 @@ async function tryPackageJson(basePath: string): Promise<DetectedStack | null> {
       sourceFile: "package.json",
     };
   } catch (err) {
-    logger.debug("stackDetector:packageJsonReadFailure", { error: err instanceof Error ? err.message : String(err) });
+    log.debug("stackDetector:packageJsonReadFailure", { error: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }
@@ -100,7 +102,7 @@ async function tryRequirementsTxt(basePath: string): Promise<DetectedStack | nul
           : { name: line.trim(), version: "*" };
       });
 
-    logger.info("Stack detected: Python", { libraries: libraries.length });
+    log.info("Stack detected: Python", { libraries: libraries.length });
 
     return {
       runtime: "python",
@@ -108,7 +110,7 @@ async function tryRequirementsTxt(basePath: string): Promise<DetectedStack | nul
       sourceFile: "requirements.txt",
     };
   } catch (err) {
-    logger.debug("stackDetector:requirementsTxtReadFailure", { error: err instanceof Error ? err.message : String(err) });
+    log.debug("stackDetector:requirementsTxtReadFailure", { error: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }
@@ -131,7 +133,7 @@ async function tryGoMod(basePath: string): Promise<DetectedStack | null> {
       }
     }
 
-    logger.info("Stack detected: Go", { libraries: libraries.length });
+    log.info("Stack detected: Go", { libraries: libraries.length });
 
     return {
       runtime: "go",
@@ -139,7 +141,7 @@ async function tryGoMod(basePath: string): Promise<DetectedStack | null> {
       sourceFile: "go.mod",
     };
   } catch (err) {
-    logger.debug("stackDetector:goModReadFailure", { error: err instanceof Error ? err.message : String(err) });
+    log.debug("stackDetector:goModReadFailure", { error: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }

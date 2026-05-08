@@ -32,8 +32,10 @@ import {
 } from "../../core/memory/memory-reader.js";
 import { indexMemories } from "../../core/rag/memory-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "memory.ts" });
 
 /** registerMemory — auto-generated description placeholder. */
 export function registerMemory(server: McpServer, store: SqliteStore): void {
@@ -46,7 +48,7 @@ export function registerMemory(server: McpServer, store: SqliteStore): void {
       content: z.string().min(1).describe("Memory content (markdown)."),
     },
     async ({ name, content }) => {
-      logger.debug("tool:write_memory", { name });
+      log.debug("tool:write_memory", { name });
       const basePath = process.cwd();
 
       const normalizedContent = normalizeNewlines(content) ?? content;
@@ -74,7 +76,7 @@ export function registerMemory(server: McpServer, store: SqliteStore): void {
       name: z.string().min(1).describe("Memory name (without .md extension)."),
     },
     async ({ name }) => {
-      logger.debug("tool:read_memory", { name });
+      log.debug("tool:read_memory", { name });
       const basePath = process.cwd();
 
       const memory = await readMemory(basePath, name);
@@ -92,7 +94,7 @@ export function registerMemory(server: McpServer, store: SqliteStore): void {
     "List all project memories available in workflow-graph/memories/.",
     {},
     async () => {
-      logger.debug("tool:list_memories", {});
+      log.debug("tool:list_memories", {});
       const basePath = process.cwd();
 
       const names = await listMemories(basePath);
@@ -113,7 +115,7 @@ export function registerMemory(server: McpServer, store: SqliteStore): void {
       name: z.string().min(1).describe("Memory name to delete (without .md extension)."),
     },
     async ({ name }) => {
-      logger.debug("tool:delete_memory", { name });
+      log.debug("tool:delete_memory", { name });
       const basePath = process.cwd();
 
       const deleted = await deleteMemory(basePath, name);

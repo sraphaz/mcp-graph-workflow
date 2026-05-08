@@ -19,8 +19,10 @@
  * Health Check — validates connectivity with configured Siebel environments.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SiebelEnvironment } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "core", source: "health-check.ts" });
 
 export type HealthStatus = "online" | "offline" | "degraded";
 
@@ -61,7 +63,7 @@ export async function checkEnvironmentHealth(
 
     const status: HealthStatus = response.ok ? "online" : "degraded";
 
-    logger.info("Health check complete", {
+    log.info("Health check complete", {
       environment: env.name,
       status,
       responseTime: String(responseTimeMs),
@@ -78,7 +80,7 @@ export async function checkEnvironmentHealth(
     const responseTimeMs = Date.now() - start;
     const error = err instanceof Error ? err.message : String(err);
 
-    logger.warn("Health check failed", {
+    log.warn("Health check failed", {
       environment: env.name,
       error,
     });

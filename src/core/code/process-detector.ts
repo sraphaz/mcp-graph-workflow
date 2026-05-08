@@ -22,7 +22,9 @@
 
 import type { CodeStore } from "./code-store.js";
 import type { DetectedProcess } from "./code-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "process-detector.ts" });
 
 /**
  * Detect execution processes: exported symbols with no callers → trace call chains.
@@ -92,7 +94,7 @@ export function detectProcesses(store: CodeStore, projectId: string): DetectedPr
     });
   }
 
-  logger.debug("process-detector", {
+  log.debug("process-detector", {
     entryPoints: entryPoints.length,
     processes: processes.length,
   });

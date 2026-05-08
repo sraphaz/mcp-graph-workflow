@@ -8,7 +8,9 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod/v4";
 import { HookChannelSchema, type HookChannel } from "./hook-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "config-loader.ts" });
 
 /**
  * 3-level config loader for runtime hook handlers.
@@ -104,7 +106,7 @@ export function loadHookConfig(options: LoadHookConfigOptions = {}): MergedHookC
     }
     const parsed = HookConfigFileSchema.safeParse(file.data);
     if (!parsed.success) {
-      logger.warn("hooks:config:invalid", { path, error: parsed.error.message });
+      log.warn("hooks:config:invalid", { path, error: parsed.error.message });
       sources.push({ path, loaded: false, reason: "schema validation failed" });
       continue;
     }

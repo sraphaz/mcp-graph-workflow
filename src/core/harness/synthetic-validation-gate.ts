@@ -18,7 +18,9 @@
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphDocument } from "../graph/graph-types.js";
 import { checkInvariants, getBuiltInInvariants } from "./property-invariants.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "synthetic-validation-gate.ts" });
 
 export interface MutationRecord { type: "dangling_edge" | "status_regression" | "self_cycle" | "duplicate_edge"; description: string; detected: boolean; }
 export interface SyntheticValidationResult { passed: boolean; mutationsApplied: number; mutationsCaught: number; score: number; mutations: MutationRecord[]; durationMs: number; }
@@ -62,7 +64,7 @@ export function runSyntheticValidation(store: SqliteStore): SyntheticValidationR
   const total = mutations.length;
   const score = total > 0 ? Math.round((caught / total) * 100) : 100;
   const durationMs = Math.round(performance.now() - start);
-  logger.info("synthetic-validation:result", { mutationsApplied: total, mutationsCaught: caught, score, durationMs });
+  log.info("synthetic-validation:result", { mutationsApplied: total, mutationsCaught: caught, score, durationMs });
   return { passed: score >= 50, mutationsApplied: total, mutationsCaught: caught, score, mutations, durationMs };
 }
 

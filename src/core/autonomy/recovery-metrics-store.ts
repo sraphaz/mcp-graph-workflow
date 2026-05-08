@@ -16,7 +16,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "recovery-metrics-store.ts" });
 
 export interface RecoveryMetricEntry { nodeId: string; action: "rollback" | "escalation" | "success"; success: boolean; mttrMs: number; attempt: number; timestamp?: string; }
 export interface RecoveryMetricsSummary { totalRollbacks: number; totalEscalations: number; totalSuccesses: number; avgMttrMs: number; successRate: number; }
@@ -29,7 +31,7 @@ export class RecoveryMetricsStore {
 
   record(entry: RecoveryMetricEntry): void {
     this.db.prepare("INSERT INTO recovery_metrics (node_id, action, success, mttr_ms, attempt, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))").run(entry.nodeId, entry.action, entry.success ? 1 : 0, entry.mttrMs, entry.attempt);
-    logger.debug("recovery-metrics:recorded", { nodeId: entry.nodeId, action: entry.action, mttrMs: entry.mttrMs });
+    log.debug("recovery-metrics:recorded", { nodeId: entry.nodeId, action: entry.action, mttrMs: entry.mttrMs });
   }
 
   getByNode(nodeId: string): RecoveryMetricEntry[] {

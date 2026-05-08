@@ -3,9 +3,11 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { GraphEventBus } from "../events/event-bus.js";
 import type { HookChannel, HookEvent, HookHandler } from "./hook-types.js";
+
+const log = createLogger({ layer: "core", source: "hook-bus.ts" });
 
 /**
  * Typed pub/sub layer for hook events.
@@ -37,7 +39,7 @@ export class HookBus {
       try {
         await handler(event);
       } catch (err) {
-        logger.error("Hook handler error", {
+        log.error("Hook handler error", {
           channel: event.channel,
           error: err instanceof Error ? err.message : String(err),
         });

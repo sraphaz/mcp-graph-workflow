@@ -25,8 +25,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { SpecStore } from "../../core/spec-evolution/spec-store.js";
 import { syncSpecToGraph } from "../../core/spec-evolution/sync-engine.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "spec-sync.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Handlers (exported for testing)                                    */
@@ -136,7 +138,7 @@ export function registerSpecSync(server: McpServer, store: SqliteStore): void {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("Spec sync tool error", { action: params.action, error: msg });
+        log.error("Spec sync tool error", { action: params.action, error: msg });
         return mcpError(msg);
       }
     },

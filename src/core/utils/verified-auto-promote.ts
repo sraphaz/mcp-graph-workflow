@@ -29,8 +29,10 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { fileExists } from "./fs.js";
-import { logger } from "./logger.js";
+import { createLogger } from "./logger.js";
 import { runTestGate as defaultRunTestGate, type TestGateResult } from "../harness/test-gate.js";
+
+const log = createLogger({ layer: "core", source: "verified-auto-promote.ts" });
 
 const MAX_DEPTH = 10;
 
@@ -118,7 +120,7 @@ export async function verifyAndPromote(
     const verdict = await verifyParent(store, parent.id, parent.title, runTestGate);
     if (!verdict.ok) {
       resultValue.rejected.push({ nodeId: parent.id, title: parent.title, reasons: verdict.reasons });
-      logger.warn("verified-auto-promote:rejected", {
+      log.warn("verified-auto-promote:rejected", {
         nodeId: parent.id,
         title: parent.title,
         reasons: verdict.reasons,
@@ -128,7 +130,7 @@ export async function verifyAndPromote(
 
     store.updateNodeStatus(parent.id, "done");
     resultValue.promoted.push(parent.id);
-    logger.info("verified-auto-promote:promoted", {
+    log.info("verified-auto-promote:promoted", {
       nodeId: parent.id,
       title: parent.title,
       childrenDone: siblings.length,

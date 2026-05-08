@@ -42,10 +42,12 @@ import { getSiebelBestPractices, getBestPracticesByCategory } from "../../core/s
 import { enrichSifContext } from "../../core/siebel/context-enrichment.js";
 import { reviewSiebelCode } from "../../core/siebel/code-review.js";
 import { checkSiebelReady } from "../../core/siebel/definition-of-ready.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import multer from "multer";
 import path from "node:path";
 import { unlink } from "node:fs/promises";
+
+const log = createLogger({ layer: "api", source: "siebel.ts" });
 
 const siebelUpload = multer({
   dest: "/tmp/mcp-graph-siebel-uploads/",
@@ -102,7 +104,7 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
           metadata: { fileName, importedAt: new Date().toISOString() },
         });
       } catch (err) {
-        logger.debug("siebel:knowledgeStoreInsertFailure", { error: err instanceof Error ? err.message : String(err) });
+        log.debug("siebel:knowledgeStoreInsertFailure", { error: err instanceof Error ? err.message : String(err) });
         // Non-fatal
       }
 
@@ -396,7 +398,7 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
         indexed++;
       }
 
-      logger.info("Siebel docs uploaded and indexed", {
+      log.info("Siebel docs uploaded and indexed", {
         fileName: file.originalname,
         chunks: String(indexed),
       });
@@ -414,7 +416,7 @@ export function createSiebelRouter(storeRef: StoreRef, getBasePath: () => string
       try {
         await unlink(file.path);
       } catch (err) {
-        logger.debug("siebel:fileCleanupFailure", { error: err instanceof Error ? err.message : String(err) });
+        log.debug("siebel:fileCleanupFailure", { error: err instanceof Error ? err.message : String(err) });
         // Cleanup failure is non-fatal
       }
     }

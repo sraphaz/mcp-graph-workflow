@@ -17,7 +17,9 @@
 
 import type { AutopilotController } from "./autopilot-controller.js";
 import type { RecoveryOrchestrator, RecoveryMetrics } from "./recovery-orchestrator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "autopilot-recovery-bridge.ts" });
 
 export interface AutopilotRecoveryResult { autopilotAction: string; rolledBack?: boolean; canRetry?: boolean; escalate?: boolean; mttrMs?: number; }
 
@@ -26,17 +28,17 @@ export class AutopilotRecoveryBridge {
   private recovery: RecoveryOrchestrator;
   constructor(autopilot: AutopilotController, recovery: RecoveryOrchestrator) { this.autopilot = autopilot; this.recovery = recovery; }
 
-  onTaskStart(nodeId: string): void { this.recovery.beginTask(nodeId); logger.debug("autopilot-recovery:task-start", { nodeId }); }
+  onTaskStart(nodeId: string): void { this.recovery.beginTask(nodeId); log.debug("autopilot-recovery:task-start", { nodeId }); }
 
   onTaskSuccess(nodeId: string): AutopilotRecoveryResult {
     this.recovery.succeedTask(nodeId); this.autopilot.recordResult(nodeId, true);
-    logger.info("autopilot-recovery:task-success", { nodeId });
+    log.info("autopilot-recovery:task-success", { nodeId });
     return { autopilotAction: "continue" };
   }
 
   onTaskFailure(nodeId: string, reason: string): AutopilotRecoveryResult {
     const rVar = this.recovery.failTask(nodeId, reason); this.autopilot.recordResult(nodeId, false);
-    logger.info("autopilot-recovery:task-failure", { nodeId, reason, rolledBack: rVar.rolledBack, canRetry: rVar.canRetry, escalate: rVar.escalate, attempt: rVar.attempt, mttrMs: rVar.mttrMs });
+    log.info("autopilot-recovery:task-failure", { nodeId, reason, rolledBack: rVar.rolledBack, canRetry: rVar.canRetry, escalate: rVar.escalate, attempt: rVar.attempt, mttrMs: rVar.mttrMs });
     return { autopilotAction: rVar.escalate ? "pause" : "retry", rolledBack: rVar.rolledBack, canRetry: rVar.canRetry, escalate: rVar.escalate, mttrMs: rVar.mttrMs };
   }
 

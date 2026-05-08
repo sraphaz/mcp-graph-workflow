@@ -43,7 +43,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { NodeNotFoundError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "reporter.ts" });
 
 /** Minimal subset of a SandboxReport that the graph update needs. */
 export interface ReporterOutcome {
@@ -75,7 +77,7 @@ export function updateGraphFromReport(
 
   // `done` is frozen — reporter never writes over it, regardless of outcome.
   if (previousStatus === "done") {
-    logger.debug("sandbox:reporter:skipped-done", { nodeId });
+    log.debug("sandbox:reporter:skipped-done", { nodeId });
     return {
       nodeId,
       previousStatus,
@@ -94,14 +96,14 @@ export function updateGraphFromReport(
       };
     }
     store.updateNodeStatus(nodeId, "blocked");
-    logger.info("sandbox:reporter:blocked", { nodeId, previousStatus, status: report.status });
+    log.info("sandbox:reporter:blocked", { nodeId, previousStatus, status: report.status });
     return { nodeId, previousStatus, newStatus: "blocked" };
   }
 
   // Success path — unblock if previously blocked, otherwise leave alone.
   if (previousStatus === "blocked") {
     store.updateNodeStatus(nodeId, "in_progress");
-    logger.info("sandbox:reporter:unblocked", { nodeId, status: report.status });
+    log.info("sandbox:reporter:unblocked", { nodeId, status: report.status });
     return { nodeId, previousStatus, newStatus: "in_progress" };
   }
 

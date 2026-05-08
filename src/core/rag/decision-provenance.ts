@@ -27,7 +27,9 @@
 
 import type { KnowledgeStore } from "../store/knowledge-store.js";
 import type { CitationRef } from "./citation-chain.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "decision-provenance.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -73,7 +75,7 @@ export function createProvenance(
       timestamp,
     },
   });
-  logger.info("decision-provenance:created", {
+  log.info("decision-provenance:created", {
     docId: doc.id,
     nodeId,
     citationCount: citations.length,

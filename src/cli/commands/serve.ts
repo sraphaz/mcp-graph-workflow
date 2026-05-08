@@ -16,7 +16,9 @@
  */
 
 import { Command } from "commander";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "serve.ts" });
 
 /** serveCommand — auto-generated description placeholder. */
 export function serveCommand(): Command {
@@ -26,7 +28,7 @@ export function serveCommand(): Command {
     .action(async (opts: { port: string }) => {
       const port = parseInt(opts.port, 10);
       if (isNaN(port) || port < 1 || port > 65535) {
-        logger.error("Invalid port number");
+        log.error("Invalid port number");
         process.exit(1);
       }
 

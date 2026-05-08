@@ -13,7 +13,9 @@ import vm from "node:vm";
 import type { CdpClient } from "./cdp-client.js";
 import type { HelpersRegistry } from "./helpers-registry.js";
 import { HelperNotFoundError, HarnessSafetyViolation } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "helpers-runtime.ts" });
 
 type CompiledHelper = (
   cdp: CdpClient,
@@ -99,9 +101,9 @@ export class HelpersRuntime {
       Set,
       Error,
       console: {
-        log: (...args: unknown[]) => logger.debug(`bh-helper:${name}`, { args: args.map(String) }),
-        warn: (...args: unknown[]) => logger.warn(`bh-helper:${name}`, { args: args.map(String) }),
-        error: (...args: unknown[]) => logger.warn(`bh-helper:${name}`, { args: args.map(String) }),
+        log: (...args: unknown[]) => log.debug(`bh-helper:${name}`, { args: args.map(String) }),
+        warn: (...args: unknown[]) => log.warn(`bh-helper:${name}`, { args: args.map(String) }),
+        error: (...args: unknown[]) => log.warn(`bh-helper:${name}`, { args: args.map(String) }),
       },
     };
     const context = vm.createContext(sandbox, { name: `bh-helper-ctx:${name}` });

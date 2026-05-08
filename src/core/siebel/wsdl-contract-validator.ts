@@ -22,7 +22,9 @@
 
 import type { WsdlParseResult, WsdlComplexType } from "./wsdl-parser.js";
 import type { SiebelObject } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "wsdl-contract-validator.ts" });
 
 export interface OperationValidation {
   operationName: string;
@@ -125,7 +127,7 @@ export function validateWsdlContract(
     ? Math.round(operations.reduce((sum, o) => sum + o.conformanceScore, 0) / operations.length)
     : 100;
 
-  logger.info("WSDL contract validation complete", {
+  log.info("WSDL contract validation complete", {
     serviceName,
     operationCount: String(operations.length),
     overallScore: String(overallScore),

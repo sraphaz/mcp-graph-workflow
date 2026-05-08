@@ -9,8 +9,10 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { recordError } from "../utils/error-recorder.js";
+
+const log = createLogger({ layer: "core", source: "retry-worker.ts" });
 
 export const MAX_RETRY_ATTEMPTS = 5;
 export const DEFAULT_INTERVAL_MS = 30_000;
@@ -47,7 +49,7 @@ export class RetryWorker {
     if (this.timer) return; // already running
     this.timer = setInterval(() => {
       void this.processBatch().catch((err) => {
-        logger.error("retry-worker:tick-error", {
+        log.error("retry-worker:tick-error", {
           error: err instanceof Error ? err.message : String(err),
         });
       });
@@ -131,7 +133,7 @@ export class RetryWorker {
       patternCount: count,
       lastError: errorMessage,
     });
-    logger.warn("retry-worker:abandoned-recurrent", {
+    log.warn("retry-worker:abandoned-recurrent", {
       retryId: row.id,
       taskId: row.task_id,
       patternHash,
@@ -165,7 +167,7 @@ export class RetryWorker {
         attempt: newAttempt,
         lastError: errorMessage,
       });
-      logger.warn("retry-worker:abandoned", {
+      log.warn("retry-worker:abandoned", {
         retryId: row.id,
         taskId: row.task_id,
         attempt: newAttempt,

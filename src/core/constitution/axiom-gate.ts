@@ -26,7 +26,9 @@
  */
 
 import type { AxiomLink } from "../../schemas/axiom-link.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "axiom-gate.ts" });
 
 export interface AxiomGateContext {
   activePrincipleIds: string[];
@@ -55,7 +57,7 @@ export function checkAxiomGate(ctx: AxiomGateContext): AxiomGateResult {
   };
 
   if (mode === "off") {
-    logger.debug("axiom_gate:off", { principleCount: activePrincipleIds.length });
+    log.debug("axiom_gate:off", { principleCount: activePrincipleIds.length });
     return base;
   }
 
@@ -68,7 +70,7 @@ export function checkAxiomGate(ctx: AxiomGateContext): AxiomGateResult {
 
   if (orphans.length === 0) {
     const snapshotToken = `axiom_snapshot_${Date.now()}`;
-    logger.info("axiom_gate:released", { principleCount: activePrincipleIds.length, snapshotToken });
+    log.info("axiom_gate:released", { principleCount: activePrincipleIds.length, snapshotToken });
     return { ...base, snapshotToken };
   }
 
@@ -76,7 +78,7 @@ export function checkAxiomGate(ctx: AxiomGateContext): AxiomGateResult {
     (id) => `Principle "${id}" has no valid axiom_link — link to AC + provenance before REVIEW`,
   );
 
-  logger.warn("axiom_gate:orphans_found", { orphans, mode });
+  log.warn("axiom_gate:orphans_found", { orphans, mode });
 
   if (mode === "strict") {
     return { ...base, blocked: true, orphanPrincipleIds: orphans, warnings };

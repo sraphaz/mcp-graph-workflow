@@ -22,7 +22,9 @@
 
 import type { TaskContext } from "./compact-context.js";
 import type { SessionTracker } from "./session-tracker.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "context-session.ts" });
 
 export interface SessionSavings {
   skippedCount: number;
@@ -86,7 +88,7 @@ export function applySessionDelta(
     tracker.trackSent(sessionId, delta.newChunks);
   }
 
-  logger.debug("context-session:delta", {
+  log.debug("context-session:delta", {
     sessionId,
     totalChunks: chunks.length,
     newChunks: delta.newChunks.length,
@@ -156,7 +158,7 @@ export function applyRagSessionDelta(
     tracker.trackSent(sessionId, delta.newChunks);
   }
 
-  logger.debug("rag-session:delta", {
+  log.debug("rag-session:delta", {
     sessionId,
     totalChunks: chunks.length,
     newChunks: delta.newChunks.length,

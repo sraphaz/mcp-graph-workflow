@@ -30,7 +30,9 @@ import { assessTechRisks } from "./tech-risk-assessor.js";
 import { detectCycles } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "definition-of-ready.ts" });
 
 const GRADE_ORDER: Record<AdrGrade, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 };
 
@@ -193,7 +195,7 @@ export function checkDesignReadiness(doc: GraphDocument): DesignReadinessReport 
     ? `Design Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `Design Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("design-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("design-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { checks, ready, score, grade, summary };
 }

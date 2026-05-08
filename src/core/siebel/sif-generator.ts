@@ -25,7 +25,7 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { parseSifContent } from "./sif-parser.js";
 import { indexSifContent } from "../../core/rag/siebel-indexer.js";
 import {
@@ -39,6 +39,8 @@ import type {
   SiebelSifParseResult,
 } from "../../schemas/siebel.schema.js";
 
+const log = createLogger({ layer: "core", source: "sif-generator.ts" });
+
 /**
  * Phase 1: Prepare SIF generation context.
  *
@@ -49,7 +51,7 @@ export function prepareSifGeneration(
   knowledgeStore: KnowledgeStore,
   request: SifGenerationRequest,
 ): SifGenerationContext {
-  logger.info("Preparing SIF generation", {
+  log.info("Preparing SIF generation", {
     types: request.objectTypes.join(","),
     description: request.description.slice(0, 100),
   });
@@ -68,7 +70,7 @@ export function finalizeSifGeneration(
   generatedXml: string,
   request: SifGenerationRequest,
 ): SifGenerationResult {
-  logger.info("Finalizing SIF generation", {
+  log.info("Finalizing SIF generation", {
     xmlLength: String(generatedXml.length),
     requestTypes: request.objectTypes.join(","),
   });
@@ -85,7 +87,7 @@ export function finalizeSifGeneration(
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    logger.error("SIF generation validation failed: invalid XML", { error: errMsg });
+    log.error("SIF generation validation failed: invalid XML", { error: errMsg });
     messages.push({
       level: "error",
       message: `Invalid SIF XML: ${errMsg}`,
@@ -125,11 +127,11 @@ export function finalizeSifGeneration(
   if (!hasErrors) {
     try {
       indexSifContent(knowledgeStore, parseResult);
-      logger.info("Generated SIF indexed into knowledge store", {
+      log.info("Generated SIF indexed into knowledge store", {
         objectCount: String(parseResult.objects.length),
       });
     } catch (err) {
-      logger.error("Failed to index generated SIF", {
+      log.error("Failed to index generated SIF", {
         error: err instanceof Error ? err.message : String(err),
       });
     }
@@ -146,7 +148,7 @@ export function finalizeSifGeneration(
     },
   };
 
-  logger.info("SIF generation finalized", {
+  log.info("SIF generation finalized", {
     status,
     score: String(score),
     objectCount: String(parseResult.objects.length),

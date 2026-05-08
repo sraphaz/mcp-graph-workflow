@@ -22,8 +22,10 @@
  * Inspired by hermes-agent Programmatic Tool Calling (PTC).
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { PipelineStep, PipelineStepResult, PipelineResult } from "../../schemas/pipeline.schema.js";
+
+const log = createLogger({ layer: "core", source: "tool-pipeline.ts" });
 
 export type ToolHandler = (args: unknown) => Promise<unknown>;
 
@@ -92,7 +94,7 @@ export class ToolPipeline {
           durationMs,
         });
 
-        logger.debug("pipeline:step_completed", { step: i, tool: step.tool, durationMs });
+        log.debug("pipeline:step_completed", { step: i, tool: step.tool, durationMs });
       } catch (err) {
         const durationMs = Math.round(performance.now() - stepStart);
         const errorMsg = err instanceof Error ? err.message : String(err);
@@ -106,7 +108,7 @@ export class ToolPipeline {
         });
 
         failed = true;
-        logger.warn("pipeline:step_failed", { step: i, tool: step.tool, error: errorMsg });
+        log.warn("pipeline:step_failed", { step: i, tool: step.tool, error: errorMsg });
       }
     }
 

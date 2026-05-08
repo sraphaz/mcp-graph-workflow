@@ -22,10 +22,12 @@
  * v1: blessed plugins only (local paths), no sandbox.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
 import { PluginRegistry } from "./plugin-registry.js";
 import type { PluginManifest } from "./plugin-registry.js";
+
+const log = createLogger({ layer: "core", source: "plugin-loader.ts" });
 
 export interface PluginContext {
   registerTool: (name: string, handler: unknown) => void;
@@ -86,19 +88,19 @@ export function resolveLoadOrder(manifests: PluginManifest[]): PluginManifest[] 
 function createPluginContext(): PluginContext {
   return {
     registerTool: (_name: string, _handler: unknown) => {
-      logger.debug(`Plugin registered tool: ${_name}`);
+      log.debug(`Plugin registered tool: ${_name}`);
     },
     registerAnalyzer: (_name: string, _handler: unknown) => {
-      logger.debug(`Plugin registered analyzer: ${_name}`);
+      log.debug(`Plugin registered analyzer: ${_name}`);
     },
     registerValidator: (_name: string, _handler: unknown) => {
-      logger.debug(`Plugin registered validator: ${_name}`);
+      log.debug(`Plugin registered validator: ${_name}`);
     },
     registerClassifierPattern: (_nodeType: string, _patterns: string[]) => {
-      logger.debug(`Plugin registered classifier patterns for: ${_nodeType}`);
+      log.debug(`Plugin registered classifier patterns for: ${_nodeType}`);
     },
     registerTemplate: (_name: string, _template: unknown) => {
-      logger.debug(`Plugin registered template: ${_name}`);
+      log.debug(`Plugin registered template: ${_name}`);
     },
   };
 }
@@ -115,7 +117,7 @@ export class PluginLoader {
     try {
       this.registry.register(manifest);
     } catch (err) {
-      logger.error(`Plugin registration failed: ${manifest.name}`, { error: err instanceof Error ? err.message : String(err) });
+      log.error(`Plugin registration failed: ${manifest.name}`, { error: err instanceof Error ? err.message : String(err) });
       throw err;
     }
 
@@ -123,7 +125,7 @@ export class PluginLoader {
     try {
       await instance.activate(context);
       this.instances.set(manifest.name, instance);
-      logger.info(`Plugin activated: ${manifest.name}@${manifest.version}`);
+      log.info(`Plugin activated: ${manifest.name}@${manifest.version}`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       // Mark as error in registry instead of removing
@@ -132,7 +134,7 @@ export class PluginLoader {
         registration.status = "error";
         registration.error = errorMsg;
       }
-      logger.error(`Plugin activation failed: ${manifest.name}`, { error: errorMsg });
+      log.error(`Plugin activation failed: ${manifest.name}`, { error: errorMsg });
     }
   }
 
@@ -142,12 +144,12 @@ export class PluginLoader {
       try {
         await instance.deactivate();
       } catch (err) {
-        logger.error(`Plugin deactivation error: ${name}`, { error: err instanceof Error ? err.message : String(err) });
+        log.error(`Plugin deactivation error: ${name}`, { error: err instanceof Error ? err.message : String(err) });
       }
     }
     this.instances.delete(name);
     this.registry.remove(name);
-    logger.info(`Plugin unloaded: ${name}`);
+    log.info(`Plugin unloaded: ${name}`);
   }
 
   async loadPlugins(manifests: PluginManifest[], instanceMap: Map<string, PluginInstance>): Promise<void> {

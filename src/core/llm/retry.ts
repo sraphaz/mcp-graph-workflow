@@ -7,12 +7,14 @@
  * Ported from src/core/browser-harness/llm-client.ts to live in the SDK layer.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import {
   LlmAuthError,
   LlmContextWindowError,
   LlmModelUnknown,
 } from "./errors.js";
+
+const log = createLogger({ layer: "core", source: "retry.ts" });
 
 export interface RetryConfig {
   maxAttempts: number;
@@ -48,7 +50,7 @@ export async function withRetry<T>(
         config.maxDelayMs ?? 8000,
         config.baseDelayMs * 2 ** (attempt - 1),
       );
-      logger.warn("llm:retry", {
+      log.warn("llm:retry", {
         attempt,
         status: (err as { status?: number }).status ?? 0,
         delayMs: delay,

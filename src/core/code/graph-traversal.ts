@@ -23,7 +23,9 @@
 import type { CodeStore } from "./code-store.js";
 import type { CodeGraphData, CodeSymbol, CodeRelation, ImpactResult, AffectedSymbol } from "./code-types.js";
 import { calculateRiskLevel } from "./code-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "graph-traversal.ts" });
 
 // ── Context (1-hop neighbors) ────────────────────────
 
@@ -59,7 +61,7 @@ export function getSymbolContext(store: CodeStore, name: string, projectId: stri
     }
   }
 
-  logger.debug("graph-traversal:context", {
+  log.debug("graph-traversal:context", {
     symbol: name,
     symbols: symbolMap.size,
     relations: relationSet.size,
@@ -104,12 +106,12 @@ export function analyzeImpact(
   while (frontier.length > 0) {
     // Guard: max affected nodes limit
     if (affected.length >= MAX_AFFECTED) {
-      logger.warn("graph-traversal:max-affected-reached", { symbol: name, limit: MAX_AFFECTED });
+      log.warn("graph-traversal:max-affected-reached", { symbol: name, limit: MAX_AFFECTED });
       break;
     }
     // Guard: timeout
     if (Date.now() - startTime > TIMEOUT_MS) {
-      logger.warn("graph-traversal:timeout", { symbol: name, timeoutMs: TIMEOUT_MS, affected: affected.length });
+      log.warn("graph-traversal:timeout", { symbol: name, timeoutMs: TIMEOUT_MS, affected: affected.length });
       break;
     }
 
@@ -151,7 +153,7 @@ export function analyzeImpact(
 
   const riskLevel = calculateRiskLevel(affected.length);
 
-  logger.debug("graph-traversal:impact", {
+  log.debug("graph-traversal:impact", {
     symbol: name,
     direction,
     affected: affected.length,
@@ -255,7 +257,7 @@ export async function getSymbolContextSemantic(
       }
     }
 
-    logger.debug("graph-traversal:semantic-enrich", {
+    log.debug("graph-traversal:semantic-enrich", {
       symbol: name,
       lspRefs: refs.length,
       newSymbols: newSymbols.length,
@@ -267,7 +269,7 @@ export async function getSymbolContextSemantic(
       lspEnriched: true,
     };
   } catch (err) {
-    logger.warn("graph-traversal:lsp-enrichment-failed", {
+    log.warn("graph-traversal:lsp-enrichment-failed", {
       symbol: name,
       error: err instanceof Error ? err.message : String(err),
     });

@@ -27,7 +27,9 @@
 import { z } from "zod/v4";
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "velocity.ts" });
 
 const VelocityFilterSchema = z.object({
   sprintId: z.string().optional(),
@@ -168,7 +170,7 @@ export function calculateVelocity(doc: GraphDocument, filter?: { sprintId?: stri
     };
   }).sort((a, b) => a.category.localeCompare(b.category));
 
-  logger.info(`Velocity: ${totalTasksCompleted} tasks done, ${totalPoints} points across ${sprints.length} sprints`);
+  log.info(`Velocity: ${totalTasksCompleted} tasks done, ${totalPoints} points across ${sprints.length} sprints`);
 
   return {
     sprints,

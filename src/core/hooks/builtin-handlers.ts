@@ -3,7 +3,7 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { HookBus } from "./hook-bus.js";
 import { detectBannedPhrases } from "./anti-hallucination-detector.js";
 import { checkDestructiveDbIntent } from "./destructive-db-guard.js";
@@ -17,6 +17,8 @@ import { isBudgetLow } from "./agent-budget-precheck.js";
 import { ApprovalTimeoutTracker, getApprovalTimeoutMs } from "./approval-timeout.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { OperationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "builtin-handlers.ts" });
 
 export const builtinHandlerIds = [
   "builtin:audit-log",
@@ -44,7 +46,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
 
   // Audit-log: records task completions and errors to the structured logger
   bus.on("task:post-complete", async (event) => {
-    logger.info("hook:audit:task-complete", {
+    log.info("hook:audit:task-complete", {
       nodeId: event.payload["nodeId"],
       title: event.payload["title"],
       ts: event.timestamp,
@@ -52,7 +54,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
   });
 
   bus.on("task:error", async (event) => {
-    logger.warn("hook:audit:task-error", {
+    log.warn("hook:audit:task-error", {
       nodeId: event.payload["nodeId"],
       error: event.payload["error"],
       ts: event.timestamp,
@@ -61,11 +63,11 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
 
   // Telemetry: records tool call durations for observability
   bus.on("tool:pre-call", async (event) => {
-    logger.debug("hook:telemetry:tool-pre-call", { toolName: event.payload["toolName"], ts: event.timestamp });
+    log.debug("hook:telemetry:tool-pre-call", { toolName: event.payload["toolName"], ts: event.timestamp });
   });
 
   bus.on("tool:post-call", async (event) => {
-    logger.info("hook:telemetry:tool-post-call", {
+    log.info("hook:telemetry:tool-post-call", {
       toolName: event.payload["toolName"],
       durationMs: event.payload["durationMs"],
       ts: event.timestamp,
@@ -80,7 +82,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
     if (typeof prompt !== "string" || prompt.length === 0) return;
     const hits = detectBannedPhrases(prompt);
     if (hits.length > 0) {
-      logger.warn("hook:anti-hallucination:detected", {
+      log.warn("hook:anti-hallucination:detected", {
         nodeId: event.payload["nodeId"],
         bannedPhrases: hits,
         rule: ".claude/rules/anti-hallucination.md",
@@ -101,7 +103,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
       typeof confirm === "string" ? confirm : null,
     );
     if (verdict.blocked) {
-      logger.error("hook:destructive-db-guard:blocked", {
+      log.error("hook:destructive-db-guard:blocked", {
         nodeId: event.payload["nodeId"],
         matched: verdict.matchedPattern,
         reason: verdict.reason,
@@ -119,7 +121,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
     if (typeof cmd !== "string") return;
     const verdict = checkDestructiveDbIntent(cmd);
     if (verdict.blocked) {
-      logger.error("hook:destructive-db-guard:blocked-bash", {
+      log.error("hook:destructive-db-guard:blocked-bash", {
         matched: verdict.matchedPattern,
         reason: verdict.reason,
       });
@@ -143,7 +145,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
       input: (input && typeof input === "object") ? (input as Record<string, unknown>) : null,
     });
     if (resultValue.requires_approval) {
-      logger.warn("hook:approval-required:detected", {
+      log.warn("hook:approval-required:detected", {
         tool,
         nodeId: event.payload["nodeId"],
         severity: resultValue.severity,
@@ -176,19 +178,19 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
       try {
         const resultValue = await verifyAndPromote(store, nodeId);
         if (resultValue.promoted.length > 0) {
-          logger.info("hook:verified-auto-promote:done", {
+          log.info("hook:verified-auto-promote:done", {
             triggeredBy: nodeId,
             promoted: resultValue.promoted,
           });
         }
         if (resultValue.rejected.length > 0) {
-          logger.warn("hook:verified-auto-promote:rejected", {
+          log.warn("hook:verified-auto-promote:rejected", {
             triggeredBy: nodeId,
             rejected: resultValue.rejected,
           });
         }
       } catch (err) {
-        logger.error("hook:verified-auto-promote:error", {
+        log.error("hook:verified-auto-promote:error", {
           nodeId,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -207,7 +209,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
       const hits = scanForPii(content);
       if (hits.length === 0) return;
       const kinds = [...new Set(hits.map((h) => h.kind))];
-      logger.warn("hook:memory:pii-detected", {
+      log.warn("hook:memory:pii-detected", {
         kinds,
         count: hits.length,
         nodeId: event.payload["nodeId"],
@@ -236,7 +238,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
         const cap = getWipCap(process.env);
         const current = countInProgressForAgent(store, agentIdStr);
         if (current >= cap) {
-          logger.warn("hook:wip-cap:exceeded", {
+          log.warn("hook:wip-cap:exceeded", {
             agentId: agentIdStr,
             current,
             cap,
@@ -244,7 +246,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
           });
         }
       } catch (err) {
-        logger.error("hook:wip-cap:error", {
+        log.error("hook:wip-cap:error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -262,7 +264,7 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
       if (typeof currentUsd !== "number") return;
       const cap = typeof capUsd === "number" ? capUsd : undefined;
       if (isBudgetLow({ currentUsd, capUsd: cap })) {
-        logger.warn("hook:agent:budget-low", {
+        log.warn("hook:agent:budget-low", {
           agentId: event.payload["agentId"],
           currentUsd,
           capUsd: cap,
@@ -274,12 +276,12 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
 
   // §EPIC-21.T13 — approval-timeout-escalate. Em approval:required, arma um
   // timer; se nenhum approval:resolved chegar dentro do timeout, escala via
-  // logger.error (consumer pode wirar Slack ping em separado). Toggle:
+  // log.error(consumer pode wirar Slack ping em separado). Toggle:
   // MCP_GRAPH_APPROVAL_TIMEOUT_GUARD=off para não armar timers.
   if (process.env.MCP_GRAPH_APPROVAL_TIMEOUT_GUARD !== "off") {
     const timeoutMs = getApprovalTimeoutMs(process.env);
     const tracker = new ApprovalTimeoutTracker(timeoutMs, (approvalId, context) => {
-      logger.error("hook:approval:timeout", {
+      log.error("hook:approval:timeout", {
         approvalId,
         timeoutMs,
         ...context,
@@ -308,13 +310,13 @@ export function registerBuiltinHandlers(bus: HookBus, store?: SqliteStore): void
   bus.on("session:end", async (event) => {
     const delta = typeof event.payload["delta"] === "number" ? event.payload["delta"] : 0;
     if (delta < -5) {
-      logger.warn("hook:harness-regression:detected", {
+      log.warn("hook:harness-regression:detected", {
         scoreBefore: event.payload["scoreBefore"],
         scoreAfter: event.payload["scoreAfter"],
         delta,
       });
     } else {
-      logger.debug("hook:harness-regression:ok", { delta });
+      log.debug("hook:harness-regression:ok", { delta });
     }
   });
 }
@@ -345,6 +347,6 @@ function recordDestructiveAttempt(
       source: "destructive-db-guard",
     });
   } catch (err) {
-    logger.debug("hook:destructive-db-guard:lesson_record_failed", { error: String(err) });
+    log.debug("hook:destructive-db-guard:lesson_record_failed", { error: String(err) });
   }
 }

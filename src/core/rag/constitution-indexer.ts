@@ -21,7 +21,9 @@
  */
 
 import type { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "constitution-indexer.ts" });
 
 export interface ConstitutionPrincipleInput {
   id: string;
@@ -89,7 +91,7 @@ export function indexConstitution(
     indexed++;
   }
 
-  logger.info("Constitution indexed", {
+  log.info("Constitution indexed", {
     nodeId: input.nodeId,
     version: input.constitutionVersion,
     principlesIndexed: indexed,

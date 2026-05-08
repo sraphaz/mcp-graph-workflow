@@ -24,8 +24,10 @@
 
 import type { GraphNode, NodeStatus } from "../graph/graph-types.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { KanbanConfig, KanbanMoveResult } from "./kanban-types.js";
+
+const log = createLogger({ layer: "core", source: "kanban-validator.ts" });
 
 /**
  * Validate a card move from its current status to a new status.
@@ -84,7 +86,7 @@ export function validateMove(
     }
   }
 
-  logger.debug("kanban-validator:validate", {
+  log.debug("kanban-validator:validate", {
     nodeId,
     from: previousStatus,
     to: newStatus,

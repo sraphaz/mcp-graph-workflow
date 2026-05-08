@@ -18,8 +18,10 @@
 import { Command } from "commander";
 import { runDoctor } from "../../core/doctor/doctor-runner.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import type { CheckResult } from "../../core/doctor/doctor-types.js";
+
+const log = createLogger({ layer: "cli", source: "doctor.ts" });
 
 function output(msg: string): void {
   process.stdout.write(msg + "\n");
@@ -75,7 +77,7 @@ export function doctorCommand(): Command {
           process.exit(1);
         }
       } catch (err) {
-        logger.error(`Doctor failed: ${getErrorMessage(err)}`);
+        log.error(`Doctor failed: ${getErrorMessage(err)}`);
         process.exit(1);
       }
     });

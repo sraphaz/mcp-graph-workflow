@@ -21,8 +21,10 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SwaggerParseResult, SwaggerEndpoint, SwaggerSchema } from "../parser/read-swagger.js";
+
+const log = createLogger({ layer: "rag", source: "swagger-indexer.ts" });
 
 export interface SwaggerIndexResult {
   documentsIndexed: number;
@@ -41,7 +43,7 @@ export function indexSwaggerContent(
   const { endpoints, schemas, title, version, format } = parseResult;
 
   if (endpoints.length === 0 && schemas.length === 0) {
-    logger.info("No Swagger content to index", { fileName });
+    log.info("No Swagger content to index", { fileName });
     return { documentsIndexed: 0, fileName };
   }
 
@@ -103,7 +105,7 @@ export function indexSwaggerContent(
 
   const docs = knowledgeStore.insertChunks(chunks);
 
-  logger.info("Swagger content indexed", {
+  log.info("Swagger content indexed", {
     fileName,
     endpoints: String(endpoints.length),
     schemas: String(schemas.length),

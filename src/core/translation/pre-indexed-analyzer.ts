@@ -25,7 +25,9 @@
 
 import type { CodeStore } from "../code/code-store.js";
 import type { TranslationAnalysis } from "./translation-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "pre-indexed-analyzer.ts" });
 
 /** Map Code Intelligence symbol kind → UCR construct ID */
 const KIND_TO_CONSTRUCT: Record<string, string> = {
@@ -120,7 +122,7 @@ export function analyzeFromIndex(
       totalConstructs,
     };
 
-    logger.debug("pre-indexed-analysis", {
+    log.debug("pre-indexed-analysis", {
       file: filePath,
       language: detectedLanguage,
       symbols: fileSymbols.length,
@@ -129,7 +131,7 @@ export function analyzeFromIndex(
 
     return { analysis, fromIndex: true };
   } catch (err) {
-    logger.debug("pre-indexed-analysis:failed", {
+    log.debug("pre-indexed-analysis:failed", {
       error: err instanceof Error ? err.message : String(err),
     });
     return null;

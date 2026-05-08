@@ -33,7 +33,9 @@ import type {
 } from "../../schemas/entity.schema.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "entity-store.ts" });
 
 // ── Row types (SQLite ↔ JS) ─────────────────────────────
 
@@ -188,7 +190,7 @@ export class EntityStore {
       this.addMention(id, docId, null, 0);
     }
 
-    logger.debug("entity-store:upsert", { id, name, type });
+    log.debug("entity-store:upsert", { id, name, type });
 
     return {
       id,
@@ -235,7 +237,7 @@ export class EntityStore {
         createdAt: timestamp,
       };
     } catch {
-      logger.debug("entity-store:relation-exists", { fromEntityId, toEntityId, relationType });
+      log.debug("entity-store:relation-exists", { fromEntityId, toEntityId, relationType });
       return null;
     }
   }
@@ -440,7 +442,7 @@ export class EntityStore {
       if (entity) entities.push(entity);
     }
 
-    logger.debug("entity-store:subgraph", {
+    log.debug("entity-store:subgraph", {
       seeds: seedEntityIds.length,
       entities: entities.length,
       relations: collectedRelations.size,
@@ -510,7 +512,7 @@ export class EntityStore {
       // Delete merged entity
       this.db.prepare("DELETE FROM kg_entities WHERE id = ?").run(mergeId);
 
-      logger.debug("entity-store:merge", { keepId, mergeId, mentionCount });
+      log.debug("entity-store:merge", { keepId, mergeId, mentionCount });
     })();
   }
 

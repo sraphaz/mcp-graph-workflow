@@ -24,9 +24,11 @@ import path from "node:path";
 import { readdir, readFile, writeFile, mkdir, unlink, rename } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { McpGraphError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { STORE_DIR } from "../utils/constants.js";
 import { assertPathInside } from "../utils/safe-path.js";
+
+const log = createLogger({ layer: "core", source: "memory-reader.ts" });
 
 export interface ProjectMemory {
   name: string;
@@ -81,7 +83,7 @@ export async function listMemories(basePath: string): Promise<string[]> {
     const dir = memoriesPath(basePath);
     return await collectMdFiles(dir, dir);
   } catch (err) {
-    logger.info("No memories directory found", { basePath, error: getErrorMessage(err) });
+    log.info("No memories directory found", { basePath, error: getErrorMessage(err) });
     return [];
   }
 }
@@ -99,7 +101,7 @@ export async function readMemory(basePath: string, name: string): Promise<Projec
       sizeBytes: Buffer.byteLength(content, "utf-8"),
     };
   } catch (err) {
-    logger.debug("Memory not found", { name, error: getErrorMessage(err) });
+    log.debug("Memory not found", { name, error: getErrorMessage(err) });
     return null;
   }
 }
@@ -137,7 +139,7 @@ export async function writeMemory(basePath: string, name: string, content: strin
   const tmpPath = `${filePath}.tmp.${Date.now()}`;
   await writeFile(tmpPath, content, "utf-8");
   await rename(tmpPath, filePath);
-  logger.info("Memory written", { name, sizeBytes: Buffer.byteLength(content, "utf-8") });
+  log.info("Memory written", { name, sizeBytes: Buffer.byteLength(content, "utf-8") });
 }
 
 /**
@@ -147,10 +149,10 @@ export async function deleteMemory(basePath: string, name: string): Promise<bool
   try {
     const filePath = safePath(basePath, name);
     await unlink(filePath);
-    logger.info("Memory deleted", { name });
+    log.info("Memory deleted", { name });
     return true;
   } catch (err) {
-    logger.debug("Memory delete failed", { name, error: getErrorMessage(err) });
+    log.debug("Memory delete failed", { name, error: getErrorMessage(err) });
     return false;
   }
 }

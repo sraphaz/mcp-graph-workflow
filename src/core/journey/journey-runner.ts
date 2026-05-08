@@ -22,7 +22,9 @@ import {
   type JourneyRunVerdict,
 } from "../../schemas/journey-run.schema.js";
 import { shouldOcr } from "./ocr-service.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "journey-runner.ts" });
 
 /** Minimal interface a step executor must satisfy. Return shape mirrors the
  *  browser-harness built-in helpers so we can plug the real runtime in later. */
@@ -116,7 +118,7 @@ export class JourneyRunner {
         try {
           screenshotPath = this.deps.runs.saveScreenshot(initial.id, step.index, pngBytes);
         } catch (err) {
-          logger.warn("journey:runner:screenshot:save:fail", { error: err instanceof Error ? err.message : String(err) });
+          log.warn("journey:runner:screenshot:save:fail", { error: err instanceof Error ? err.message : String(err) });
         }
       }
 
@@ -129,7 +131,7 @@ export class JourneyRunner {
             this.emit({ type: "ocr", index: step.index, text: ocrText, confidence: ocr.confidence });
           }
         } catch (err) {
-          logger.warn("journey:runner:ocr:fail", { error: err instanceof Error ? err.message : String(err) });
+          log.warn("journey:runner:ocr:fail", { error: err instanceof Error ? err.message : String(err) });
         }
       }
 
@@ -199,7 +201,7 @@ export class JourneyRunner {
   private emit(event: JourneyRunEvent): void {
     for (const fn of this.listeners) {
       try { fn(event); } catch (err) {
-        logger.warn("journey:runner:emit:error", { error: err instanceof Error ? err.message : String(err) });
+        log.warn("journey:runner:emit:error", { error: err instanceof Error ? err.message : String(err) });
       }
     }
   }

@@ -20,7 +20,7 @@ import path from "node:path";
 import { SqliteStore } from "../store/sqlite-store.js";
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { CheckResult, DoctorReport } from "./doctor-types.js";
 import {
   checkNodeVersion,
@@ -34,6 +34,8 @@ import {
   checkIntegrations,
   checkOnnxStatus,
 } from "./doctor-checks.js";
+
+const log = createLogger({ layer: "core", source: "doctor-runner.ts" });
 
 function buildSummary(checks: CheckResult[]): DoctorReport["summary"] {
   let ok = 0;
@@ -54,7 +56,7 @@ export async function runDoctor(basePath: string): Promise<DoctorReport> {
   if (!basePath) {
     throw new McpGraphError("Doctor requires a valid base path");
   }
-  logger.info("Running doctor checks", { basePath });
+  log.info("Running doctor checks", { basePath });
 
   const checks: CheckResult[] = [];
 

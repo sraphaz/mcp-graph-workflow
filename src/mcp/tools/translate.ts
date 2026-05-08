@@ -31,9 +31,11 @@ import { TranslationOrchestrator } from "../../core/translation/translation-orch
 import { ConstructRegistry } from "../../core/translation/ucr/construct-registry.js";
 import { loadAndSeedRegistry } from "../../core/translation/ucr/construct-seed.js";
 import { CodeStore } from "../../core/code/code-store.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { assertPathInsideProject } from "../../core/utils/fs.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "translate.ts" });
 
 const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   ".py": "python",
@@ -136,7 +138,7 @@ export function registerTranslate(server: McpServer, store: SqliteStore): void {
     },
     async (params) => {
       const { action } = params;
-      logger.info("tool:translate", { action });
+      log.info("tool:translate", { action });
 
       try {
         switch (action) {
@@ -152,7 +154,7 @@ export function registerTranslate(server: McpServer, store: SqliteStore): void {
             return mcpError(`Unknown translate action: ${action}`);
         }
       } catch (err) {
-        logger.error("tool:translate failed", { action, error: err instanceof Error ? err.message : String(err) });
+        log.error("tool:translate failed", { action, error: err instanceof Error ? err.message : String(err) });
         return mcpError(err instanceof Error ? err : String(err));
       }
     },
@@ -189,7 +191,7 @@ async function handleConvert(
 ): Promise<ReturnType<typeof mcpText>> {
   const { code, filePath, sourceLanguage, targetLanguage, scope, generatedCode, jobId } = params;
 
-  logger.info("tool:translate:convert", { filePath, targetLanguage, scope, hasGeneratedCode: !!generatedCode, jobId });
+  log.info("tool:translate:convert", { filePath, targetLanguage, scope, hasGeneratedCode: !!generatedCode, jobId });
 
   const orchestrator = getOrchestrator();
 
@@ -247,7 +249,7 @@ async function handleAnalyze(
 ): Promise<ReturnType<typeof mcpText>> {
   const { code, filePath, sourceLanguage, targetLanguage } = params;
 
-  logger.info("tool:translate:analyze", { filePath, sourceLanguage, targetLanguage });
+  log.info("tool:translate:analyze", { filePath, sourceLanguage, targetLanguage });
 
   const { resolvedCode, resolvedSourceLanguage } = resolveCodeAndLanguage(code, filePath, sourceLanguage);
 
@@ -286,7 +288,7 @@ async function handleJobs(
     return mcpError("jobAction is required when action=jobs (list, get, delete, stats)");
   }
 
-  logger.info("tool:translate:jobs", { jobAction, jobId, status });
+  log.info("tool:translate:jobs", { jobAction, jobId, status });
 
   const translationStore = getTranslationStore();
   const projectId = store.getProject()?.id;
@@ -374,7 +376,7 @@ async function handleBatchConvert(
     return mcpError("items array is required for batch_convert (max 50)");
   }
 
-  logger.info("tool:translate:batch_convert", { count: items.length });
+  log.info("tool:translate:batch_convert", { count: items.length });
 
   const projectId = store.getProject()?.id;
   if (!projectId) {

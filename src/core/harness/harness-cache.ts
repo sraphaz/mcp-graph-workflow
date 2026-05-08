@@ -28,7 +28,9 @@
 import { execSync } from "child_process";
 import { runHarnessScan, type HarnessScanResult } from "./harness-scan-runner.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "harness-cache.ts" });
 
 const CACHE_TTL_MS = 60_000; // 60 seconds
 
@@ -79,7 +81,7 @@ export function runHarnessScanCached(
     (now - cache.cachedAt) < CACHE_TTL_MS &&
     cache.gitHash === currentHash
   ) {
-    logger.debug("harness:cache:hit", { age: now - cache.cachedAt });
+    log.debug("harness:cache:hit", { age: now - cache.cachedAt });
     return cache.result;
   }
 
@@ -87,7 +89,7 @@ export function runHarnessScanCached(
   try {
     const resultValue = runHarnessScan(rootDir, db);
     cache = { result: resultValue, cachedAt: now, rootDir, gitHash: currentHash };
-    logger.debug("harness:cache:miss", {
+    log.debug("harness:cache:miss", {
       score: resultValue.score,
       grade: resultValue.grade,
       reason: !cache ? "empty" : "expired_or_invalidated",
@@ -100,10 +102,10 @@ export function runHarnessScanCached(
     // bug-hunt notebook (node_4e5847d6d9ac).
     const e = err as NodeJS.ErrnoException;
     if (e.code === "ENOENT" && /[/\\]src(?:[/\\]|$)/.test(e.path ?? "")) {
-      logger.debug("harness:cache:no-src-dir", { rootDir });
+      log.debug("harness:cache:no-src-dir", { rootDir });
       return null;
     }
-    logger.warn("harness:cache:scan_failed", { error: String(err) });
+    log.warn("harness:cache:scan_failed", { error: String(err) });
     return null;
   }
 }

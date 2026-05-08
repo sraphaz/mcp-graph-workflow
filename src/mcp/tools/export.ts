@@ -21,8 +21,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { graphToMermaid, filterNodes } from "../../core/graph/mermaid-export.js";
 import { graphToCsv } from "../../core/graph/csv-export.js";
 import type { NodeStatus, NodeType } from "../../core/graph/graph-types.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "export.ts" });
 
 /** registerExport — auto-generated description placeholder. */
 export function registerExport(server: McpServer, store: SqliteStore): void {
@@ -38,7 +40,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
       filterType: z.array(z.enum(["epic", "task", "subtask", "requirement", "constraint", "milestone", "acceptance_criteria", "risk", "decision", "interface", "formula", "state_machine", "contract", "scenario", "performance_budget", "asset", "data_table", "metric", "config_schema"])).optional().describe("Only include nodes with these types"),
     },
     async ({ action, format, direction, filterStatus, filterType }) => {
-      logger.debug("tool:export", { format: action });
+      log.debug("tool:export", { format: action });
       const doc = store.toGraphDocument();
 
       if (action === "json") {
@@ -77,7 +79,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
             },
           };
         }
-        logger.info("tool:export:ok", { format: "json", nodes: filteredDoc.nodes.length });
+        log.info("tool:export:ok", { format: "json", nodes: filteredDoc.nodes.length });
         return mcpText(filteredDoc);
       }
 
@@ -86,7 +88,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
           filterStatus: filterStatus as string[] | undefined,
           filterType: filterType as string[] | undefined,
         });
-        logger.info("tool:export:ok", { format: "csv", nodes: doc.nodes.length });
+        log.info("tool:export:ok", { format: "csv", nodes: doc.nodes.length });
         return {
           content: [
             { type: "text" as const, text: csv },
@@ -102,7 +104,7 @@ export function registerExport(server: McpServer, store: SqliteStore): void {
         filterType: filterType as NodeType[] | undefined,
       });
 
-      logger.info("tool:export:ok", { format: "mermaid", diagramFormat: format ?? "flowchart" });
+      log.info("tool:export:ok", { format: "mermaid", diagramFormat: format ?? "flowchart" });
       return {
         content: [
           { type: "text" as const, text: mermaid },

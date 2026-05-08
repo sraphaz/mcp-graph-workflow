@@ -28,7 +28,9 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "dataset-store.ts" });
 
 // ── Interfaces ─────────────────────────────────────────
 
@@ -86,7 +88,7 @@ export class DatasetStore {
       "INSERT INTO eval_datasets (id, name, source, entry_count, created_at) VALUES (?, ?, ?, 0, ?)",
     ).run(id, name, source, createdAt);
 
-    logger.debug("dataset:created", { id, name, source });
+    log.debug("dataset:created", { id, name, source });
     return id;
   }
 

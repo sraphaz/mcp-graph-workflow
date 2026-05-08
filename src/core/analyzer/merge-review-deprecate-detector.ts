@@ -27,7 +27,9 @@
 
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
 import { tokenize, jaccardSimilarity } from "../utils/similarity.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "merge-review-deprecate-detector.ts" });
 
 // ── Constants ──
 
@@ -248,7 +250,7 @@ export function detectMrdCandidates(doc: GraphDocument): MrdCandidateReport {
   const deprecate = detectDeprecateCandidates(doc);
   const totalCandidates = merge.length + review.length + deprecate.length;
 
-  logger.info("mrd-detector", {
+  log.info("mrd-detector", {
     merge: merge.length,
     review: review.length,
     deprecate: deprecate.length,

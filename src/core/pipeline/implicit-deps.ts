@@ -15,7 +15,9 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "implicit-deps.ts" });
 
 // Matches: import ... from "..." or import ... from '...'
 const IMPORT_RE = /from\s+['"]([^'"]+)['"]/g;
@@ -62,7 +64,7 @@ export function detectImplicitDeps(
 
     return warnings;
   } catch (err) {
-    logger.warn("implicit_deps:scan_error", { error: String(err) });
+    log.warn("implicit_deps:scan_error", { error: String(err) });
     return [];
   }
 }

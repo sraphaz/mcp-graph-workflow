@@ -28,7 +28,9 @@
 import type Database from "better-sqlite3";
 import { now } from "../utils/time.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "issue-pattern-tracker.ts" });
 
 // ── Schema ──────────────────────────────────────────────
 
@@ -139,7 +141,7 @@ export class IssuePatternTracker {
         .run(id, patternType, timestamp, timestamp);
     }
 
-    logger.debug(`Issue pattern recorded pattern="${patternType}"`);
+    log.debug(`Issue pattern recorded pattern="${patternType}"`);
   }
 
   /**

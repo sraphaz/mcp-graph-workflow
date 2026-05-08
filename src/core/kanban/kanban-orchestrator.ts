@@ -28,8 +28,10 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import { findNextTask } from "../planner/next-task.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { KanbanBoard, KanbanSuggestion } from "./kanban-types.js";
+
+const log = createLogger({ layer: "core", source: "kanban-orchestrator.ts" });
 
 /** Threshold: if blocked tasks exceed this fraction of total tasks, alert. */
 const BOTTLENECK_THRESHOLD = 0.3;
@@ -134,6 +136,6 @@ export function generateSuggestions(
   // Sort by priority ASC (1 = most urgent)
   suggestions.sort((a, b) => a.priority - b.priority);
 
-  logger.debug("kanban-orchestrator:suggestions", { count: suggestions.length });
+  log.debug("kanban-orchestrator:suggestions", { count: suggestions.length });
   return suggestions;
 }

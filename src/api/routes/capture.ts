@@ -19,7 +19,9 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { validateBody } from "../middleware/validate.js";
 import { captureWebPage } from "../../core/capture/web-capture.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "capture.ts" });
 
 const CaptureRequestSchema = z.object({
   url: z.url("url must be a valid URL").max(2000),
@@ -40,7 +42,7 @@ export function createCaptureRouter(): Router {
     try {
       const { url, selector, timeout, waitForSelector } = req.body as z.infer<typeof CaptureRequestSchema>;
 
-      logger.info("Capture request received", { url, selector });
+      log.info("Capture request received", { url, selector });
 
       const resultValue = await captureWebPage(url, { selector, timeout, waitForSelector });
 

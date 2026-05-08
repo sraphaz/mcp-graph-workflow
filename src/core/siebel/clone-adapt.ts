@@ -23,7 +23,9 @@
 
 import type { SiebelObject } from "../../schemas/siebel.schema.js";
 import { diffSifObjects, type SifDiffResult } from "./sif-diff.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "clone-adapt.ts" });
 
 // --- Types ---
 
@@ -170,7 +172,7 @@ function renameChild(
 export function cloneAndAdapt(request: CloneAdaptRequest): CloneAdaptResult {
   const { source, newName, renames, addChildren, removeChildren } = request;
 
-  logger.info("clone-adapt", {
+  log.info("clone-adapt", {
     source: source.name,
     newName,
     renameCount: String(Object.keys(renames).length),
@@ -207,7 +209,7 @@ export function cloneAndAdapt(request: CloneAdaptRequest): CloneAdaptResult {
   // 5. Generate diff between original and clone
   const diff = diffSifObjects([source], [resultValue]);
 
-  logger.info("clone-adapt:complete", {
+  log.info("clone-adapt:complete", {
     childCount: String(resultValue.children.length),
     renamesApplied: String(renamed.renamesApplied),
     diffAdded: String(diff.summary.addedCount),

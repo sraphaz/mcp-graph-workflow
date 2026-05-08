@@ -39,7 +39,9 @@ import { runWakeReadyPhase } from "./phases/wake-ready-phase.js";
 import { GraphEventBus } from "../events/event-bus.js";
 import type { GraphEvent } from "../events/event-types.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "dream-engine.ts" });
 
 export class DreamEngine {
   private db: Database.Database;
@@ -162,12 +164,12 @@ export class DreamEngine {
         durationMs: totalDurationMs,
       });
 
-      logger.info("dream:cycle:complete", { cycleId, durationMs: totalDurationMs });
+      log.info("dream:cycle:complete", { cycleId, durationMs: totalDurationMs });
       return resultValue;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       this.emitEvent("dream:cycle_failed", { cycleId, errorMessage });
-      logger.error("dream:cycle:failed", { cycleId, error: errorMessage });
+      log.error("dream:cycle:failed", { cycleId, error: errorMessage });
       throw new McpGraphError(`Dream cycle ${cycleId} failed: ${errorMessage}`);
     } finally {
       this.running = false;
@@ -181,7 +183,7 @@ export class DreamEngine {
    */
   cancelCycle(): void {
     this.cancelled = true;
-    logger.info("dream:cycle:cancel_requested", { cycleId: this.currentCycleId });
+    log.info("dream:cycle:cancel_requested", { cycleId: this.currentCycleId });
   }
 
   /**
@@ -245,7 +247,7 @@ export class DreamEngine {
       updateDreamCycle(this.db, resultValue);
     }
     this.emitEvent("dream:cycle_cancelled", { cycleId, phase: this.currentPhase });
-    logger.info("dream:cycle:cancelled", { cycleId, phase: this.currentPhase });
+    log.info("dream:cycle:cancelled", { cycleId, phase: this.currentPhase });
 
     return resultValue;
   }

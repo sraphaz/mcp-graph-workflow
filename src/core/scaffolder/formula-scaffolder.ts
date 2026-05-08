@@ -30,7 +30,9 @@
  */
 
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "formula-scaffolder.ts" });
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -119,7 +121,7 @@ export function scaffoldFormula(
   const functionContent = renderFunctionFile(spec, functionPreserved);
   const testContent = renderTestFile(spec, testPreserved, functionDir);
 
-  logger.info("formula-scaffolder", {
+  log.info("formula-scaffolder", {
     nodeId: spec.id,
     name: spec.name,
     variables: Object.keys(spec.domain).join(","),

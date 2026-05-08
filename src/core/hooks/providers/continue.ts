@@ -6,7 +6,9 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { readSettingsFile, type ImportEnvelope } from "../import-helpers.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "continue.ts" });
 
 /**
  * Sprint M6 (Multi-CLI PRD, stretch) — Continue.dev provider.
@@ -50,7 +52,7 @@ export function importContinueSettings(opts: ContinueImportOptions = {}): Contin
   }
 
   const mcpServers = Object.keys(file.data.mcpServers ?? {});
-  logger.info("hooks:import:continue", { source, mcpServersCount: mcpServers.length });
+  log.info("hooks:import:continue", { source, mcpServersCount: mcpServers.length });
   return {
     imported: [],
     skipped,

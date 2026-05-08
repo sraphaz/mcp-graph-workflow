@@ -26,7 +26,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "data-integrity.ts" });
 
 export interface DataIntegrityReport {
   tables: Array<{ nodeId: string; title: string; valid: boolean; issues: string[] }>;
@@ -126,7 +128,7 @@ export function analyzeDataIntegrity(doc: GraphDocument): DataIntegrityReport {
     tables.push({ nodeId: node.id, title: node.title, valid, issues });
   }
 
-  logger.debug("analyzer:data-integrity", {
+  log.debug("analyzer:data-integrity", {
     totalTables: tableNodes.length,
     validCount,
   });

@@ -13,7 +13,9 @@ import {
   walkEventBlocks,
   type ImportEnvelope,
 } from "../import-helpers.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "codex.ts" });
 
 /**
  * OpenAI Codex CLI provider — reads `~/.codex/config.toml`.
@@ -85,7 +87,7 @@ export function importCodexSettings(opts: CodexImportOptions = {}): ImportEnvelo
     source,
   );
 
-  logger.info("hooks:import:done", {
+  log.info("hooks:import:done", {
     provider: "codex",
     source,
     imported: envelope.imported.length,

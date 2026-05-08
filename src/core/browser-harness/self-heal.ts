@@ -16,8 +16,10 @@ import {
 import type { HelpersRegistry } from "./helpers-registry.js";
 import type { HelpersRuntime } from "./helpers-runtime.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { validateSource } from "../security/ast-source-validator.js";
+
+const log = createLogger({ layer: "core", source: "self-heal.ts" });
 
 const FORBIDDEN_TOKENS = [
   /\brequire\s*\(/,
@@ -77,7 +79,7 @@ export class SelfHealService {
       bytes: input.source.length,
     }, { ok: true });
 
-    logger.info("bh:self-heal:add", { name: record.name, version: record.version });
+    log.info("bh:self-heal:add", { name: record.name, version: record.version });
     return { name: record.name, version: record.version };
   }
 

@@ -28,9 +28,11 @@
 import type Database from "better-sqlite3";
 import type { KnowledgeDocument, KnowledgeSourceType } from "../../schemas/knowledge.schema.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { findDuplicates, findContradictions } from "./knowledge-dedup.js";
 import { applyFeedback } from "./knowledge-feedback.js";
+
+const log = createLogger({ layer: "rag", source: "knowledge-quality.ts" });
 
 const FRESHNESS_WEIGHT = 0.3;
 const RELIABILITY_WEIGHT = 0.3;
@@ -138,7 +140,7 @@ export function recordUsage(
     "UPDATE knowledge_documents SET usage_count = usage_count + 1, last_accessed_at = ? WHERE id = ?",
   ).run(timestamp, docId);
 
-  logger.debug("Knowledge usage recorded", { docId, action });
+  log.debug("Knowledge usage recorded", { docId, action });
 }
 
 /**
@@ -220,7 +222,7 @@ export function consolidateDuplicates(db: Database.Database): { consolidated: nu
   })();
 
   if (consolidated.length > 0) {
-    logger.info("knowledge-quality:consolidated", { count: consolidated.length });
+    log.info("knowledge-quality:consolidated", { count: consolidated.length });
   }
   return { consolidated: consolidated.length, pairs: consolidated };
 }
@@ -282,7 +284,7 @@ export function forgetContradictions(db: Database.Database): { forgotten: number
     if (olderHelpful > newerHelpful) {
       skippedHigherHelpful += 1;
       audit.push({ olderId: older.id, newerId: newer.id, action: "skipped" });
-      logger.warn("knowledge-quality:contradiction:skipped_human_decides", {
+      log.warn("knowledge-quality:contradiction:skipped_human_decides", {
         olderId: older.id,
         newerId: newer.id,
         olderHelpful,
@@ -298,7 +300,7 @@ export function forgetContradictions(db: Database.Database): { forgotten: number
   }
 
   if (forgotten > 0 || skippedHigherHelpful > 0) {
-    logger.info("knowledge-quality:contradictions_processed", { forgotten, skippedHigherHelpful });
+    log.info("knowledge-quality:contradictions_processed", { forgotten, skippedHigherHelpful });
   }
   return { forgotten, skippedHigherHelpful, pairs: audit };
 }
@@ -353,6 +355,6 @@ export function decayStaleKnowledge(db: Database.Database): { updated: number } 
     }
   })();
 
-  logger.info("Knowledge staleness decay completed", { updated });
+  log.info("Knowledge staleness decay completed", { updated });
   return { updated };
 }

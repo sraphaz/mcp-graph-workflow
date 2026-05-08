@@ -26,8 +26,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { BUILT_IN_PRESETS, getPreset } from "../../core/presets/built-in-presets.js";
 import { resolvePresets, type ResolvedConfig } from "../../core/presets/preset-resolver.js";
 import { PresetSchema, type PresetDefinition } from "../../schemas/preset.schema.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "preset.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Custom presets storage (project settings)                          */
@@ -81,7 +83,7 @@ export function handlePresetApply(
   }
 
   store.setProjectSetting(ACTIVE_PRESET_KEY, params.presetName);
-  logger.info("Preset applied", { preset: params.presetName });
+  log.info("Preset applied", { preset: params.presetName });
 
   return { ok: true, applied: params.presetName };
 }
@@ -128,7 +130,7 @@ export function handlePresetCreate(
   }
   saveCustomPresets(store, custom);
 
-  logger.info("Preset created", { name: params.name });
+  log.info("Preset created", { name: params.name });
 
   return { ok: true, created: params.name };
 }
@@ -179,7 +181,7 @@ export function registerPreset(server: McpServer, store: SqliteStore): void {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("Preset tool error", { action: params.action, error: msg });
+        log.error("Preset tool error", { action: params.action, error: msg });
         return mcpError(msg);
       }
     },

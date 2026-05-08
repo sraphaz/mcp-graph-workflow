@@ -28,7 +28,9 @@ import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { McpGraphError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "feedback-readiness.ts" });
 
 export interface ListeningReadinessOptions {
   hasSnapshots?: boolean;
@@ -155,7 +157,7 @@ export function checkListeningReadiness(
       });
     }
   } catch (err) {
-    logger.debug("listening-readiness: harness scan failed", { error: getErrorMessage(err) });
+    log.debug("listening-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──
@@ -173,7 +175,7 @@ export function checkListeningReadiness(
     ? `Listening Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `Listening Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("listening-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("listening-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { checks, ready, score, grade, summary };
 }

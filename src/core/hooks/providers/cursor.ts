@@ -5,10 +5,12 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
 import type { AgentSource } from "../config-loader.js";
 import type { HookDedupStore } from "../dedup-store.js";
 import { installFsWatcher } from "../fs-watcher.js";
+
+const log = createLogger({ layer: "core", source: "cursor.ts" });
 
 /**
  * Sprint M4 (Multi-CLI PRD) — Cursor provider.
@@ -46,10 +48,10 @@ export function importCursorRules(opts: CursorImportOptions = {}): CursorImportR
   }
   try {
     const rulesText = readFileSync(source, "utf-8");
-    logger.info("hooks:cursor:rules_loaded", { source, bytes: rulesText.length });
+    log.info("hooks:cursor:rules_loaded", { source, bytes: rulesText.length });
     return { rulesText, source, provider: "cursor", imported: 1 };
   } catch (err) {
-    logger.warn("hooks:cursor:rules_read_failed", { source, error: String(err) });
+    log.warn("hooks:cursor:rules_read_failed", { source, error: String(err) });
     return { rulesText: null, source, provider: "cursor", imported: 0 };
   }
 }

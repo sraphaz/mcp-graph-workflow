@@ -28,7 +28,9 @@ import {
   HarnessSafetyViolation,
   HelperNotFoundError,
 } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "mcp", source: "browser-harness.ts" });
 
 interface HarnessRuntimeBundle {
   registry: HelpersRegistry;
@@ -146,7 +148,7 @@ export function registerBrowserHarnessTool(server: McpServer, store: SqliteStore
           }
         }
       } catch (err) {
-        logger.warn("tool:browser_harness:error", {
+        log.warn("tool:browser_harness:error", {
           action: input.action,
           error: err instanceof Error ? err.message : String(err),
         });

@@ -53,7 +53,9 @@ import type { PromptContext } from "./prompt-builder.js";
 import { TranslationError } from "../utils/errors.js";
 import { extractPlaceholdersFromAst } from "./generators/ast-placeholder-extractor.js";
 import { UniversalGenerator } from "./generators/universal-generator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "translation-orchestrator.ts" });
 
 /**
  * Mapping of equivalent constructs across languages.
@@ -313,7 +315,7 @@ export class TranslationOrchestrator {
           deterministicCode = genResult.code;
         }
       } catch (err) {
-        logger.warn("Deterministic translation failed, falling back to AI prompt", { error: String(err) });
+        log.warn("Deterministic translation failed, falling back to AI prompt", { error: String(err) });
       }
     }
 

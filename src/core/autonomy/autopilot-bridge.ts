@@ -38,7 +38,9 @@ const PhaseChangeInputSchema = z.object({
   autopilot: z.boolean().optional(),
   sprintId: z.string().optional(),
 });
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "autopilot-bridge.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -98,7 +100,7 @@ export class AutopilotBridge {
       const session = this.controller.start(sprintId ?? `${phase}-auto`);
       this.active = true;
 
-      logger.info("autopilot-bridge:started", { phase, sprintId, sessionId: session.id });
+      log.info("autopilot-bridge:started", { phase, sprintId, sessionId: session.id });
 
       return {
         autopilotActive: true,
@@ -113,7 +115,7 @@ export class AutopilotBridge {
       this.controller.pause("set_phase autopilot=false");
       this.active = false;
 
-      logger.info("autopilot-bridge:stopped", {
+      log.info("autopilot-bridge:stopped", {
         phase,
         tasksCompleted: summary?.tasksCompleted,
         tasksFailed: summary?.tasksFailed,
@@ -149,7 +151,7 @@ export class AutopilotBridge {
    */
   setRecoveryBridge(bridge: AutopilotRecoveryBridge): void {
     this.recoveryBridge = bridge;
-    logger.info("autopilot-bridge:recovery-initialized");
+    log.info("autopilot-bridge:recovery-initialized");
   }
 
   /**
@@ -180,12 +182,12 @@ export class AutopilotBridge {
           childSessionId: childId,
           reason: "context_pressure",
         });
-        logger.info("autopilot-bridge:session-chained", {
+        log.info("autopilot-bridge:session-chained", {
           parentSessionId: session.id,
           childSessionId: childId,
         });
       } catch (err) {
-        logger.warn("autopilot-bridge:session-chain-failed", { error: String(err) });
+        log.warn("autopilot-bridge:session-chain-failed", { error: String(err) });
       }
     };
 

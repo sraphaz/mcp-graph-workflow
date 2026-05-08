@@ -30,8 +30,10 @@ import type Database from "better-sqlite3";
 import type { DreamCycleConfig, NremPhaseResult } from "../dream-types.js";
 import { archiveDreamDoc } from "../dream-store.js";
 import { decayStaleKnowledge } from "../../rag/knowledge-quality.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
 import { generateId } from "../../utils/id.js";
+
+const log = createLogger({ layer: "core", source: "nrem-phase.ts" });
 
 interface DocRow {
   id: string;
@@ -65,7 +67,7 @@ export function runNremPhase(
   const { pruned, archived } = pruneBelowThreshold(db, config, cycleId);
 
   const durationMs = Date.now() - startMs;
-  logger.info("dream:nrem:complete", { replayed, scoresDecayed, pruned, archived, durationMs });
+  log.info("dream:nrem:complete", { replayed, scoresDecayed, pruned, archived, durationMs });
 
   return { replayed, scoresDecayed, pruned, archived, durationMs };
 }
@@ -100,7 +102,7 @@ function replayRecentDocs(db: Database.Database, config: DreamCycleConfig): numb
     }
   })();
 
-  logger.debug("dream:nrem:replay", { count: docs.length });
+  log.debug("dream:nrem:replay", { count: docs.length });
   return docs.length;
 }
 
@@ -148,6 +150,6 @@ function pruneBelowThreshold(
     archived = docs.length; // count what would be archived
   }
 
-  logger.debug("dream:nrem:prune", { pruned: docs.length, archived, dryRun: config.dryRun });
+  log.debug("dream:nrem:prune", { pruned: docs.length, archived, dryRun: config.dryRun });
   return { pruned: docs.length, archived };
 }

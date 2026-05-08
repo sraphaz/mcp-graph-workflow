@@ -28,7 +28,9 @@
  */
 
 import { minimatch } from "minimatch";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tdd-enforcement.ts" });
 
 export interface CommitInfo {
   hash: string;
@@ -98,7 +100,7 @@ export function checkTddEnforcement(ctx: TddEnforcementContext): TddEnforcementR
   };
 
   if (mode === "off") {
-    logger.debug("tdd_enforcement:off", { fileCount: touchedFiles.length });
+    log.debug("tdd_enforcement:off", { fileCount: touchedFiles.length });
     return base;
   }
 
@@ -158,7 +160,7 @@ export function checkTddEnforcement(ctx: TddEnforcementContext): TddEnforcementR
     violations.push(codeFile);
   }
 
-  logger.warn("tdd_enforcement:check", {
+  log.warn("tdd_enforcement:check", {
     mode,
     violations: violations.length,
     warnings: warnings.length,

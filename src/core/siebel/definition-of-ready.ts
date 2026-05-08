@@ -23,7 +23,9 @@
  */
 
 import type { SiebelObject, SiebelObjectType } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "definition-of-ready.ts" });
 
 // --- Public types ---
 
@@ -211,7 +213,7 @@ function checkLockConflicts(
 export function checkSiebelReady(request: ReadyCheckRequest): ReadyCheckResult {
   const { targetObjects, repository, prefix, currentUser, availableWsdls = [] } = request;
 
-  logger.debug("definition-of-ready: checking", { targets: targetObjects.length });
+  log.debug("definition-of-ready: checking", { targets: targetObjects.length });
 
   if (targetObjects.length === 0) {
     return { ready: true, checks: [] };
@@ -240,7 +242,7 @@ export function checkSiebelReady(request: ReadyCheckRequest): ReadyCheckResult {
 
   const ready = checks.every((c) => c.passed);
 
-  logger.info("definition-of-ready: complete", {
+  log.info("definition-of-ready: complete", {
     ready,
     passed: checks.filter((c) => c.passed).length,
     failed: checks.filter((c) => !c.passed).length,

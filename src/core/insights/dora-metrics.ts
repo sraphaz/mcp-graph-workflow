@@ -22,7 +22,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "dora-metrics.ts" });
 
 export interface DoraMetrics {
   deploymentFrequency: number;     // tasks done per day (rolling 7d)
@@ -142,7 +144,7 @@ export function calculateDoraMetrics(store: SqliteStore): DoraMetrics {
       trend = "stable";
     }
 
-    logger.info("dora-metrics:calculated", {
+    log.info("dora-metrics:calculated", {
       deploymentFrequency,
       leadTimeP50: leadTime.p50,
       changeFailureRate,
@@ -152,7 +154,7 @@ export function calculateDoraMetrics(store: SqliteStore): DoraMetrics {
 
     return { deploymentFrequency, leadTime, changeFailureRate, mttr, trend };
   } catch (err) {
-    logger.warn("dora-metrics:calculation_failed", { error: String(err) });
+    log.warn("dora-metrics:calculation_failed", { error: String(err) });
     return emptyMetrics();
   }
 }

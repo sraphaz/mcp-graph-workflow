@@ -20,8 +20,10 @@ import path from "node:path";
 import { readPdfBuffer } from "./read-pdf.js";
 import { readHtmlContent } from "./read-html.js";
 import { readDocxContent } from "./read-docx.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "file-reader.ts" });
 
 /** Maximum file size in bytes (50 MB) */
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -66,7 +68,7 @@ export async function readFileContent(
     );
   }
 
-  logger.info("Reading file", { name, ext, sizeBytes: fileStat.size });
+  log.info("Reading file", { name, ext, sizeBytes: fileStat.size });
 
   const buffer = await readFile(filePath);
   const sizeBytes = buffer.length;
@@ -102,7 +104,7 @@ export async function readFileContent(
     }
   }
 
-  logger.info("File read complete", { name, format: ext, textLength: text.length });
+  log.info("File read complete", { name, format: ext, textLength: text.length });
 
   return {
     text,

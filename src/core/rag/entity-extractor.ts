@@ -24,8 +24,10 @@
  * richer type classification and relation detection.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { EntityType, EntityRelationType } from "../../schemas/entity.schema.js";
+
+const log = createLogger({ layer: "rag", source: "entity-extractor.ts" });
 
 // ── Extracted types ──────────────────────────────────────
 
@@ -219,7 +221,7 @@ export function extractEntitiesFromText(text: string): ExtractedEntity[] {
     }
   }
 
-  logger.debug("entity-extractor:entities", { count: seen.size });
+  log.debug("entity-extractor:entities", { count: seen.size });
   return Array.from(seen.values());
 }
 
@@ -318,6 +320,6 @@ export function extractRelationsFromText(
     }
   }
 
-  logger.debug("entity-extractor:relations", { count: relations.length });
+  log.debug("entity-extractor:relations", { count: relations.length });
   return relations;
 }

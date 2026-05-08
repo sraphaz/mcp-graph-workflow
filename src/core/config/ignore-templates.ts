@@ -25,7 +25,9 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "ignore-templates.ts" });
 
 export type IgnoreUpdateStatus = "created" | "updated" | "up-to-date";
 
@@ -195,11 +197,11 @@ export function getIgnoreTemplate(): string {
 export function ensureClaudeIgnore(projectDir: string): boolean {
   const filePath = path.join(projectDir, ".claudeignore");
   if (existsSync(filePath)) {
-    logger.debug(".claudeignore already exists, skipping");
+    log.debug(".claudeignore already exists, skipping");
     return false;
   }
   writeFileSync(filePath, IGNORE_TEMPLATE, "utf-8");
-  logger.info(".claudeignore created with lean context template");
+  log.info(".claudeignore created with lean context template");
   return true;
 }
 
@@ -209,11 +211,11 @@ export function ensureClaudeIgnore(projectDir: string): boolean {
 export function ensureCopilotIgnore(projectDir: string): boolean {
   const filePath = path.join(projectDir, ".copilotignore");
   if (existsSync(filePath)) {
-    logger.debug(".copilotignore already exists, skipping");
+    log.debug(".copilotignore already exists, skipping");
     return false;
   }
   writeFileSync(filePath, IGNORE_TEMPLATE, "utf-8");
-  logger.info(".copilotignore created with lean context template");
+  log.info(".copilotignore created with lean context template");
   return true;
 }
 
@@ -222,7 +224,7 @@ function updateIgnoreFile(filePath: string, label: string, dryRun?: boolean): Ig
   if (!exists) {
     if (!dryRun) {
       writeFileSync(filePath, IGNORE_TEMPLATE, "utf-8");
-      logger.info(`${label} created with lean context template`);
+      log.info(`${label} created with lean context template`);
     }
     return { status: "created", message: `${label} created` };
   }
@@ -232,7 +234,7 @@ function updateIgnoreFile(filePath: string, label: string, dryRun?: boolean): Ig
   }
   if (!dryRun) {
     writeFileSync(filePath, IGNORE_TEMPLATE, "utf-8");
-    logger.info(`${label} updated to latest template`);
+    log.info(`${label} updated to latest template`);
   }
   return { status: "updated", message: `${label} updated` };
 }

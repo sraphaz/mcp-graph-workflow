@@ -27,7 +27,9 @@
 
 import type Database from "better-sqlite3";
 import { TokenBudgetPolicy, type BudgetPresetName } from "./token-budget-policy.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "adaptive-budget.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -74,7 +76,7 @@ export function getAdaptiveBudgetSplit(
     const resultValue = policy.getDistribution(phase, grade);
     const dist = resultValue.distribution;
 
-    logger.debug("adaptive-budget:split", {
+    log.debug("adaptive-budget:split", {
       phase, grade, preset: resultValue.preset, source: resultValue.source,
     });
 
@@ -88,7 +90,7 @@ export function getAdaptiveBudgetSplit(
       resultValue.source,
     );
   } catch (err) {
-    logger.warn("adaptive-budget:fallback", { error: String(err) });
+    log.warn("adaptive-budget:fallback", { error: String(err) });
     return applyRatios(totalBudget, DEFAULT_GRAPH_RATIO, DEFAULT_KNOWLEDGE_RATIO, DEFAULT_CODE_RATIO, DEFAULT_HISTORY_RATIO, "balanced", "fallback");
   }
 }

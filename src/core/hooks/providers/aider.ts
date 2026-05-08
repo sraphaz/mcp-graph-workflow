@@ -12,7 +12,9 @@ import {
   generateHandlerId,
   type ImportEnvelope,
 } from "../import-helpers.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "aider.ts" });
 
 /**
  * Sprint M5 (Multi-CLI PRD) — Aider provider.
@@ -84,7 +86,7 @@ export function importAiderSettings(opts: AiderImportOptions = {}): ImportEnvelo
     skipped.push({ event: "auto-commits", reason: "no analog — handled via git hooks (M5.2)" });
   }
 
-  logger.info("hooks:import:done", {
+  log.info("hooks:import:done", {
     provider: "aider",
     source,
     imported: imported.length,
@@ -129,7 +131,7 @@ export function installAiderBridge(opts: InstallAiderBridgeOptions): InstallAide
   const resultValue: InstallAiderBridgeResult = { applied: !dryRun, changes: [], dryRun };
 
   if (!existsSync(join(opts.basePath, ".git"))) {
-    logger.warn("hooks:aider:no-git", { basePath: opts.basePath });
+    log.warn("hooks:aider:no-git", { basePath: opts.basePath });
     return resultValue;
   }
   if (!dryRun) mkdirSync(hooksDir, { recursive: true });
@@ -147,7 +149,7 @@ export function installAiderBridge(opts: InstallAiderBridgeOptions): InstallAide
     if (dryRun) {
       const action: "create" | "append" = existing.length === 0 ? "create" : "append";
       resultValue.changes.push({ hookPath, action });
-      logger.info("hooks:aider:dry-run", { hookPath, action, snippet });
+      log.info("hooks:aider:dry-run", { hookPath, action, snippet });
       continue;
     }
 

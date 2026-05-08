@@ -28,7 +28,9 @@ import { calculateVelocity } from "./velocity.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { PlannerError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "enhanced-next.ts" });
 
 /** Maps common task tags to harness dimension keys */
 const TAG_TO_DIMENSION: Record<string, string> = {
@@ -142,10 +144,10 @@ export function findEnhancedNextTask(
       }
     }
   } catch (err) {
-    logger.debug("enhanced-next: harness scan failed", { error: getErrorMessage(err) });
+    log.debug("enhanced-next: harness scan failed", { error: getErrorMessage(err) });
   }
 
-  logger.info("Enhanced next task", {
+  log.info("Enhanced next task", {
     nodeId: baseResult.node.id,
     knowledgeCoverage,
     estimatedHours: velocityContext.estimatedHours,
@@ -190,7 +192,7 @@ function assessKnowledgeCoverage(store: SqliteStore, node: GraphNode): number {
 
     return Math.min(1, matchedTerms.size / terms.length);
   } catch (err) {
-    logger.debug("enhanced-next: knowledge coverage failed", { error: getErrorMessage(err) });
+    log.debug("enhanced-next: knowledge coverage failed", { error: getErrorMessage(err) });
     return 0;
   }
 }

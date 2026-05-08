@@ -44,8 +44,10 @@ import {
 } from "../../core/browser-pilot/execute-browser-pilot.js";
 import { BridgeClient } from "../../core/browser-pilot/bridge-client.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { OperationError } from "../../core/utils/errors.js";
+
+const log = createLogger({ layer: "mcp", source: "browser-pilot.ts" });
 
 const DEFAULT_BRIDGE_URL = "http://127.0.0.1:9876/v1";
 const DEFAULT_MODEL = "claude-3.5-sonnet";
@@ -131,7 +133,7 @@ export function registerBrowserPilotTool(
         return mcpText(response);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        logger.error("browser_pilot_run unexpected", { message });
+        log.error("browser_pilot_run unexpected", { message });
         return mcpError(err instanceof Error ? err : String(err));
       }
     },

@@ -24,7 +24,9 @@
  */
 
 import { estimateTokens } from "../context/token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "prompt-paginator.ts" });
 
 const DEFAULT_PAGE_TOKEN_BUDGET = 8000;
 
@@ -66,7 +68,7 @@ export function paginatePrompt(
   const pageIndex = Math.max(0, Math.min(requestedPage - 1, totalPages - 1));
   const page = pages[pageIndex];
 
-  logger.debug("prompt:paginated", {
+  log.debug("prompt:paginated", {
     totalTokens,
     totalPages,
     requestedPage,

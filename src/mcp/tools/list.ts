@@ -21,8 +21,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { NodeType, NodeStatus } from "../../core/graph/graph-types.js";
 import { NodeTypeSchema, NodeStatusSchema } from "../../schemas/node.schema.js";
 import { LockManager } from "../../core/store/lock-manager.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "list.ts" });
 
 /** registerList — auto-generated description placeholder. */
 export function registerList(server: McpServer, store: SqliteStore): void {
@@ -39,7 +41,7 @@ export function registerList(server: McpServer, store: SqliteStore): void {
     async ({ type, status, sprint, limit: rawLimit, offset: rawOffset }) => {
       const limit = rawLimit ?? 50;
       const offset = rawOffset ?? 0;
-      logger.debug("tool:list", { type, status, sprint, limit, offset });
+      log.debug("tool:list", { type, status, sprint, limit, offset });
       let nodes;
 
       if (type && status) {
@@ -104,7 +106,7 @@ export function registerList(server: McpServer, store: SqliteStore): void {
         return base;
       });
 
-      logger.info("tool:list:ok", { total, limit, offset, returned: paginatedNodes.length });
+      log.info("tool:list:ok", { total, limit, offset, returned: paginatedNodes.length });
       // Bug #065: warn when offset exceeds total
       const resultValue: Record<string, unknown> = { total, limit, offset, hasMore: offset + limit < total, nodes: summary };
       if (offset >= total && total > 0) {

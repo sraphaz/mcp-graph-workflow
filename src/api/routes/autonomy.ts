@@ -30,7 +30,9 @@ import { Router } from "express";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { getAdaptiveBudgetSplit } from "../../core/context/adaptive-budget.js";
 import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "autonomy.ts" });
 
 /** createAutonomyRouter — auto-generated description placeholder. */
 export function createAutonomyRouter(storeRef: StoreRef): Router {
@@ -165,6 +167,6 @@ export function createAutonomyRouter(storeRef: StoreRef): Router {
     }
   });
 
-  logger.debug("api:autonomy:registered", { endpoints: ["/status", "/session", "/budget"] });
+  log.debug("api:autonomy:registered", { endpoints: ["/status", "/session", "/budget"] });
   return router;
 }

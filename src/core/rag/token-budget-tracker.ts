@@ -21,7 +21,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "token-budget-tracker.ts" });
 
 export type BudgetZone = "green" | "yellow" | "red";
 
@@ -113,7 +115,7 @@ export function generateBudgetReport(
   const topConsumers = consumers.slice(0, 5);
   const recommendations = generateRecommendations(zone, topConsumers, usagePercent);
 
-  logger.debug("token-budget:report", { zone, usagePercent, totalTokens, budget: tokenBudget });
+  log.debug("token-budget:report", { zone, usagePercent, totalTokens, budget: tokenBudget });
 
   return {
     zone,

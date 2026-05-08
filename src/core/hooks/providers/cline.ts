@@ -7,7 +7,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ImportEnvelope } from "../import-helpers.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "cline.ts" });
 
 /**
  * Sprint M6 (Multi-CLI PRD, stretch) — Cline (VS Code extension).
@@ -80,7 +82,7 @@ export function importClineSettings(opts: ClineImportOptions = {}): ClineImportR
 
   const clineMcp = parsed["cline.mcpServers"] as Record<string, unknown> | undefined;
   const mcpServers = clineMcp ? Object.keys(clineMcp) : [];
-  logger.info("hooks:import:cline", { source, mcpServersCount: mcpServers.length });
+  log.info("hooks:import:cline", { source, mcpServersCount: mcpServers.length });
 
   return {
     imported: [],

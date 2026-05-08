@@ -15,7 +15,9 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "read-pdf.ts" });
 
 interface PdfReadResult {
   text: string;
@@ -31,7 +33,7 @@ export async function readPdfBuffer(buffer: Buffer): Promise<PdfReadResult> {
   // CI environments that may prune node_modules between jobs).
   const { PDFParse } = await import("pdf-parse");
 
-  logger.info("Parsing PDF buffer", { sizeBytes: buffer.length });
+  log.info("Parsing PDF buffer", { sizeBytes: buffer.length });
 
   const PDF_TIMEOUT_MS = 30_000;
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
@@ -42,7 +44,7 @@ export async function readPdfBuffer(buffer: Buffer): Promise<PdfReadResult> {
     ),
   ]);
 
-  logger.info("PDF parsed", { pages: resultValue.total, textLength: resultValue.text.length });
+  log.info("PDF parsed", { pages: resultValue.total, textLength: resultValue.text.length });
 
   return {
     text: resultValue.text,

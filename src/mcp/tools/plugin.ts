@@ -25,9 +25,11 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { PluginStore } from "../../core/plugins/plugin-store.js";
 import { PluginRegistry } from "../../core/plugins/plugin-registry.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { McpGraphError } from "../../core/utils/errors.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "plugin.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Shared state (module-level registry for MCP process lifetime)      */
@@ -66,7 +68,7 @@ export function handlePluginInstall(
     config: params.config,
   });
 
-  logger.info("Plugin installed via MCP", { name: params.name, version: params.version });
+  log.info("Plugin installed via MCP", { name: params.name, version: params.version });
 
   return { ok: true, name: params.name, status: "installed" };
 }
@@ -87,7 +89,7 @@ export function handlePluginRemove(
     registry.remove(params.name);
   }
 
-  logger.info("Plugin removed via MCP", { name: params.name });
+  log.info("Plugin removed via MCP", { name: params.name });
 
   return { ok: true, removed: params.name };
 }
@@ -231,7 +233,7 @@ export function registerPlugin(server: McpServer, store: SqliteStore): void {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("Plugin tool error", { action: params.action, error: msg });
+        log.error("Plugin tool error", { action: params.action, error: msg });
         return mcpError(msg);
       }
     },

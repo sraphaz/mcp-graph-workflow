@@ -16,7 +16,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "plugin-store.ts" });
 
 export interface PluginRow {
   name: string;
@@ -72,12 +74,12 @@ export class PluginStore {
       now,
       now,
     );
-    logger.info(`Plugin persisted: ${params.name}@${params.version} for project ${params.projectId}`);
+    log.info(`Plugin persisted: ${params.name}@${params.version} for project ${params.projectId}`);
   }
 
   remove(projectId: string, name: string): void {
     this.db.prepare("DELETE FROM plugins WHERE project_id = ? AND name = ?").run(projectId, name);
-    logger.info(`Plugin removed from DB: ${name} for project ${projectId}`);
+    log.info(`Plugin removed from DB: ${name} for project ${projectId}`);
   }
 
   setEnabled(projectId: string, name: string, enabled: boolean): void {

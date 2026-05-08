@@ -41,8 +41,10 @@ import type { GraphNode, GraphEdge } from "../graph/graph-types.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
 import { generateId } from "../utils/id.js";
 import { smartDecompose, type DecomposeResult } from "./smart-decompose.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
+
+const log = createLogger({ layer: "core", source: "auto-decompose.ts" });
 
 export interface PersistResult {
   createdNodeIds: string[];
@@ -108,7 +110,7 @@ export function persistDecomposition(
       store.insertEdge(realEdge);
       createdEdgeCount++;
     } catch (err) {
-      logger.warn("auto-decompose:edge_insert_failed", {
+      log.warn("auto-decompose:edge_insert_failed", {
         from,
         to,
         error: err instanceof Error ? err.message : String(err),
@@ -116,7 +118,7 @@ export function persistDecomposition(
     }
   }
 
-  logger.info("auto-decompose:persisted", {
+  log.info("auto-decompose:persisted", {
     parentId: result.parentId,
     subtasks: createdNodeIds.length,
     edges: createdEdgeCount,
@@ -201,7 +203,7 @@ export function autoDecomposeLarge(
     decomposed.push({ parentId: node.id, subtaskIds: persisted.createdNodeIds });
   }
 
-  logger.info("auto-decompose:scan_complete", {
+  log.info("auto-decompose:scan_complete", {
     decomposed: decomposed.length,
     skipped: skipped.length,
   });

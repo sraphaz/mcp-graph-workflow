@@ -16,7 +16,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "phase-distribution.ts" });
 
 const LIFECYCLE_PHASES = [
   "ANALYZE", "DESIGN", "PLAN", "IMPLEMENT",
@@ -75,7 +77,7 @@ export interface PhaseDistribution {
  * 3. Status-based fallback
  */
 export function calculatePhaseDistribution(doc: GraphDocument): PhaseDistribution[] {
-  logger.info("Calculating phase distribution", { nodes: doc.nodes.length });
+  log.info("Calculating phase distribution", { nodes: doc.nodes.length });
 
   const tasks = doc.nodes.filter((n) => n.type === "task" || n.type === "subtask");
   const phaseCounts = new Map<Phase, number>();

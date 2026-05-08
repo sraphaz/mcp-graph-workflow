@@ -5,7 +5,9 @@
 
 import { MemoryGuard, type MemoryPressureLevel } from "./memory-guard.js";
 import type { GraphEventBus } from "../events/event-bus.js";
-import { logger } from "./logger.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger({ layer: "core", source: "memory-telemetry.ts" });
 
 const MB = 1024 * 1024;
 const DEFAULT_INTERVAL_MS = 30_000;
@@ -97,7 +99,7 @@ export class MemoryTelemetry {
     const snap = this.guard.snapshot();
     const usage = process.memoryUsage();
 
-    logger.info("memory:telemetry", {
+    log.info("memory:telemetry", {
       heapUsedMb: snap.heapUsedMb.toFixed(1),
       heapTotalMb: (usage.heapTotal / MB).toFixed(1),
       externalMb: (usage.external / MB).toFixed(1),

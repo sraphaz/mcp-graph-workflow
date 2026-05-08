@@ -43,10 +43,12 @@ import { CustomSkillInputSchema, TaskTemplateInputSchema } from "../../schemas/s
 import { parseSkillMarkdown } from "../../core/skills/skill-loader.js";
 import { loadDomainSkills } from "../../core/skills/domain-skill-loader.js";
 import { join } from "node:path";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { readFileSync } from "node:fs";
+
+const log = createLogger({ layer: "mcp", source: "manage-skill.ts" });
 
 /** registerManageSkill — auto-generated description placeholder. */
 export function registerManageSkill(server: McpServer, store: SqliteStore): void {
@@ -99,7 +101,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
         .describe("Template data (for create_template)"),
     },
     async ({ action, skillName, skillId, phase, data, template, filePath }) => {
-      logger.debug("tool:manage_skill", { action, skillName, skillId });
+      log.debug("tool:manage_skill", { action, skillName, skillId });
 
       const project = store.getProject();
       if (!project) {
@@ -140,7 +142,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
               phases: s.phases,
             }));
 
-            logger.info("tool:manage_skill:list:ok", { count: summary.length, phase: phase ?? "all" });
+            log.info("tool:manage_skill:list:ok", { count: summary.length, phase: phase ?? "all" });
             return mcpText({
               total: summary.length,
               ...(phase ? { phase } : {}),
@@ -173,7 +175,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             }
             const created = createCustomSkill(db, projectId, parsed.data);
             indexEntitiesForSource(db, "skill");
-            logger.info("tool:manage_skill:created", { id: created.id, name: created.name });
+            log.info("tool:manage_skill:created", { id: created.id, name: created.name });
             return mcpText(created);
           }
 
@@ -223,13 +225,13 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
               return mcpError(`Validation failed: ${JSON.stringify(parsed.error.issues)}`);
             }
             const created = createTaskTemplate(db, projectId, parsed.data);
-            logger.info("tool:manage_skill:create_template", { id: created.id, name: created.name });
+            log.info("tool:manage_skill:create_template", { id: created.id, name: created.name });
             return mcpText({ ok: true, template: created });
           }
 
           case "list_templates": {
             const templates = listTaskTemplates(db, projectId);
-            logger.info("tool:manage_skill:list_templates", { count: templates.length });
+            log.info("tool:manage_skill:list_templates", { count: templates.length });
             return mcpText({ ok: true, total: templates.length, templates });
           }
 
@@ -249,14 +251,14 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             }
             const imported = createCustomSkill(db, projectId, parseResult.skill);
             indexEntitiesForSource(db, "skill");
-            logger.info("tool:manage_skill:imported", { id: imported.id, name: imported.name, filePath });
+            log.info("tool:manage_skill:imported", { id: imported.id, name: imported.name, filePath });
             return mcpText({ ok: true, action: "import", skill: imported });
           }
 
           case "list_domain": {
             const rootDir = join(process.cwd(), "src", "skills", "domain");
             const resultValue = loadDomainSkills(rootDir);
-            logger.info("tool:manage_skill:list_domain", {
+            log.info("tool:manage_skill:list_domain", {
               count: resultValue.skills.length,
               errors: resultValue.errors.length,
             });
@@ -281,7 +283,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
             const currentPhase = detectCurrentPhase(doc);
             const targetPhase = (phase as LifecyclePhase) ?? currentPhase;
             const recs = recommendBuiltInSkills(doc, targetPhase);
-            logger.info("tool:manage_skill:recommend", { phase: targetPhase, count: recs.length });
+            log.info("tool:manage_skill:recommend", { phase: targetPhase, count: recs.length });
             return mcpText({ phase: targetPhase, recommendations: recs });
           }
 
@@ -290,7 +292,7 @@ export function registerManageSkill(server: McpServer, store: SqliteStore): void
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        logger.error("tool:manage_skill:error", { action, error: message });
+        log.error("tool:manage_skill:error", { action, error: message });
         return mcpError(message);
       }
     },

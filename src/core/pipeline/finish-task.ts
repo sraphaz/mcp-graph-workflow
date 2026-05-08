@@ -58,7 +58,9 @@ import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { execSync } from "node:child_process";
 import { LockConflictError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "finish-task.ts" });
 
 // Maps DoD check names to IssuePatternTracker pattern types
 const DOD_CHECK_TO_PATTERN: Record<string, string> = {
@@ -168,7 +170,7 @@ export async function finishTask(
     try {
       store.updateNode(nodeId, { testFiles });
     } catch (err) {
-      logger.warn("pipeline:finish_task:testfiles_update_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:testfiles_update_failed", { error: String(err) });
     }
   }
 
@@ -181,10 +183,10 @@ export async function finishTask(
         discoveredTestFiles = discoverTestFiles(node.title, process.cwd());
         if (discoveredTestFiles.length > 0) {
           store.updateNode(nodeId, { testFiles: discoveredTestFiles });
-          logger.info("pipeline:finish_task:test_discovery", { nodeId, found: discoveredTestFiles.length });
+          log.info("pipeline:finish_task:test_discovery", { nodeId, found: discoveredTestFiles.length });
         }
       } catch (err) {
-        logger.warn("pipeline:finish_task:test_discovery_failed", { error: String(err) });
+        log.warn("pipeline:finish_task:test_discovery_failed", { error: String(err) });
       }
     }
   }
@@ -207,12 +209,12 @@ export async function finishTask(
         });
         artifactIds.push(id);
       }
-      logger.info("pipeline:finish_task:artifacts_persisted", {
+      log.info("pipeline:finish_task:artifacts_persisted", {
         nodeId,
         count: artifactIds.length,
       });
     } catch (err) {
-      logger.warn("pipeline:finish_task:artifacts_persist_failed", {
+      log.warn("pipeline:finish_task:artifacts_persist_failed", {
         error: String(err),
       });
     }
@@ -290,7 +292,7 @@ export async function finishTask(
       }
     }
   } catch (err) {
-    logger.warn("pipeline:finish_task:contract_gate_failed", { error: String(err) });
+    log.warn("pipeline:finish_task:contract_gate_failed", { error: String(err) });
     contractGate = { mode: "advisory", violationCount: 0, errorCount: 0, warningCount: 0, violations: [], blocked: false };
   }
 
@@ -299,14 +301,14 @@ export async function finishTask(
   try {
     invariantResult = checkInvariants(doc, getBuiltInInvariants());
     if (!invariantResult.passed) {
-      logger.warn("pipeline:finish_task:invariant_violations", {
+      log.warn("pipeline:finish_task:invariant_violations", {
         nodeId,
         violations: invariantResult.violations.length,
         invariants: [...new Set(invariantResult.violations.map((v: { invariantId?: string; rule?: string }) => v.invariantId ?? v.rule ?? "unknown"))],
       });
     }
   } catch (err) {
-    logger.warn("pipeline:finish_task:invariant_check_failed", { error: String(err) });
+    log.warn("pipeline:finish_task:invariant_check_failed", { error: String(err) });
   }
 
   // 2. Determine if task can be marked done
@@ -339,7 +341,7 @@ export async function finishTask(
       blockers.push(`test_gate: ${testGate.failed} test(s) failed — fix before marking done`);
     }
   } catch (err) {
-    logger.warn("pipeline:finish_task:test_gate_failed", { error: String(err) });
+    log.warn("pipeline:finish_task:test_gate_failed", { error: String(err) });
   }
 
   // 2.0c. Feature-depth check — per-file regression gate + quadrant
@@ -368,7 +370,7 @@ export async function finishTask(
       }
     }
   } catch (err) {
-    logger.warn("pipeline:finish_task:feature_depth_failed", { error: String(err) });
+    log.warn("pipeline:finish_task:feature_depth_failed", { error: String(err) });
   }
 
   // 2a. Verify task ownership in teamTask mode
@@ -398,19 +400,19 @@ export async function finishTask(
         const node = store.getNodeById(nodeId);
         const outcome = proposeBrowserSkillFromNode(node);
         if (outcome.written) {
-          logger.info("pipeline:finish_task:browser_skill_written", { nodeId, path: outcome.path });
+          log.info("pipeline:finish_task:browser_skill_written", { nodeId, path: outcome.path });
         }
       } catch (err) {
-        logger.warn("pipeline:finish_task:browser_skill_failed", { nodeId, error: String(err) });
+        log.warn("pipeline:finish_task:browser_skill_failed", { nodeId, error: String(err) });
       }
 
       // Release task lock in teamTask mode
       if (lockManager && leaseToken) {
         try {
           lockManager.release(leaseToken);
-          logger.info("pipeline:finish_task:lock_released", { nodeId, leaseToken });
+          log.info("pipeline:finish_task:lock_released", { nodeId, leaseToken });
         } catch (err) {
-          logger.warn("pipeline:finish_task:lock_release_failed", { nodeId, error: String(err) });
+          log.warn("pipeline:finish_task:lock_release_failed", { nodeId, error: String(err) });
         }
       }
 
@@ -427,10 +429,10 @@ export async function finishTask(
                 // Stale or already-released token — ignore
               }
             }
-            logger.info("pipeline:finish_task:file_leases_released", { nodeId, count: fileLeases.length });
+            log.info("pipeline:finish_task:file_leases_released", { nodeId, count: fileLeases.length });
           }
         } catch (err) {
-          logger.warn("pipeline:finish_task:file_leases_release_failed", { nodeId, error: String(err) });
+          log.warn("pipeline:finish_task:file_leases_release_failed", { nodeId, error: String(err) });
         }
       }
 
@@ -450,7 +452,7 @@ export async function finishTask(
         store.updateNode(nodeId, {
           metadata: { ...(existing?.metadata as Record<string, unknown> ?? {}), touchedFilesObserved },
         });
-        logger.info("pipeline:finish_task:touched_files_harvested", { nodeId, count: touchedFilesObserved.length });
+        log.info("pipeline:finish_task:touched_files_harvested", { nodeId, count: touchedFilesObserved.length });
       } catch {
         // git not available or no commits yet — store empty array
         try {
@@ -463,13 +465,13 @@ export async function finishTask(
         }
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:status_update_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:status_update_failed", { error: String(err) });
       status = "blocked";
       blockers.push(`Status update failed: ${String(err)}`);
     }
   } else {
     status = "blocked";
-    logger.info("pipeline:finish_task:blocked", { nodeId, blockers: blockers.length });
+    log.info("pipeline:finish_task:blocked", { nodeId, blockers: blockers.length });
   }
 
   // 2.3a. Emit pipeline hook for completion / failure (Sprint 1 — wiring)
@@ -499,12 +501,12 @@ export async function finishTask(
       const recovery = new RecoveryOrchestrator(store, { maxRetries: 3 });
       recovery.beginTask(nodeId);
       const recoveryResult = recovery.failTask(nodeId, blockers.join("; "));
-      logger.info("pipeline:finish_task:recovery_recorded", {
+      log.info("pipeline:finish_task:recovery_recorded", {
         nodeId, attempt: recoveryResult.attempt, canRetry: recoveryResult.canRetry,
         escalate: recoveryResult.escalate, mttrMs: recoveryResult.mttrMs,
       });
     } catch (err) {
-      logger.warn("pipeline:finish_task:recovery_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:recovery_failed", { error: String(err) });
     }
   }
 
@@ -513,13 +515,13 @@ export async function finishTask(
     try {
       if (status === "done") {
         const mergeResult = mergeShadowBranch(shadowBranch, "HEAD");
-        logger.info("pipeline:finish_task:shadow_merged", { shadowBranch, merged: mergeResult.merged });
+        log.info("pipeline:finish_task:shadow_merged", { shadowBranch, merged: mergeResult.merged });
       } else {
         const discardResult = discardShadowBranch(shadowBranch, "HEAD");
-        logger.info("pipeline:finish_task:shadow_discarded", { shadowBranch, discarded: discardResult.discarded });
+        log.info("pipeline:finish_task:shadow_discarded", { shadowBranch, discarded: discardResult.discarded });
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:shadow_branch_failed", { shadowBranch, error: String(err) });
+      log.warn("pipeline:finish_task:shadow_branch_failed", { shadowBranch, error: String(err) });
     }
   }
 
@@ -537,7 +539,7 @@ export async function finishTask(
     }
     ruleSuggestions = tracker.getSuggestedRules();
   } catch (err) {
-    logger.warn("pipeline:finish_task:issue_tracker_failed", { error: String(err) });
+    log.warn("pipeline:finish_task:issue_tracker_failed", { error: String(err) });
   }
 
   // 3. Index rationale as AI decision (if done + rationale provided)
@@ -566,13 +568,13 @@ export async function finishTask(
             timestamp: new Date().toISOString(),
           });
         } catch (provErr) {
-          logger.warn("pipeline:finish_task:provenance_failed", { error: String(provErr) });
+          log.warn("pipeline:finish_task:provenance_failed", { error: String(provErr) });
         }
       }
 
       decisionIndexed = true;
     } catch (err) {
-      logger.warn("pipeline:finish_task:decision_index_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:decision_index_failed", { error: String(err) });
     }
   }
 
@@ -596,11 +598,11 @@ export async function finishTask(
           });
           const { writeMemory } = await import("../memory/memory-reader.js");
           await writeMemory(process.cwd(), payload.name, payload.content);
-          logger.info("pipeline:finish_task:strategy_memory_written", { nodeId, name: payload.name, patternKey: resultValue.patternKey, count: resultValue.count });
+          log.info("pipeline:finish_task:strategy_memory_written", { nodeId, name: payload.name, patternKey: resultValue.patternKey, count: resultValue.count });
         }
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:strategy_memory_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:strategy_memory_failed", { error: String(err) });
     }
   }
 
@@ -626,13 +628,13 @@ export async function finishTask(
         if (caseResult.shouldWrite && caseResult.name && caseResult.content) {
           const { writeMemory } = await import("../memory/memory-reader.js");
           await writeMemory(process.cwd(), caseResult.name, caseResult.content);
-          logger.info("pipeline:finish_task:case_memory_written", { nodeId, name: caseResult.name });
+          log.info("pipeline:finish_task:case_memory_written", { nodeId, name: caseResult.name });
         } else {
-          logger.debug("pipeline:finish_task:case_memory_skipped", { nodeId, reason: caseResult.reason });
+          log.debug("pipeline:finish_task:case_memory_skipped", { nodeId, reason: caseResult.reason });
         }
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:case_memory_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:case_memory_failed", { error: String(err) });
     }
   }
 
@@ -653,14 +655,14 @@ export async function finishTask(
           testGate?.failed ?? 0,
         );
         const resultValue = applyRagFeedback(store.getDb(), ragOffered, signal, taskNode?.title ?? nodeId);
-        logger.info("pipeline:finish_task:rag_feedback_applied", {
+        log.info("pipeline:finish_task:rag_feedback_applied", {
           nodeId,
           signal,
           ...resultValue,
         });
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:rag_feedback_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:rag_feedback_failed", { error: String(err) });
     }
   }
 
@@ -690,9 +692,9 @@ export async function finishTask(
           query: nextTask.task.node.title ?? "",
           context: JSON.stringify(nextRag),
         });
-        logger.debug("pipeline:finish_task:prefetch_fed", { nextNodeId: nextTask.task.node.id });
+        log.debug("pipeline:finish_task:prefetch_fed", { nextNodeId: nextTask.task.node.id });
       } catch (err) {
-        logger.debug("pipeline:finish_task:prefetch_feed_failed", { error: String(err) });
+        log.debug("pipeline:finish_task:prefetch_feed_failed", { error: String(err) });
       }
     }
   }
@@ -714,7 +716,7 @@ export async function finishTask(
         const overrideReason = typeof meta?._harnessOverrideReason === "string" ? meta._harnessOverrideReason : undefined;
         harnessGate = checkHarnessRegressionGate(baselineScore, scanResult.score, gateMode, 5, overrideReason);
         if (harnessGate.blocked) {
-          logger.warn("pipeline:finish_task:harness_gate_blocked", {
+          log.warn("pipeline:finish_task:harness_gate_blocked", {
             nodeId,
             startScore: baselineScore,
             endScore: scanResult.score,
@@ -750,10 +752,10 @@ export async function finishTask(
               },
             });
           } catch (err) {
-            logger.warn("pipeline:finish_task:savings_record_failed", { error: String(err) });
+            log.warn("pipeline:finish_task:savings_record_failed", { error: String(err) });
           }
         } else if (harnessGate.delta < -5) {
-          logger.warn("pipeline:finish_task:harness_gate_advisory", {
+          log.warn("pipeline:finish_task:harness_gate_advisory", {
             nodeId,
             startScore: baselineScore,
             endScore: scanResult.score,
@@ -762,7 +764,7 @@ export async function finishTask(
         }
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:harness_regression_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:harness_regression_failed", { error: String(err) });
     }
   }
 
@@ -772,7 +774,7 @@ export async function finishTask(
     try {
       syntheticValidation = runSyntheticValidation(store);
       if (syntheticValidation && !syntheticValidation.passed) {
-        logger.warn("pipeline:finish_task:synthetic_validation_low", {
+        log.warn("pipeline:finish_task:synthetic_validation_low", {
           nodeId,
           score: syntheticValidation.score,
           caught: syntheticValidation.mutationsCaught,
@@ -780,7 +782,7 @@ export async function finishTask(
         });
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:synthetic_validation_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:synthetic_validation_failed", { error: String(err) });
     }
   }
 
@@ -801,7 +803,7 @@ export async function finishTask(
               const sid = validator.recordPreFixState(preFixViolations);
               remediationValidation = validator.validatePostFix(sid, scanWithViolations.violations);
             } catch {
-              logger.warn("finish-task:corrupted-prefix-violations", { preFixData: preFixData.slice(0, 100) });
+              log.warn("finish-task:corrupted-prefix-violations", { preFixData: preFixData.slice(0, 100) });
             }
           }
         }
@@ -810,7 +812,7 @@ export async function finishTask(
         store.setProjectSetting("harness_prefix_violations", "");
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:remediation_validation_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:remediation_validation_failed", { error: String(err) });
     }
   }
 
@@ -840,18 +842,18 @@ export async function finishTask(
           summary: rationale,
           reasons: trajectory.reasons,
         });
-        logger.info("pipeline:finish_task:skill_proposed", {
+        log.info("pipeline:finish_task:skill_proposed", {
           nodeId,
           domain: skillProposal.domain,
           reasons: trajectory.reasons,
         });
       }
     } catch (err) {
-      logger.warn("pipeline:finish_task:skill_proposal_failed", { error: String(err) });
+      log.warn("pipeline:finish_task:skill_proposal_failed", { error: String(err) });
     }
   }
 
-  logger.info("pipeline:finish_task:ok", {
+  log.info("pipeline:finish_task:ok", {
     nodeId,
     status,
     dodScore: dodReport.score,

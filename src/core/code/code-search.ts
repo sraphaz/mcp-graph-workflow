@@ -23,7 +23,9 @@
 import type { CodeStore } from "./code-store.js";
 import type { CodeSearchResult } from "./code-types.js";
 import { rerankWithTfIdf } from "../search/tfidf.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "code-search.ts" });
 
 export interface CodeSearchOptions {
   limit?: number;
@@ -61,13 +63,13 @@ export function searchCodeSymbols(
   const { limit = 20, rerank = false, groupByModule = false, language } = options;
   const sanitized = sanitizeFtsQuery(query);
 
-  logger.debug("code-search:start", { query, sanitized, rerank, groupByModule, language });
+  log.debug("code-search:start", { query, sanitized, rerank, groupByModule, language });
 
   const startMs = performance.now();
   const candidateLimit = rerank ? Math.min(limit * 3, 100) : limit;
   const ftsResults = store.searchSymbols(sanitized, projectId, candidateLimit);
 
-  logger.debug("code-search:fts", {
+  log.debug("code-search:fts", {
     resultCount: ftsResults.length,
     durationMs: Math.round(performance.now() - startMs),
   });

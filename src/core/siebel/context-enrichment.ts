@@ -26,7 +26,9 @@ import type {
   SiebelDependency,
   SiebelObjectType,
 } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "context-enrichment.ts" });
 
 // --- Public types ---
 
@@ -134,14 +136,14 @@ function findUsedBy(
 export function enrichSifContext(request: EnrichmentRequest): EnrichmentResult {
   const { objects, dependencies } = request;
 
-  logger.debug("context-enrichment: enriching", { objects: objects.length, deps: dependencies.length });
+  log.debug("context-enrichment: enriching", { objects: objects.length, deps: dependencies.length });
 
   const summary = buildSummary(objects);
   const objectTypes = [...new Set(objects.map((o) => o.type))];
   const dependsOn = findDependsOn(objects, dependencies);
   const usedBy = findUsedBy(objects, dependencies);
 
-  logger.info("context-enrichment: complete", {
+  log.info("context-enrichment: complete", {
     types: objectTypes.length,
     dependsOn: dependsOn.length,
     usedBy: usedBy.length,

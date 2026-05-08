@@ -26,7 +26,9 @@
 import type Database from "better-sqlite3";
 import { EntityStore } from "./entity-store.js";
 import { extractEntitiesFromText, extractRelationsFromText } from "./entity-extractor.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "entity-indexer.ts" });
 
 // ── Result types ─────────────────────────────────────────
 
@@ -58,7 +60,7 @@ export function indexDocument(db: Database.Database, docId: string): IndexDocume
     .get(docId) as { id: string; title: string; content: string } | undefined;
 
   if (!doc) {
-    logger.debug("entity-indexer:doc-not-found", { docId });
+    log.debug("entity-indexer:doc-not-found", { docId });
     return { docId, entitiesCreated: 0, relationsCreated: 0 };
   }
 
@@ -98,7 +100,7 @@ export function indexDocument(db: Database.Database, docId: string): IndexDocume
     }
   }
 
-  logger.debug("entity-indexer:indexed", {
+  log.debug("entity-indexer:indexed", {
     docId,
     entities: entitiesCreated,
     relations: relationsCreated,
@@ -130,7 +132,7 @@ export function reindexAll(db: Database.Database): ReindexResult {
 
   const stats = store.stats();
 
-  logger.info("entity-indexer:reindex-complete", {
+  log.info("entity-indexer:reindex-complete", {
     documentsProcessed,
     ...stats,
   });

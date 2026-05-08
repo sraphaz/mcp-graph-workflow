@@ -27,7 +27,7 @@ import type Database from "better-sqlite3";
 import { readAllMemories, writeMemory, listMemories } from "../memory/memory-reader.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
 import {
   KnowledgePackageSchema,
@@ -37,6 +37,8 @@ import {
   type MemoryExport,
   type TranslationMemoryExport,
 } from "../../schemas/knowledge-package.schema.js";
+
+const log = createLogger({ layer: "core", source: "knowledge-packager.ts" });
 
 // ── Types ──────────────────────────────────────────────
 
@@ -125,7 +127,7 @@ export async function exportKnowledge(
   const includeRelations = options?.includeRelations ?? true;
   const minQuality = options?.minQuality ?? 0;
 
-  logger.info("knowledge-packager:export:start", {
+  log.info("knowledge-packager:export:start", {
     sources: options?.sources?.join(","),
     minQuality,
     includeMemories,
@@ -185,7 +187,7 @@ export async function exportKnowledge(
     translationEntries: translationMemory.length,
   };
 
-  logger.info("knowledge-packager:export:done", stats);
+  log.info("knowledge-packager:export:done", stats);
   return { package: pkg, stats };
 }
 
@@ -204,7 +206,7 @@ export async function importKnowledge(
     throw new McpGraphError(`Invalid knowledge package: ${errorMsg}`);
   }
 
-  logger.info("knowledge-packager:import:start", {
+  log.info("knowledge-packager:import:start", {
     documentCount: pkg.manifest.documentCount,
     memoryCount: pkg.manifest.memoryCount,
     projectName: pkg.manifest.projectName,
@@ -342,7 +344,7 @@ export async function importKnowledge(
     })();
   }
 
-  logger.info("knowledge-packager:import:done", {
+  log.info("knowledge-packager:import:done", {
     documentsImported: resultValue.documentsImported,
     documentsSkipped: resultValue.documentsSkipped,
     memoriesImported: resultValue.memoriesImported,
@@ -491,7 +493,7 @@ function queryTranslationMemory(db: Database.Database): TranslationMemoryExport[
     }));
   } catch {
     // translation_memory table may not exist
-    logger.debug("knowledge-packager:no-translation-memory-table");
+    log.debug("knowledge-packager:no-translation-memory-table");
     return [];
   }
 }

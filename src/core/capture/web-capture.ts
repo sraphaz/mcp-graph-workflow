@@ -15,9 +15,11 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
 import { extractContent, type ExtractionResult } from "./content-extractor.js";
+
+const log = createLogger({ layer: "core", source: "web-capture.ts" });
 
 /** Hostname/IP patterns that must be blocked to prevent SSRF attacks. */
 const BLOCKED_HOSTNAME_PATTERNS: RegExp[] = [
@@ -127,7 +129,7 @@ export async function captureWebPage(
   }
   const timeout = options?.timeout ?? 30_000;
 
-  logger.info("Capturing web page", { url, timeout, selector: options?.selector });
+  log.info("Capturing web page", { url, timeout, selector: options?.selector });
 
   // Dynamic import — Playwright may not be installed
   let chromium: typeof import("playwright").chromium;
@@ -154,7 +156,7 @@ export async function captureWebPage(
 
     const extraction = await extractContent(html, { selector: options?.selector });
 
-    logger.info("Web page captured", { url, wordCount: extraction.wordCount });
+    log.info("Web page captured", { url, wordCount: extraction.wordCount });
 
     return {
       ...extraction,
@@ -185,7 +187,7 @@ async function closeBrowserSafely(
       }),
     ]);
   } catch (err) {
-    logger.warn("Web capture browser close timed out", {
+    log.warn("Web capture browser close timed out", {
       timeoutMs,
       error: err instanceof Error ? err.message : String(err),
     });

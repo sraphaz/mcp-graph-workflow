@@ -29,7 +29,9 @@ import type {
   WsdlField,
 } from "./wsdl-parser.js";
 import type { SiebelObject, SiebelObjectType } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "wsdl-to-sif.ts" });
 
 // --- Public types ---
 
@@ -226,7 +228,7 @@ export function generateSifFromWsdl(
 ): WsdlToSifResult {
   const { prefix, projectName = "Generated", existingBcName } = options;
 
-  logger.debug("wsdl-to-sif: generating", {
+  log.debug("wsdl-to-sif: generating", {
     operations: wsdl.operations.length,
     types: wsdl.types.length,
   });
@@ -260,7 +262,7 @@ export function generateSifFromWsdl(
   // AC5: Validation
   const validationScore = calculateValidationScore(objects);
 
-  logger.info("wsdl-to-sif: complete", {
+  log.info("wsdl-to-sif: complete", {
     objects: objects.length,
     fields: allFields.length,
     score: validationScore,

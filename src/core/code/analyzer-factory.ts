@@ -29,7 +29,9 @@ import { TsAnalyzer } from "./ts-analyzer.js";
 import { TreeSitterAnalyzer } from "./treesitter/treesitter-analyzer.js";
 import { ServerRegistry } from "../lsp/server-registry.js";
 import { detectProjectLanguages } from "../lsp/language-detector.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "analyzer-factory.ts" });
 
 const TS_LANGUAGE_IDS = new Set(["typescript", "javascript"]);
 
@@ -78,7 +80,7 @@ export async function createAnalyzers(basePath: string): Promise<CodeAnalyzer[]>
       analyzers.push(proxy);
     }
 
-    logger.info("analyzer-factory:created", {
+    log.info("analyzer-factory:created", {
       tsAnalyzer: true,
       treeSitter: filteredExtensions.length > 0,
       detectedLanguages: otherLanguages.map((d) => d.languageId).join(","),

@@ -52,15 +52,19 @@ vi.mock("node:child_process", () => ({
 }));
 
 // Suppress logger output during tests
-vi.mock("../../core/utils/logger.js", () => ({
-  logger: {
+vi.mock("../../core/utils/logger.js", () => {
+  const contextual = {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
     success: vi.fn(),
-  },
-}));
+  };
+  return {
+    logger: contextual,
+    createLogger: vi.fn(() => contextual),
+  };
+});
 
 import { LspClient } from "../../core/lsp/lsp-client.js";
 

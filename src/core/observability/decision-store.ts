@@ -29,8 +29,10 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { ConfidenceEvidence, ConfidenceDecision } from "../autonomy/confidence-scorer.js";
+
+const log = createLogger({ layer: "core", source: "decision-store.ts" });
 
 // ── Interfaces ─────────────────────────────────────────
 
@@ -123,7 +125,7 @@ export class DecisionStore {
       createdAt,
     );
 
-    logger.debug("decision:recorded", { id, nodeId: entry.nodeId, decision: entry.decision, score: entry.confidenceScore });
+    log.debug("decision:recorded", { id, nodeId: entry.nodeId, decision: entry.decision, score: entry.confidenceScore });
     return id;
   }
 
@@ -133,7 +135,7 @@ export class DecisionStore {
       "UPDATE decision_log SET outcome = ? WHERE id = ?",
     ).run(outcome, decisionId);
 
-    logger.debug("decision:outcome", { decisionId, outcome });
+    log.debug("decision:outcome", { decisionId, outcome });
   }
 
   /** Get all decisions for a node, ordered by created_at ASC. */

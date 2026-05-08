@@ -29,7 +29,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { runTests, type TestError } from "./test-runner.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "test-gate.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -78,7 +80,7 @@ export async function runTestGate(
 
   // No test files = skip (backward compatible)
   if (testFiles.length === 0) {
-    logger.debug("test-gate:skipped", { nodeId, reason: "no testFiles" });
+    log.debug("test-gate:skipped", { nodeId, reason: "no testFiles" });
     return {
       status: "skipped",
       blocked: false,
@@ -92,7 +94,7 @@ export async function runTestGate(
   }
 
   // Run the tests
-  logger.info("test-gate:running", { nodeId, testFiles, mode, timeoutMs });
+  log.info("test-gate:running", { nodeId, testFiles, mode, timeoutMs });
 
   const resultValue = await runTests(testFiles, { timeoutMs });
 
@@ -107,7 +109,7 @@ export async function runTestGate(
     mode,
   };
 
-  logger.info("test-gate:result", {
+  log.info("test-gate:result", {
     nodeId,
     status: gateResult.status,
     blocked: gateResult.blocked,

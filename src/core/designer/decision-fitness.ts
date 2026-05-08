@@ -24,7 +24,9 @@
  */
 
 import type { GraphNode } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "decision-fitness.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -131,7 +133,7 @@ export function scoreFriction(decision: GraphNode): FrictionResult {
       ? "No friction indicators detected"
       : `Detected ${detectedKeywords.length} friction indicator(s): ${detectedKeywords.join(", ")}`;
 
-  logger.debug("decision-fitness:friction", {
+  log.debug("decision-fitness:friction", {
     nodeId: decision.id,
     score,
     keywords: detectedKeywords.length,
@@ -176,7 +178,7 @@ export function scoreOptimality(decision: GraphNode, jtbds: Jtbd[]): OptimalityR
 
   const score = Math.round((matchedJtbds.length / jtbds.length) * 100);
 
-  logger.debug("decision-fitness:optimality", {
+  log.debug("decision-fitness:optimality", {
     nodeId: decision.id,
     score,
     matched: matchedJtbds.length,
@@ -215,7 +217,7 @@ export function scoreReversibility(decision: GraphNode): ReversibilityResult {
       ? 50 // neutral when no signals
       : Math.round((reversibleKeywords.length / total) * 100);
 
-  logger.debug("decision-fitness:reversibility", {
+  log.debug("decision-fitness:reversibility", {
     nodeId: decision.id,
     score,
     reversible: reversibleKeywords.length,

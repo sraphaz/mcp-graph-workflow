@@ -25,9 +25,11 @@ import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexDecision } from "../../core/rag/decision-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { autoPromoteEpic, cascadeDownOnDone } from "../../core/utils/epic-promotion.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { extractAgentId } from "../agent-identity.js";
+
+const log = createLogger({ layer: "mcp", source: "update-status.ts" });
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   backlog: ["ready", "in_progress", "blocked"],
@@ -53,7 +55,7 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
       const ids = Array.isArray(id) ? id : [id];
       const isBulk = ids.length > 1;
 
-      logger.debug("tool:update_status", { ids, status, bulk: isBulk, force, agentId });
+      log.debug("tool:update_status", { ids, status, bulk: isBulk, force, agentId });
 
       if (isBulk) {
         // Validate transitions for bulk update
@@ -71,7 +73,7 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
         }
 
         const resultValue = store.bulkUpdateStatus(ids, status as NodeStatus);
-        logger.info("tool:update_status:ok", { count: ids.length, status, updated: resultValue.updated.length });
+        log.info("tool:update_status:ok", { count: ids.length, status, updated: resultValue.updated.length });
         const bulkResult: Record<string, unknown> = { ok: true, ...resultValue };
         if (bulkWarnings.length > 0) bulkResult.warnings = bulkWarnings;
         return mcpText(bulkResult);
@@ -94,11 +96,11 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
 
       if (!updated) {
         const err = new NodeNotFoundError(ids[0]);
-        logger.warn("tool:update_status:fail", { error: err.message });
+        log.warn("tool:update_status:fail", { error: err.message });
         return mcpError(err);
       }
 
-      logger.info("tool:update_status:ok", { id: ids[0], status });
+      log.info("tool:update_status:ok", { id: ids[0], status });
 
       // Auto-capture AI decision when transitioning to done
       if (status === "done" && rationale) {
@@ -112,7 +114,7 @@ export function registerUpdateStatus(server: McpServer, store: SqliteStore): voi
           });
           indexEntitiesForSource(store.getDb(), "ai_decision");
         } catch (err) {
-          logger.warn("tool:update_status:decision_index_failed", { error: String(err) });
+          log.warn("tool:update_status:decision_index_failed", { error: String(err) });
         }
       }
 

@@ -25,7 +25,9 @@
  */
 
 import { z } from "zod/v4";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "synthetic-data-gen.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -129,7 +131,7 @@ export function generateEdgeCase<T extends z.ZodObject<ZodShape>>(
     }
   }
 
-  logger.debug("synthetic-data-gen:edge-cases", { count: unique.length });
+  log.debug("synthetic-data-gen:edge-cases", { count: unique.length });
   return unique;
 }
 

@@ -7,7 +7,9 @@ import type { GraphEventBus } from "../events/event-bus.js";
 import type { GraphEvent, GraphEventType } from "../events/event-types.js";
 import type { HookBus } from "./hook-bus.js";
 import type { HookChannel } from "./hook-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "graph-event-bridge.ts" });
 
 /**
  * Opt-in bridge: subscribe to GraphEventBus typed events and re-emit them
@@ -52,7 +54,7 @@ export function installGraphEventBridge(
   }
 
   if (subscriptions.length > 0) {
-    logger.info("hooks:bridge:installed", { entries: subscriptions.length });
+    log.info("hooks:bridge:installed", { entries: subscriptions.length });
   }
 
   return () => {

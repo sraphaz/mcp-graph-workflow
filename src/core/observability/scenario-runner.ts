@@ -29,8 +29,10 @@
 
 import Database from "better-sqlite3";
 import { runMigrations } from "../store/migrations.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
+
+const log = createLogger({ layer: "core", source: "scenario-runner.ts" });
 
 // ── Interfaces ─────────────────────────────────────────
 
@@ -142,7 +144,7 @@ export class ScenarioRunner {
     const durationMs = Math.round(performance.now() - startTime);
     const passed = failedAssertions.length === 0;
 
-    logger.debug("scenario:completed", {
+    log.debug("scenario:completed", {
       name: scenario.name,
       passed,
       stepsExecuted,

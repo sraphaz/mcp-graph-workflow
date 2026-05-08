@@ -27,7 +27,9 @@
  *   - Only requested stores are queried (no implicit fan-out).
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "federated-query.ts" });
 
 export type StoreId = "graph" | "memory" | "provenance" | "knowledge" | "rag";
 
@@ -77,7 +79,7 @@ export async function federatedQuery(
         const msg = err instanceof Error ? err.message : String(err);
         const warning = `Store "${adapter.storeId}" unavailable: ${msg}`;
         warnings.push(warning);
-        logger.warn("federated-query:store_offline", {
+        log.warn("federated-query:store_offline", {
           storeId: adapter.storeId,
           error: msg,
         });

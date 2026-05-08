@@ -24,7 +24,9 @@ import { getBuiltInSkills, type BuiltInSkill } from "../skills/built-in-skills.j
 import { scanSkills } from "../insights/skill-recommender.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { chunkText } from "./chunk-text.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "skill-indexer.ts" });
 
 export interface SkillIndexResult {
   builtInIndexed: number;
@@ -108,10 +110,10 @@ export async function indexSkills(
       }
     }
   } catch {
-    logger.debug("skill-indexer: filesystem scan skipped (no skills directory)");
+    log.debug("skill-indexer: filesystem scan skipped (no skills directory)");
   }
 
-  logger.info("Skills indexed", { builtInIndexed, filesystemIndexed, skippedDuplicates });
+  log.info("Skills indexed", { builtInIndexed, filesystemIndexed, skippedDuplicates });
   return { builtInIndexed, filesystemIndexed, skippedDuplicates };
 }
 

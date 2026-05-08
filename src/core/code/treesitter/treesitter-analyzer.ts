@@ -26,7 +26,7 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
 import type { AnalyzedFile, CodeAnalyzer, CodeSymbol, CodeRelation } from "../code-types.js";
 import { TreeSitterManager, resetTreeSitterLoader } from "./treesitter-manager.js";
 import { LANGUAGE_REFERENCES, SUPPORTED_LANGUAGES } from "./reference-content.js";
@@ -477,6 +477,8 @@ import {
   type KtSyntaxNodeLike,
 } from "./kotlin-enrichment.js";
 
+const log = createLogger({ layer: "core", source: "treesitter-analyzer.ts" });
+
 // ── TreeSitterAnalyzer class ─────────────────────────────
 
 export class TreeSitterAnalyzer implements CodeAnalyzer {
@@ -507,7 +509,7 @@ export class TreeSitterAnalyzer implements CodeAnalyzer {
 
     const parser = await this.manager.getParser(languageId);
     if (!parser) {
-      logger.debug("treesitter-analyzer:no-parser", { languageId, file: relativePath });
+      log.debug("treesitter-analyzer:no-parser", { languageId, file: relativePath });
       return { file: relativePath, symbols: [], relations: [] };
     }
 
@@ -515,7 +517,7 @@ export class TreeSitterAnalyzer implements CodeAnalyzer {
     try {
       content = readFileSync(filePath, "utf-8");
     } catch {
-      logger.debug("treesitter-analyzer:read-error", { file: relativePath });
+      log.debug("treesitter-analyzer:read-error", { file: relativePath });
       return { file: relativePath, symbols: [], relations: [] };
     }
 
@@ -538,7 +540,7 @@ export class TreeSitterAnalyzer implements CodeAnalyzer {
       extractSymbolsFromNode(child, ctx);
     }
 
-    logger.debug("treesitter-analyzer:analyzed", {
+    log.debug("treesitter-analyzer:analyzed", {
       file: relativePath,
       languageId,
       symbols: String(ctx.symbols.length),

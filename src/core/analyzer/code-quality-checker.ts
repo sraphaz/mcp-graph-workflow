@@ -23,7 +23,9 @@
 import { execSync } from "node:child_process";
 import { McpGraphError } from "../utils/errors.js";
 import { scoreToGrade } from "../utils/grading.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "code-quality-checker.ts" });
 
 export interface QualityCheck {
   name: string;
@@ -125,7 +127,7 @@ export function checkCodeQuality(projectPath: string): CodeQualityReport {
   const grade = scoreToGrade(score);
   const passed = passedRequired === totalRequired;
 
-  logger.info("code-quality:complete", { score, grade, passed });
+  log.info("code-quality:complete", { score, grade, passed });
 
   return { mode: "code_quality", score, grade, checks, findings: allFindings, passed };
 }

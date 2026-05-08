@@ -28,7 +28,9 @@
 import type { SiebelObject, SiebelObjectType } from "../../schemas/siebel.schema.js";
 import { learnTemplates, type LearnedTemplate } from "./template-learner.js";
 import { buildSifXml, type SifTemplateObject, type SifTemplateChild } from "./sif-templates.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "scaffold-generator.ts" });
 
 // --- Types ---
 
@@ -163,7 +165,7 @@ const BC_SCRIPT_BOILERPLATE = `function BusComp_PreSetFieldValue (FieldName, Fie
 export function scaffoldSiebelObjects(request: ScaffoldRequest): ScaffoldResult {
   const { description, prefix, projectName, referenceObjects, includeScriptBoilerplate } = request;
 
-  logger.info("scaffold-generator", {
+  log.info("scaffold-generator", {
     description: description.slice(0, 100),
     prefix,
     projectName,
@@ -306,7 +308,7 @@ export function scaffoldSiebelObjects(request: ScaffoldRequest): ScaffoldResult 
     ];
   }
 
-  logger.info("scaffold-generator:complete", {
+  log.info("scaffold-generator:complete", {
     objectCount: String(objects.length),
     validationScore: String(validationScore),
     fields: String(intent.fields.length),

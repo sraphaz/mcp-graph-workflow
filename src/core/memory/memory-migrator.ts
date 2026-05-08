@@ -24,8 +24,10 @@
 import path from "node:path";
 import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { STORE_DIR } from "../utils/constants.js";
+
+const log = createLogger({ layer: "core", source: "memory-migrator.ts" });
 
 export interface MigrationResult {
   migrated: number;
@@ -92,7 +94,7 @@ export async function migrateSerenaMemories(basePath: string): Promise<Migration
   }
 
   if (migrated > 0) {
-    logger.info("Serena memories migrated", { migrated, skipped, from: sourceDir, to: targetDir });
+    log.info("Serena memories migrated", { migrated, skipped, from: sourceDir, to: targetDir });
   }
 
   return { migrated, skipped };

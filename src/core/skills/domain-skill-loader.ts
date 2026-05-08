@@ -20,7 +20,9 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, basename, extname } from "node:path";
 import { z } from "zod/v4";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "domain-skill-loader.ts" });
 
 /**
  * §extracta-sweep-1 — supported `process.platform` values that a domain
@@ -141,7 +143,7 @@ export function loadDomainSkills(
       }
     });
   } catch (err) {
-    logger.warn("domain-skill-loader:read_root_failed", { rootDir, error: String(err) });
+    log.warn("domain-skill-loader:read_root_failed", { rootDir, error: String(err) });
     return { skills, errors };
   }
 

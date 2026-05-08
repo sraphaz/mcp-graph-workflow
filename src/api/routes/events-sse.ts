@@ -24,7 +24,9 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import type { GraphEventBus } from "../../core/events/event-bus.js";
 import type { GraphEvent } from "../../core/events/event-types.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "events-sse.ts" });
 
 /** Active SSE connections for cleanup tracking */
 const clients = new Set<Response>();
@@ -65,10 +67,10 @@ function handleSSE(
     } catch {
       // Connection already closed — ignore.
     }
-    logger.warn("SSE client capacity exceeded — dropped oldest", { cap: MAX_SSE_CLIENTS });
+    log.warn("SSE client capacity exceeded — dropped oldest", { cap: MAX_SSE_CLIENTS });
   }
 
-  logger.debug("SSE client connected", { totalClients: clients.size });
+  log.debug("SSE client connected", { totalClients: clients.size });
 
   // Forward all graph events to this client, using event.type as SSE event name
   const handler = (event: GraphEvent): void => {
@@ -96,7 +98,7 @@ function handleSSE(
     clearInterval(heartbeat);
     eventBus.off("*", handler);
     clients.delete(res);
-    logger.debug("SSE client disconnected", { totalClients: clients.size });
+    log.debug("SSE client disconnected", { totalClients: clients.size });
   };
 
   req.on("close", cleanup);

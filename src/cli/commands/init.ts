@@ -19,7 +19,9 @@ import { Command } from "commander";
 import path from "node:path";
 import { runInit } from "../../mcp/init-project.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "init.ts" });
 
 function output(msg: string): void {
   process.stdout.write(msg + "\n");
@@ -41,7 +43,7 @@ export function initCommand(): Command {
         output(`Import PRD: mcp-graph import <file.md>`);
         output(`Stats: mcp-graph stats`);
       } catch (error) {
-        logger.error("Init failed", { error: getErrorMessage(error) });
+        log.error("Init failed", { error: getErrorMessage(error) });
         process.exitCode = 1;
       }
     });

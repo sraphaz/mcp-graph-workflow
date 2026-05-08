@@ -31,8 +31,10 @@ import {
   getBaselinesByModule,
 } from "../../core/feature-depth/baselines-store.js";
 import { writeTrendMemory } from "../../core/feature-depth/trend-memory.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "feature-depth.ts" });
 
 const FEATURE_DEPTH_ACTIONS = ["score", "audit", "growth", "diff", "baselines", "trend"] as const;
 type FeatureDepthAction = (typeof FEATURE_DEPTH_ACTIONS)[number];
@@ -206,7 +208,7 @@ export function registerFeatureDepth(
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("feature_depth tool error", { action, error: msg });
+        log.error("feature_depth tool error", { action, error: msg });
         return mcpError(msg);
       }
     },

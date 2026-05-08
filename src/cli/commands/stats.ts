@@ -18,7 +18,9 @@
 import { Command } from "commander";
 import { openStoreOrFail } from "../open-store.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "stats.ts" });
 
 function output(msg: string): void {
   process.stdout.write(msg + "\n");
@@ -53,7 +55,7 @@ export function statsCommand(): Command {
           output(`Total edges: ${stats.totalEdges}`);
         }
       } catch (err) {
-        logger.error(`Stats failed: ${getErrorMessage(err)}`);
+        log.error(`Stats failed: ${getErrorMessage(err)}`);
         process.exit(1);
       } finally {
         store.close();

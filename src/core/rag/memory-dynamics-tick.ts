@@ -34,7 +34,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { decayStaleKnowledge, consolidateDuplicates, forgetContradictions } from "./knowledge-quality.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "memory-dynamics-tick.ts" });
 
 export const MEMORY_DYNAMICS_TICK_KEY = "last_memory_dynamics_tick_at";
 export const MEMORY_DYNAMICS_TICK_INTERVAL_KEY = "memory_dynamics_tick_interval_ms";
@@ -105,6 +107,6 @@ export function maybeRunMemoryDynamicsTick(
     lastTickAt: newTickAt,
   };
 
-  logger.info("memory-dynamics-tick:ran", { ...result });
+  log.info("memory-dynamics-tick:ran", { ...result });
   return result;
 }

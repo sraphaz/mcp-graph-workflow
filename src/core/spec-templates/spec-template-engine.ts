@@ -20,8 +20,10 @@
  * ADR-08: sections with outputNodeType create typed nodes deterministically.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SpecTemplate } from "../../schemas/spec-template.schema.js";
+
+const log = createLogger({ layer: "core", source: "spec-template-engine.ts" });
 
 export interface ConstitutionPrincipleRef {
   id: string;
@@ -173,7 +175,7 @@ function checkValidationRule(rule: string, content: string, sectionTitle: string
       return null;
     }
     default:
-      logger.debug(`Unknown validation rule: ${ruleName}`);
+      log.debug(`Unknown validation rule: ${ruleName}`);
       return null;
   }
 }

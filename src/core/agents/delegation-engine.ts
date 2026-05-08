@@ -25,9 +25,11 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
 import type { DelegationTask } from "../../schemas/delegation.schema.js";
+
+const log = createLogger({ layer: "core", source: "delegation-engine.ts" });
 
 export const MAX_DEPTH = 2;
 export const MAX_CONCURRENT = 3;
@@ -108,7 +110,7 @@ export class DelegationEngine {
        VALUES (?, ?, ?, ?, ?, 'running', ?, ?)`,
     ).run(id, parentAgentId, childAgentId, task.objective, allowedToolsJson, depth, now());
 
-    logger.info("delegation:created", { id, parentAgentId, childAgentId, depth, tools: task.allowedTools.length });
+    log.info("delegation:created", { id, parentAgentId, childAgentId, depth, tools: task.allowedTools.length });
     return id;
   }
 
@@ -117,7 +119,7 @@ export class DelegationEngine {
       `UPDATE delegations SET status = 'completed', result_summary = ?, tokens_used = ?, completed_at = ?
        WHERE id = ?`,
     ).run(summary, tokensUsed, now(), delegationId);
-    logger.info("delegation:completed", { id: delegationId });
+    log.info("delegation:completed", { id: delegationId });
   }
 
   fail(delegationId: string, errorMessage: string): void {
@@ -125,7 +127,7 @@ export class DelegationEngine {
       `UPDATE delegations SET status = 'failed', result_summary = ?, completed_at = ?
        WHERE id = ?`,
     ).run(errorMessage, now(), delegationId);
-    logger.warn("delegation:failed", { id: delegationId, error: errorMessage });
+    log.warn("delegation:failed", { id: delegationId, error: errorMessage });
   }
 
   getById(id: string): DelegationRecord | null {

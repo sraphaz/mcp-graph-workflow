@@ -30,7 +30,9 @@
 import type Database from "better-sqlite3";
 import type { DreamCycleConfig, RemPhaseResult } from "../dream-types.js";
 import { linkBySharedContext } from "../../rag/knowledge-linker.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "rem-phase.ts" });
 
 interface DocRow {
   id: string;
@@ -97,7 +99,7 @@ export function runRemPhase(
   }
 
   const durationMs = Date.now() - startMs;
-  logger.info("dream:rem:complete", { priorityProcessed, urgencyDecayed, merged, associationsCreated, durationMs });
+  log.info("dream:rem:complete", { priorityProcessed, urgencyDecayed, merged, associationsCreated, durationMs });
 
   return { priorityProcessed, urgencyDecayed, merged, clustersFormed, associationsCreated, durationMs };
 }
@@ -165,7 +167,7 @@ function mergeBySemanticSimilarity(
       try {
         if (matchDoc.metadata) meta = JSON.parse(matchDoc.metadata) as Record<string, unknown>;
       } catch {
-        logger.warn("rem-phase:corrupted-metadata", { docId: match.id });
+        log.warn("rem-phase:corrupted-metadata", { docId: match.id });
       }
       meta.merged_into = id;
       meta.merged_at = new Date().toISOString();
@@ -179,7 +181,7 @@ function mergeBySemanticSimilarity(
 
     if (cluster.length > 0) {
       clustersFormed++;
-      logger.debug("dream:rem:merge_cluster", { kept: id, softMerged: cluster, sourceType: sourceDoc.source_type });
+      log.debug("dream:rem:merge_cluster", { kept: id, softMerged: cluster, sourceType: sourceDoc.source_type });
     }
   }
 
@@ -213,7 +215,7 @@ function processPriorityDocs(
       try {
         meta = JSON.parse(doc.metadata) as Record<string, unknown>;
       } catch {
-        logger.warn("rem-phase:corrupted-metadata-boost", { docId: doc.id });
+        log.warn("rem-phase:corrupted-metadata-boost", { docId: doc.id });
         continue;
       }
 
@@ -240,6 +242,6 @@ function processPriorityDocs(
     }
   })();
 
-  logger.debug("dream:rem:priority", { priorityProcessed, urgencyDecayed });
+  log.debug("dream:rem:priority", { priorityProcessed, urgencyDecayed });
   return { priorityProcessed, urgencyDecayed };
 }

@@ -17,9 +17,11 @@
 
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
 import type { DaVinciJobStatus } from "./davinci-types.js";
+
+const log = createLogger({ layer: "core", source: "davinci-store.ts" });
 
 // ── Row Interface ─────────────────────────────────────────────────────
 
@@ -141,7 +143,7 @@ export class DaVinciStore {
       VALUES (?, ?, ?, ?, ?, ?, ?, 'analyzing', ?, ?)
     `).run(id, input.sourceCode, input.pluginType, input.pluginName, input.packageName, input.className, input.targetSdk, now, now);
 
-    logger.info("davinci-store: job created", { id, pluginName: input.pluginName });
+    log.info("davinci-store: job created", { id, pluginName: input.pluginName });
     const job = this.getJob(id);
     if (!job) throw new McpGraphError(`Failed to retrieve created job ${id}`);
     return job;

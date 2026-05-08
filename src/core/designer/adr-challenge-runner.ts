@@ -28,7 +28,9 @@ import { scoreFriction, scoreOptimality, scoreReversibility, computeDecisionFitn
 import { assembleChallengeReport, type ChallengeReport } from "./challenge-report.js";
 import type { Finding } from "./severity-scoring.js";
 import { NodeNotFoundError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "adr-challenge-runner.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -179,7 +181,7 @@ export function runAdrChallenge(store: SqliteStore, nodeId: string): AdrChalleng
   // 4. Assemble report
   const report = assembleChallengeReport({ fitness, jtbdResults, preMortemFindings });
 
-  logger.info("adr-challenge:run", {
+  log.info("adr-challenge:run", {
     mode: "adr_challenge",
     nodeId,
     verdict: report.overallVerdict.verdict,
@@ -224,7 +226,7 @@ export function runAllAdrChallenges(store: SqliteStore): AllAdrChallengesResult 
       : 0,
   };
 
-  logger.info("adr-challenge:run-all", {
+  log.info("adr-challenge:run-all", {
     mode: "adr_challenge",
     totalDecisions: summary.totalDecisions,
     passed: summary.passed,

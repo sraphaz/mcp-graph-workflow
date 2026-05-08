@@ -20,7 +20,9 @@
  * Supports incremental gate wrapping and enable/disable per plugin.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "plugin-tool-registry.ts" });
 
 export interface PluginToolRegistration {
   toolName: string;
@@ -35,7 +37,7 @@ export class PluginToolRegistry {
 
   register(registration: PluginToolRegistration): void {
     this.tools.set(registration.toolName, registration);
-    logger.debug(`Plugin tool registered: ${registration.toolName} from ${registration.pluginName}`);
+    log.debug(`Plugin tool registered: ${registration.toolName} from ${registration.pluginName}`);
   }
 
   list(): PluginToolRegistration[] {
@@ -56,12 +58,12 @@ export class PluginToolRegistry {
 
   enablePlugin(pluginName: string): void {
     this.disabledPlugins.delete(pluginName);
-    logger.debug(`Plugin enabled in tool registry: ${pluginName}`);
+    log.debug(`Plugin enabled in tool registry: ${pluginName}`);
   }
 
   disablePlugin(pluginName: string): void {
     this.disabledPlugins.add(pluginName);
-    logger.debug(`Plugin disabled in tool registry: ${pluginName}`);
+    log.debug(`Plugin disabled in tool registry: ${pluginName}`);
   }
 
   removePlugin(pluginName: string): void {
@@ -76,7 +78,7 @@ export class PluginToolRegistry {
       this.wrappedSet.delete(toolName);
     }
     this.disabledPlugins.delete(pluginName);
-    logger.debug(`Plugin removed from tool registry: ${pluginName}, tools removed: ${toRemove.length}`);
+    log.debug(`Plugin removed from tool registry: ${pluginName}, tools removed: ${toRemove.length}`);
   }
 
   markWrapped(toolName: string): void {

@@ -22,7 +22,9 @@
 
 import { execSync } from "node:child_process";
 import { scoreToGrade } from "../utils/grading.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "test-coverage-checker.ts" });
 
 export interface CoverageCheck {
   name: string;
@@ -115,7 +117,7 @@ export function checkTestCoverage(projectPath: string): TestCoverageReport {
   const grade = scoreToGrade(score);
   const passed = requiredPassed === requiredTotal;
 
-  logger.info("test-coverage:complete", { score, grade, testCount: suiteResult.testCount, passed });
+  log.info("test-coverage:complete", { score, grade, testCount: suiteResult.testCount, passed });
 
   return {
     mode: "test_coverage",

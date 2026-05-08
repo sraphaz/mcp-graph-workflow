@@ -28,7 +28,9 @@
  */
 
 import type { UnderstandingResult, QueryIntent } from "./query-understanding.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "adaptive-router.ts" });
 
 export type QueryComplexity = "simple" | "moderate" | "complex";
 
@@ -126,7 +128,7 @@ export function routeQuery(understood: UnderstandingResult): RoutingDecision {
 
   const reason = buildReason(complexity, understood);
 
-  logger.debug("adaptive-router: query routed", {
+  log.debug("adaptive-router: query routed", {
     query: understood.originalQuery.slice(0, 60),
     complexity,
     strategies: strategies.length,
@@ -206,7 +208,7 @@ export function decomposeIntoSubQueries(understood: UnderstandingResult): SubQue
     subQueries.push({ text: originalQuery, source: "original" });
   }
 
-  logger.debug("adaptive-router: sub-query decomposition", {
+  log.debug("adaptive-router: sub-query decomposition", {
     original: originalQuery.slice(0, 60),
     subQueryCount: subQueries.length,
   });

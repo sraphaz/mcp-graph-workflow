@@ -29,7 +29,9 @@
  * - Bulk invalidation
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "response-cache.ts" });
 
 export interface ResponseCacheOptions {
   ttlMs: number;
@@ -106,7 +108,7 @@ export class ResponseCache {
   invalidateAll(): void {
     const count = this.entries.size;
     this.entries.clear();
-    logger.debug("ResponseCache invalidated", { entriesCleared: count });
+    log.debug("ResponseCache invalidated", { entriesCleared: count });
   }
 
   getStats(): ResponseCacheStats {

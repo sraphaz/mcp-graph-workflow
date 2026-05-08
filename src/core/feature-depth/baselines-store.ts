@@ -14,8 +14,10 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { Quadrant } from "./quadrant.js";
+
+const log = createLogger({ layer: "core", source: "baselines-store.ts" });
 
 export interface BaselineRow {
   readonly relPath: string;
@@ -89,7 +91,7 @@ export function getBaseline(
       gitCommit: row.git_commit,
     };
   } catch (err) {
-    logger.warn("feature-depth:baseline-get-failed", {
+    log.warn("feature-depth:baseline-get-failed", {
       relPath,
       error: err instanceof Error ? err.message : String(err),
     });
@@ -130,7 +132,7 @@ export function upsertBaseline(
       input.gitCommit ?? null,
     );
   } catch (err) {
-    logger.warn("feature-depth:baseline-upsert-failed", {
+    log.warn("feature-depth:baseline-upsert-failed", {
       relPath: input.relPath,
       error: err instanceof Error ? err.message : String(err),
     });

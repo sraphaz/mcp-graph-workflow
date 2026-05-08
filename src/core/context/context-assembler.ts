@@ -32,12 +32,14 @@ import { estimateTokens } from "./token-estimator.js";
 import { findCommunityDocs } from "../rag/graph-rag-strategy.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
 import type { CitationRef } from "../rag/citation-chain.js";
 import { extractCitationRefs } from "../rag/citation-chain.js";
 import { getAdaptiveBudgetSplit } from "./adaptive-budget.js";
 import { pruneContextSection } from "./context-pruning.js";
+
+const log = createLogger({ layer: "core", source: "context-assembler.ts" });
 
 /** Max nodes to load per paginated SQLite query in the fallback search path. Configurable via env. */
 export const CONTEXT_CHUNK_SIZE: number = (() => {
@@ -134,7 +136,7 @@ export function assembleContext(
   const cacheKey = `detail:${query.trim().toLowerCase()}:${tier}:${tokenBudget}:compress=${compress}`;
   const cached = assemblerCache.get(cacheKey) as AssembledContext | undefined;
   if (cached) {
-    logger.debug("assembler:context cache hit", { query: query.slice(0, 60) });
+    log.debug("assembler:context cache hit", { query: query.slice(0, 60) });
     return cached;
   }
 
@@ -236,7 +238,7 @@ export function assembleContext(
         }
       }
     } catch (err) {
-      logger.debug("context-assembler: quality search fallback", { error: getErrorMessage(err) });
+      log.debug("context-assembler: quality search fallback", { error: getErrorMessage(err) });
     }
 
     // Build citation chain for RAG provenance (M.A.P.A.: M — Model Contracts)
@@ -275,7 +277,7 @@ export function assembleContext(
       }
     }
   } catch (err) {
-    logger.debug("Knowledge search unavailable during assembly", { error: getErrorMessage(err) });
+    log.debug("Knowledge search unavailable during assembly", { error: getErrorMessage(err) });
   }
 
   breakdown.knowledge = tokensUsed - knowledgeTokensBefore;
@@ -317,7 +319,7 @@ export function assembleContext(
         }
       }
     } catch (err) {
-      logger.debug("Graph community context unavailable during assembly", { error: getErrorMessage(err) });
+      log.debug("Graph community context unavailable during assembly", { error: getErrorMessage(err) });
     }
   }
   breakdown.graph_community = tokensUsed - communityTokensBefore;
@@ -338,7 +340,7 @@ export function assembleContext(
   }
   breakdown.lsp = tokensUsed - lspTokensBefore;
 
-  logger.debug("context:breakdown", {
+  log.debug("context:breakdown", {
     graphTokens: breakdown.graph,
     knowledgeTokens: breakdown.knowledge,
     sections: sections.map((s) => `${s.name}:${s.tokens}`).join(", "),
@@ -348,18 +350,18 @@ export function assembleContext(
   while (tokensUsed > tokenBudget && sections.length > 1) {
     const removed = sections.pop();
     if (removed) tokensUsed -= removed.tokens;
-    logger.debug("context:budget-truncated", { removed: removed?.name, tokensUsed, tokenBudget });
+    log.debug("context:budget-truncated", { removed: removed?.name, tokensUsed, tokenBudget });
   }
   if (tokensUsed > tokenBudget) {
-    logger.warn("context:budget-exceeded", { tokensUsed, tokenBudget, overage: tokensUsed - tokenBudget });
+    log.warn("context:budget-exceeded", { tokensUsed, tokenBudget, overage: tokensUsed - tokenBudget });
   }
 
   const truncatedSections = nodeIds.length - sections.filter((s) => s.source === "graph").length;
   if (truncatedSections > 0) {
-    logger.warn("context:sections-truncated", { truncatedSections, reason: "token budget" });
+    log.warn("context:sections-truncated", { truncatedSections, reason: "token budget" });
   }
 
-  logger.info("Context assembled", {
+  log.info("Context assembled", {
     query: query.slice(0, 50),
     tier,
     sections: sections.length,
@@ -387,7 +389,7 @@ export function assembleContext(
     const reduction = inputTokens > 0 ? Math.round((1 - outputTokens / inputTokens) * 100) : 0;
 
     compressionStats = { inputTokens, outputTokens, reductionPercent: reduction };
-    logger.debug("context:compression", { inputTokens, outputTokens, reductionPercent: reduction });
+    log.debug("context:compression", { inputTokens, outputTokens, reductionPercent: reduction });
   }
 
   const resultValue: AssembledContext = {
@@ -419,7 +421,7 @@ function findRelevantNodeIds(store: SqliteStore, query: string): string[] {
     const results = store.searchNodes(query, 5);
     if (results.length > 0) return results.map((r) => r.id);
   } catch (err) {
-    logger.debug("FTS search failed in context assembler, falling back to substring", { error: getErrorMessage(err) });
+    log.debug("FTS search failed in context assembler, falling back to substring", { error: getErrorMessage(err) });
   }
 
   // Fallback: paginated LIKE query — avoids loading all nodes into memory.
@@ -432,7 +434,7 @@ function findRelevantNodeIds(store: SqliteStore, query: string): string[] {
     const { nodes } = store.queryNodes({ search: searchTerm, limit: CONTEXT_CHUNK_SIZE });
     return nodes.slice(0, 10).map((n) => n.id);
   } catch (err) {
-    logger.debug("Substring fallback also failed in context assembler", { error: getErrorMessage(err) });
+    log.debug("Substring fallback also failed in context assembler", { error: getErrorMessage(err) });
     return [];
   }
 }

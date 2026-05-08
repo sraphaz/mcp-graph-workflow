@@ -26,7 +26,9 @@
 import type { LockManager } from "../store/lock-manager.js";
 import type { SqliteEventBridge } from "../events/sqlite-event-bridge.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "agent-heartbeat.ts" });
 
 const DEFAULT_INTERVAL_MS = 30_000; // 30 seconds
 const LOCK_RENEWAL_TTL_SECONDS = 600; // 10 minutes
@@ -52,10 +54,10 @@ export class AgentHeartbeat {
       try {
         this.tick();
       } catch (err) {
-        logger.warn("agent-heartbeat:tick_error", { error: String(err) });
+        log.warn("agent-heartbeat:tick_error", { error: String(err) });
       }
     }, intervalMs);
-    logger.info("agent-heartbeat:started", { agentId: this.agentId, intervalMs });
+    log.info("agent-heartbeat:started", { agentId: this.agentId, intervalMs });
   }
 
   /**
@@ -65,7 +67,7 @@ export class AgentHeartbeat {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
-      logger.debug("agent-heartbeat:stopped", { agentId: this.agentId });
+      log.debug("agent-heartbeat:stopped", { agentId: this.agentId });
     }
   }
 
@@ -81,7 +83,7 @@ export class AgentHeartbeat {
       try {
         this.lockManager.renew(lock.leaseToken, LOCK_RENEWAL_TTL_SECONDS);
       } catch (err) {
-        logger.warn("agent-heartbeat:renew_failed", {
+        log.warn("agent-heartbeat:renew_failed", {
           resourceId: lock.resourceId,
           error: String(err),
         });
@@ -98,7 +100,7 @@ export class AgentHeartbeat {
       },
     });
 
-    logger.debug("agent-heartbeat:tick", {
+    log.debug("agent-heartbeat:tick", {
       agentId: this.agentId,
       renewedLocks: activeLocks.length,
     });

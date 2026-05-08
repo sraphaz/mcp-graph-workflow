@@ -23,7 +23,9 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphEdge } from "./graph-types.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "auto-sequence.ts" });
 
 /** sequenceSubtasks — auto-generated description placeholder. */
 export function sequenceSubtasks(store: SqliteStore, parentId: string): { edgesCreated: number; chain: string[] } {
@@ -51,6 +53,6 @@ export function sequenceSubtasks(store: SqliteStore, parentId: string): { edgesC
     store.mergeInsert([], edges);
   }
 
-  logger.info("auto-sequence", { parentId, edgesCreated: edges.length });
+  log.info("auto-sequence", { parentId, edgesCreated: edges.length });
   return { edgesCreated: edges.length, chain: children.map(c => c.id) };
 }

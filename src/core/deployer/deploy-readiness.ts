@@ -28,7 +28,9 @@ import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { DeployReadinessError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "deploy-readiness.ts" });
 
 export interface DeployReadinessOptions {
   hasSnapshots?: boolean;
@@ -146,7 +148,7 @@ export function checkDeployReadiness(
       });
     }
   } catch (err) {
-    logger.debug("deploy-readiness: harness scan failed", { error: getErrorMessage(err) });
+    log.debug("deploy-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──
@@ -161,7 +163,7 @@ export function checkDeployReadiness(
     ? `Deploy Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `Deploy Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("deploy-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("deploy-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { checks, ready, score, grade, summary };
 }

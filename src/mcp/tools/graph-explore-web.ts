@@ -30,12 +30,15 @@
 import { z } from "zod/v4";
 import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 import {
+
   PlanPayloadSchema,
   type PlanPayload,
 } from "../contracts/plan-payload.js";
+
+const log = createLogger({ layer: "mcp", source: "graph-explore-web.ts" });
 
 export interface ExploreWebInput {
   nodeId: string;
@@ -108,7 +111,7 @@ export function registerGraphExploreWeb(server: McpServer): void {
     },
     async (args) => {
       const rVar = buildExploreWebPlan(args);
-      logger.debug("tool:graph_explore_web", { ok: rVar.ok, nodeId: args.nodeId });
+      log.debug("tool:graph_explore_web", { ok: rVar.ok, nodeId: args.nodeId });
       return mcpText(rVar);
     },
   );

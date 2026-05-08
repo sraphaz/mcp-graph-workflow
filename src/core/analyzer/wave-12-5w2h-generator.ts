@@ -22,7 +22,7 @@
  * for the Sandbox Build initiative with persistence to SQLite.
  */
 
-import { logger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 import {
   // Re-exported through `validateWave125W2HAnalysis` below — imported here for
   // documentation/IDE discoverability of the full contract surface.
@@ -30,6 +30,8 @@ import {
   Wave125W2HAnalysis,
   validateWave125W2HAnalysis,
 } from '../../schemas/wave-12-5w2h-analysis.js';
+
+const log = createLogger({ layer: "core", source: "wave-12-5w2h-generator.ts" });
 
 /**
  * Generate default 5W2H analysis for Wave-12 Sandbox Build
@@ -285,7 +287,7 @@ export function validate5W2HAnalysis(
   const resultValue = validateWave125W2HAnalysis(data);
 
   if (!resultValue.valid) {
-    logger.error('5W2H validation failed', {
+    log.error('5W2H validation failed', {
       errors: resultValue.errors,
     });
   }

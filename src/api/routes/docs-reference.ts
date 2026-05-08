@@ -29,9 +29,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { introspectTools } from "../../core/docs/tool-introspector.js";
 import { introspectRoutes } from "../../core/docs/route-introspector.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import type { ToolInfo } from "../../core/docs/tool-introspector.js";
 import type { RouteInfo } from "../../core/docs/route-introspector.js";
+
+const log = createLogger({ layer: "api", source: "docs-reference.ts" });
 
 // ── Manifest types ─────────────────────────────────
 
@@ -58,11 +60,11 @@ function loadManifest(): DocsManifest | null {
     if (existsSync(manifestPath)) {
       const raw = readFileSync(manifestPath, "utf-8");
       _manifest = JSON.parse(raw) as DocsManifest;
-      logger.debug("docs:manifest:loaded", { path: manifestPath, tools: _manifest.tools.length, routes: _manifest.routes.length, docs: _manifest.docs.length });
+      log.debug("docs:manifest:loaded", { path: manifestPath, tools: _manifest.tools.length, routes: _manifest.routes.length, docs: _manifest.docs.length });
       return _manifest;
     }
   } catch (err) {
-    logger.warn("docs:manifest:error", { error: String(err) });
+    log.warn("docs:manifest:error", { error: String(err) });
   }
 
   _manifest = null;
@@ -237,7 +239,7 @@ export function createDocsReferenceRouter(getBasePath: () => string): Router {
       const filePath = path.join(getBasePath(), "docs", category, `${slug}.md`);
       if (existsSync(filePath)) {
         const content = readFileSync(filePath, "utf-8");
-        logger.debug("docs:read", { category, slug });
+        log.debug("docs:read", { category, slug });
         res.json({ slug: `${category}/${slug}`, content });
         return;
       }
@@ -247,7 +249,7 @@ export function createDocsReferenceRouter(getBasePath: () => string): Router {
       const fullSlug = `${category}/${slug}`;
       const entry = manifest?.docs.find((d) => d.slug === fullSlug);
       if (entry) {
-        logger.debug("docs:read:manifest", { category, slug });
+        log.debug("docs:read:manifest", { category, slug });
         res.json({ slug: fullSlug, content: entry.content });
         return;
       }

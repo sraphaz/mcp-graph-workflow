@@ -21,7 +21,9 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "translation-indexer.ts" });
 
 export interface TranslationEvidenceInput {
   jobId: string;
@@ -107,7 +109,7 @@ export function indexTranslationEvidence(
     },
   ]);
 
-  logger.info("Translation evidence indexed", {
+  log.info("Translation evidence indexed", {
     jobId: evidence.jobId,
     sourceLanguage: evidence.sourceLanguage,
     targetLanguage: evidence.targetLanguage,

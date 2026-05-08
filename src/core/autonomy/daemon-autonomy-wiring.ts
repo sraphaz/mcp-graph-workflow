@@ -19,7 +19,7 @@
 
 import type Database from "better-sqlite3";
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import {
   bootstrapAutonomy,
   type AutonomyHandle,
@@ -27,6 +27,8 @@ import {
 import type { Dispatcher } from "./autopilot-scheduler.js";
 import type { RetryExecutor } from "./retry-worker.js";
 import type { ReactorBus } from "./event-reactor.js";
+
+const log = createLogger({ layer: "core", source: "daemon-autonomy-wiring.ts" });
 
 export interface AnyEventBus {
   on(event: string, handler: (payload: unknown) => void | Promise<void>): unknown;
@@ -63,7 +65,7 @@ export function toReactorBus(bus: AnyEventBus): ReactorBus {
       try {
         await Promise.resolve(bus.emit(event, payload));
       } catch (err) {
-        logger.error("daemon-autonomy:bus-emit-error", {
+        log.error("daemon-autonomy:bus-emit-error", {
           event,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -73,11 +75,11 @@ export function toReactorBus(bus: AnyEventBus): ReactorBus {
 }
 
 const noopRetry: RetryExecutor = async (taskId) => {
-  logger.warn("daemon-autonomy:noop-retry-executor", { taskId });
+  log.warn("daemon-autonomy:noop-retry-executor", { taskId });
 };
 
 const noopDispatch: Dispatcher = async (nodeId) => {
-  logger.warn("daemon-autonomy:noop-dispatcher", { nodeId });
+  log.warn("daemon-autonomy:noop-dispatcher", { nodeId });
 };
 
 /**
@@ -90,11 +92,11 @@ export function maybeStartDaemonAutonomy(
 ): AutonomyHandle | undefined {
   const env = opts.env ?? process.env;
   if (!isAutonomyEnabled(env)) {
-    logger.info("daemon-autonomy:skipped", { reason: "MCP_GRAPH_AUTONOMY!=on" });
+    log.info("daemon-autonomy:skipped", { reason: "MCP_GRAPH_AUTONOMY!=on" });
     return undefined;
   }
 
-  logger.info("daemon-autonomy:starting", {
+  log.info("daemon-autonomy:starting", {
     schedulerTickMs: opts.schedulerTickMs,
     retryIntervalMs: opts.retryIntervalMs,
   });

@@ -28,7 +28,9 @@
 
 import type { TextChunk } from "./chunk-text.js";
 import { tokenize } from "../search/tokenizer.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "enrichment-pipeline.ts" });
 
 export interface EnrichedChunk extends TextChunk {
   /** Top-N keywords extracted via TF-IDF term frequency */
@@ -153,7 +155,7 @@ export function enrichChunk(
   const entities = extractEntities(chunk.content);
   const summary = generateSummary(chunk.content);
 
-  logger.debug("Chunk enriched", {
+  log.debug("Chunk enriched", {
     index: chunk.index,
     sourceType,
     keywordCount: keywords.length,

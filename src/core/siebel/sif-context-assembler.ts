@@ -23,10 +23,12 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { getTemplate, type SifTemplate } from "./sif-templates.js";
 import type { SifGenerationRequest, SifTemplateType } from "../../schemas/siebel.schema.js";
 import type { KnowledgeDocument } from "../../schemas/knowledge.schema.js";
+
+const log = createLogger({ layer: "core", source: "sif-context-assembler.ts" });
 
 /** Summary of a knowledge document for context assembly. */
 export interface KnowledgeSummary {
@@ -72,7 +74,7 @@ export function assembleSifContext(
   knowledgeStore: KnowledgeStore,
   request: SifGenerationRequest,
 ): SifGenerationContext {
-  logger.info("Assembling SIF generation context", {
+  log.info("Assembling SIF generation context", {
     types: request.objectTypes.join(","),
     project: request.basedOnProject ?? "none",
   });
@@ -97,7 +99,7 @@ export function assembleSifContext(
   // 6. Build structured prompt
   const prompt = buildPrompt(request, templates, existingObjects, relatedDocs, exampleSif, validationRules);
 
-  logger.debug("SIF context assembled", {
+  log.debug("SIF context assembled", {
     existingObjects: String(existingObjects.length),
     templates: String(templates.length),
     relatedDocs: String(relatedDocs.length),
@@ -154,7 +156,7 @@ function searchExistingObjects(
     }
   }
 
-  logger.debug("Existing objects search", { found: String(summaries.length) });
+  log.debug("Existing objects search", { found: String(summaries.length) });
   return summaries;
 }
 

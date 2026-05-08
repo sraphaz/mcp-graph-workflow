@@ -44,7 +44,9 @@
 import { execSync } from "node:child_process";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "shadow-branch.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -125,11 +127,11 @@ export function createShadowBranch(nodeId: string, cwd?: string): ShadowBranchRe
 
   try {
     execSync(`git worktree add -b ${branchName} ${worktreePath} HEAD`, opts);
-    logger.info("shadow-branch:created", { nodeId, branchName, worktreePath });
+    log.info("shadow-branch:created", { nodeId, branchName, worktreePath });
     return { branchName, worktreePath, created: true };
   } catch (err) {
     const error = String(err);
-    logger.warn("shadow-branch:create-failed", { nodeId, error });
+    log.warn("shadow-branch:create-failed", { nodeId, error });
     return { branchName, worktreePath, created: false, error };
   }
 }
@@ -165,7 +167,7 @@ export function mergeShadowBranch(
       } catch (wtErr) {
         // Worktree removal failure is non-fatal — branch deletion is the
         // important part. `git worktree prune` (later) reclaims metadata.
-        logger.debug("shadow-branch:worktree-remove-soft-fail", {
+        log.debug("shadow-branch:worktree-remove-soft-fail", {
           worktreePath: handle.worktreePath,
           reason: String(wtErr),
         });
@@ -173,7 +175,7 @@ export function mergeShadowBranch(
     }
     execSync(`git branch -D ${handle.branchName}`, opts);
 
-    logger.info("shadow-branch:merged", {
+    log.info("shadow-branch:merged", {
       branchName: handle.branchName,
       worktreePath: handle.worktreePath,
       targetBranch,
@@ -181,7 +183,7 @@ export function mergeShadowBranch(
     return { merged: true, branchName: handle.branchName, worktreePath: handle.worktreePath };
   } catch (err) {
     const error = String(err);
-    logger.warn("shadow-branch:merge-failed", {
+    log.warn("shadow-branch:merge-failed", {
       branchName: handle.branchName,
       targetBranch,
       error,
@@ -210,7 +212,7 @@ export function discardShadowBranch(
       try {
         execSync(`git worktree remove --force ${handle.worktreePath}`, opts);
       } catch (wtErr) {
-        logger.debug("shadow-branch:worktree-remove-soft-fail", {
+        log.debug("shadow-branch:worktree-remove-soft-fail", {
           worktreePath: handle.worktreePath,
           reason: String(wtErr),
         });
@@ -221,7 +223,7 @@ export function discardShadowBranch(
     }
     execSync(`git branch -D ${handle.branchName}`, opts);
 
-    logger.info("shadow-branch:discarded", {
+    log.info("shadow-branch:discarded", {
       branchName: handle.branchName,
       worktreePath: handle.worktreePath,
       targetBranch,
@@ -229,7 +231,7 @@ export function discardShadowBranch(
     return { discarded: true, branchName: handle.branchName, worktreePath: handle.worktreePath };
   } catch (err) {
     const error = String(err);
-    logger.warn("shadow-branch:discard-failed", { branchName: handle.branchName, error });
+    log.warn("shadow-branch:discard-failed", { branchName: handle.branchName, error });
     return { discarded: false, branchName: handle.branchName, worktreePath: handle.worktreePath, error };
   }
 }
@@ -295,7 +297,7 @@ export function pruneOrphanWorktrees(options?: PruneOptions): PruneResult {
     ).toString();
     branches = out.split("\n").map((s) => s.trim()).filter(Boolean);
   } catch (err) {
-    logger.debug("shadow-branch:prune:list-failed", { error: String(err) });
+    log.debug("shadow-branch:prune:list-failed", { error: String(err) });
   }
 
   // 2. For each stale branch, remove its worktree (if any) then delete the branch.
@@ -309,14 +311,14 @@ export function pruneOrphanWorktrees(options?: PruneOptions): PruneResult {
         execSync(`git worktree remove --force ${wtPath}`, execOpts);
         reapedWorktrees += 1;
       } catch (err) {
-        logger.debug("shadow-branch:prune:wt-remove-failed", { branch, wtPath, error: String(err) });
+        log.debug("shadow-branch:prune:wt-remove-failed", { branch, wtPath, error: String(err) });
       }
     }
     try {
       execSync(`git branch -D ${branch}`, execOpts);
       reapedBranches += 1;
     } catch (err) {
-      logger.debug("shadow-branch:prune:branch-delete-failed", { branch, error: String(err) });
+      log.debug("shadow-branch:prune:branch-delete-failed", { branch, error: String(err) });
     }
   }
 
@@ -324,14 +326,14 @@ export function pruneOrphanWorktrees(options?: PruneOptions): PruneResult {
   try {
     const output = execSync("git worktree prune --verbose", execOpts).toString();
     if (reapedBranches > 0 || reapedWorktrees > 0) {
-      logger.info("shadow-branch:prune-ok", { reapedBranches, reapedWorktrees, ttlMs });
+      log.info("shadow-branch:prune-ok", { reapedBranches, reapedWorktrees, ttlMs });
     } else {
-      logger.debug("shadow-branch:prune-ok", { reapedBranches, reapedWorktrees, output });
+      log.debug("shadow-branch:prune-ok", { reapedBranches, reapedWorktrees, output });
     }
     return { pruned: true, reapedBranches, reapedWorktrees, output };
   } catch (err) {
     const error = String(err);
-    logger.debug("shadow-branch:prune-failed", { error });
+    log.debug("shadow-branch:prune-failed", { error });
     return { pruned: false, reapedBranches, reapedWorktrees, error };
   }
 }
@@ -367,18 +369,18 @@ export function reapShadowForNode(nodeId: string, cwd?: string): PruneResult {
       execSync(`git worktree remove --force ${wtPath}`, execOpts);
       reapedWorktrees += 1;
     } catch (err) {
-      logger.debug("shadow-branch:reap:wt-remove-failed", { branch, wtPath, error: String(err) });
+      log.debug("shadow-branch:reap:wt-remove-failed", { branch, wtPath, error: String(err) });
     }
     try {
       execSync(`git branch -D ${branch}`, execOpts);
       reapedBranches += 1;
     } catch (err) {
-      logger.debug("shadow-branch:reap:branch-delete-failed", { branch, error: String(err) });
+      log.debug("shadow-branch:reap:branch-delete-failed", { branch, error: String(err) });
     }
   }
 
   if (reapedBranches > 0 || reapedWorktrees > 0) {
-    logger.info("shadow-branch:reap-ok", { nodeId, reapedBranches, reapedWorktrees });
+    log.info("shadow-branch:reap-ok", { nodeId, reapedBranches, reapedWorktrees });
   }
   return { pruned: true, reapedBranches, reapedWorktrees };
 }

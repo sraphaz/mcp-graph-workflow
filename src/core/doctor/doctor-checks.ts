@@ -23,8 +23,10 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { fileExists } from "../utils/fs.js";
 import { getIntegrationsStatus } from "../integrations/tool-status.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { CheckResult } from "./doctor-types.js";
+
+const log = createLogger({ layer: "core", source: "doctor-checks.ts" });
 
 const MIN_NODE_VERSION = 20;
 
@@ -399,7 +401,7 @@ export async function checkIntegrations(basePath: string): Promise<CheckResult[]
 
     return results;
   } catch (err) {
-    logger.debug("doctor:integrations:fail", {
+    log.debug("doctor:integrations:fail", {
       error: err instanceof Error ? err.message : String(err),
     });
     return [

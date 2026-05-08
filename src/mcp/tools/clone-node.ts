@@ -22,9 +22,11 @@ import type { GraphNode, RelationType } from "../../core/graph/graph-types.js";
 import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { generateId } from "../../core/utils/id.js";
 import { now } from "../../core/utils/time.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { indexNodeAsKnowledge } from "../../core/rag/node-indexer.js";
+
+const log = createLogger({ layer: "mcp", source: "clone-node.ts" });
 
 function cloneSingle(
   store: SqliteStore,
@@ -103,7 +105,7 @@ export function registerCloneNode(server: McpServer, store: SqliteStore): void {
       newParentId: z.string().optional().describe("Parent ID for the cloned node"),
     },
     async ({ id, deep, newParentId }) => {
-      logger.debug("tool:clone_node", { sourceId: id, deep });
+      log.debug("tool:clone_node", { sourceId: id, deep });
       const source = store.getNodeById(id);
       if (!source) {
         const err = new NodeNotFoundError(id);
@@ -135,7 +137,7 @@ export function registerCloneNode(server: McpServer, store: SqliteStore): void {
         for (const cVar of cloned) {
           indexNodeAsKnowledge(store.getDb(), cVar);
         }
-        logger.info("tool:clone_node:ok", { sourceId: id, deep: true, clonedCount: cloned.length });
+        log.info("tool:clone_node:ok", { sourceId: id, deep: true, clonedCount: cloned.length });
         return mcpText({ ok: true, clonedCount: cloned.length, nodes: cloned });
       }
 
@@ -147,7 +149,7 @@ export function registerCloneNode(server: McpServer, store: SqliteStore): void {
         return mcpError(`Clone failed: node ${clone.id} not found after insert`);
       }
       indexNodeAsKnowledge(store.getDb(), verified);
-      logger.info("tool:clone_node:ok", { sourceId: id, deep: false, cloneId: verified.id });
+      log.info("tool:clone_node:ok", { sourceId: id, deep: false, cloneId: verified.id });
       return mcpText({ ok: true, node: verified });
     },
   );

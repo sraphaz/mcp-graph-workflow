@@ -27,7 +27,9 @@ import type {
   SiebelDependency,
   SiebelObjectType,
 } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "migration-package.ts" });
 
 // --- Constants ---
 
@@ -336,7 +338,7 @@ export function buildMigrationPackage(request: MigrationPackageRequest): Migrati
     environments = ["dev", "test", "staging", "prod"],
   } = request;
 
-  logger.debug("migration-package: building", {
+  log.debug("migration-package: building", {
     modified: modifiedObjects.length,
     total: allObjects.length,
     deps: dependencies.length,
@@ -390,7 +392,7 @@ export function buildMigrationPackage(request: MigrationPackageRequest): Migrati
     transitiveCount: transitiveRefs.length,
   });
 
-  logger.info("migration-package: complete", {
+  log.info("migration-package: complete", {
     objects: uniqueRefs.length,
     conflicts: conflicts.length,
     riskLevel,

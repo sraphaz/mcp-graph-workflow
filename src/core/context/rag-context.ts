@@ -31,8 +31,10 @@ import { estimateTokens } from "./token-estimator.js";
 import { understandQuery } from "../rag/query-understanding.js";
 import { routeQuery } from "../rag/adaptive-router.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
+
+const log = createLogger({ layer: "core", source: "rag-context.ts" });
 
 // Module-level cache for ragBuildContext results (default path)
 const ragContextCache = new ResponseCache({ ttlMs: 2 * 60 * 1000, maxSize: 50 });
@@ -105,7 +107,7 @@ export function ragBuildContext(
   const cacheKey = `default:${query.trim().toLowerCase()}:${tokenBudget}:${phase ?? "none"}`;
   const cached = ragContextCache.get(cacheKey) as RagContext | undefined;
   if (cached) {
-    logger.debug("rag:context cache hit", { query: query.slice(0, 60) });
+    log.debug("rag:context cache hit", { query: query.slice(0, 60) });
     return cached;
   }
 
@@ -120,14 +122,14 @@ export function ragBuildContext(
   const routing = routeQuery(understanding);
   const effectiveBudget = Math.min(tokenBudget, routing.tokenBudget);
 
-  logger.info(`RAG context: query="${query}", effective="${effectiveQuery}", budget=${effectiveBudget} tokens, phase=${phase ?? "none"}, intent=${understanding.intent}, complexity=${routing.complexity}`);
+  log.info(`RAG context: query="${query}", effective="${effectiveQuery}", budget=${effectiveBudget} tokens, phase=${phase ?? "none"}, intent=${understanding.intent}, complexity=${routing.complexity}`);
 
   // Stage 1: Search for relevant nodes with TF-IDF reranking + substring fallback
   let searchResults = searchNodes(store, effectiveQuery, { limit: 10, rerank: true });
 
   // Fallback: if FTS returns nothing, try substring match
   if (searchResults.length === 0) {
-    logger.debug("RAG FTS returned 0 results, falling back to substring search");
+    log.debug("RAG FTS returned 0 results, falling back to substring search");
     try {
       const allNodes = snapshotCache.getCachedSnapshot().nodes;
       const lowerQuery = query.toLowerCase();
@@ -144,7 +146,7 @@ export function ragBuildContext(
         searchResults = matched.map((node) => ({ node, score: 0.5 }));
       }
     } catch (err) {
-      logger.debug("RAG substring fallback also failed", { error: getErrorMessage(err) });
+      log.debug("RAG substring fallback also failed", { error: getErrorMessage(err) });
     }
   }
 
@@ -181,7 +183,7 @@ export function ragBuildContext(
       }
     } catch (err) {
       // Fall back to basic search if quality columns not yet available
-      logger.debug("rag-context: quality search fallback", { error: getErrorMessage(err) });
+      log.debug("rag-context: quality search fallback", { error: getErrorMessage(err) });
       kResults = knowledgeStore.search(effectiveQuery, 10);
     }
     knowledgeResults = kResults.slice(0, 5).map((r) => ({
@@ -193,7 +195,7 @@ export function ragBuildContext(
     }));
   } catch (err) {
     // Knowledge search may fail if no knowledge docs exist — that's OK
-    logger.debug("Knowledge FTS search returned no results or errored", { error: getErrorMessage(err) });
+    log.debug("Knowledge FTS search returned no results or errored", { error: getErrorMessage(err) });
   }
 
   // Fallback: if knowledge store returned nothing, synthesize from node descriptions
@@ -244,7 +246,7 @@ export function ragBuildContext(
   // Enforce hard cap: used never exceeds budget in the reported metrics
   const reportedUsed = Math.min(tokensUsed, tokenBudget);
 
-  logger.info(
+  log.info(
     `RAG context built: ${relevantNodes.length} nodes, ${knowledgeResults.length} knowledge, ${expandedContexts.length} expanded, ${tokensUsed}/${tokenBudget} tokens`,
   );
 

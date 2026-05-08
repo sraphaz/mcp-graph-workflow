@@ -24,7 +24,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "agent-registry.ts" });
 
 const HEARTBEAT_TIMEOUT_MS = 60_000; // 60 seconds
 
@@ -74,7 +76,7 @@ export class AgentRegistry {
       });
     }
 
-    logger.debug("agent-registry:register", { agentId, capabilities: capabilities.length });
+    log.debug("agent-registry:register", { agentId, capabilities: capabilities.length });
   }
 
   /**
@@ -92,7 +94,7 @@ export class AgentRegistry {
    */
   unregisterAgent(agentId: string): void {
     this.agents.delete(agentId);
-    logger.debug("agent-registry:unregister", { agentId });
+    log.debug("agent-registry:unregister", { agentId });
   }
 
   /**

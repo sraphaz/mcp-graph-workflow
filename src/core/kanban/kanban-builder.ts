@@ -26,7 +26,7 @@
 import type { GraphDocument, GraphNode, NodeStatus } from "../graph/graph-types.js";
 import { findNextTask } from "../planner/next-task.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import {
   COLUMN_ORDER,
   COLUMN_TITLES,
@@ -39,11 +39,13 @@ import {
   type WipViolation,
 } from "./kanban-types.js";
 
+const log = createLogger({ layer: "core", source: "kanban-builder.ts" });
+
 /**
  * Build a full KanbanBoard from a GraphDocument and configuration.
  */
 export function buildKanbanBoard(doc: GraphDocument, config: KanbanConfig): KanbanBoard {
-  logger.debug("kanban-builder:build", { nodes: doc.nodes.length, edges: doc.edges.length });
+  log.debug("kanban-builder:build", { nodes: doc.nodes.length, edges: doc.edges.length });
 
   const filteredNodes = filterNodes(doc.nodes, config);
   const nodeMap = new Map(doc.nodes.map((n) => [n.id, n]));

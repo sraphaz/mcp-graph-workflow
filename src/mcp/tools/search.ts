@@ -20,8 +20,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { searchNodes } from "../../core/search/fts-search.js";
 import { SessionRecallStore } from "../../core/context/session-recall.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "search.ts" });
 
 /** registerSearch — auto-generated description placeholder. */
 export function registerSearch(server: McpServer, store: SqliteStore): void {
@@ -47,14 +49,14 @@ export function registerSearch(server: McpServer, store: SqliteStore): void {
         .describe("Search scope: 'nodes' (default) for graph nodes, 'sessions' for past session summaries"),
     },
     async ({ query, limit, rerank, scope }) => {
-      logger.debug("tool:search", { query, limit, scope });
+      log.debug("tool:search", { query, limit, scope });
 
       // Session scope: search across session summaries
       if (scope === "sessions") {
         try {
           const recallStore = new SessionRecallStore(store.getDb());
           const sessions = recallStore.recallSessions(query, limit ?? 20);
-          logger.info("tool:search:sessions:ok", { query, total: sessions.length });
+          log.info("tool:search:sessions:ok", { query, total: sessions.length });
           return mcpText({
             query,
             scope: "sessions",
@@ -68,7 +70,7 @@ export function registerSearch(server: McpServer, store: SqliteStore): void {
             })),
           });
         } catch (err) {
-          logger.warn("tool:search:sessions:error", { error: err instanceof Error ? err.message : String(err) });
+          log.warn("tool:search:sessions:error", { error: err instanceof Error ? err.message : String(err) });
           return mcpText({ query, scope: "sessions", total: 0, results: [], hint: "Session recall table may not exist yet. Run a task cycle first." });
         }
       }
@@ -100,7 +102,7 @@ export function registerSearch(server: McpServer, store: SqliteStore): void {
       // Bug #024: indicate when results may be truncated by limit
       const effectiveLimit = limit ?? 20;
       const hasMore = items.length >= effectiveLimit;
-      logger.info("tool:search:ok", { query, total: items.length, hasMore });
+      log.info("tool:search:ok", { query, total: items.length, hasMore });
       return mcpText({ query, total: items.length, hasMore, results: items });
     },
   );

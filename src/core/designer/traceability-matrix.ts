@@ -22,7 +22,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { TraceabilityReport, TraceabilityEntry, TraceabilityCoverage } from "../../schemas/designer-schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "traceability-matrix.ts" });
 
 const TRACEABILITY_EDGE_TYPES = new Set([
   "implements", "derived_from", "related_to", "depends_on", "parent_of", "child_of",
@@ -112,7 +114,7 @@ export function buildTraceabilityMatrix(doc: GraphDocument): TraceabilityReport 
     ? Math.round((linkedItems / totalItems) * 10000) / 100
     : 0;
 
-  logger.info("traceability-matrix", { requirements: requirements.length, coverageRate });
+  log.info("traceability-matrix", { requirements: requirements.length, coverageRate });
 
   // Bug #009: warn when no requirement nodes exist but graph has other nodes
   const warning = requirements.length === 0 && doc.nodes.length > 0

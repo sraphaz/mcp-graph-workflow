@@ -24,7 +24,9 @@ import {
   DEFAULT_REVIEW_NET_THRESHOLD,
   type FileDelta,
 } from "../../core/feature-depth/review.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "review-depth.ts" });
 
 interface FileEntry {
   RelPath: string;
@@ -178,7 +180,7 @@ export function reviewDepthCommand(): Command {
             { stdio: ["ignore", "pipe", "ignore"] },
           ).toString().trim();
         } catch {
-          logger.error("Could not resolve merge-base. Specify --base explicitly.");
+          log.error("Could not resolve merge-base. Specify --base explicitly.");
           process.exit(2);
         }
       }
@@ -187,14 +189,14 @@ export function reviewDepthCommand(): Command {
 
       const baseSnap = await snapshotRef(opts.dir, baseRef, toolPath);
       if (!baseSnap.ok) {
-        logger.error(`Snapshot baseline failed: ${baseSnap.error}`);
+        log.error(`Snapshot baseline failed: ${baseSnap.error}`);
         baseSnap.cleanup();
         process.exit(2);
       }
 
       const headSnap = await snapshotRef(opts.dir, opts.head, toolPath);
       if (!headSnap.ok) {
-        logger.error(`Snapshot head failed: ${headSnap.error}`);
+        log.error(`Snapshot head failed: ${headSnap.error}`);
         baseSnap.cleanup();
         headSnap.cleanup();
         process.exit(2);

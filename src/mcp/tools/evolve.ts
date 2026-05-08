@@ -18,7 +18,7 @@ import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { mcpText, mcpError } from "../response-helpers.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import {
   decideCloseBatch,
   decidePostMergeAction,
@@ -30,12 +30,15 @@ import {
   type RegressionSignals,
 } from "../../core/autonomy/self-map.js";
 import {
+
   currentHead,
   currentBranch,
   commitsBetween,
   diffStat,
   isClean,
 } from "../../core/autonomy/git-ops.js";
+
+const log = createLogger({ layer: "mcp", source: "evolve.ts" });
 
 const EvolveActionSchema = z.enum(["batch-status", "simulate-revert", "classify"]);
 
@@ -175,7 +178,7 @@ export function registerEvolve(server: McpServer, store: SqliteStore): void {
     "Auto-merge cycle introspection (read-only). Actions: batch-status (decide close vs stay), simulate-revert (dry-run a revert plan for a SHA), classify (bucket a regression payload).",
     InputSchema,
     async (input) => {
-      logger.debug("tool:evolve", { action: input.action });
+      log.debug("tool:evolve", { action: input.action });
       try {
         switch (input.action) {
           case "batch-status":
@@ -210,7 +213,7 @@ export function registerEvolve(server: McpServer, store: SqliteStore): void {
             });
         }
       } catch (err) {
-        logger.warn("tool:evolve:error", { error: String(err) });
+        log.warn("tool:evolve:error", { error: String(err) });
         return mcpError(`evolve failed: ${String(err)}`);
       }
     },

@@ -21,8 +21,10 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SiebelSifParseResult, SiebelObject } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "rag", source: "siebel-indexer.ts" });
 
 export interface SiebelIndexResult {
   documentsIndexed: number;
@@ -40,7 +42,7 @@ export function indexSifContent(
   const { metadata, objects, dependencies } = parseResult;
 
   if (objects.length === 0) {
-    logger.info("No Siebel objects to index", { sourceFile: metadata.fileName });
+    log.info("No Siebel objects to index", { sourceFile: metadata.fileName });
     return { documentsIndexed: 0, sourceFile: metadata.fileName };
   }
 
@@ -80,7 +82,7 @@ export function indexSifContent(
 
   const totalIndexed = docs.length + escriptCount;
 
-  logger.info("Siebel SIF content indexed", {
+  log.info("Siebel SIF content indexed", {
     sourceFile: metadata.fileName,
     documents: String(docs.length),
     escripts: String(escriptCount),

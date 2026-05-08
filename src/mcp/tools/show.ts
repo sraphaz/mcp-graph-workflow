@@ -20,8 +20,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { LockManager } from "../../core/store/lock-manager.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "show.ts" });
 
 /** registerShow — auto-generated description placeholder. */
 export function registerShow(server: McpServer, store: SqliteStore): void {
@@ -33,11 +35,11 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
       includeHistory: z.boolean().optional().describe("Include node changelog (audit trail) in response"),
     },
     async ({ id, includeHistory }) => {
-      logger.debug("tool:show", { id });
+      log.debug("tool:show", { id });
       const node = store.getNodeById(id);
       if (!node) {
         const err = new NodeNotFoundError(id);
-        logger.warn("tool:show:fail", { error: err.message });
+        log.warn("tool:show:fail", { error: err.message });
         return mcpError(err);
       }
 
@@ -79,7 +81,7 @@ export function registerShow(server: McpServer, store: SqliteStore): void {
         } catch { /* non-blocking */ }
       }
 
-      logger.info("tool:show:ok", { id, edgesOut: edgesFrom.length, edgesIn: edgesTo.length, children: children.length, includeHistory: !!includeHistory });
+      log.info("tool:show:ok", { id, edgesOut: edgesFrom.length, edgesIn: edgesTo.length, children: children.length, includeHistory: !!includeHistory });
       return mcpText(resultValue);
     },
   );

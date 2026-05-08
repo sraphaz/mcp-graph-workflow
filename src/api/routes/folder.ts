@@ -25,8 +25,10 @@ import { validateBody } from "../middleware/validate.js";
 import { STORE_DIR, DB_FILE } from "../../core/utils/constants.js";
 import { CodeStore } from "../../core/code/code-store.js";
 import { CodeIndexer } from "../../core/code/code-indexer.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { McpGraphError } from "../../core/utils/errors.js";
+
+const log = createLogger({ layer: "api", source: "folder.ts" });
 
 /** Directories that should never be browsable (OS-level sensitive paths). */
 const BLOCKED_PATHS = new Set(["/proc", "/sys", "/dev", "/boot", "/lost+found"]);
@@ -98,13 +100,13 @@ export function createFolderRouter(storeManager: StoreManager): Router {
           const codeStore = new CodeStore(storeManager.store.getDb());
           const indexer = new CodeIndexer(codeStore, project.id);
           const indexResult = await indexer.indexDirectory(newBasePath, newBasePath);
-          logger.info("Code graph re-indexed after folder swap", {
+          log.info("Code graph re-indexed after folder swap", {
             basePath: newBasePath,
             symbols: indexResult.symbolCount,
           });
         }
       } catch (err) {
-        logger.warn("Code graph re-index after swap failed (non-blocking)", {
+        log.warn("Code graph re-index after swap failed (non-blocking)", {
           error: err instanceof Error ? err.message : String(err),
         });
       }

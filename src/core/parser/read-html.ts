@@ -15,7 +15,9 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "read-html.ts" });
 
 const HEADING_MAP: Record<string, string> = {
   h1: "#",
@@ -35,7 +37,7 @@ export async function readHtmlContent(html: string): Promise<string> {
   // Dynamic import — cheerio is heavy, lazy-load
   const { load } = await import("cheerio");
 
-  logger.info("Parsing HTML content", { sizeChars: html.length });
+  log.info("Parsing HTML content", { sizeChars: html.length });
 
   const $Var = load(html);
 
@@ -73,7 +75,7 @@ export async function readHtmlContent(html: string): Promise<string> {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  logger.info("HTML parsed", { textLength: text.length });
+  log.info("HTML parsed", { textLength: text.length });
 
   return text;
 }

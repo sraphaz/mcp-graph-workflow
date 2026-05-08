@@ -19,8 +19,10 @@ import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { calculateDoraMetrics } from "../../core/insights/dora-metrics.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "forecast.ts" });
 
 /** registerForecast — auto-generated description placeholder. */
 export function registerForecast(server: McpServer, store: SqliteStore): void {
@@ -31,11 +33,11 @@ export function registerForecast(server: McpServer, store: SqliteStore): void {
       mode: z.enum(["dora"]).describe("Forecast mode"),
     },
     async ({ mode }) => {
-      logger.debug("tool:forecast", { mode });
+      log.debug("tool:forecast", { mode });
 
       if (mode === "dora") {
         const metrics = calculateDoraMetrics(store);
-        logger.info("tool:forecast:dora:ok", {
+        log.info("tool:forecast:dora:ok", {
           deployFreq: metrics.deploymentFrequency,
           trend: metrics.trend,
         });

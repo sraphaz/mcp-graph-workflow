@@ -22,10 +22,12 @@
 
 import { readAllMemories, type ProjectMemory } from "../memory/memory-reader.js";
 import { migrateSerenaMemories } from "../memory/memory-migrator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { CodeStore } from "../code/code-store.js";
 import { getSymbolContext } from "../code/graph-traversal.js";
 import type { CodeGraphData } from "../code/code-types.js";
+
+const log = createLogger({ layer: "core", source: "enriched-context.ts" });
 
 export interface EnrichedContext {
   symbol: string;
@@ -125,13 +127,13 @@ export async function buildEnrichedContext(
   timeoutMs = 5_000,
   options?: { db?: import("better-sqlite3").Database; projectId?: string },
 ): Promise<EnrichedContext> {
-  logger.info("Building enriched context", { symbol, basePath });
+  log.info("Building enriched context", { symbol, basePath });
 
   // Lazy migration: copy .serena/memories → workflow-graph/memories if needed
   try {
     await withOperationTimeout(migrateSerenaMemories(basePath), timeoutMs, "migrateSerenaMemories");
   } catch (err) {
-    logger.warn("Enriched context migration timeout/failure", {
+    log.warn("Enriched context migration timeout/failure", {
       symbol,
       timeoutMs,
       error: err instanceof Error ? err.message : String(err),
@@ -153,14 +155,14 @@ export async function buildEnrichedContext(
   ]);
 
   if (memoriesResult.status === "rejected") {
-    logger.warn("Enriched context memories unavailable", {
+    log.warn("Enriched context memories unavailable", {
       symbol,
       timeoutMs,
       error: memoriesResult.reason instanceof Error ? memoriesResult.reason.message : String(memoriesResult.reason),
     });
   }
   if (codeGraphResult.status === "rejected") {
-    logger.warn("Enriched context code graph unavailable", {
+    log.warn("Enriched context code graph unavailable", {
       symbol,
       timeoutMs,
       error: codeGraphResult.reason instanceof Error ? codeGraphResult.reason.message : String(codeGraphResult.reason),
@@ -191,7 +193,7 @@ export async function buildEnrichedContext(
 
   const combined = parts.join("\n");
 
-  logger.info("Enriched context built", {
+  log.info("Enriched context built", {
     symbol,
     memories: relevantMemories.length,
     codeGraphAvailable: codeGraph.available,

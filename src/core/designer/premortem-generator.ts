@@ -25,7 +25,9 @@
  */
 
 import type { GraphNode, GraphEdge } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "premortem-generator.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -213,7 +215,7 @@ export function generatePreMortem(decision: GraphNode, doc: PreMortreGraphDoc): 
   // 4. Ensure minimum 3 failure modes with fallback generics
   ensureMinimumFailureModes(failureModes, technology, scope);
 
-  logger.debug("premortem:generate", {
+  log.debug("premortem:generate", {
     nodeId: decision.id,
     count: failureModes.length,
     categories: [...new Set(failureModes.map((fm) => fm.category))],

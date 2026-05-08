@@ -26,7 +26,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { RiskMatrix, RiskEntry, RiskLevel } from "../../schemas/analyzer-schema.js";
 import { assessMitigationLevel } from "../designer/tech-risk-assessor.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "risk-assessment.ts" });
 
 const HIGH_PROBABILITY_KEYWORDS = ["sempre", "provável", "frequente", "common", "likely"];
 const LOW_PROBABILITY_KEYWORDS = ["raro", "improvável", "unlikely", "rare"];
@@ -113,7 +115,7 @@ export function assessRisks(doc: GraphDocument): RiskMatrix {
     mitigated: risks.filter((r) => r.mitigationStatus === "mitigated").length,
   };
 
-  logger.info("risk-assessment", { total: summary.total, critical: summary.critical, high: summary.high });
+  log.info("risk-assessment", { total: summary.total, critical: summary.critical, high: summary.high });
 
   return { risks, summary };
 }

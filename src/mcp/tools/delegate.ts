@@ -27,8 +27,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { DelegationEngine, MAX_DEPTH, MAX_CONCURRENT } from "../../core/agents/delegation-engine.js";
 import { DelegationTaskSchema } from "../../schemas/delegation.schema.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "delegate.ts" });
 
 /** registerDelegate — auto-generated description placeholder. */
 export function registerDelegate(server: McpServer, store: SqliteStore): void {
@@ -79,7 +81,7 @@ export function registerDelegate(server: McpServer, store: SqliteStore): void {
         .describe("Tokens used by the delegation (for complete)"),
     },
     async ({ action, parentAgentId, delegationId, depth, task, summary, errorMessage, tokensUsed }) => {
-      logger.debug("tool:delegate", { action, parentAgentId, delegationId });
+      log.debug("tool:delegate", { action, parentAgentId, delegationId });
 
       const project = store.getProject();
       if (!project) {
@@ -105,7 +107,7 @@ export function registerDelegate(server: McpServer, store: SqliteStore): void {
             }
 
             const id = engine.create(parentAgentId, parsed.data, depth ?? 1);
-            logger.info("tool:delegate:create:ok", { id, parentAgentId, depth: depth ?? 1 });
+            log.info("tool:delegate:create:ok", { id, parentAgentId, depth: depth ?? 1 });
 
             return mcpText({
               ok: true,
@@ -132,7 +134,7 @@ export function registerDelegate(server: McpServer, store: SqliteStore): void {
 
             engine.complete(delegationId, summary, tokensUsed ?? 0);
             const record = engine.getById(delegationId);
-            logger.info("tool:delegate:complete:ok", { delegationId, tokensUsed: tokensUsed ?? 0 });
+            log.info("tool:delegate:complete:ok", { delegationId, tokensUsed: tokensUsed ?? 0 });
 
             return mcpText({
               ok: true,
@@ -151,7 +153,7 @@ export function registerDelegate(server: McpServer, store: SqliteStore): void {
             }
 
             engine.fail(delegationId, errorMessage);
-            logger.warn("tool:delegate:fail:ok", { delegationId, errorMessage });
+            log.warn("tool:delegate:fail:ok", { delegationId, errorMessage });
 
             return mcpText({
               ok: true,
@@ -198,7 +200,7 @@ export function registerDelegate(server: McpServer, store: SqliteStore): void {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        logger.error("tool:delegate:error", { action, error: message });
+        log.error("tool:delegate:error", { action, error: message });
         return mcpError(message);
       }
     },

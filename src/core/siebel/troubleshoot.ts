@@ -25,7 +25,9 @@ import type {
   SiebelObjectRef,
   SiebelDependency,
 } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "troubleshoot.ts" });
 
 // --- Public types ---
 
@@ -324,7 +326,7 @@ function analyzeCauses(
 export function troubleshootSiebel(request: TroubleshootRequest): TroubleshootResult {
   const { errorMessage, objects, dependencies } = request;
 
-  logger.debug("troubleshoot: analyzing", { errorLength: errorMessage.length, objectCount: objects.length });
+  log.debug("troubleshoot: analyzing", { errorLength: errorMessage.length, objectCount: objects.length });
 
   // AC1: Parse error to find related objects
   const relatedObjects = extractObjectNames(errorMessage, objects);
@@ -353,7 +355,7 @@ export function troubleshootSiebel(request: TroubleshootRequest): TroubleshootRe
   // AC5 + AC6: Causes with suggestions
   const causes = analyzeCauses(errorMessage, relatedScripts, configIssues);
 
-  logger.info("troubleshoot: complete", {
+  log.info("troubleshoot: complete", {
     relatedObjects: relatedObjects.length,
     scripts: relatedScripts.length,
     causes: causes.length,

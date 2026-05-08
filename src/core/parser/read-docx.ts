@@ -23,8 +23,10 @@
  */
 
 import { readFile } from "node:fs/promises";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { FileNotFoundError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "read-docx.ts" });
 
 const DOCX_EXTENSIONS = new Set([".doc", ".docx"]);
 
@@ -52,7 +54,7 @@ export async function readDocxContent(filePath: string): Promise<string> {
     throw new FileNotFoundError(`File is empty: ${filePath}`);
   }
 
-  logger.info("Parsing DOCX file", { filePath, sizeBytes: buffer.length });
+  log.info("Parsing DOCX file", { filePath, sizeBytes: buffer.length });
 
   // Dynamic import — mammoth is heavy, lazy-load
   const mammoth = await import("mammoth");
@@ -63,13 +65,13 @@ export async function readDocxContent(filePath: string): Promise<string> {
   const text = htmlToText(resultValue.value);
 
   if (resultValue.messages.length > 0) {
-    logger.debug("DOCX parse messages", {
+    log.debug("DOCX parse messages", {
       filePath,
       messages: resultValue.messages.map((m: { type: string; message: string }) => m.message).join("; "),
     });
   }
 
-  logger.info("DOCX parsed", { filePath, textLength: text.length });
+  log.info("DOCX parsed", { filePath, textLength: text.length });
 
   return text;
 }

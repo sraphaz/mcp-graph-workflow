@@ -31,9 +31,11 @@
  * - < 50: STOP — escalate to human
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { z } from "zod/v4";
 import { McpGraphError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "confidence-scorer.ts" });
 
 // ── Zod Schemas ────────────────────────────────────────
 
@@ -117,7 +119,7 @@ export function computeConfidence(input: ConfidenceInput): ConfidenceDecision {
     historicalContribution: Math.round(historicalContribution * 10) / 10,
   };
 
-  logger.debug("confidence-scorer:compute", {
+  log.debug("confidence-scorer:compute", {
     score, action,
     ragContribution: evidence.ragContribution,
     harnessContribution: evidence.harnessContribution,

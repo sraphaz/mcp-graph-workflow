@@ -29,10 +29,12 @@ import { indexConstitution } from "../../core/rag/constitution-indexer.js";
 import { ConstitutionChecker } from "../../core/constitution/constitution-checker.js";
 import { getBuiltinConstitution, listBuiltinConstitutions } from "../../core/constitution/built-in-constitutions.js";
 import { generateId } from "../../core/utils/id.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { McpGraphError } from "../../core/utils/errors.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import type { GraphNode } from "../../core/graph/graph-types.js";
+
+const log = createLogger({ layer: "mcp", source: "constitution.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -112,7 +114,7 @@ export function handleConstitutionCreate(
     principles: params.principles,
   });
 
-  logger.info("Constitution created", { nodeId, principles: params.principles.length });
+  log.info("Constitution created", { nodeId, principles: params.principles.length });
 
   return {
     ok: true,
@@ -177,7 +179,7 @@ export function handleConstitutionInstallBuiltin(
     created.nodeId,
   );
 
-  logger.info("Built-in constitution installed", { name: bundle.name, nodeId: created.nodeId });
+  log.info("Built-in constitution installed", { name: bundle.name, nodeId: created.nodeId });
 
   return {
     ok: true,
@@ -222,7 +224,7 @@ export function handleConstitutionUpdate(
     principles: params.principles,
   });
 
-  logger.info("Constitution updated", { nodeId: params.nodeId, version: newVersion });
+  log.info("Constitution updated", { nodeId: params.nodeId, version: newVersion });
 
   return {
     ok: true,
@@ -366,7 +368,7 @@ export function registerConstitution(server: McpServer, store: SqliteStore): voi
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("Constitution tool error", { action: params.action, error: msg });
+        log.error("Constitution tool error", { action: params.action, error: msg });
         return mcpError(msg);
       }
     },

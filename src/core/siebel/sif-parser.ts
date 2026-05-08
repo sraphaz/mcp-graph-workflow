@@ -25,7 +25,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { FileNotFoundError, ValidationError } from "../utils/errors.js";
 import type {
   SiebelObject,
@@ -35,6 +35,8 @@ import type {
   SiebelSifParseResult,
   SiebelSifMetadata,
 } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "core", source: "sif-parser.ts" });
 
 /**
  * Mapping from SIF XML tag names to Siebel object types.
@@ -166,7 +168,7 @@ export function parseSifContent(content: string, fileName: string): SiebelSifPar
     extractedAt: new Date().toISOString(),
   };
 
-  logger.info("SIF parsed", {
+  log.info("SIF parsed", {
     fileName,
     objectCount: String(objects.length),
     dependencyCount: String(dependencies.length),

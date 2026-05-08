@@ -27,7 +27,9 @@
 
 import type Database from "better-sqlite3";
 import { applyFeedback } from "./knowledge-feedback.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "rag-feedback.ts" });
 
 export type FeedbackSignal = "helpful" | "unhelpful" | "neutral";
 export type DodGrade = "A" | "B" | "C" | "D" | "F";
@@ -78,18 +80,18 @@ export function applyRagFeedback(
         .get(docId);
       if (!exists) {
         skipped += 1;
-        logger.debug("rag-feedback:skip:unknown_doc", { docId });
+        log.debug("rag-feedback:skip:unknown_doc", { docId });
         continue;
       }
       applyFeedback(db, docId, query, signal);
       applied += 1;
     } catch (err) {
       skipped += 1;
-      logger.warn("rag-feedback:apply_failed", { docId, error: String(err) });
+      log.warn("rag-feedback:apply_failed", { docId, error: String(err) });
     }
   }
 
-  logger.info("rag-feedback:applied", { signal, applied, skipped, query });
+  log.info("rag-feedback:applied", { signal, applied, skipped, query });
   return { applied, skipped };
 }
 

@@ -22,7 +22,9 @@
 
 import Database from "better-sqlite3";
 import { exportKnowledge, importKnowledge } from "./knowledge-packager.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "cross-project-learner.ts" });
 
 export interface LearnOptions {
   categories?: string[];
@@ -61,7 +63,7 @@ export async function learnFromProject(
   try {
     sourceDb = new Database(sourcePath, { readonly: true });
   } catch (err) {
-    logger.warn("cross-project:open_failed", { sourcePath, error: String(err) });
+    log.warn("cross-project:open_failed", { sourcePath, error: String(err) });
     return { imported: 0, skipped: 0, categories: {}, sourceProject: sourcePath };
   }
 
@@ -97,7 +99,7 @@ export async function learnFromProject(
       catCounts[cat] = (catCounts[cat] ?? 0) + 1;
     }
 
-    logger.info("cross-project:learned", {
+    log.info("cross-project:learned", {
       sourcePath,
       imported: resultValue.documentsImported,
       skipped: resultValue.documentsSkipped,
@@ -111,7 +113,7 @@ export async function learnFromProject(
       sourceProject: sourcePath,
     };
   } catch (err) {
-    logger.warn("cross-project:learn_failed", { sourcePath, error: String(err) });
+    log.warn("cross-project:learn_failed", { sourcePath, error: String(err) });
     return { imported: 0, skipped: 0, categories: {}, sourceProject: sourcePath };
   } finally {
     try { sourceDb.close(); } catch { /* best-effort */ }

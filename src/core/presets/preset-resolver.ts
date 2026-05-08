@@ -15,9 +15,11 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { getPreset } from "./built-in-presets.js";
 import type { PresetDefinition } from "../../schemas/preset.schema.js";
+
+const log = createLogger({ layer: "core", source: "preset-resolver.ts" });
 
 export interface ResolvedField<T> {
   value: T;
@@ -108,14 +110,14 @@ export function resolvePresets(options: ResolvePresetsOptions): ResolvedConfig {
     const preset = getPreset(activePreset);
     if (preset) {
       applyPreset(config, preset, "preset");
-      logger.debug(`Preset applied: ${activePreset}`);
+      log.debug(`Preset applied: ${activePreset}`);
     }
   }
 
   // Layer 2: Plugin presets (in order = priority ascending, last wins)
   for (const pluginPreset of pluginPresets) {
     applyPreset(config, pluginPreset, "plugin");
-    logger.debug(`Plugin preset applied: ${pluginPreset.name}`);
+    log.debug(`Plugin preset applied: ${pluginPreset.name}`);
   }
 
   // Layer 3: Project overrides (highest priority)

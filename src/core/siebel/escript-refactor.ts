@@ -21,7 +21,9 @@
  * memory cleanup, duplicate lookup detection, unused variables.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "escript-refactor.ts" });
 
 // --- Public types ---
 
@@ -325,7 +327,7 @@ export function refactorEscript(code: string): RefactorResult {
     return { original: code, refactored: code, issues: [], diff: [] };
   }
 
-  logger.debug("escript-refactor: analyzing script", { length: code.length });
+  log.debug("escript-refactor: analyzing script", { length: code.length });
 
   const allIssues: RefactorIssue[] = [];
   let refactored = code;
@@ -365,7 +367,7 @@ export function refactorEscript(code: string): RefactorResult {
   // AC7: Diff
   const diff = generateDiff(code, refactored);
 
-  logger.info("escript-refactor: complete", {
+  log.info("escript-refactor: complete", {
     issues: allIssues.length,
     hasChanges: diff.length > 0,
   });

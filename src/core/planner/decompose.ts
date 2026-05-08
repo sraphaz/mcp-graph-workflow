@@ -27,7 +27,9 @@
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
 import { getNodeAcTexts } from "../utils/ac-helpers.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "decompose.ts" });
 
 const ESTIMATE_THRESHOLD = 120; // minutes
 const AC_THRESHOLD = 5;
@@ -93,7 +95,7 @@ export function detectLargeTasks(doc: GraphDocument): DecomposeResult[] {
     results.push({ node, reasons, suggestedSubtasks });
   }
 
-  logger.info(`Decomposition: ${results.length} large tasks detected from ${tasks.length} total`);
+  log.info(`Decomposition: ${results.length} large tasks detected from ${tasks.length} total`);
   return results;
 }
 

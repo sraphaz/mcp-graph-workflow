@@ -26,7 +26,9 @@
 import type { KnowledgeStore } from "../store/knowledge-store.js";
 import type { ChallengeReport } from "../rag/challenge-indexer.js";
 import { searchChallengeHistory } from "../rag/challenge-indexer.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "alternative-suggester.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -62,7 +64,7 @@ export function suggestAlternatives(
   knowledgeStore: KnowledgeStore,
   limit: number = 5,
 ): AlternativeSuggestion[] {
-  logger.info("alternative-suggester:search", {
+  log.info("alternative-suggester:search", {
     nodeId: failedReport.nodeId,
     compositeScore: failedReport.compositeScore,
     tags: failedReport.tags,
@@ -132,7 +134,7 @@ export function suggestAlternatives(
 
   const resultValue = deduped.slice(0, limit);
 
-  logger.info("alternative-suggester:results", {
+  log.info("alternative-suggester:results", {
     nodeId: failedReport.nodeId,
     candidatesFound: suggestions.length,
     returned: resultValue.length,

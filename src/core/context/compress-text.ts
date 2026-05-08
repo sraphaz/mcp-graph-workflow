@@ -21,7 +21,9 @@
 
 import { compressBullets, compressSummary, compressSteps, compressJson } from "./rule-compressor.js";
 import { estimateTokens } from "./token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "compress-text.ts" });
 
 export type CompressFormat = "bullets" | "summary" | "steps" | "json";
 
@@ -76,7 +78,7 @@ export function compressText(
       compressed = compressJson(text, maxTokens);
       break;
     default:
-      logger.warn("compress-text:unknown-format", { format });
+      log.warn("compress-text:unknown-format", { format });
       compressed = text;
       break;
   }

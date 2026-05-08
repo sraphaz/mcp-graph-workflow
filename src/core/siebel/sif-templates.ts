@@ -23,8 +23,10 @@
  */
 
 import { XMLBuilder } from "fast-xml-parser";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SifTemplateType } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "core", source: "sif-templates.ts" });
 
 /**
  * Escape XML special characters in attribute values and text content.
@@ -154,7 +156,7 @@ export function getTemplate(type: SifTemplateType): SifTemplate | undefined {
  * The output is compatible with parseSifContent() for round-trip validation.
  */
 export function buildSifXml(objects: SifTemplateObject[]): string {
-  logger.info("Building SIF XML", { objectCount: String(objects.length) });
+  log.info("Building SIF XML", { objectCount: String(objects.length) });
 
   // Group objects by project
   const byProject = new Map<string, SifTemplateObject[]>();
@@ -178,7 +180,7 @@ export function buildSifXml(objects: SifTemplateObject[]): string {
     for (const objValue of projObjects) {
       const tag = TYPE_TO_TAG[objValue.type];
       if (!tag) {
-        logger.debug("Skipping object with unknown type", { type: objValue.type, name: objValue.name });
+        log.debug("Skipping object with unknown type", { type: objValue.type, name: objValue.name });
         continue;
       }
 
@@ -247,7 +249,7 @@ export function buildSifXml(objects: SifTemplateObject[]): string {
 
   const xml = builder.build(doc) as string;
 
-  logger.debug("SIF XML built", {
+  log.debug("SIF XML built", {
     projects: String(byProject.size),
     objects: String(objects.length),
     xmlLength: String(xml.length),

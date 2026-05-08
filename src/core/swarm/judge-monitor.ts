@@ -10,7 +10,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "judge-monitor.ts" });
 
 export interface HealthCheckResult {
   sessionId: string;
@@ -51,7 +53,7 @@ export class JudgeMonitor {
   start(): void {
     if (this.timer) return;
     this.timer = setInterval(() => this.tick(), this.tickIntervalMs);
-    logger.info("judge:monitor:start", { tickIntervalMs: this.tickIntervalMs });
+    log.info("judge:monitor:start", { tickIntervalMs: this.tickIntervalMs });
   }
 
   /** Stop background tick loop. */
@@ -59,7 +61,7 @@ export class JudgeMonitor {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
-      logger.info("judge:monitor:stop");
+      log.info("judge:monitor:stop");
     }
   }
 
@@ -95,7 +97,7 @@ export class JudgeMonitor {
         stallDurationMs,
         message: `Session has not updated in ${Math.round(stallDurationMs / 1000)}s`,
       };
-      logger.warn("judge:stall_detected", { sessionId, stallDurationMs });
+      log.warn("judge:stall_detected", { sessionId, stallDurationMs });
       this.recordResult(resultValue);
       return resultValue;
     }
@@ -123,7 +125,7 @@ export class JudgeMonitor {
       this.checkHealth(id);
     }
 
-    logger.info("judge:tick", { checked: activeSessions.length });
+    log.info("judge:tick", { checked: activeSessions.length });
   }
 
   private recordResult(result: HealthCheckResult): void {

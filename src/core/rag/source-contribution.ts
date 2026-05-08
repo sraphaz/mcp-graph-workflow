@@ -22,7 +22,9 @@
  * Aggregates data from traces and usage logs to compute per-source metrics.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "source-contribution.ts" });
 
 export interface TraceAggregation {
   sourceType: string;
@@ -103,7 +105,7 @@ export function identifyUnderutilizedSources(
     }
   }
 
-  logger.debug("Underutilized sources identified", { count: underutilized.length });
+  log.debug("Underutilized sources identified", { count: underutilized.length });
 
   return underutilized;
 }

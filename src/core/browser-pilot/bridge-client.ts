@@ -29,8 +29,10 @@
  * é serviço externo.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { OperationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "bridge-client.ts" });
 
 export interface BridgeHealth {
   ok: boolean;
@@ -127,7 +129,7 @@ export class BridgeClient {
         return await this.health();
       } catch (err) {
         lastErr = err;
-        logger.debug("bridge-client: health attempt failed", {
+        log.debug("bridge-client: health attempt failed", {
           attempt: i + 1,
           totalAttempts: schedule.length,
           reason: err instanceof Error ? err.message : String(err),

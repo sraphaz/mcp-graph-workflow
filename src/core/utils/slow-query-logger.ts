@@ -3,7 +3,9 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { logger } from "./logger.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger({ layer: "core", source: "slow-query-logger.ts" });
 
 /** Queries taking longer than this are logged as warnings. */
 export const SLOW_QUERY_THRESHOLD_MS = 500;
@@ -31,7 +33,7 @@ export function timedQuery<T>(sql: string, fn: () => T, opts: TimedQueryOptions 
   } finally {
     const durationMs = now() - t0;
     if (durationMs >= threshold) {
-      logger.warn("slow_query", {
+      log.warn("slow_query", {
         sql: sql.slice(0, MAX_SQL_LOG_CHARS),
         durationMs,
       });

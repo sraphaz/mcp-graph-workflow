@@ -21,8 +21,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { LockManager } from "../../core/store/lock-manager.js";
 import { findEnhancedNextTask } from "../../core/planner/enhanced-next.js";
 import { generateTddHints, generateTddHintsFromTexts } from "../../core/implementer/tdd-checker.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "next.ts" });
 
 /** registerNext — auto-generated description placeholder. */
 export function registerNext(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
@@ -33,12 +35,12 @@ export function registerNext(server: McpServer, store: SqliteStore, lockManager?
       agentId: z.string().optional().describe("Agent ID for teamTask mode — excludes tasks locked by other agents"),
     },
     async ({ agentId }) => {
-      logger.debug("tool:next", { agentId });
+      log.debug("tool:next", { agentId });
       const doc = store.toGraphDocument();
       const resultValue = findEnhancedNextTask(doc, store, { lockManager, agentId });
 
       if (!resultValue) {
-        logger.info("tool:next:ok", { found: false });
+        log.info("tool:next:ok", { found: false });
         return mcpText({
           message: "No actionable tasks found. All tasks are either done or blocked.",
         });
@@ -56,7 +58,7 @@ export function registerNext(server: McpServer, store: SqliteStore, lockManager?
         ? generateTddHintsFromTexts(acTexts)
         : generateTddHints(resultValue.task.node);
 
-      logger.info("tool:next:ok", {
+      log.info("tool:next:ok", {
         found: true,
         nodeId: resultValue.task.node.id,
         knowledgeCoverage: resultValue.knowledgeCoverage,

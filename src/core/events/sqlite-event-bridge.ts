@@ -25,7 +25,9 @@
 import type Database from "better-sqlite3";
 import type { GraphEventBus } from "./event-bus.js";
 import type { GraphEvent, GraphEventType } from "./event-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "sqlite-event-bridge.ts" });
 
 interface EventQueueRow {
   id: number;
@@ -60,7 +62,7 @@ export class SqliteEventBridge {
         event.timestamp,
       );
 
-    logger.debug("event-bridge:publish", { type: event.type, agentId: this.agentId });
+    log.debug("event-bridge:publish", { type: event.type, agentId: this.agentId });
   }
 
   /**
@@ -72,10 +74,10 @@ export class SqliteEventBridge {
       try {
         this.pollOnce();
       } catch (err) {
-        logger.warn("event-bridge:poll_error", { error: String(err) });
+        log.warn("event-bridge:poll_error", { error: String(err) });
       }
     }, intervalMs);
-    logger.info("event-bridge:polling_started", { intervalMs, agentId: this.agentId });
+    log.info("event-bridge:polling_started", { intervalMs, agentId: this.agentId });
   }
 
   /**
@@ -85,7 +87,7 @@ export class SqliteEventBridge {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
-      logger.debug("event-bridge:polling_stopped", { agentId: this.agentId });
+      log.debug("event-bridge:polling_stopped", { agentId: this.agentId });
     }
   }
 
@@ -110,7 +112,7 @@ export class SqliteEventBridge {
       this.localBus.emit(event);
       this.lastSeenId = row.id;
 
-      logger.debug("event-bridge:received", { type: event.type, from: row.agent_id, id: row.id });
+      log.debug("event-bridge:received", { type: event.type, from: row.agent_id, id: row.id });
     }
   }
 
@@ -124,7 +126,7 @@ export class SqliteEventBridge {
       .run(cutoff);
 
     if (resultValue.changes > 0) {
-      logger.debug("event-bridge:pruned", { count: resultValue.changes });
+      log.debug("event-bridge:pruned", { count: resultValue.changes });
     }
 
     return resultValue.changes;

@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "asset-blockers.ts" });
 
 export interface BlockingAsset {
   assetId: string;
@@ -74,7 +76,7 @@ export function analyzeAssetBlockers(doc: GraphDocument): AssetBlockersReport {
     }
   }
 
-  logger.debug("analyzer:asset-blockers", {
+  log.debug("analyzer:asset-blockers", {
     totalAssets: assetNodes.length,
     pendingAssets: pendingAssets.length,
     blockedTaskCount,

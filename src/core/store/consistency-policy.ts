@@ -27,7 +27,9 @@
 
 import type Database from "better-sqlite3";
 import { KnowledgeStore, contentHash } from "./knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "consistency-policy.ts" });
 
 // ── AC3 Error ────────────────────────────────────────────────────
 
@@ -79,7 +81,7 @@ export function resolveGraphMemoryConflict(
     )
     .run(STALE_SENTINEL, nodeId);
 
-  logger.debug("consistency:graph_memory_conflict_resolved", {
+  log.debug("consistency:graph_memory_conflict_resolved", {
     nodeId,
     memoryDocsAffected: resultValue.changes,
   });
@@ -110,7 +112,7 @@ export function evictAndReindexKnowledge(
 
   store.delete(docId);
 
-  logger.debug("consistency:knowledge_evicted", { docId, hashPreserved: hashBefore === hashAfter });
+  log.debug("consistency:knowledge_evicted", { docId, hashPreserved: hashBefore === hashAfter });
 
   return {
     docId,

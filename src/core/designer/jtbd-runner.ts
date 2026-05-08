@@ -27,7 +27,9 @@
 
 import type { GraphNode } from "../graph/graph-types.js";
 import type { Jtbd } from "./decision-fitness.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "jtbd-runner.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -94,13 +96,13 @@ export function extractJtbds(nodes: GraphNode[]): Jtbd[] {
   }
 
   if (jtbds.length === 0 && nodes.length > 0) {
-    logger.warn("jtbd-runner:extract", {
+    log.warn("jtbd-runner:extract", {
       message: "no JTBDs found in graph",
       nodeCount: nodes.length,
     });
   }
 
-  logger.debug("jtbd-runner:extract", {
+  log.debug("jtbd-runner:extract", {
     nodesScanned: nodes.length,
     jtbdsFound: jtbds.length,
   });
@@ -130,7 +132,7 @@ export function runJtbdTests(jtbds: Jtbd[], decision: GraphNode): JtbdTestResult
     const status = classifyOverlap(overlapScore);
     const justification = buildJustification(jtbd, status, overlapScore, intersection);
 
-    logger.debug("jtbd-runner:test", {
+    log.debug("jtbd-runner:test", {
       jtbdSource: jtbd.sourceNodeId,
       decisionId: decision.id,
       status,

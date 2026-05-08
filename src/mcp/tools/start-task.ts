@@ -21,8 +21,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { LockManager } from "../../core/store/lock-manager.js";
 import { startTask } from "../../core/pipeline/start-task.js";
 import { AmbiguityAuditSchema } from "../../core/decisions/ambiguity-audit-types.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "start-task.ts" });
 
 /** registerStartTask — auto-generated description placeholder. */
 export function registerStartTask(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
@@ -39,7 +41,7 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
       ambiguityAudit: AmbiguityAuditSchema.optional().describe("§EPIC-13.2 — Pre-execution self-audit classifying ACs as specified/partial/unspecified. Persisted in node.metadata.ambiguityAudit."),
     },
     async ({ nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, ambiguityAudit }) => {
-      logger.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, hasAmbiguityAudit: !!ambiguityAudit });
+      log.debug("tool:start_task", { nodeId, contextDetail, ragBudget, autoStart, agentId, siblingBudget, hasAmbiguityAudit: !!ambiguityAudit });
 
       const resultValue = startTask(store, {
         nodeId, contextDetail, ragBudget, autoStart,
@@ -50,13 +52,13 @@ export function registerStartTask(server: McpServer, store: SqliteStore, lockMan
       });
 
       if (!resultValue) {
-        logger.info("tool:start_task:no_tasks");
+        log.info("tool:start_task:no_tasks");
         return mcpText({
           message: "No actionable tasks found. All tasks are either done or blocked.",
         });
       }
 
-      logger.info("tool:start_task:ok", {
+      log.info("tool:start_task:ok", {
         nodeId: resultValue.task.task.node.id,
         title: resultValue.task.task.node.title,
         autoStart: resultValue.startedAt !== null,

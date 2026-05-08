@@ -31,7 +31,9 @@ import type { RankedResult } from "./multi-strategy-retrieval.js";
 import { validateRetrievedResults, correctResults, computeBatchConfidence } from "./corrective-rag.js";
 import type { BatchConfidenceSignal } from "./corrective-rag.js";
 import { tokenize } from "../search/tokenizer.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "post-retrieval.ts" });
 
 export interface PostRetrievalOptions {
   query: string;
@@ -173,7 +175,7 @@ export function postRetrievalPipeline(options: PostRetrievalOptions): PostRetrie
       correctedResults = correctResults(deduped, validations);
       corrected = deduped.length - correctedResults.length;
     } catch (err) {
-      logger.warn("Post-retrieval corrective validation failed", { error: err instanceof Error ? err.message : String(err) });
+      log.warn("Post-retrieval corrective validation failed", { error: err instanceof Error ? err.message : String(err) });
       correctedResults = deduped;
     }
   }
@@ -200,7 +202,7 @@ export function postRetrievalPipeline(options: PostRetrievalOptions): PostRetrie
   }));
   const confidenceSignal = computeBatchConfidence(syntheticValidations);
 
-  logger.debug("Post-retrieval pipeline complete", {
+  log.debug("Post-retrieval pipeline complete", {
     input: results.length,
     deduplicated,
     corrected,

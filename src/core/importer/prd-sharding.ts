@@ -33,7 +33,9 @@ import { extractEntities } from "../parser/extract.js";
 import { convertToGraph } from "./prd-to-graph.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "prd-sharding.ts" });
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -109,7 +111,7 @@ export function importShardedPrd(text: string, options: PrdShardingOptions = {})
   const parseFn = parseShardFn ?? defaultParseShard;
 
   const shards = shardPrdText(text, tokenBudget);
-  logger.info("prd-sharding:start", { shards: shards.length, tokenBudget });
+  log.info("prd-sharding:start", { shards: shards.length, tokenBudget });
 
   const allNodes: GraphNode[] = [];
   const allEdges: GraphEdge[] = [];
@@ -125,7 +127,7 @@ export function importShardedPrd(text: string, options: PrdShardingOptions = {})
       const msg = err instanceof Error ? err.message : String(err);
       failedShards.push(i);
       shardErrors.push(msg);
-      logger.warn("prd-sharding:shard_failed", { shardIndex: i, error: msg });
+      log.warn("prd-sharding:shard_failed", { shardIndex: i, error: msg });
     }
   }
 
@@ -140,7 +142,7 @@ export function importShardedPrd(text: string, options: PrdShardingOptions = {})
     }
   }
 
-  logger.info("prd-sharding:done", {
+  log.info("prd-sharding:done", {
     nodes: allNodes.length,
     edges: allEdges.length,
     failed: failedShards.length,

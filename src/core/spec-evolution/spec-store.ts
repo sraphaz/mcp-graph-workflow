@@ -22,8 +22,10 @@
 
 import type Database from "better-sqlite3";
 import { createHash } from "crypto";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "spec-store.ts" });
 
 function generateId(): string {
   return `spec_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -93,7 +95,7 @@ export class SpecStore {
       VALUES (?, ?, 1, ?, ?, 'Initial version', ?)
     `).run(generateId(), id, params.content, hash, now);
 
-    logger.info("Spec document registered", { id, name: params.name });
+    log.info("Spec document registered", { id, name: params.name });
 
     const resultValue = this.get(id);
     if (!resultValue) throw new McpGraphError(`Failed to retrieve spec document after register: ${id}`);
@@ -119,7 +121,7 @@ export class SpecStore {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(generateId(), specId, newVersion, newContent, hash, diffSummary, now);
 
-    logger.info("Spec document updated", { specId, version: newVersion });
+    log.info("Spec document updated", { specId, version: newVersion });
   }
 
   get(specId: string): SpecDocument | undefined {
@@ -141,7 +143,7 @@ export class SpecStore {
     this.db.prepare("DELETE FROM spec_document_versions WHERE spec_id = ?").run(specId);
     this.db.prepare("DELETE FROM spec_node_links WHERE spec_id = ?").run(specId);
     this.db.prepare("DELETE FROM spec_documents WHERE id = ?").run(specId);
-    logger.info("Spec document removed", { specId });
+    log.info("Spec document removed", { specId });
   }
 
   linkNode(specId: string, nodeId: string, sectionTitle: string, linkType: string): void {

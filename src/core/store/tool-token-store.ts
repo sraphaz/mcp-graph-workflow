@@ -22,7 +22,9 @@
 
 import type Database from "better-sqlite3";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tool-token-store.ts" });
 
 export interface ToolTokenEntry {
   id: number;
@@ -130,7 +132,7 @@ export class ToolTokenStore {
       `INSERT INTO tool_token_usage (project_id, tool_name, input_tokens, output_tokens, called_at)
        VALUES (?, ?, ?, ?, ?)`,
     ).run(projectId, toolName, inputTokens, outputTokens, now());
-    logger.debug("tool-token-store: recorded", { toolName, inputTokens, outputTokens });
+    log.debug("tool-token-store: recorded", { toolName, inputTokens, outputTokens });
   }
 
   getPerToolStats(projectId: string): ToolTokenAggregate[] {
@@ -183,7 +185,7 @@ export class ToolTokenStore {
 
   clearProject(projectId: string): void {
     this.db.prepare("DELETE FROM tool_token_usage WHERE project_id = ?").run(projectId);
-    logger.debug("tool-token-store: cleared project", { projectId });
+    log.debug("tool-token-store: cleared project", { projectId });
   }
 
   /**
@@ -207,7 +209,7 @@ export class ToolTokenStore {
       opts.durationMs,
       opts.errorKind ?? null,
     );
-    logger.debug("tool-token-store: recordCall", {
+    log.debug("tool-token-store: recordCall", {
       toolName,
       success: opts.success,
       durationMs: opts.durationMs,

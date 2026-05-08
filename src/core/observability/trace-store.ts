@@ -30,7 +30,9 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "trace-store.ts" });
 
 // ── Interfaces ─────────────────────────────────────────
 
@@ -144,7 +146,7 @@ export class TraceStore {
     ).run(id, threadId, nodeId, toolName, startedAt);
 
     this.startTimes.set(id, performance.now());
-    logger.debug("trace:begin", { traceId: id, threadId, nodeId, toolName });
+    log.debug("trace:begin", { traceId: id, threadId, nodeId, toolName });
     return id;
   }
 
@@ -171,7 +173,7 @@ export class TraceStore {
     );
 
     this.startTimes.delete(traceId);
-    logger.debug("trace:end", { traceId, status, latencyMs });
+    log.debug("trace:end", { traceId, status, latencyMs });
   }
 
   // ── Span lifecycle ─────────────────────────────────

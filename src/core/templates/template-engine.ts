@@ -20,7 +20,9 @@ import type { GraphNode, RelationType } from "../graph/graph-types.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "template-engine.ts" });
 
 export interface TaskTemplate {
   name: string;
@@ -135,7 +137,7 @@ export function instantiateTemplate(
     }
   }
 
-  logger.info("template-engine:instantiate", {
+  log.info("template-engine:instantiate", {
     template: template.name,
     nodes: nodesCreated.length,
     edges: edgesCreated.length,

@@ -30,8 +30,10 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { GraphNode } from "../graph/graph-types.js";
+
+const log = createLogger({ layer: "core", source: "success-pattern-tracker.ts" });
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS success_patterns (
@@ -118,7 +120,7 @@ export class SuccessPatternTracker {
       this.db
         .prepare("INSERT INTO success_patterns (id, pattern_key, count, contributing_node_ids, contributing_rationales, first_seen, last_seen, memory_written) VALUES (?, ?, 1, ?, ?, ?, ?, 0)")
         .run(id, patternKey, JSON.stringify([nodeId]), JSON.stringify([rationale]), ts, ts);
-      logger.debug("success-pattern:recorded:new", { patternKey, nodeId });
+      log.debug("success-pattern:recorded:new", { patternKey, nodeId });
       return { shouldEmit: false, alreadyEmitted: false, patternKey, count: 1, contributingNodeIds: [nodeId], contributingRationales: [rationale] };
     }
 
@@ -145,7 +147,7 @@ export class SuccessPatternTracker {
       this.db
         .prepare("UPDATE success_patterns SET memory_written = 1 WHERE id = ?")
         .run(existing.id);
-      logger.info("success-pattern:emit", { patternKey, count: newCount, nodes: ids });
+      log.info("success-pattern:emit", { patternKey, count: newCount, nodes: ids });
       return { shouldEmit: true, alreadyEmitted: false, patternKey, count: newCount, contributingNodeIds: ids, contributingRationales: rats };
     }
 

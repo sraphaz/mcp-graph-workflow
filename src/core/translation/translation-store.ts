@@ -23,7 +23,9 @@
 import type Database from "better-sqlite3";
 import type { TranslationJob, TranslationJobStatus, TranslationScope } from "./translation-types.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "translation-store.ts" });
 
 /** Jobs older than this many days are purged on cleanup. */
 const TRANSLATION_JOB_TTL_DAYS = 7;
@@ -155,7 +157,7 @@ export class TranslationStore {
     }
 
     if (purged > 0) {
-      logger.info("translation:cleanup", { purgedJobs: purged });
+      log.info("translation:cleanup", { purgedJobs: purged });
     }
   }
 

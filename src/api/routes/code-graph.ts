@@ -31,7 +31,7 @@ import { detectProcesses } from "../../core/code/process-detector.js";
 import { isTypeScriptAvailable } from "../../core/code/ts-analyzer.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { safeParseInt } from "../../core/utils/parse-query.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { LspBridge } from "../../core/lsp/lsp-bridge.js";
 import { LspServerManager } from "../../core/lsp/lsp-server-manager.js";
 import { LspCache } from "../../core/lsp/lsp-cache.js";
@@ -39,6 +39,8 @@ import { LspDiagnosticsCollector } from "../../core/lsp/lsp-diagnostics.js";
 import { ServerRegistry } from "../../core/lsp/server-registry.js";
 import { detectProjectLanguages } from "../../core/lsp/language-detector.js";
 import { estimateTokens } from "../../core/context/token-estimator.js";
+
+const log = createLogger({ layer: "api", source: "code-graph.ts" });
 
 const SymbolBodySchema = z.object({ symbol: z.string().min(1) });
 const SearchBodySchema = z.object({
@@ -115,7 +117,7 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
       const projectId = getProjectId();
       const basePath = getBasePath();
 
-      logger.info("code-graph:reindex:start", { basePath });
+      log.info("code-graph:reindex:start", { basePath });
 
       const analyzers = await createAnalyzers(basePath);
       const indexer = new CodeIndexer(codeStore, projectId, analyzers);
@@ -260,7 +262,7 @@ export function createCodeGraphRouter(options: CodeGraphRouterOptions): Router {
     try {
       cache.prune();
     } catch (err) {
-      logger.debug("codeGraph:cachePruneFailure", { error: err instanceof Error ? err.message : String(err) });
+      log.debug("codeGraph:cachePruneFailure", { error: err instanceof Error ? err.message : String(err) });
       // Non-critical — ignore prune errors
     }
 

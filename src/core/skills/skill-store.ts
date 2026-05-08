@@ -23,9 +23,11 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
 import type { CustomSkill, CustomSkillInput } from "../../schemas/skill.schema.js";
+
+const log = createLogger({ layer: "core", source: "skill-store.ts" });
 
 // ── Row types ────────────────────────────────────────
 
@@ -68,7 +70,7 @@ function rowToCustomSkill(row: CustomSkillRow): CustomSkill {
 
 /** Toggle a skill's enabled/disabled preference for a project. */
 export function setSkillEnabled(db: Database.Database, projectId: string, skillName: string, enabled: boolean): void {
-  logger.debug("skill-store:setEnabled", { projectId, skillName, enabled });
+  log.debug("skill-store:setEnabled", { projectId, skillName, enabled });
   db.prepare(`
     INSERT INTO skill_preferences (project_id, skill_name, enabled, updated_at)
     VALUES (?, ?, ?, ?)
@@ -96,7 +98,7 @@ export function createCustomSkill(db: Database.Database, projectId: string, data
   const id = generateId("skill");
   const timestamp = now();
 
-  logger.info("skill-store:create", { projectId, name: data.name });
+  log.info("skill-store:create", { projectId, name: data.name });
 
   try {
     db.prepare(`
@@ -150,7 +152,7 @@ export function updateCustomSkill(
     instructions: data.instructions ?? existing.instructions,
   };
 
-  logger.info("skill-store:update", { projectId, id });
+  log.info("skill-store:update", { projectId, id });
 
   db.prepare(`
     UPDATE custom_skills
@@ -170,7 +172,7 @@ export function updateCustomSkill(
 
 /** Delete a custom skill by ID, throwing if not found. */
 export function deleteCustomSkill(db: Database.Database, projectId: string, id: string): void {
-  logger.info("skill-store:delete", { projectId, id });
+  log.info("skill-store:delete", { projectId, id });
   const resultValue = db.prepare(
     "DELETE FROM custom_skills WHERE id = ? AND project_id = ?",
   ).run(id, projectId);

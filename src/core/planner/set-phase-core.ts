@@ -16,7 +16,9 @@ import { generateAndIndexPhaseSummary } from "../rag/phase-summary.js";
 import { runAdrChallengeGate } from "../designer/adr-challenge-gate.js";
 import { AutopilotBridge } from "../autonomy/autopilot-bridge.js";
 import { invalidateAssemblerCache } from "../context/context-assembler.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "set-phase-core.ts" });
 
 const autopilotBridge = new AutopilotBridge();
 
@@ -88,10 +90,10 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
 
   if (caveman !== undefined) {
     store.setProjectSetting("caveman_mode", caveman ? "on" : "off");
-    logger.info("set_phase_core:caveman_changed", { caveman });
+    log.info("set_phase_core:caveman_changed", { caveman });
   }
 
-  logger.debug("set_phase_core", {
+  log.debug("set_phase_core", {
     phase,
     force,
     mode,
@@ -104,39 +106,39 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
 
   if (mode) {
     store.setProjectSetting("lifecycle_strictness_mode", mode);
-    logger.info("set_phase_core:mode_changed", { mode });
+    log.info("set_phase_core:mode_changed", { mode });
   }
 
   if (codeIntelligence) {
     store.setProjectSetting("code_intelligence_mode", codeIntelligence);
-    logger.info("set_phase_core:code_intelligence_changed", { codeIntelligence });
+    log.info("set_phase_core:code_intelligence_changed", { codeIntelligence });
   }
 
   if (prerequisites) {
     store.setProjectSetting("tool_prerequisites_mode", prerequisites);
-    logger.info("set_phase_core:prerequisites_changed", { prerequisites });
+    log.info("set_phase_core:prerequisites_changed", { prerequisites });
   }
 
   if (featureDepth) {
     store.setProjectSetting("feature_depth_mode", featureDepth);
-    logger.info("set_phase_core:feature_depth_changed", { featureDepth });
+    log.info("set_phase_core:feature_depth_changed", { featureDepth });
   }
 
   if (teamTask !== undefined) {
     store.setProjectSetting("team_task_mode", teamTask ? "on" : "off");
-    logger.info("set_phase_core:team_task_changed", { teamTask });
+    log.info("set_phase_core:team_task_changed", { teamTask });
   }
 
   if (wipStrict !== undefined) {
     store.setProjectSetting("wip_strict_mode", wipStrict ? "true" : "false");
-    logger.info("set_phase_core:wip_strict_changed", { wipStrict });
+    log.info("set_phase_core:wip_strict_changed", { wipStrict });
   } else if (teamTask !== undefined) {
     store.setProjectSetting("wip_strict_mode", teamTask ? "true" : "false");
   }
 
   if (maxInFlight !== undefined) {
     store.setProjectSetting("wip_max_in_flight", String(maxInFlight));
-    logger.info("set_phase_core:wip_max_in_flight_changed", { maxInFlight });
+    log.info("set_phase_core:wip_max_in_flight_changed", { maxInFlight });
   }
 
   if (phase === "auto") {
@@ -149,7 +151,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     const currentCodeIntel = codeIntelligence ?? store.getProjectSetting("code_intelligence_mode") ?? "off";
     const currentPrereqs = prerequisites ?? store.getProjectSetting("tool_prerequisites_mode") ?? "advisory";
 
-    logger.info("set_phase_core:ok", {
+    log.info("set_phase_core:ok", {
       action: "auto",
       detectedPhase,
       mode: currentMode,
@@ -180,7 +182,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     const gateResult = validatePhaseTransition(doc, currentPhase as Exclude<typeof phase, "auto">, phase);
 
     if (!gateResult.allowed && currentMode === "strict" && !force) {
-      logger.warn("set_phase_core:gate_blocked", {
+      log.warn("set_phase_core:gate_blocked", {
         from: currentPhase,
         to: phase,
         unmetConditions: gateResult.unmetConditions,
@@ -199,7 +201,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     }
 
     if (!gateResult.allowed && force) {
-      logger.warn("set_phase_core:forced", {
+      log.warn("set_phase_core:forced", {
         from: currentPhase,
         to: phase,
         unmetConditions: gateResult.unmetConditions,
@@ -215,7 +217,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
       const failedNames = adrResult.failedDecisions
         .map((d) => `${d.title} (score: ${d.score})`)
         .join("; ");
-      logger.warn("set_phase_core:adr_gate_blocked", { failed: adrResult.failedDecisions.length });
+      log.warn("set_phase_core:adr_gate_blocked", { failed: adrResult.failedDecisions.length });
       return {
         ok: false,
         kind: "adr_challenge_gate_blocked",
@@ -237,7 +239,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
       );
       phaseSummaryIndexed = summaryResult.indexed;
     } catch (err) {
-      logger.warn("set_phase_core:summary_failed", { error: String(err) });
+      log.warn("set_phase_core:summary_failed", { error: String(err) });
     }
   }
 
@@ -249,9 +251,9 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     try {
       invalidateAssemblerCache();
       cacheInvalidated = true;
-      logger.info("set_phase_core:cache_invalidated", { from: currentPhase, to: phase });
+      log.info("set_phase_core:cache_invalidated", { from: currentPhase, to: phase });
     } catch (err) {
-      logger.warn("set_phase_core:cache_invalidation_failed", { error: String(err) });
+      log.warn("set_phase_core:cache_invalidation_failed", { error: String(err) });
     }
   }
 
@@ -266,9 +268,9 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
     };
     if (autopilot && bridgeResult.action === "started" && store.eventBus) {
       autopilotBridge.subscribeToEventBus(store.getDb(), store.eventBus);
-      logger.info("set_phase_core:autopilot:session-chain-subscribed");
+      log.info("set_phase_core:autopilot:session-chain-subscribed");
     }
-    logger.info("set_phase_core:autopilot", {
+    log.info("set_phase_core:autopilot", {
       action: bridgeResult.action,
       active: bridgeResult.autopilotActive,
     });
@@ -277,7 +279,7 @@ export function setPhaseCore(store: SqliteStore, input: SetPhaseInput): SetPhase
   const currentCodeIntel = codeIntelligence ?? store.getProjectSetting("code_intelligence_mode") ?? "off";
   const currentPrereqs = prerequisites ?? store.getProjectSetting("tool_prerequisites_mode") ?? "advisory";
 
-  logger.info("set_phase_core:ok", {
+  log.info("set_phase_core:ok", {
     action: "override",
     phase,
     mode: currentMode,

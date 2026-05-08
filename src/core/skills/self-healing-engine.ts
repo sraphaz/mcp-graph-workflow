@@ -38,7 +38,9 @@ import type {
 } from "../../schemas/healing.schema.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "self-healing-engine.ts" });
 
 export const DEFAULT_HEALING_CONFIG: HealingConfig = {
   staleHours: 48,
@@ -54,7 +56,7 @@ export const DEFAULT_HEALING_CONFIG: HealingConfig = {
  * Pure function — no side effects.
  */
 export function monitorGraph(doc: GraphDocument, config: HealingConfig): HealingIssue[] {
-  logger.info("self-healing:monitor", { nodes: doc.nodes.length, edges: doc.edges.length });
+  log.info("self-healing:monitor", { nodes: doc.nodes.length, edges: doc.edges.length });
 
   const issues: HealingIssue[] = [];
   const nodeIds = new Set(doc.nodes.map((n) => n.id));
@@ -244,7 +246,7 @@ export function monitorGraph(doc: GraphDocument, config: HealingConfig): Healing
     }
   }
 
-  logger.info("self-healing:monitor:done", { issuesFound: issues.length });
+  log.info("self-healing:monitor:done", { issuesFound: issues.length });
   return issues;
 }
 
@@ -262,7 +264,7 @@ const SEVERITY_ORDER: Record<HealingSeverity, number> = {
  * Pure function — returns sorted and enriched issues.
  */
 export function analyzeIssues(issues: HealingIssue[]): HealingIssue[] {
-  logger.info("self-healing:analyze", { issues: issues.length });
+  log.info("self-healing:analyze", { issues: issues.length });
 
   return [...issues].sort(
     (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity],
@@ -360,7 +362,7 @@ const ACTION_MAP: Record<HealingIssueType, (issue: HealingIssue, doc: GraphDocum
  * Pure function.
  */
 export function planActions(issues: HealingIssue[], doc: GraphDocument): HealingAction[] {
-  logger.info("self-healing:plan", { issues: issues.length });
+  log.info("self-healing:plan", { issues: issues.length });
 
   const actions: HealingAction[] = [];
   for (const issue of issues) {
@@ -373,7 +375,7 @@ export function planActions(issues: HealingIssue[], doc: GraphDocument): Healing
     }
   }
 
-  logger.info("self-healing:plan:done", { actionsGenerated: actions.length });
+  log.info("self-healing:plan:done", { actionsGenerated: actions.length });
   return actions;
 }
 
@@ -392,7 +394,7 @@ export function executeActions(
   doc: GraphDocument,
   options: ExecuteOptions,
 ): HealingResult[] {
-  logger.info("self-healing:execute", { actions: actions.length, dryRun: options.dryRun });
+  log.info("self-healing:execute", { actions: actions.length, dryRun: options.dryRun });
 
   const results: HealingResult[] = [];
   const timestamp = now();
@@ -460,7 +462,7 @@ export function executeActions(
     }
   }
 
-  logger.info("self-healing:execute:done", {
+  log.info("self-healing:execute:done", {
     total: results.length,
     success: results.filter((r) => r.success).length,
   });
@@ -478,7 +480,7 @@ export function buildKnowledge(
   actions: HealingAction[],
   results: HealingResult[],
 ): HealingReport {
-  logger.info("self-healing:knowledge", { issues: issues.length, results: results.length });
+  log.info("self-healing:knowledge", { issues: issues.length, results: results.length });
 
   const totalHealed = results.filter((r) => r.success).length;
   const totalFailed = results.filter((r) => !r.success).length;

@@ -22,7 +22,9 @@
  */
 
 import { classifyError, calculateBackoff, type ErrorClassification, type ErrorCategory } from "./error-classifier.js";
-import { logger } from "./logger.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger({ layer: "core", source: "retry-executor.ts" });
 
 export interface RetryOptions {
   maxAttempts: number;
@@ -59,7 +61,7 @@ export async function withRetry<T>(
       const isLastAttempt = attempt === maxAttempts - 1;
 
       if (!isRetryable || isLastAttempt) {
-        logger.debug("retry-executor:exhausted", {
+        log.debug("retry-executor:exhausted", {
           attempts: attempt + 1,
           category: classification.category,
           retryable: isRetryable,
@@ -74,7 +76,7 @@ export async function withRetry<T>(
         onRetry(attempt, lastError, classification);
       }
 
-      logger.debug("retry-executor:retry", {
+      log.debug("retry-executor:retry", {
         attempt: attempt + 1,
         maxAttempts,
         category: classification.category,

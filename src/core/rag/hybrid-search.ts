@@ -3,7 +3,9 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "hybrid-search.ts" });
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,7 +136,7 @@ export function hybridSearch(
       .sort((a, b) => b.bm25Score - a.bm25Score)
       .slice(0, k);
 
-    logger.debug("hybrid-search:bm25-fallback", { count: sorted.length });
+    log.debug("hybrid-search:bm25-fallback", { count: sorted.length });
 
     return sorted.map((c) => ({
       ...c,

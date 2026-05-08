@@ -29,7 +29,9 @@
 import type Database from "better-sqlite3";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { RankedResult } from "./multi-strategy-retrieval.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "corrective-rag.ts" });
 
 export interface ValidationIssue {
   code: string;
@@ -69,7 +71,7 @@ export function validateRetrievedResults(
     validations.push(validation);
   }
 
-  logger.debug("corrective-rag: validation complete", {
+  log.debug("corrective-rag: validation complete", {
     total: validations.length,
     fresh: validations.filter((v) => v.staleness === "fresh").length,
     aging: validations.filter((v) => v.staleness === "aging").length,
@@ -103,7 +105,7 @@ export function correctResults(
 
     // Filter out results below confidence threshold
     if (validation.confidenceScore < minConfidence) {
-      logger.debug("corrective-rag: filtering low-confidence result", {
+      log.debug("corrective-rag: filtering low-confidence result", {
         docId: resultValue.id,
         confidence: validation.confidenceScore,
         staleness: validation.staleness,

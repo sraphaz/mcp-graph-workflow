@@ -29,8 +29,10 @@ import {
   listAgents,
   type AgentFormat,
 } from "../../core/agents/agent-format-generator.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "agent-format.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Handlers (exported for testing)                                    */
@@ -101,7 +103,7 @@ export function registerAgentFormat(server: McpServer, _store: SqliteStore): voi
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("Agent format tool error", { action: params.action, error: msg });
+        log.error("Agent format tool error", { action: params.action, error: msg });
         return mcpError(msg);
       }
     },

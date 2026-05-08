@@ -25,7 +25,9 @@
  * Based on: Cache Coherence Protocol — consistency via proactive invalidation.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "cache-invalidator.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ export function invalidateDependentCaches(
   }
 
   if (dependents.length > 0) {
-    logger.debug("cache-invalidator:dependents", {
+    log.debug("cache-invalidator:dependents", {
       changedNode: changedNodeId,
       invalidated: dependents.length,
     });

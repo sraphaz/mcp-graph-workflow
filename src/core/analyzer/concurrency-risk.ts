@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "concurrency-risk.ts" });
 
 const CONCURRENCY_KEYWORDS = [
   "trade",
@@ -134,7 +136,7 @@ export function analyzeConcurrencyRisk(doc: GraphDocument): ConcurrencyRiskRepor
     }
   }
 
-  logger.debug("analyzer:concurrency-risk", {
+  log.debug("analyzer:concurrency-risk", {
     totalRisks: risks.length,
     entityConflicts: entityConflicts.length,
   });

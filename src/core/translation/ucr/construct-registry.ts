@@ -27,7 +27,9 @@ import type {
   UcrLanguageMapping,
   UcrSeedData,
 } from "./construct-types.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "construct-registry.ts" });
 
 // ── Row types (SQLite ↔ JS) ─────────────────────────────
 
@@ -262,7 +264,7 @@ export class ConstructRegistry {
 
     tx();
 
-    logger.info("ucr:seed", {
+    log.info("ucr:seed", {
       categories: resultValue.categories,
       constructs: resultValue.constructs,
       mappings: resultValue.mappings,

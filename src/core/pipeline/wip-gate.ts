@@ -28,7 +28,9 @@
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { WIPLimitError, FileConflictError, LockConflictError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "wip-gate.ts" });
 
 export interface WipGateOptions {
   readonly teamTask: boolean;
@@ -71,7 +73,7 @@ export function enforceWipAndFileGates(
     const warning = `WIP limit advisory: ${current}/${opts.wipLimit} tasks in_progress. ` +
       `Task "${opts.nodeId}" will start but consider finishing existing work first.`;
 
-    logger.warn("wip-gate:advisory", {
+    log.warn("wip-gate:advisory", {
       nodeId: opts.nodeId,
       current: String(current),
       limit: String(opts.wipLimit),
@@ -121,7 +123,7 @@ function enforceFileGate(opts: WipGateOptions): string[] {
           agentId: ownerId,
         }));
 
-        logger.warn("wip-gate:file_conflict", {
+        log.warn("wip-gate:file_conflict", {
           nodeId,
           conflictingFiles: conflictingFiles.join(","),
         });

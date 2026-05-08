@@ -68,7 +68,7 @@ describe("isOnnxAvailable — AC1", () => {
 
   it("should log a warning when ONNX is unavailable (structural: warn path present in source)", () => {
     const source = src();
-    expect(source).toMatch(/onnxAvailableCache.*=.*false|logger\.warn.*unavailable/s);
+    expect(source).toMatch(/onnxAvailableCache.*=.*false|(?:logger|log)\.warn.*unavailable/s);
   });
 });
 
@@ -144,7 +144,7 @@ describe("ensureModelFiles — AC4: corrupt model detection", () => {
 
   it("should log a warn for corrupt model files (structural: logger.warn present)", () => {
     const source = src();
-    expect(source).toMatch(/logger\.warn.*corrupted-model/);
+    expect(source).toMatch(/(?:logger|log)\.warn.*corrupted-model/);
   });
 
   it("should delete corrupt model file and re-download (structural: unlinkSync present)", () => {
@@ -157,7 +157,7 @@ describe("ensureModelFiles — AC4: corrupt model detection", () => {
 describe("ensureModelFiles + loadTokenizer — AC5: tokenizer resilience", () => {
   it("should log a warn for corrupt tokenizer files (structural: corrupted-tokenizer present)", () => {
     const source = src();
-    expect(source).toMatch(/logger\.warn.*corrupted-tokenizer/);
+    expect(source).toMatch(/(?:logger|log)\.warn.*corrupted-tokenizer/);
   });
 
   it("should attempt to parse tokenizer JSON and catch errors (structural: try.*JSON.parse)", () => {

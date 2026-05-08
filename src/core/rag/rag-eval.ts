@@ -28,7 +28,9 @@
 import type Database from "better-sqlite3";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { multiStrategySearch } from "./multi-strategy-retrieval.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "rag-eval.ts" });
 
 export interface EvalQuery {
   /** Natural language query. */
@@ -211,7 +213,7 @@ export function generateEvalDataset(
     }
   }
 
-  logger.info("rag-eval: generated eval dataset", { queryCount: queries.length });
+  log.info("rag-eval: generated eval dataset", { queryCount: queries.length });
   return queries;
 }
 
@@ -252,7 +254,7 @@ export async function runEvalBenchmark(
   const avgPrecision = perQuery.reduce((s, q) => s + q.metrics.precisionAtK, 0) / nVar;
   const avgMrr = perQuery.reduce((s, q) => s + q.metrics.mrr, 0) / nVar;
 
-  logger.info("rag-eval: benchmark complete", {
+  log.info("rag-eval: benchmark complete", {
     queries: perQuery.length,
     avgNdcg: Math.round(avgNdcg * 1000) / 1000,
     avgRecall: Math.round(avgRecall * 1000) / 1000,

@@ -16,7 +16,9 @@
  */
 
 import { spawn } from "node:child_process";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "runner.ts" });
 
 export interface RunnerResult {
   readonly ok: boolean;
@@ -76,7 +78,7 @@ export function runFeatureDepthGo(opts: RunnerOptions): Promise<RunnerResult> {
 
     child.on("error", (err) => {
       clearTimeout(timer);
-      logger.warn("feature-depth:runner-error", { error: err.message });
+      log.warn("feature-depth:runner-error", { error: err.message });
       resolve({
         ok: false,
         stdout,

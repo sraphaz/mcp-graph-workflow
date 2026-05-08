@@ -36,8 +36,10 @@ import { loadAndSeedRegistry } from "../../core/translation/ucr/construct-seed.j
 import { CodeStore } from "../../core/code/code-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexTranslationEvidence } from "../../core/rag/translation-indexer.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { McpGraphError } from "../../core/utils/errors.js";
+
+const log = createLogger({ layer: "api", source: "translation-project.ts" });
 
 const UploadSchema = z.object({
   targetLanguage: z.string().min(1),
@@ -131,7 +133,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       const projectOrchestrator = getProjectOrchestrator();
       const projectStore = getProjectStore();
 
-      logger.info("Creating translation project from ZIP", { projectId, targetLanguage, name });
+      log.info("Creating translation project from ZIP", { projectId, targetLanguage, name });
 
       const project = projectOrchestrator.createFromZip(projectId, file.path, targetLanguage, name);
       projectOrchestrator.analyzeProject(project.id);
@@ -147,12 +149,12 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.status(201).json({ project, files });
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation project upload failed", { error: err });
+      log.error("Translation project upload failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Upload failed" });
     } finally {
       if (file) {
         unlink(file.path).catch((unlinkErr) => {
-          logger.warn("translation:upload:cleanup_failed", { path: file.path, error: String(unlinkErr) });
+          log.warn("translation:upload:cleanup_failed", { path: file.path, error: String(unlinkErr) });
         });
       }
     }
@@ -165,7 +167,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       const projects = getProjectStore().listProjects(projectId);
       res.json({ projects });
     } catch (err) {
-      logger.error("Translation project list failed", { error: err });
+      log.error("Translation project list failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "List failed" });
     }
   });
@@ -182,7 +184,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       const files = projectStore.getFiles(req.params.id);
       res.json({ project, files });
     } catch (err) {
-      logger.error("Translation project get failed", { error: err });
+      log.error("Translation project get failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "Get failed" });
     }
   });
@@ -208,7 +210,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
           .map((f) => f.id);
       }
 
-      logger.info("Preparing translation for files", { projectId: id, fileCount: fileIds.length });
+      log.info("Preparing translation for files", { projectId: id, fileCount: fileIds.length });
 
       const results: Array<{ fileId: string; jobId: string; prompt: string }> = [];
       for (const fileId of fileIds) {
@@ -219,7 +221,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.json({ results });
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation project prepare failed", { error: err });
+      log.error("Translation project prepare failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Prepare failed" });
     }
   });
@@ -236,7 +238,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       const { id, fileId } = req.params;
       const projectOrchestrator = getProjectOrchestrator();
 
-      logger.info("Finalizing translation file", { projectId: id, fileId });
+      log.info("Finalizing translation file", { projectId: id, fileId });
 
       const resultValue = projectOrchestrator.finalizeFile(id, fileId, parsed.data.generatedCode);
 
@@ -263,7 +265,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
           }
         }
       } catch (indexErr) {
-        logger.error("Translation evidence indexing failed (non-blocking)", { error: indexErr });
+        log.error("Translation evidence indexing failed (non-blocking)", { error: indexErr });
       }
 
       eventBus?.emit({
@@ -275,7 +277,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.json(resultValue);
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation file finalize failed", { error: err });
+      log.error("Translation file finalize failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Finalize failed" });
     }
   });
@@ -286,7 +288,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       const { id } = req.params;
       const projectOrchestrator = getProjectOrchestrator();
 
-      logger.info("Generating download ZIP", { projectId: id });
+      log.info("Generating download ZIP", { projectId: id });
 
       const buffer = await projectOrchestrator.generateDownloadZip(id);
 
@@ -295,7 +297,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.send(buffer);
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation project download failed", { error: err });
+      log.error("Translation project download failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Download failed" });
     }
   });
@@ -330,7 +332,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.send(job.targetCode);
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation file download failed", { error: err });
+      log.error("Translation file download failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "File download failed" });
     }
   });
@@ -345,7 +347,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.json(summary);
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation project summary failed", { error: err });
+      log.error("Translation project summary failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Summary failed" });
     }
   });
@@ -368,7 +370,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.json({ nodes, edges: [] });
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation project graph failed", { error: err });
+      log.error("Translation project graph failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Graph failed" });
     }
   });
@@ -379,7 +381,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       const { id } = req.params;
       const projectStore = getProjectStore();
 
-      logger.info("Deleting translation project", { projectId: id });
+      log.info("Deleting translation project", { projectId: id });
 
       const deleted = projectStore.deleteProject(id);
       if (!deleted) {
@@ -389,7 +391,7 @@ export function createTranslationProjectRouter(storeRef: StoreRef, eventBus?: Gr
       res.status(204).send();
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation project delete failed", { error: err });
+      log.error("Translation project delete failed", { error: err });
       res.status(status).json({ error: err instanceof Error ? err.message : "Delete failed" });
     }
   });

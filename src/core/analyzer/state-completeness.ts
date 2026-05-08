@@ -26,7 +26,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "state-completeness.ts" });
 
 export interface StateCompletenessReport {
   machines: Array<{ nodeId: string; title: string; valid: boolean; issues: string[] }>;
@@ -109,7 +111,7 @@ export function analyzeStateCompleteness(doc: GraphDocument): StateCompletenessR
     machines.push({ nodeId: node.id, title: node.title, valid, issues });
   }
 
-  logger.debug("analyzer:state-completeness", {
+  log.debug("analyzer:state-completeness", {
     totalMachines: machineNodes.length,
     validCount,
   });

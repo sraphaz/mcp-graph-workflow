@@ -26,8 +26,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { getSpecTemplate, listSpecTemplates } from "../../core/spec-templates/built-in-spec-templates.js";
 import { generateSpecDocument, validateSpecDocument } from "../../core/spec-templates/spec-template-engine.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "spec.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Handlers (exported for testing)                                    */
@@ -74,10 +76,10 @@ export function handleSpecGenerate(
     });
     knowledgeIndexed = true;
   } catch (err) {
-    logger.error("Failed to index spec document", { error: err instanceof Error ? err.message : String(err) });
+    log.error("Failed to index spec document", { error: err instanceof Error ? err.message : String(err) });
   }
 
-  logger.info("Spec generated", { template: params.templateName, phase: template.phase });
+  log.info("Spec generated", { template: params.templateName, phase: template.phase });
 
   return { ok: true, markdown, knowledgeIndexed };
 }
@@ -140,7 +142,7 @@ export function registerSpec(server: McpServer, store: SqliteStore): void {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error("Spec tool error", { action: params.action, error: msg });
+        log.error("Spec tool error", { action: params.action, error: msg });
         return mcpError(msg);
       }
     },

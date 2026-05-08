@@ -21,7 +21,9 @@
  */
 
 import { captureWebPage, type CaptureResult, type CaptureOptions } from "./web-capture.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "validate-runner.ts" });
 
 export interface ValidateOptions extends CaptureOptions {
   /** Second URL for A/B comparison */
@@ -51,7 +53,7 @@ export async function runValidation(
   url: string,
   options?: ValidateOptions,
 ): Promise<ValidateResult> {
-  logger.info("Running validation", { url, compareUrl: options?.compareUrl });
+  log.info("Running validation", { url, compareUrl: options?.compareUrl });
 
   const primary = await captureWebPage(url, options);
 
@@ -66,7 +68,7 @@ export async function runValidation(
     resultValue.diff = computeDiff(primary, comparison);
   }
 
-  logger.info("Validation complete", {
+  log.info("Validation complete", {
     url,
     wordCount: primary.wordCount,
     hasDiff: !!resultValue.diff,

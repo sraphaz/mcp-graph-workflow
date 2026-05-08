@@ -6,9 +6,11 @@
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { SwarmConfigSchema } from "./swarm-types.js";
 import type { SwarmConfigInput, Topology, ConsensusKind } from "./swarm-types.js";
+
+const log = createLogger({ layer: "core", source: "swarm-coordinator.ts" });
 
 export interface SwarmSession {
   id: string;
@@ -60,7 +62,7 @@ export class SwarmCoordinator {
       )
       .run(id, config.topology, config.consensus, config.maxAgents, config.strategy, now, now);
 
-    logger.info("swarm:init", { id, topology: config.topology, consensus: config.consensus });
+    log.info("swarm:init", { id, topology: config.topology, consensus: config.consensus });
     return this.status(id);
   }
 
@@ -73,7 +75,7 @@ export class SwarmCoordinator {
       throw new McpGraphError(`Swarm session not found: ${sessionId}`);
     }
 
-    logger.info("swarm:start", { sessionId });
+    log.info("swarm:start", { sessionId });
     return this.status(sessionId);
   }
 
@@ -90,7 +92,7 @@ export class SwarmCoordinator {
         .run(new Date().toISOString(), sessionId);
     })();
 
-    logger.info("swarm:stop", { sessionId });
+    log.info("swarm:stop", { sessionId });
     return this.status(sessionId);
   }
 
@@ -110,7 +112,7 @@ export class SwarmCoordinator {
       throw new McpGraphError(`Swarm session not found: ${sessionId}`);
     }
 
-    logger.info("swarm:scale", { sessionId, newMax });
+    log.info("swarm:scale", { sessionId, newMax });
     return this.status(sessionId);
   }
 

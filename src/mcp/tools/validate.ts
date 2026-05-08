@@ -30,8 +30,10 @@ import { indexCapture } from "../../core/rag/capture-indexer.js";
 import { indexAcValidationResult } from "../../core/rag/validation-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { validateAcQuality } from "../../core/analyzer/ac-validator.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "validate.ts" });
 
 /** registerValidate — auto-generated description placeholder. */
 export function registerValidate(server: McpServer, store: SqliteStore): void {
@@ -50,7 +52,7 @@ export function registerValidate(server: McpServer, store: SqliteStore): void {
       all: z.boolean().optional().describe("Validate all nodes with AC (ac only, default: true if no nodeId)"),
     },
     async ({ action, url, compareUrl, selector, nodeId, all }) => {
-      logger.debug("tool:validate", { action, nodeId });
+      log.debug("tool:validate", { action, nodeId });
 
       if (action === "task") {
         if (!url) {
@@ -96,7 +98,7 @@ export function registerValidate(server: McpServer, store: SqliteStore): void {
           since: "v11.0.0",
         };
 
-        logger.info("tool:validate:task:ok", { nodeId, url, deprecated: true });
+        log.info("tool:validate:task:ok", { nodeId, url, deprecated: true });
         return mcpText(response);
       }
 
@@ -121,11 +123,11 @@ export function registerValidate(server: McpServer, store: SqliteStore): void {
           }
           indexEntitiesForSource(store.getDb(), "validation_result");
         } catch (err) {
-          logger.warn("tool:validate:ac:index_failed", { error: String(err) });
+          log.warn("tool:validate:ac:index_failed", { error: String(err) });
         }
       }
 
-      logger.info("tool:validate:ac:ok", { nodes: report.nodes.length, score: report.overallScore });
+      log.info("tool:validate:ac:ok", { nodes: report.nodes.length, score: report.overallScore });
       return mcpText({ ok: true, ...report });
     },
   );

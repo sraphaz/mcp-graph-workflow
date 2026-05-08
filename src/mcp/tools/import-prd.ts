@@ -26,10 +26,12 @@ import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexPrdContent } from "../../core/rag/prd-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { diffPrd } from "../../core/parser/prd-diff.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { generateId } from "../../core/utils/id.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import type { GraphNode } from "../../core/graph/graph-types.js";
+
+const log = createLogger({ layer: "mcp", source: "import-prd.ts" });
 
 /**
  * §BUG-04 — Ensure each unique sprint label has a corresponding milestone
@@ -70,7 +72,7 @@ export function ensureSprintMilestones(store: SqliteStore, sprintLabels: Readonl
     created++;
   }
   if (created > 0) {
-    logger.info("ensureSprintMilestones:created", { count: created, labels: unique });
+    log.info("ensureSprintMilestones:created", { count: created, labels: unique });
   }
   return created;
 }
@@ -99,7 +101,7 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
         .describe("Compare with previous import and show changes (sections added/removed/modified)"),
     },
     async ({ filePath, force, dryRun, diff }) => {
-      logger.info("tool:import_prd", { filePath, force, diff });
+      log.info("tool:import_prd", { filePath, force, diff });
       // 1. Read and parse
       const { content, absolutePath, sizeBytes } = await readPrdFile(filePath);
       const sourceFileName = path.basename(absolutePath);
@@ -148,7 +150,7 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
             })),
           });
         } catch (err) {
-          logger.warn("tool:import_prd:diff_failed", { error: String(err) });
+          log.warn("tool:import_prd:diff_failed", { error: String(err) });
           return mcpError(`Diff failed: ${String(err)}`);
         }
       }
@@ -166,12 +168,12 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       }
 
       // 4. Extract entities
-      logger.debug("tool:import_prd:extract", { sourceFileName, sizeBytes });
+      log.debug("tool:import_prd:extract", { sourceFileName, sizeBytes });
       const extraction = extractEntities(content);
 
       // 5. Convert to graph
       const { nodes, edges, stats } = convertToGraph(extraction, sourceFileName);
-      logger.debug("tool:import_prd:converted", { nodes: nodes.length, edges: edges.length });
+      log.debug("tool:import_prd:converted", { nodes: nodes.length, edges: edges.length });
 
       // 5.5 Dry-run: return preview without persisting
       if (dryRun) {
@@ -182,7 +184,7 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
           priority: n.priority,
           parentId: n.parentId ?? null,
         }));
-        logger.info("tool:import_prd:dry_run", { nodesPreview: preview.length, totalNodes: nodes.length });
+        log.info("tool:import_prd:dry_run", { nodesPreview: preview.length, totalNodes: nodes.length });
         return mcpText({
           ok: true,
           dryRun: true,
@@ -203,7 +205,7 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       ];
       const sprintMilestonesCreated = ensureSprintMilestones(store, sprintLabelsFound);
       if (sprintMilestonesCreated > 0) {
-        logger.info("tool:import_prd:sprint_milestones", { created: sprintMilestonesCreated, labels: sprintLabelsFound });
+        log.info("tool:import_prd:sprint_milestones", { created: sprintMilestonesCreated, labels: sprintLabelsFound });
       }
 
       // 7. Record import
@@ -239,7 +241,7 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
           metadata: { sourceFile: sourceFileName, purpose: "diff_tracking", storedAt: new Date().toISOString() },
         });
       } catch (err) {
-        logger.warn("tool:import_prd:knowledge_index_failed", { error: String(err) });
+        log.warn("tool:import_prd:knowledge_index_failed", { error: String(err) });
       }
 
       // 9. Snapshot after import
@@ -249,12 +251,12 @@ export function registerImportPrd(server: McpServer, store: SqliteStore): void {
       try {
         const { rebuildCommunities } = await import("../../core/rag/community-summarizer.js");
         rebuildCommunities(store);
-        logger.debug("tool:import_prd:communities_rebuilt");
+        log.debug("tool:import_prd:communities_rebuilt");
       } catch {
         // Non-blocking — community rebuild failure should not fail import
       }
 
-      logger.info("tool:import_prd:ok", {
+      log.info("tool:import_prd:ok", {
         sourceFile: sourceFileName,
         nodesCreated: stats.nodesCreated,
         edgesCreated: stats.edgesCreated,

@@ -31,12 +31,15 @@ import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { graphToMermaid } from "../../core/graph/mermaid-export.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 import {
+
   PlanPayloadSchema,
   type PlanPayload,
 } from "../contracts/plan-payload.js";
+
+const log = createLogger({ layer: "mcp", source: "graph-materialize.ts" });
 
 const ARTIFACT_KINDS = ["mermaid", "adr", "snapshot"] as const;
 export type Artifact = typeof ARTIFACT_KINDS[number];
@@ -144,7 +147,7 @@ export function registerGraphMaterialize(server: McpServer, store: SqliteStore):
     },
     async (args) => {
       const rVar = buildMaterializePlan(store, args);
-      logger.debug("tool:graph_materialize", {
+      log.debug("tool:graph_materialize", {
         ok: rVar.ok,
         artifact: args.artifact,
         nodeId: args.nodeId,

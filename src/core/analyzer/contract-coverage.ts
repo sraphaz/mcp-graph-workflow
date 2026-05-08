@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "contract-coverage.ts" });
 
 export interface ContractCoverageReport {
   contracts: Array<{ nodeId: string; title: string; hasProvider: boolean; hasConsumer: boolean }>;
@@ -72,7 +74,7 @@ export function analyzeContractCoverage(doc: GraphDocument): ContractCoverageRep
     ? Math.round((coveredCount / contractNodes.length) * 100)
     : 100;
 
-  logger.debug("analyzer:contract-coverage", {
+  log.debug("analyzer:contract-coverage", {
     totalContracts: contractNodes.length,
     coveragePercent,
     uncovered: uncoveredContracts.length,

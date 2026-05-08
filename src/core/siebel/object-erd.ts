@@ -21,7 +21,9 @@
  */
 
 import type { SiebelObject } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "object-erd.ts" });
 
 // --- Public types ---
 
@@ -57,7 +59,7 @@ export function generateSiebelErd(
   objects: readonly SiebelObject[],
   projectFilter?: string,
 ): ErdResult {
-  logger.debug("object-erd: generating", { objectCount: objects.length, project: projectFilter });
+  log.debug("object-erd: generating", { objectCount: objects.length, project: projectFilter });
 
   let bcs = objects.filter((o) => o.type === "business_component");
   if (projectFilter) {
@@ -119,7 +121,7 @@ export function generateSiebelErd(
   // Generate Mermaid
   const mermaid = generateMermaid(tables, relationships);
 
-  logger.info("object-erd: complete", { tables: tables.length, relationships: relationships.length });
+  log.info("object-erd: complete", { tables: tables.length, relationships: relationships.length });
 
   return { tables, relationships, mermaid };
 }

@@ -25,8 +25,10 @@ import { createMcpContext7Fetcher } from "../../core/docs/mcp-context7-fetcher.j
 import { detectStack } from "../../core/docs/stack-detector.js";
 import { indexCachedDocs } from "../../core/rag/docs-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "sync-stack-docs.ts" });
 
 /**
  * Shared input schema — exported so name-aliases (e.g. graph_refresh_docs)
@@ -56,7 +58,7 @@ export async function runSyncStackDocs(
   store: SqliteStore,
   { basePath, libraries }: SyncStackDocsArgs,
 ): Promise<ReturnType<typeof mcpText>> {
-      logger.debug("tool:sync_stack_docs", { basePath });
+      log.debug("tool:sync_stack_docs", { basePath });
       const projectPath = basePath ?? process.cwd();
       const docsCacheStore = new DocsCacheStore(store.getDb());
       const knowledgeStore = new KnowledgeStore(store.getDb());
@@ -100,7 +102,7 @@ export async function runSyncStackDocs(
       const indexResult = indexCachedDocs(knowledgeStore, docsCacheStore);
       indexEntitiesForSource(store.getDb(), "docs");
 
-      logger.info("tool:sync_stack_docs:ok", { librariesProcessed: results.length, knowledgeIndexed: indexResult.documentsIndexed });
+      log.info("tool:sync_stack_docs:ok", { librariesProcessed: results.length, knowledgeIndexed: indexResult.documentsIndexed });
       return mcpText({
         ok: true,
         librariesProcessed: results.length,

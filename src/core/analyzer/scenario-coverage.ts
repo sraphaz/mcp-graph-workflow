@@ -26,7 +26,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "scenario-coverage.ts" });
 
 export interface ScenarioCoverageReport {
   totalScenarios: number;
@@ -75,7 +77,7 @@ export function analyzeScenarioCoverage(doc: GraphDocument): ScenarioCoverageRep
     ? Math.round((systemsCovered.length / allSystems.length) * 100)
     : 100;
 
-  logger.debug("analyzer:scenario-coverage", {
+  log.debug("analyzer:scenario-coverage", {
     totalScenarios: scenarios.length,
     covered: systemsCovered.length,
     total: allSystems.length,

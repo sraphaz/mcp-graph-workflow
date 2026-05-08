@@ -22,7 +22,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { InterfaceReport, InterfaceCheckResult } from "../../schemas/designer-schema.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "interface-checker.ts" });
 
 // Bug #071: include constraint and risk nodes in interface analysis
 const INTERFACE_NODE_TYPES = new Set(["epic", "requirement", "decision", "constraint", "risk"]);
@@ -79,7 +81,7 @@ export function checkInterfaces(doc: GraphDocument): InterfaceReport {
   const overallScore = Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length);
   const nodesWithoutContracts = results.filter((r) => r.score < 50).map((r) => r.nodeId);
 
-  logger.info("interface-checker", { evaluated: results.length, overallScore });
+  log.info("interface-checker", { evaluated: results.length, overallScore });
 
   return { results, overallScore, nodesWithoutContracts };
 }

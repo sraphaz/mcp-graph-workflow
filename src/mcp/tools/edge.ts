@@ -23,9 +23,11 @@ import { RelationTypeSchema } from "../../schemas/edge.schema.js";
 import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { generateId } from "../../core/utils/id.js";
 import { now } from "../../core/utils/time.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { sequenceSubtasks } from "../../core/graph/auto-sequence.js";
+
+const log = createLogger({ layer: "mcp", source: "edge.ts" });
 
 /** registerEdge — auto-generated description placeholder. */
 export function registerEdge(server: McpServer, store: SqliteStore): void {
@@ -57,7 +59,7 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
       direction: z.enum(["from", "to", "both"]).optional().describe("Edge direction relative to nodeId (list only, default: both)"),
     },
     async ({ action, from, to, relationType, reason, weight, id, edges: batchEdges, nodeId, direction, parentId }) => {
-      logger.debug("tool:edge", { action, from, to, relationType });
+      log.debug("tool:edge", { action, from, to, relationType });
       if (action === "add") {
         if (!from || !to || !relationType) {
           return mcpError("from, to, and relationType are required for add action");
@@ -103,13 +105,13 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
         })();
 
         if (resultValue.existing) {
-          logger.info("tool:edge:ok", { action: "existing", edgeId: resultValue.edge.id, from, to, relationType });
+          log.info("tool:edge:ok", { action: "existing", edgeId: resultValue.edge.id, from, to, relationType });
           return mcpText({ ok: true, edge: resultValue.edge, existing: true });
         }
 
         const edge = resultValue.edge;
 
-        logger.info("tool:edge:ok", { action: "add", edgeId: edge.id, from, to, relationType });
+        log.info("tool:edge:ok", { action: "add", edgeId: edge.id, from, to, relationType });
         return mcpText({ ok: true, edge });
       }
 
@@ -178,7 +180,7 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
           store.mergeInsert([], validEdges);
         }
 
-        logger.info("tool:edge:batch_add:ok", { inserted: inserted.length, errors: errors.length });
+        log.info("tool:edge:batch_add:ok", { inserted: inserted.length, errors: errors.length });
         return mcpText({ ok: true, inserted, errors });
       }
 
@@ -192,7 +194,7 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
         }
 
         const resultValue = sequenceSubtasks(store, parentId);
-        logger.info("tool:edge:sequence:ok", { parentId, edgesCreated: resultValue.edgesCreated });
+        log.info("tool:edge:sequence:ok", { parentId, edgesCreated: resultValue.edgesCreated });
         return mcpText({ ok: true, ...resultValue });
       }
 
@@ -206,7 +208,7 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
           return mcpError(`Edge not found: ${id}`);
         }
 
-        logger.info("tool:edge:ok", { action: "delete", deletedId: id });
+        log.info("tool:edge:ok", { action: "delete", deletedId: id });
         return mcpText({ ok: true, deletedId: id });
       }
 
@@ -240,7 +242,7 @@ export function registerEdge(server: McpServer, store: SqliteStore): void {
         edges = edges.filter((e) => e.relationType === (relationType as RelationType));
       }
 
-      logger.info("tool:edge:ok", { action: "list", total: edges.length });
+      log.info("tool:edge:ok", { action: "list", total: edges.length });
       return mcpText({ ok: true, total: edges.length, edges });
     },
   );

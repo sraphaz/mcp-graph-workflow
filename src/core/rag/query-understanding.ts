@@ -31,7 +31,9 @@ import { tokenize } from "../search/tokenizer.js";
 import { extractEntities } from "./enrichment-pipeline.js";
 import { extractEntitiesFromText } from "./entity-extractor.js";
 import { EntityStore } from "./entity-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "query-understanding.ts" });
 
 export type QueryIntent = "search" | "how_to" | "status" | "debug" | "compare" | "history";
 
@@ -170,7 +172,7 @@ export function understandQuery(query: string, prior?: PriorAttemptSignals): Und
     expandedTerms = expandedTerms.filter((t) => !lowYieldSet.has(t.toLowerCase()));
   }
 
-  logger.debug("Query understood", {
+  log.debug("Query understood", {
     intent,
     entityCount: entities.length,
     sourceFilters: sourceTypeFilter.length,
@@ -273,7 +275,7 @@ export function decomposeQuery(query: string, db: Database.Database): Decomposed
     }
   } catch {
     // KG not available — graceful degradation
-    logger.debug("decomposeQuery: KG tables not available, skipping entity matching");
+    log.debug("decomposeQuery: KG tables not available, skipping entity matching");
   }
 
   // Deduplicate entity matches by entityId, keeping highest score
@@ -285,7 +287,7 @@ export function decomposeQuery(query: string, db: Database.Database): Decomposed
     }
   }
 
-  logger.debug("Query decomposed", {
+  log.debug("Query decomposed", {
     highLevelKeys: highLevelKeys.length,
     lowLevelKeys: uniqueLowKeys.length,
     entityMatches: entityMap.size,

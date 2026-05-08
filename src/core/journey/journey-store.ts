@@ -19,11 +19,13 @@ import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { McpGraphError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "journey-store.ts" });
 
 function safeJsonParse<T>(raw: string | null | undefined, fallback: T | undefined = undefined): T | undefined {
   if (!raw) return fallback;
-  try { return JSON.parse(raw) as T; } catch (err) { logger.warn("journey-store:corrupted-json", { raw: raw.slice(0, 80), error: getErrorMessage(err) }); return fallback; }
+  try { return JSON.parse(raw) as T; } catch (err) { log.warn("journey-store:corrupted-json", { raw: raw.slice(0, 80), error: getErrorMessage(err) }); return fallback; }
 }
 
 // ── Row types ────────────────────────────────────────────
@@ -256,7 +258,7 @@ export class JourneyStore {
       .run(id, this.projectId, input.name, input.url ?? null, input.description ?? null,
         input.metadata ? JSON.stringify(input.metadata) : null, ts, ts);
 
-    logger.info("journey:map:created", { id, name: input.name });
+    log.info("journey:map:created", { id, name: input.name });
     return { id, name: input.name, url: input.url, description: input.description, metadata: input.metadata, createdAt: ts, updatedAt: ts };
   }
 
@@ -265,7 +267,7 @@ export class JourneyStore {
       .prepare("DELETE FROM journey_maps WHERE id = ? AND project_id = ?")
       .run(id, this.projectId);
     if (resultValue.changes > 0) {
-      logger.info("journey:map:deleted", { id });
+      log.info("journey:map:deleted", { id });
     }
     return resultValue.changes > 0;
   }
@@ -302,7 +304,7 @@ export class JourneyStore {
         ts, ts,
       );
 
-    logger.info("journey:screen:created", { id, mapId, title: input.title });
+    log.info("journey:screen:created", { id, mapId, title: input.title });
     return {
       id, mapId, title: input.title,
       description: input.description, screenshot: input.screenshot, url: input.url,
@@ -372,7 +374,7 @@ export class JourneyStore {
         input.label ?? null, input.type ?? "navigation",
         input.metadata ? JSON.stringify(input.metadata) : null, ts);
 
-    logger.info("journey:edge:created", { id, mapId, from: input.from, to: input.to });
+    log.info("journey:edge:created", { id, mapId, from: input.from, to: input.to });
     return { id, mapId, from: input.from, to: input.to, label: input.label, type: input.type ?? "navigation", metadata: input.metadata, createdAt: ts };
   }
 
@@ -451,7 +453,7 @@ export class JourneyStore {
       }
     })();
 
-    logger.info("journey:imported", { mapId: map.id, screensCreated, edgesCreated });
+    log.info("journey:imported", { mapId: map.id, screensCreated, edgesCreated });
     return { id: map.id, screensCreated, edgesCreated };
   }
 }

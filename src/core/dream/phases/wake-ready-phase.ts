@@ -28,7 +28,9 @@ import type Database from "better-sqlite3";
 import type { WakeReadyResult } from "../dream-types.js";
 import { estimateTokens } from "../../context/token-estimator.js";
 import { runSynthesisCycle } from "../../rag/knowledge-synthesizer.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "wake-ready-phase.ts" });
 
 interface BeforeMetrics {
   totalDocsBefore: number;
@@ -65,11 +67,11 @@ export function runWakeReadyPhase(
     const synthesisResult = runSynthesisCycle(db);
     newGeneralizations = synthesisResult.synthesized;
   } catch {
-    logger.debug("dream:wake:synthesis_skipped", { reason: "insufficient docs or no patterns" });
+    log.debug("dream:wake:synthesis_skipped", { reason: "insufficient docs or no patterns" });
   }
 
   const durationMs = Date.now() - startMs;
-  logger.info("dream:wake:complete", { freedTokens, signalToNoise, newGeneralizations, durationMs });
+  log.info("dream:wake:complete", { freedTokens, signalToNoise, newGeneralizations, durationMs });
 
   return { freedTokens, signalToNoise, newGeneralizations, durationMs };
 }

@@ -27,7 +27,9 @@
  */
 
 import type { SiebelObject } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "escript-generator.ts" });
 
 // --- Types ---
 
@@ -208,7 +210,7 @@ export function generateEScript(request: EScriptGenerationRequest): EScriptGener
     knownFieldNames,
   } = request;
 
-  logger.info("escript-generator", {
+  log.info("escript-generator", {
     parent: parentObjectName,
     event: eventName,
     description: behaviorDescription.slice(0, 80),
@@ -276,7 +278,7 @@ export function generateEScript(request: EScriptGenerationRequest): EScriptGener
     knownFieldNames,
   );
 
-  logger.debug("escript-generator:complete", {
+  log.debug("escript-generator:complete", {
     functionName,
     scriptLength: String(script.length),
     referencedEntities: String(referencedEntities.length),

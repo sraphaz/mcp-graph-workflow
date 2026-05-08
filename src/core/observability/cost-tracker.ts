@@ -21,7 +21,9 @@
  * Pricing as of 2025-Q2 (USD per 1M tokens).
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "cost-tracker.ts" });
 
 export interface ModelPricing {
   inputPer1M: number;
@@ -88,7 +90,7 @@ export function calculateCost(model: string, inputTokens: number, outputTokens: 
   const pricing = getModelPricing(model);
 
   if (!pricing) {
-    logger.warn("cost-tracker:unknown_model", { model });
+    log.warn("cost-tracker:unknown_model", { model });
     return { model, inputTokens, outputTokens, inputCostUsd: 0, outputCostUsd: 0, totalUsd: 0 };
   }
 

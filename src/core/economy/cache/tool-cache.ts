@@ -28,7 +28,9 @@ import { buildCacheKey } from "./cache-key.js";
 import { CACHEABLE_TOOLS, type CacheableToolName } from "../_cacheable-tools.js";
 import type { GraphEventBus } from "../../events/event-bus.js";
 import type { GraphEventType } from "../../events/event-types.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tool-cache.ts" });
 
 /** Bump when the cached result shape changes incompatibly. */
 export const TOOL_CACHE_SCHEMA_VERSION = 1;
@@ -132,7 +134,7 @@ export class ToolCache {
   invalidateAll(reason: string): void {
     if (this.lru.size === 0) return;
     this.invalidations++;
-    logger.debug("tool-cache:invalidate", { reason, size: this.lru.size });
+    log.debug("tool-cache:invalidate", { reason, size: this.lru.size });
     this.lru.clear();
   }
 

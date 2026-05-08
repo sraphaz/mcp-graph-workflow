@@ -27,7 +27,9 @@ import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import type { DetectedLanguage } from './lsp-types.js';
 import type { ServerRegistry } from './server-registry.js';
-import { logger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ layer: "core", source: "language-detector.ts" });
 
 // ---------------------------------------------------------------------------
 // Config files that indicate a language
@@ -88,7 +90,7 @@ export function detectProjectLanguages(
   projectPath: string,
   registry: ServerRegistry,
 ): DetectedLanguage[] {
-  logger.debug('detecting project languages', { projectPath });
+  log.debug('detecting project languages', { projectPath });
 
   // Track config-file detections: languageId -> configFileName
   const configDetections = new Map<string, string>();
@@ -133,7 +135,7 @@ export function detectProjectLanguages(
   // 4. Sort by fileCount descending
   results.sort((a, b) => b.fileCount - a.fileCount);
 
-  logger.info('project languages detected', {
+  log.info('project languages detected', {
     count: String(results.length),
     languages: results.map(r => r.languageId).join(','),
   });
@@ -154,7 +156,7 @@ function detectConfigFiles(
   try {
     entries = readdirSync(rootPath, { withFileTypes: true, encoding: 'utf-8' });
   } catch {
-    logger.debug('cannot read root directory for config detection', { rootPath });
+    log.debug('cannot read root directory for config detection', { rootPath });
     return;
   }
 
@@ -190,7 +192,7 @@ function walkAndCountFiles(
   try {
     entries = readdirSync(dirPath, { withFileTypes: true, encoding: 'utf-8' });
   } catch {
-    logger.debug('cannot read directory, skipping', { dirPath });
+    log.debug('cannot read directory, skipping', { dirPath });
     return;
   }
 

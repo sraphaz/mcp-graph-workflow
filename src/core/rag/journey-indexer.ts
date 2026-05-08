@@ -23,7 +23,9 @@
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { JourneyStore, type JourneyMapFull, type JourneyScreen, type JourneyEdge } from "../journey/journey-store.js";
 import { chunkText } from "./chunk-text.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "journey-indexer.ts" });
 
 export interface JourneyIndexResult {
   mapsIndexed: number;
@@ -145,7 +147,7 @@ export function indexJourneyMaps(
   const maps = journeyStore.listMaps();
 
   if (maps.length === 0) {
-    logger.info("No journey maps to index");
+    log.info("No journey maps to index");
     return { mapsIndexed: 0, documentsIndexed: 0 };
   }
 
@@ -225,7 +227,7 @@ export function indexJourneyMaps(
       totalDocs += screenChunks.length;
     }
 
-    logger.info("Journey map indexed", {
+    log.info("Journey map indexed", {
       mapId: map.id,
       name: map.name,
       screens: map.screens.length,

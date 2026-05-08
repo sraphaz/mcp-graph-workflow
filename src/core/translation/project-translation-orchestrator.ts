@@ -24,7 +24,7 @@
 
 import AdmZip from "adm-zip";
 import path from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { TranslationError } from "../utils/errors.js";
 import { TranslationOrchestrator } from "./translation-orchestrator.js";
 import { TranslationProjectStore } from "./translation-project-store.js";
@@ -35,6 +35,8 @@ import type {
   TranslationProjectSummary,
 } from "./translation-project-types.js";
 import type { TranslationAnalysis } from "./translation-types.js";
+
+const log = createLogger({ layer: "core", source: "project-translation-orchestrator.ts" });
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -114,7 +116,7 @@ export class ProjectTranslationOrchestrator {
 
     this.projectStore.updateProject(project.id, { totalFiles: files.length });
 
-    logger.info("project-translation:createFromZip", {
+    log.info("project-translation:createFromZip", {
       translationProjectId: project.id,
       projectId,
       zipPath,
@@ -137,7 +139,7 @@ export class ProjectTranslationOrchestrator {
 
     const files = this.projectStore.getFiles(translationProjectId);
 
-    logger.info("project-translation:analyzeProject:start", {
+    log.info("project-translation:analyzeProject:start", {
       translationProjectId,
       fileCount: files.length,
     });
@@ -172,7 +174,7 @@ export class ProjectTranslationOrchestrator {
 
           processedCount++;
 
-          logger.debug("project-translation:analyzeProject:file", {
+          log.debug("project-translation:analyzeProject:file", {
             translationProjectId,
             fileId: file.id,
             filePath: file.filePath,
@@ -182,7 +184,7 @@ export class ProjectTranslationOrchestrator {
           });
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
-          logger.error("project-translation:analyzeProject:fileError", {
+          log.error("project-translation:analyzeProject:fileError", {
             translationProjectId,
             fileId: file.id,
             filePath: file.filePath,
@@ -206,7 +208,7 @@ export class ProjectTranslationOrchestrator {
       deterministicPct: confidence.deterministicPct,
     });
 
-    logger.info("project-translation:analyzeProject:done", {
+    log.info("project-translation:analyzeProject:done", {
       translationProjectId,
       processedFiles: processedCount,
       totalFiles: files.length,
@@ -376,7 +378,7 @@ export class ProjectTranslationOrchestrator {
     const files = this.projectStore.getFiles(translationProjectId);
     const zip = new AdmZip();
 
-    logger.info("project-translation:generateDownloadZip", {
+    log.info("project-translation:generateDownloadZip", {
       translationProjectId,
       fileCount: files.length,
     });
@@ -407,7 +409,7 @@ export class ProjectTranslationOrchestrator {
         zip.addFile(sidecarPath, Buffer.from(prepared.prompt, "utf-8"));
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
-        logger.debug("project-translation:generateDownloadZip:promptError", {
+        log.debug("project-translation:generateDownloadZip:promptError", {
           fileId: file.id,
           filePath: file.filePath,
           error: message,

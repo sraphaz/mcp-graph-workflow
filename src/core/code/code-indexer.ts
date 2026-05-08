@@ -30,9 +30,11 @@ import type { CodeAnalyzer, IndexResult } from "./code-types.js";
 import { isTypeScriptAvailable } from "./ts-analyzer.js";
 import { TsAnalyzer } from "./ts-analyzer.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { createAnalyzers } from "./analyzer-factory.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
+
+const log = createLogger({ layer: "core", source: "code-indexer.ts" });
 
 function getGitHash(basePath: string): string | null {
   try {
@@ -127,7 +129,7 @@ export class CodeIndexer {
     const supportedExtensions = new Set(this.extensionMap.keys());
     const files = walkDirectory(dirPath, supportedExtensions);
 
-    logger.info("code-indexer:start", {
+    log.info("code-indexer:start", {
       directory: dirPath,
       fileCount: files.length,
     });
@@ -165,7 +167,7 @@ export class CodeIndexer {
     );
 
     if (hasOnlyTsAnalyzers && !typescriptAvailable) {
-      logger.warn("code-indexer:typescript-unavailable", {
+      log.warn("code-indexer:typescript-unavailable", {
         message: "typescript package not found — code indexing disabled. Install it: npm install -D typescript",
         fileCount: filePaths.length,
       });
@@ -241,7 +243,7 @@ export class CodeIndexer {
           }
         }
       } catch (err) {
-        logger.warn("code-indexer:file-error", {
+        log.warn("code-indexer:file-error", {
           file: filePath,
           error: err instanceof Error ? err.message : String(err),
         });
@@ -258,7 +260,7 @@ export class CodeIndexer {
       gitHash: getGitHash(basePath),
     });
 
-    logger.info("code-indexer:done", {
+    log.info("code-indexer:done", {
       fileCount,
       filesWithSymbols,
       symbolCount: totalSymbols,

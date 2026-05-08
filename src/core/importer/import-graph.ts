@@ -20,7 +20,9 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
 import { GraphDocumentSchema } from "../../schemas/graph.schema.js";
 import { ValidationError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "import-graph.ts" });
 
 export interface MergeGraphOptions {
   dryRun?: boolean;
@@ -62,7 +64,7 @@ export function mergeGraph(
   const sourceProject = incoming.project.name;
   const dryRun = options?.dryRun ?? false;
 
-  logger.info("merge-graph:start", {
+  log.info("merge-graph:start", {
     sourceProject,
     incomingNodes: incoming.nodes.length,
     incomingEdges: incoming.edges.length,
@@ -130,7 +132,7 @@ export function mergeGraph(
       }
     }
 
-    logger.info("merge-graph:dry-run", {
+    log.info("merge-graph:dry-run", {
       nodesInserted: nodesToInsert.length,
       nodesSkipped,
       edgesInserted,
@@ -158,7 +160,7 @@ export function mergeGraph(
   // 9. Record import
   store.recordImport(`merge:${sourceProject}`, nodesInserted, edgesInserted);
 
-  logger.info("merge-graph:done", {
+  log.info("merge-graph:done", {
     sourceProject,
     nodesInserted,
     nodesSkipped,

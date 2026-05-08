@@ -4,7 +4,9 @@
  */
 
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "rag-hybrid-mode.ts" });
 
 export type RagMode = "lexical" | "semantic" | "hybrid";
 
@@ -39,7 +41,7 @@ export function parseRagHybridMode(env: Record<string, string | undefined> = pro
         `Invalid RAG_HYBRID_MODE "${canonical}". Valid values: ${[...VALID_MODES].join(", ")}`,
       );
     }
-    logger.debug("rag:mode", { mode: canonical, source: "RAG_HYBRID_MODE" });
+    log.debug("rag:mode", { mode: canonical, source: "RAG_HYBRID_MODE" });
     return canonical as RagMode;
   }
 
@@ -51,7 +53,7 @@ export function parseRagHybridMode(env: Record<string, string | undefined> = pro
         `Invalid MCP_GRAPH_EMBEDDINGS "${alias}". Valid: ${Object.keys(EMBEDDINGS_ALIAS).join(", ")}`,
       );
     }
-    logger.debug("rag:mode", { mode: mapped, source: "MCP_GRAPH_EMBEDDINGS", raw: alias });
+    log.debug("rag:mode", { mode: mapped, source: "MCP_GRAPH_EMBEDDINGS", raw: alias });
     return mapped;
   }
 

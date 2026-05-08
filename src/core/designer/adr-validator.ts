@@ -22,7 +22,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { AdrReport, AdrGrade, AdrValidationResult } from "../../schemas/designer-schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "adr-validator.ts" });
 
 const ADR_SECTIONS = ["Status", "Context", "Decision", "Consequences"] as const;
 
@@ -93,7 +95,7 @@ export function validateAdrs(doc: GraphDocument): AdrReport {
   }
 
   const summary = `${decisions.length} decision(s) avaliada(s). Grade geral: ${overallGrade}`;
-  logger.info("adr-validator", { count: decisions.length, overallGrade });
+  log.info("adr-validator", { count: decisions.length, overallGrade });
 
   return { decisions, overallGrade, summary };
 }

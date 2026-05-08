@@ -19,8 +19,10 @@ import { Command } from "commander";
 import path from "node:path";
 import { runUpdate } from "../../mcp/init-project.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import type { UpdateStepResult } from "../../mcp/init-project.js";
+
+const log = createLogger({ layer: "cli", source: "update.ts" });
 
 function output(msg: string): void {
   process.stdout.write(msg + "\n");
@@ -77,7 +79,7 @@ export function updateCommand(): Command {
         if (opts.json) {
           output(JSON.stringify({ error: getErrorMessage(err) }, null, 2));
         } else {
-          logger.error(`Update failed: ${getErrorMessage(err)}`);
+          log.error(`Update failed: ${getErrorMessage(err)}`);
           output("\nRun 'mcp-graph init' to initialize this project first.");
         }
         process.exitCode = 1;

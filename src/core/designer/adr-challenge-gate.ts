@@ -26,7 +26,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { runAllAdrChallenges, type AdrChallengeResult } from "./adr-challenge-runner.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "adr-challenge-gate.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -61,7 +63,7 @@ export function runAdrChallengeGate(
 ): AdrChallengeGateResult {
   // Off mode: skip entirely
   if (mode === "off") {
-    logger.debug("adr-challenge-gate: off mode, skipping");
+    log.debug("adr-challenge-gate: off mode, skipping");
     return {
       blocked: false,
       totalDecisions: 0,
@@ -76,7 +78,7 @@ export function runAdrChallengeGate(
 
   // Zero decisions case
   if (resultValue.summary.totalDecisions === 0) {
-    logger.info("adr-challenge-gate: no decision nodes found");
+    log.info("adr-challenge-gate: no decision nodes found");
     return {
       blocked: false,
       totalDecisions: 0,
@@ -114,7 +116,7 @@ export function runAdrChallengeGate(
   // Block in strict mode if any failures
   const blocked = mode === "strict" && failedDecisions.length > 0;
 
-  logger.info("adr-challenge-gate:result", {
+  log.info("adr-challenge-gate:result", {
     mode,
     totalDecisions: resultValue.summary.totalDecisions,
     passed: resultValue.summary.passed,

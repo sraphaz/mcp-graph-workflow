@@ -23,7 +23,9 @@
 import type Database from "better-sqlite3";
 import { now } from "../utils/time.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "golden-store.ts" });
 
 export interface GoldenEntry {
   id: string;
@@ -106,7 +108,7 @@ export class GoldenStore {
         JSON.stringify(input.tags ?? []),
         createdAt,
       );
-    logger.debug("golden-store: created", { id, tool: input.tool });
+    log.debug("golden-store: created", { id, tool: input.tool });
     return { ...input, id, createdAt, projectId: input.projectId };
   }
 

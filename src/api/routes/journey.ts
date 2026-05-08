@@ -39,7 +39,9 @@ import { HarnessSafetyViolation } from "../../core/utils/errors.js";
 import { validateBody } from "../middleware/validate.js";
 import { GraphNotInitializedError } from "../../core/utils/errors.js";
 import { STORE_DIR } from "../../core/utils/constants.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "journey.ts" });
 
 const JOURNEY_SCREENSHOTS_DIR = "journey-screenshots";
 const ID_MAX = 100;
@@ -455,7 +457,7 @@ export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => strin
         });
         send({ type: "done", runId: run.id });
       } catch (err) {
-        logger.error("api:journey:run:error", { error: String(err) });
+        log.error("api:journey:run:error", { error: String(err) });
         send({ type: "error", error: err instanceof Error ? err.message : String(err) });
       } finally {
         off();

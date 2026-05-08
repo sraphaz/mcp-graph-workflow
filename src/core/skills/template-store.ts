@@ -23,9 +23,11 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
 import type { TaskTemplate, TaskTemplateInput, TemplateSubtask } from "../../schemas/skill.schema.js";
+
+const log = createLogger({ layer: "core", source: "template-store.ts" });
 
 interface TemplateRow {
   id: string;
@@ -58,7 +60,7 @@ export function createTaskTemplate(
   const id = generateId("tmpl");
   const timestamp = now();
 
-  logger.info("template-store:create", { projectId, name: data.name });
+  log.info("template-store:create", { projectId, name: data.name });
 
   try {
     db.prepare(`
@@ -110,7 +112,7 @@ export function getTaskTemplateByName(
 
 /** Delete a task template by ID, throwing if not found. */
 export function deleteTaskTemplate(db: Database.Database, projectId: string, id: string): void {
-  logger.info("template-store:delete", { projectId, id });
+  log.info("template-store:delete", { projectId, id });
   const resultValue = db.prepare(
     "DELETE FROM task_templates WHERE id = ? AND project_id = ?",
   ).run(id, projectId);

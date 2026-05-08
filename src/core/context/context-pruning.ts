@@ -27,7 +27,9 @@
 
 import { pruneFile } from "./ast-pruner.js";
 import { estimateTokens } from "./token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "context-pruning.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -111,7 +113,7 @@ export function pruneContextSection(
 
   const prunedTokens = estimateTokens(resultValue.content);
 
-  logger.debug("context-pruning:applied", {
+  log.debug("context-pruning:applied", {
     originalTokens,
     prunedTokens,
     reductionPercent: resultValue.reductionPercent,

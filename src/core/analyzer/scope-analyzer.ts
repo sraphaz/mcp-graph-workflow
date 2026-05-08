@@ -23,7 +23,9 @@ import type { GraphDocument } from "../graph/graph-types.js";
 import type { ScopeAnalysis, OrphanNode, CoverageMatrix } from "../../schemas/analyzer-schema.js";
 import { detectCycles } from "../planner/dependency-chain.js";
 import { TASK_TYPES, REQUIREMENT_TYPES } from "../utils/node-type-sets.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "scope-analyzer.ts" });
 
 /** analyzeScope — auto-generated description placeholder. */
 export function analyzeScope(doc: GraphDocument): ScopeAnalysis {
@@ -154,7 +156,7 @@ export function analyzeScope(doc: GraphDocument): ScopeAnalysis {
     ? `Scope issues: ${summaryParts.join(", ")}`
     : "Escopo limpo — sem órfãos, ciclos ou conflitos detectados";
 
-  logger.info("scope-analyzer", { orphans: orphans.length, cycles: cycles.length, conflicts: conflicts.length });
+  log.info("scope-analyzer", { orphans: orphans.length, cycles: cycles.length, conflicts: conflicts.length });
 
   return { orphans, cycles, coverage, conflicts, summary, orphanRequirementsCount };
 }

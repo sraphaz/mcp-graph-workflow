@@ -23,7 +23,9 @@
 
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "relevance-tracker.ts" });
 
 const REQUERY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const TERM_OVERLAP_THRESHOLD = 0.5; // >50% overlap = requery
@@ -84,7 +86,7 @@ export class RelevanceTracker {
       }
     })();
 
-    logger.debug("relevance-tracker:trackQuery", { sessionId, query: query.slice(0, 50), docs: documentIds.length });
+    log.debug("relevance-tracker:trackQuery", { sessionId, query: query.slice(0, 50), docs: documentIds.length });
   }
 
   /**
@@ -135,7 +137,7 @@ export class RelevanceTracker {
           }
         })();
 
-        logger.debug("relevance-tracker:requery", {
+        log.debug("relevance-tracker:requery", {
           sessionId,
           prevQuery: prevQuery.slice(0, 50),
           newQuery: query.slice(0, 50),

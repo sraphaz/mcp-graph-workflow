@@ -19,7 +19,9 @@ import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { ConfigSchema, type McpGraphConfig } from "./config-schema.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "config-loader.ts" });
 
 const CONFIG_FILENAME = "mcp-graph.config.json";
 
@@ -36,7 +38,7 @@ export function loadConfig(basePath?: string): McpGraphConfig {
       // (Notepad on Windows, older VSCode) save JSON with BOM by default.
       const raw = readFileSync(configPath, "utf-8").replace(/^\uFEFF/, "");
       fileConfig = JSON.parse(raw) as Record<string, unknown>;
-      logger.info(`Config loaded from ${configPath}`);
+      log.info(`Config loaded from ${configPath}`);
     } catch (err) {
       // B23 (node_873b627dab19): malformed JSON used to fall through to
       // defaults silently — users were running with a config that wasn't
@@ -45,7 +47,7 @@ export function loadConfig(basePath?: string): McpGraphConfig {
       throw new McpGraphError(`Invalid config at ${configPath}: ${msg}`);
     }
   } else {
-    logger.info("No config file found, using defaults");
+    log.info("No config file found, using defaults");
   }
 
   // Env var overrides

@@ -22,8 +22,10 @@
  * embeddings for deterministic local operation (ADR-0056).
  */
 
-import { logger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 import { type EmbeddingProvider, getOnnxProvider, isOnnxAvailable } from './onnx-embeddings.js';
+
+const log = createLogger({ layer: "rag", source: "embedding-generator.ts" });
 
 // ── Constants ──
 
@@ -107,17 +109,17 @@ async function getProvider(): Promise<EmbeddingProvider> {
       if (onnxProvider) {
         cachedProvider = onnxProvider;
         providerResolved = true;
-        logger.info('embedding:provider', { name: 'onnx', dim: EMBEDDING_DIM });
+        log.info('embedding:provider', { name: 'onnx', dim: EMBEDDING_DIM });
         return cachedProvider;
       }
     } catch {
-      logger.debug('embedding:onnx-fallback', { reason: 'onnx provider init failed' });
+      log.debug('embedding:onnx-fallback', { reason: 'onnx provider init failed' });
     }
   }
 
   cachedProvider = new HashEmbeddingProvider();
   providerResolved = true;
-  logger.info('embedding:provider', { name: 'hash', dim: EMBEDDING_DIM });
+  log.info('embedding:provider', { name: 'hash', dim: EMBEDDING_DIM });
   return cachedProvider;
 }
 

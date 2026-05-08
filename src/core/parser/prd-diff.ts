@@ -23,7 +23,9 @@
 import { normalize } from "./normalize.js";
 import { segment } from "./segment.js";
 import type { Section } from "./segment.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "prd-diff.ts" });
 
 export interface PrdDiffSection {
   title: string;
@@ -87,7 +89,7 @@ export function diffPrd(oldText: string, newText: string): PrdDiffResult {
   const modifiedCount = sections.filter((s) => s.status === "modified").length;
   const unchangedCount = sections.filter((s) => s.status === "unchanged").length;
 
-  logger.info("prd-diff", { added: addedCount, removed: removedCount, modified: modifiedCount });
+  log.info("prd-diff", { added: addedCount, removed: removedCount, modified: modifiedCount });
 
   return { sections, addedCount, removedCount, modifiedCount, unchangedCount };
 }

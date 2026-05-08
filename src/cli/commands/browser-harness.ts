@@ -16,7 +16,9 @@ import {
   seedBuiltInHelpers,
   loadGuardrail,
 } from "../../core/browser-harness/index.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "browser-harness.ts" });
 
 async function withStore<T>(fn: (store: import("../../core/store/sqlite-store.js").SqliteStore) => Promise<T>): Promise<T> {
   const { SqliteStore } = await import("../../core/store/sqlite-store.js");
@@ -87,7 +89,7 @@ export function browserHarnessCommand(): Command {
         const sessions = new SessionStore(store.getDb());
         const session = sessions.find(opts.session);
         if (!session) {
-          logger.error("bh:cli:call:no-session", { id: opts.session });
+          log.error("bh:cli:call:no-session", { id: opts.session });
           process.stdout.write(JSON.stringify({ ok: false, error: "no active session — use 'connect' first in the same process" }) + "\n");
           return;
         }

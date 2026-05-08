@@ -34,7 +34,9 @@ import {
   buildOctaneXml,
 } from "../../core/browser-harness/report-generator.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "browser-harness.ts" });
 
 interface BrowserHarnessRuntime {
   registry: HelpersRegistry;
@@ -85,7 +87,7 @@ export function createBrowserHarnessRouter(
       const meta = bundle.sessions.register(cdp, endpoint, null);
       res.status(201).json({ ok: true, session: meta });
     } catch (err) {
-      logger.error("api:bh:sessions:create:error", { error: String(err) });
+      log.error("api:bh:sessions:create:error", { error: String(err) });
       next(err);
     }
   });
@@ -148,7 +150,7 @@ export function createBrowserHarnessRouter(
               run,
             });
           } catch (err) {
-            logger.warn("api:bh:chat:skill_input_persist_failed", { error: String(err) });
+            log.warn("api:bh:chat:skill_input_persist_failed", { error: String(err) });
           }
         }
         send({ type: "done", runId: run.id });

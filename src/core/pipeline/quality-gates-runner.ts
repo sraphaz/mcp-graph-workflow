@@ -25,7 +25,9 @@ import { checkCodeQuality } from "../analyzer/code-quality-checker.js";
 import { checkTestCoverage } from "../analyzer/test-coverage-checker.js";
 import { checkObservability } from "../analyzer/observability-checker.js";
 import { scoreToGrade } from "../utils/grading.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "quality-gates-runner.ts" });
 
 export interface QualityGatesResult {
   modes: string[];
@@ -97,7 +99,7 @@ export function runQualityGates(
     : 0;
   const overallGrade = scoreToGrade(overallScore);
 
-  logger.info("quality-gates:complete", {
+  log.info("quality-gates:complete", {
     gates: gates.length,
     overallScore,
     overallGrade,

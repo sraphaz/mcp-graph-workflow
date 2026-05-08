@@ -23,7 +23,9 @@
 import type { CaptureResult } from "../capture/web-capture.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { chunkText } from "./chunk-text.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "capture-indexer.ts" });
 
 export interface CaptureIndexResult {
   documentsIndexed: number;
@@ -41,7 +43,7 @@ export function indexCapture(
   const chunks = chunkText(capture.text);
 
   if (chunks.length === 0) {
-    logger.info("No content to index from capture", { url: capture.url });
+    log.info("No content to index from capture", { url: capture.url });
     return { documentsIndexed: 0, url: capture.url };
   }
 
@@ -67,7 +69,7 @@ export function indexCapture(
     })),
   );
 
-  logger.info("Web capture indexed", { url: capture.url, chunks: docs.length });
+  log.info("Web capture indexed", { url: capture.url, chunks: docs.length });
 
   return { documentsIndexed: docs.length, url: capture.url };
 }

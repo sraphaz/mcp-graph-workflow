@@ -21,7 +21,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { DocCompletenessReport } from "../../schemas/handoff-schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "doc-completeness.ts" });
 
 /** Check description coverage across all graph nodes. */
 export function checkDocCompleteness(doc: GraphDocument): DocCompletenessReport {
@@ -39,7 +41,7 @@ export function checkDocCompleteness(doc: GraphDocument): DocCompletenessReport 
     title: n.title,
   }));
 
-  logger.info("doc-completeness", { coverageRate, totalNodes, descriptionsPresent });
+  log.info("doc-completeness", { coverageRate, totalNodes, descriptionsPresent });
 
   return { descriptionsPresent, totalNodes, coverageRate, nodesWithoutDescription };
 }

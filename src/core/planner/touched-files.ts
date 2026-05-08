@@ -26,7 +26,9 @@
 import type { GraphNode } from "../graph/graph-types.js";
 import type { LockManager } from "../store/lock-manager.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "touched-files.ts" });
 
 const TOUCHED_FILES_CAP = 20;
 
@@ -45,7 +47,7 @@ export function getTouchedFiles(node: GraphNode): string[] {
   const strings = raw.filter((entry): entry is string => typeof entry === "string");
 
   if (strings.length > TOUCHED_FILES_CAP) {
-    logger.warn("touched-files:cap_exceeded", {
+    log.warn("touched-files:cap_exceeded", {
       nodeId: node.id,
       count: String(strings.length),
       cap: String(TOUCHED_FILES_CAP),
@@ -86,7 +88,7 @@ export function getInFlightFileMap(
     const node = store.getNodeById(nodeId);
 
     if (!node) {
-      logger.warn("touched-files:node_not_found", { nodeId, agentId: lock.agentId });
+      log.warn("touched-files:node_not_found", { nodeId, agentId: lock.agentId });
       continue;
     }
 

@@ -5,7 +5,9 @@
 
 import { spawn } from "node:child_process";
 import type { HookEvent } from "./hook-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "shell-handler.ts" });
 
 /**
  * Shell-handler runner. Mirrors the Claude Code hook contract:
@@ -103,7 +105,7 @@ export async function runShellHandler(
 
     child.on("error", (err) => {
       clearTimeout(timer);
-      logger.warn("hook:shell:spawn_error", { handlerId: config.id, error: String(err) });
+      log.warn("hook:shell:spawn_error", { handlerId: config.id, error: String(err) });
       resolve({
         decision: "warn",
         exitCode: null,
@@ -131,7 +133,7 @@ export async function runShellHandler(
         child.stdin.end();
       });
     } catch (err) {
-      logger.warn("hook:shell:stdin_failed", { handlerId: config.id, error: String(err) });
+      log.warn("hook:shell:stdin_failed", { handlerId: config.id, error: String(err) });
       child.kill("SIGKILL");
     }
   });

@@ -12,8 +12,10 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { enqueueRetry } from "./retry-worker.js";
+
+const log = createLogger({ layer: "core", source: "event-reactor.ts" });
 
 export const EVENT_HANDLERS = [
   "cost:budget_exceeded",
@@ -44,11 +46,11 @@ export class EventReactor {
     this.bus.on("cost:budget_exceeded", async (payload) => {
       try {
         process.env.MCP_GRAPH_AUTOPILOT_PAUSED = "true";
-        logger.warn("event-reactor:cost:budget_exceeded", {
+        log.warn("event-reactor:cost:budget_exceeded", {
           payload: isObject(payload) ? payload : null,
         });
       } catch (err) {
-        logger.error("event-reactor:cost:budget_exceeded:error", {
+        log.error("event-reactor:cost:budget_exceeded:error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -62,7 +64,7 @@ export class EventReactor {
         const lastError = isObject(payload) && typeof payload["lastError"] === "string"
           ? payload["lastError"]
           : "retry exhausted";
-        logger.warn("event-reactor:error:retry_exhausted", { taskId, lastError });
+        log.warn("event-reactor:error:retry_exhausted", { taskId, lastError });
         await this.bus.emit("approval:required", {
           nodeId: taskId,
           reason: `retry exhausted: ${lastError}`,
@@ -70,7 +72,7 @@ export class EventReactor {
           source: "event-reactor",
         });
       } catch (err) {
-        logger.error("event-reactor:error:retry_exhausted:error", {
+        log.error("event-reactor:error:retry_exhausted:error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -83,7 +85,7 @@ export class EventReactor {
           .prepare(`SELECT value FROM project_settings WHERE key = 'autopilot.last_session_ts'`)
           .get() as { value: string } | undefined;
         if (!row) {
-          logger.debug("event-reactor:session:start:no-prior-snapshot");
+          log.debug("event-reactor:session:start:no-prior-snapshot");
           return;
         }
         const lastTs = Number.parseInt(row.value, 10);
@@ -91,12 +93,12 @@ export class EventReactor {
         const ageMs = Date.now() - lastTs;
         const TWENTY_FOUR_H = 24 * 60 * 60 * 1000;
         if (ageMs > TWENTY_FOUR_H) {
-          logger.info("event-reactor:session:start:snapshot-stale", { ageMs });
+          log.info("event-reactor:session:start:snapshot-stale", { ageMs });
           return;
         }
-        logger.info("event-reactor:session:start:resume", { ageMs });
+        log.info("event-reactor:session:start:resume", { ageMs });
       } catch (err) {
-        logger.error("event-reactor:session:start:error", {
+        log.error("event-reactor:session:start:error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -108,16 +110,16 @@ export class EventReactor {
           ? payload["nodeId"]
           : null;
         if (!nodeId) {
-          logger.debug("event-reactor:task:error:no-node-id");
+          log.debug("event-reactor:task:error:no-node-id");
           return;
         }
         const errorMsg = isObject(payload) && typeof payload["error"] === "string"
           ? payload["error"]
           : undefined;
         const retryId = enqueueRetry(this.db, nodeId, errorMsg);
-        logger.info("event-reactor:task:error:enqueued", { nodeId, retryId });
+        log.info("event-reactor:task:error:enqueued", { nodeId, retryId });
       } catch (err) {
-        logger.error("event-reactor:task:error:error", {
+        log.error("event-reactor:task:error:error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -130,18 +132,18 @@ export class EventReactor {
           : 0;
         if (delta <= HARNESS_REGRESSION_THRESHOLD) {
           process.env.MCP_GRAPH_AUTOPILOT_PAUSED = "true";
-          logger.warn("event-reactor:harness:regression:pause", { delta });
+          log.warn("event-reactor:harness:regression:pause", { delta });
         } else {
-          logger.debug("event-reactor:harness:regression:within-threshold", { delta });
+          log.debug("event-reactor:harness:regression:within-threshold", { delta });
         }
       } catch (err) {
-        logger.error("event-reactor:harness:regression:error", {
+        log.error("event-reactor:harness:regression:error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
     });
 
-    logger.info("event-reactor:registered", {
+    log.info("event-reactor:registered", {
       events: EVENT_HANDLERS.length,
       list: EVENT_HANDLERS,
     });

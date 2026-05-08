@@ -26,7 +26,9 @@
 import type Database from "better-sqlite3";
 import { randomUUID } from "crypto";
 import { LockConflictError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "lock-manager.ts" });
 
 const DEFAULT_TTL_SECONDS = 300; // 5 minutes
 
@@ -86,7 +88,7 @@ export class LockManager {
         )
         .run(leaseToken, now.toISOString(), expiresAt.toISOString(), resourceId);
 
-      logger.debug("lock:acquire:upgrade", { resourceId, agentId });
+      log.debug("lock:acquire:upgrade", { resourceId, agentId });
     } else {
       // No lock — insert new
       const resourceType = resourceId.includes(":") ? resourceId.split(":")[0] : "unknown";
@@ -97,7 +99,7 @@ export class LockManager {
         )
         .run(resourceId, resourceType, agentId, leaseToken, now.toISOString(), expiresAt.toISOString());
 
-      logger.debug("lock:acquire:new", { resourceId, agentId, ttlSeconds });
+      log.debug("lock:acquire:new", { resourceId, agentId, ttlSeconds });
     }
 
     return {
@@ -121,7 +123,7 @@ export class LockManager {
       throw new Error(`No lock found for lease token "${leaseToken}"`);
     }
 
-    logger.debug("lock:release", { leaseToken });
+    log.debug("lock:release", { leaseToken });
   }
 
   /**
@@ -139,7 +141,7 @@ export class LockManager {
       throw new Error(`No lock found for lease token "${leaseToken}"`);
     }
 
-    logger.debug("lock:renew", { leaseToken, ttlSeconds });
+    log.debug("lock:renew", { leaseToken, ttlSeconds });
   }
 
   /**
@@ -186,7 +188,7 @@ export class LockManager {
       .run(now.toISOString());
 
     if (deleted.changes > 0) {
-      logger.debug("lock:clean_expired", { count: deleted.changes });
+      log.debug("lock:clean_expired", { count: deleted.changes });
     }
 
     return deleted.changes;

@@ -21,7 +21,9 @@
  */
 
 import type { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "decision-indexer.ts" });
 
 export interface DecisionInput {
   nodeId: string;
@@ -69,7 +71,7 @@ export function indexDecision(
   // Check if it was a dedup hit (existing doc returned)
   const isNew = doc.sourceId === sourceId;
 
-  logger.info("Decision indexed", { nodeId: decision.nodeId, docId: doc.id, isNew });
+  log.info("Decision indexed", { nodeId: decision.nodeId, docId: doc.id, isNew });
 
   return {
     documentsIndexed: isNew ? 1 : 0,

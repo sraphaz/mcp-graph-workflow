@@ -14,7 +14,9 @@ import {
   walkEventBlocks,
   type ImportEnvelope,
 } from "../import-helpers.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "opencode.ts" });
 
 /**
  * OpenCode (SST) provider — reads `~/.config/opencode/config.toml`
@@ -103,7 +105,7 @@ export function importOpenCodeSettings(opts: OpenCodeImportOptions = {}): OpenCo
     source,
   );
 
-  logger.info("hooks:import:done", {
+  log.info("hooks:import:done", {
     provider: "opencode",
     source,
     imported: envelope.imported.length,
@@ -135,7 +137,7 @@ function scanPlugins(dirs: string[]): string[] {
         }
       }
     } catch (err) {
-      logger.warn("opencode:plugins:scan_failed", { dir, error: String(err) });
+      log.warn("opencode:plugins:scan_failed", { dir, error: String(err) });
     }
   }
   return found;

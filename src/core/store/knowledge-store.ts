@@ -26,13 +26,15 @@ import { createHash } from "node:crypto";
 import type { KnowledgeDocument, KnowledgeSourceType } from "../../schemas/knowledge.schema.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
 import { DEFAULT_TOKEN_BUDGET } from "../utils/constants.js";
 import { getSharedHookBus } from "../hooks/shared-hook-bus.js";
 import { getPhaseBoost, applyPhaseBoost } from "../rag/phase-metadata.js";
 import { PhaseBoostCache } from "../rag/phase-boost-cache.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
+
+const log = createLogger({ layer: "core", source: "knowledge-store.ts" });
 
 export interface InsertKnowledgeDoc {
   sourceType: KnowledgeSourceType;
@@ -133,14 +135,14 @@ export class KnowledgeStore {
 
     if (resultValue.changes === 0) {
       // Dedup hit — return existing document
-      logger.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
+      log.debug("Knowledge doc dedup hit", { hash: hash.slice(0, 8), sourceId: doc.sourceId });
       const existing = this.db
         .prepare("SELECT * FROM knowledge_documents WHERE content_hash = ? AND source_id = ?")
         .get(hash, doc.sourceId) as KnowledgeRow;
       return rowToDoc(existing);
     }
 
-    logger.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
+    log.info("Knowledge doc inserted", { id, sourceType: doc.sourceType, title: doc.title });
     void getSharedHookBus().emit({
       channel: "memory:post-store",
       timestamp: new Date().toISOString(),
@@ -290,7 +292,7 @@ export class KnowledgeStore {
     const resultValue = this.db
       .prepare("DELETE FROM knowledge_documents WHERE source_type = ? AND source_id = ?")
       .run(sourceType, sourceId);
-    logger.info("Knowledge docs deleted by source", { sourceType, sourceId, count: resultValue.changes });
+    log.info("Knowledge docs deleted by source", { sourceType, sourceId, count: resultValue.changes });
     return resultValue.changes;
   }
 
@@ -349,7 +351,7 @@ export class KnowledgeStore {
     });
     tx(ids);
     const removedIds = ids.map((r) => r.id);
-    logger.info("Knowledge pruneByQuality", { sourceType, threshold, removed: removedIds.length });
+    log.info("Knowledge pruneByQuality", { sourceType, threshold, removed: removedIds.length });
     return { removed: removedIds.length, removedIds };
   }
 
@@ -381,7 +383,7 @@ export class KnowledgeStore {
       this.db.prepare(`DELETE FROM knowledge_documents WHERE id IN (${placeholders})`).run(...removedIds);
     }
 
-    logger.info("Knowledge autoprune completed", { pruned: removedIds.length, remaining: this.count(), budget: budgetLimit });
+    log.info("Knowledge autoprune completed", { pruned: removedIds.length, remaining: this.count(), budget: budgetLimit });
     return { removed: removedIds.length, removedIds };
   }
 
@@ -501,7 +503,7 @@ export class KnowledgeStore {
       if (rows.length < PAGE_SIZE) break;
     }
 
-    logger.debug("Recency scores updated", { updated });
+    log.debug("Recency scores updated", { updated });
     return updated;
   }
 

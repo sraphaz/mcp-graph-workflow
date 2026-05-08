@@ -26,9 +26,11 @@
  * and provides Siebel-specific navigation and interaction patterns.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
 import type { SiebelEnvironment, SiebelComposerResult } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "core", source: "composer-automation.ts" });
 
 /**
  * Options for Composer automation actions.
@@ -66,7 +68,7 @@ export function buildComposerInstructions(options: ComposerActionOptions): Compo
 
   const composerUrl = env.composerUrl ?? `${env.url}/composer`;
 
-  logger.info("Building Composer instructions", { action, composerUrl, objectName });
+  log.info("Building Composer instructions", { action, composerUrl, objectName });
 
   switch (action) {
     case "navigate":

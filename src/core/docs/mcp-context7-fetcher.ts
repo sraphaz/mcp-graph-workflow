@@ -23,7 +23,9 @@
  */
 
 import type { Context7Fetcher } from "./docs-syncer.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "mcp-context7-fetcher.ts" });
 
 export interface Context7FetcherOptions {
   /** Timeout for MCP calls in ms (default: 30000) */
@@ -39,7 +41,7 @@ export function createMcpContext7Fetcher(options?: Context7FetcherOptions): Cont
 
   return {
     async resolveLibraryId(name: string): Promise<string> {
-      logger.info("Context7: resolving library ID", { name });
+      log.info("Context7: resolving library ID", { name });
 
       // Try calling the MCP server via fetch (Context7 exposes HTTP)
       try {
@@ -48,7 +50,7 @@ export function createMcpContext7Fetcher(options?: Context7FetcherOptions): Cont
           return resultValue.libraryId as string;
         }
       } catch (err) {
-        logger.debug("Context7 MCP call failed, using fallback", {
+        log.debug("Context7 MCP call failed, using fallback", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -58,7 +60,7 @@ export function createMcpContext7Fetcher(options?: Context7FetcherOptions): Cont
     },
 
     async queryDocs(libId: string): Promise<string> {
-      logger.info("Context7: querying docs", { libId });
+      log.info("Context7: querying docs", { libId });
 
       try {
         const resultValue = await callContext7("query-docs", { libraryId: libId }, timeout);
@@ -66,7 +68,7 @@ export function createMcpContext7Fetcher(options?: Context7FetcherOptions): Cont
           return resultValue.documentation as string;
         }
       } catch (err) {
-        logger.debug("Context7 query-docs failed", {
+        log.debug("Context7 query-docs failed", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -91,7 +93,7 @@ async function callContext7(
   const context7Url = process.env.CONTEXT7_URL;
 
   if (!context7Url) {
-    logger.debug("CONTEXT7_URL not set, Context7 not available");
+    log.debug("CONTEXT7_URL not set, Context7 not available");
     return null;
   }
 
@@ -107,14 +109,14 @@ async function callContext7(
     });
 
     if (!resValue.ok) {
-      logger.debug("Context7 returned non-OK status", { status: resValue.status });
+      log.debug("Context7 returned non-OK status", { status: resValue.status });
       return null;
     }
 
     return (await resValue.json()) as Record<string, unknown>;
   } catch (err) {
     if ((err as Error).name === "AbortError") {
-      logger.warn("Context7 call timed out", { method, timeout });
+      log.warn("Context7 call timed out", { method, timeout });
     }
     return null;
   } finally {

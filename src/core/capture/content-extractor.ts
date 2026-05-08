@@ -15,7 +15,9 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "content-extractor.ts" });
 
 export interface ExtractionOptions {
   /** CSS selector to extract content from (defaults to full body) */
@@ -56,7 +58,7 @@ export async function extractContent(
   }
 
   const { load } = await import("cheerio");
-  logger.info("Extracting content from HTML", { sizeChars: html.length, selector: options?.selector });
+  log.info("Extracting content from HTML", { sizeChars: html.length, selector: options?.selector });
 
   const $Var = load(html);
 
@@ -76,7 +78,7 @@ export async function extractContent(
     if (selected.length > 0) {
       scopedHtml = selected.html() ?? "";
     } else {
-      logger.info("Selector matched nothing, falling back to body", { selector: options.selector });
+      log.info("Selector matched nothing, falling back to body", { selector: options.selector });
       scopedHtml = $Var("body").length ? ($Var("body").html() ?? "") : $Var.html();
     }
   } else {
@@ -116,7 +118,7 @@ export async function extractContent(
 
   const wordCount = text ? text.split(/\s+/).length : 0;
 
-  logger.info("Content extracted", { textLength: text.length, wordCount });
+  log.info("Content extracted", { textLength: text.length, wordCount });
 
   return {
     text: sanitizeCapturedText(text),

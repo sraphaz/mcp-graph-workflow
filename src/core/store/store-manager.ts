@@ -20,7 +20,9 @@ import path from "node:path";
 import os from "node:os";
 import { SqliteStore } from "./sqlite-store.js";
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "store-manager.ts" });
 
 /** Mutable reference to the current SqliteStore — shared across route closures. */
 export interface StoreRef {
@@ -115,11 +117,11 @@ export class StoreManager {
       this._addRecent(newBasePath);
       this._persistRecent();
 
-      logger.info("store-manager:swap:ok", { from: oldBasePath, to: newBasePath });
+      log.info("store-manager:swap:ok", { from: oldBasePath, to: newBasePath });
       return { ok: true, basePath: newBasePath };
     } catch (err) {
       // Swap failed — old store remains active
-      logger.error("store-manager:swap:fail", {
+      log.error("store-manager:swap:fail", {
         error: err instanceof Error ? err.message : String(err),
         targetPath: newBasePath,
       });
@@ -149,7 +151,7 @@ export class StoreManager {
     try {
       writeFileSync(RECENT_FILE, JSON.stringify(this._recentFolders, null, 2), "utf-8");
     } catch (err) {
-      logger.warn("store-manager:persist-recent:fail", {
+      log.warn("store-manager:persist-recent:fail", {
         error: err instanceof Error ? err.message : String(err),
       });
     }

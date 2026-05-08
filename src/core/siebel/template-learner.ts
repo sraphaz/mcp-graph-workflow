@@ -25,7 +25,9 @@
  */
 
 import type { SiebelObject, SiebelObjectType } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "template-learner.ts" });
 
 // --- Types ---
 
@@ -181,7 +183,7 @@ export function learnTemplates(objects: readonly SiebelObject[]): LearnedTemplat
     });
   }
 
-  logger.debug("template-learner", {
+  log.debug("template-learner", {
     inputObjects: topLevel.length,
     templatesLearned: templates.length,
   });

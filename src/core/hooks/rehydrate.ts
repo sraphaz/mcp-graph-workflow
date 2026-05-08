@@ -10,8 +10,10 @@ import type { HookHandlerConfig } from "./config-loader.js";
 import { loadHookConfig, type LoadHookConfigOptions } from "./config-loader.js";
 import { HookHandlersStore } from "./hook-handlers-store.js";
 import { runShellHandler } from "./shell-handler.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { OperationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "rehydrate.ts" });
 
 /**
  * Convert a persisted/configured HookHandlerConfig into a runtime
@@ -22,11 +24,11 @@ import { OperationError } from "../utils/errors.js";
  */
 export function configToHandler(config: HookHandlerConfig): HookHandler | null {
   if (config.kind !== "shell") {
-    logger.warn("hooks:rehydrate:skip", { id: config.id, kind: config.kind, reason: "only kind=shell is rehydratable in v1" });
+    log.warn("hooks:rehydrate:skip", { id: config.id, kind: config.kind, reason: "only kind=shell is rehydratable in v1" });
     return null;
   }
   if (!config.command) {
-    logger.warn("hooks:rehydrate:skip", { id: config.id, reason: "shell handler missing command" });
+    log.warn("hooks:rehydrate:skip", { id: config.id, reason: "shell handler missing command" });
     return null;
   }
   return async (event: HookEvent): Promise<void> => {
@@ -44,7 +46,7 @@ export function configToHandler(config: HookHandlerConfig): HookHandler | null {
       throw new OperationError(resultValue.stderr || `hook "${config.id}" blocked`);
     }
     if (resultValue.decision === "warn") {
-      logger.warn("hooks:rehydrated:warn", { id: config.id, exitCode: resultValue.exitCode, timedOut: resultValue.timedOut });
+      log.warn("hooks:rehydrated:warn", { id: config.id, exitCode: resultValue.exitCode, timedOut: resultValue.timedOut });
     }
   };
 }
@@ -107,7 +109,7 @@ export function rehydrateHooks(
   }
 
   if (registered.length > 0) {
-    logger.info("hooks:rehydrate:ok", { count: registered.length, skipped: skipped.length });
+    log.info("hooks:rehydrate:ok", { count: registered.length, skipped: skipped.length });
   }
   return { registered, skipped };
 }

@@ -13,7 +13,9 @@ import {
   walkEventBlocks,
   type ImportEnvelope,
 } from "./import-helpers.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "claude-code-importer.ts" });
 
 /**
  * Read a Claude Code settings.json (or settings.local.json) and convert
@@ -94,7 +96,7 @@ export function importClaudeCodeSettings(options: ImportOptions = {}): ImportRes
     source,
   );
 
-  logger.info("hooks:import:done", {
+  log.info("hooks:import:done", {
     provider: "claude",
     source,
     imported: envelope.imported.length,

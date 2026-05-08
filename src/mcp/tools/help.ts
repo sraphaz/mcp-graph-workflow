@@ -37,8 +37,10 @@ import {
   getVersionReference,
   getFullReference,
 } from "../../core/config/reference-content.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "help.ts" });
 
 const WORKFLOW_SECTION = `### Fluxo de trabalho OBRIGATÓRIO
 
@@ -159,12 +161,12 @@ export function registerHelp(server: McpServer): void {
         ),
     },
     async ({ topic, phase }) => {
-      logger.debug("tool:help", { topic, phase });
+      log.debug("tool:help", { topic, phase });
 
       const content = getTopicContent(topic, phase);
       const phaseLabel = phase ? ` (fase: ${phase.toUpperCase()})` : "";
 
-      logger.info("tool:help:ok", {
+      log.info("tool:help:ok", {
         topic,
         phase,
         chars: content.length,

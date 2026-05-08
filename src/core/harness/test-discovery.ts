@@ -25,7 +25,9 @@
 
 import { readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "test-discovery.ts" });
 
 const MAX_RESULTS = 20;
 
@@ -61,7 +63,7 @@ export function discoverTestFiles(nodeTitle: string, basePath: string): string[]
       if (testFiles.length >= MAX_RESULTS) break;
     }
     if (testFiles.length > 0) {
-      logger.debug("test-discovery:found", {
+      log.debug("test-discovery:found", {
         title: nodeTitle,
         keywords,
         found: testFiles.length,
@@ -69,7 +71,7 @@ export function discoverTestFiles(nodeTitle: string, basePath: string): string[]
     }
     return testFiles;
   } catch (err) {
-    logger.warn("test-discovery:error", { error: String(err) });
+    log.warn("test-discovery:error", { error: String(err) });
     return [];
   }
 }

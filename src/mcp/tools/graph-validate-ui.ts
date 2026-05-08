@@ -28,13 +28,16 @@
 import { z } from "zod/v4";
 import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
 import {
+
   PlanPayloadSchema,
   type PlanPayload,
   type PlanStep,
 } from "../contracts/plan-payload.js";
+
+const log = createLogger({ layer: "mcp", source: "graph-validate-ui.ts" });
 
 const CHECK_KINDS = ["a11y", "console-errors", "network-requests"] as const;
 export type ValidateCheck = typeof CHECK_KINDS[number];
@@ -106,7 +109,7 @@ export function registerGraphValidateUi(server: McpServer): void {
     },
     async (args) => {
       const rVar = buildValidateUiPlan(args as ValidateUiInput);
-      logger.debug("tool:graph_validate_ui", { ok: rVar.ok, nodeId: args.nodeId, checks: args.checks });
+      log.debug("tool:graph_validate_ui", { ok: rVar.ok, nodeId: args.nodeId, checks: args.checks });
       return mcpText(rVar);
     },
   );

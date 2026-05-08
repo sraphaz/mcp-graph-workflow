@@ -20,11 +20,13 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { mergeGraph } from "../../core/importer/import-graph.js";
 import type { GraphDocument } from "../../core/graph/graph-types.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { safeReadFileSync } from "../../core/utils/fs.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
 import { indexNodeAsKnowledge } from "../../core/rag/node-indexer.js";
+
+const log = createLogger({ layer: "mcp", source: "import-graph.ts" });
 
 /** registerImportGraph — auto-generated description placeholder. */
 export function registerImportGraph(server: McpServer, store: SqliteStore): void {
@@ -50,7 +52,7 @@ export function registerImportGraph(server: McpServer, store: SqliteStore): void
         .describe("Preview merge without writing — returns counts of what would be inserted/skipped"),
     },
     async ({ graph, filePath, dry_run }) => {
-      logger.info("tool:import_graph", { hasGraph: !!graph, filePath, dryRun: dry_run });
+      log.info("tool:import_graph", { hasGraph: !!graph, filePath, dryRun: dry_run });
 
       // 1. Resolve input — either inline JSON or file path
       let jsonString: string;
@@ -100,11 +102,11 @@ export function registerImportGraph(server: McpServer, store: SqliteStore): void
             }
             indexEntitiesForSource(store.getDb(), "graph_node");
           } catch {
-            logger.warn("import_graph:indexing-failed");
+            log.warn("import_graph:indexing-failed");
           }
         }
 
-        logger.info("tool:import_graph:ok", {
+        log.info("tool:import_graph:ok", {
           sourceProject: resultValue.sourceProject,
           nodesInserted: resultValue.nodesInserted,
           nodesSkipped: resultValue.nodesSkipped,

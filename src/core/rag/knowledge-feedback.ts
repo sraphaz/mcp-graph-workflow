@@ -26,7 +26,9 @@
 
 import type Database from "better-sqlite3";
 import { recordUsage } from "./knowledge-quality.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "knowledge-feedback.ts" });
 
 const HELPFUL_BOOST = 0.05;
 const UNHELPFUL_PENALTY = 0.1;
@@ -53,7 +55,7 @@ export function applyFeedback(
     .get(docId) as { quality_score: number } | undefined;
 
   if (!row) {
-    logger.warn("Feedback for unknown doc", { docId, action });
+    log.warn("Feedback for unknown doc", { docId, action });
     return;
   }
 
@@ -74,5 +76,5 @@ export function applyFeedback(
 
   db.prepare("UPDATE knowledge_documents SET quality_score = ? WHERE id = ?").run(newScore, docId);
 
-  logger.info("Feedback applied", { docId, action, oldScore: row.quality_score, newScore });
+  log.info("Feedback applied", { docId, action, oldScore: row.quality_score, newScore });
 }

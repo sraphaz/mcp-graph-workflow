@@ -21,7 +21,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "token-savings.ts" });
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS token_savings (
@@ -51,7 +53,7 @@ export function recordTokenSaving(
     "INSERT INTO token_savings (tool, input_tokens, output_tokens, saved_at) VALUES (?, ?, ?, ?)",
   ).run(tool, inputTokens, outputTokens, new Date().toISOString());
 
-  logger.debug("token-savings:record", { tool, inputTokens, outputTokens, saved: inputTokens - outputTokens });
+  log.debug("token-savings:record", { tool, inputTokens, outputTokens, saved: inputTokens - outputTokens });
 }
 
 export interface ToolSavings {

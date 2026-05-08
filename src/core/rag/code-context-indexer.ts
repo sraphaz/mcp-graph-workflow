@@ -21,7 +21,9 @@
  */
 
 import type { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "code-context-indexer.ts" });
 
 export interface CodeSymbolInput {
   name: string;
@@ -130,7 +132,7 @@ export function indexCodeAnalysis(
     documentsIndexed++;
   }
 
-  logger.info("Code analysis indexed", {
+  log.info("Code analysis indexed", {
     symbols: analysis.symbols.length,
     flows: analysis.flows.length,
     documentsIndexed,

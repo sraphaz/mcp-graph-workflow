@@ -22,9 +22,11 @@ import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { generateId } from "../../core/utils/id.js";
 import { now } from "../../core/utils/time.js";
 import type { RelationType } from "../../core/graph/graph-types.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { checkCircularity } from "../../core/utils/circularity.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "move-node.ts" });
 
 /** registerMoveNode — auto-generated description placeholder. */
 export function registerMoveNode(server: McpServer, store: SqliteStore): void {
@@ -36,7 +38,7 @@ export function registerMoveNode(server: McpServer, store: SqliteStore): void {
       newParentId: z.string().nullable().describe("New parent node ID (null to make root)"),
     },
     async ({ id, newParentId }) => {
-      logger.debug("tool:move_node", { nodeId: id, newParentId });
+      log.debug("tool:move_node", { nodeId: id, newParentId });
       const node = store.getNodeById(id);
       if (!node) {
         const err = new NodeNotFoundError(id);
@@ -99,7 +101,7 @@ export function registerMoveNode(server: McpServer, store: SqliteStore): void {
         return mcpError(`Node ${id} not found after move operation`);
       }
 
-      logger.info("tool:move_node:ok", { nodeId: id, from: oldParentId ?? null, to: newParentId });
+      log.info("tool:move_node:ok", { nodeId: id, from: oldParentId ?? null, to: newParentId });
       return mcpText({
         ok: true,
         moved: { id, from: oldParentId ?? null, to: newParentId },

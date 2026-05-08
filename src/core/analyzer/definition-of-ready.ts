@@ -32,7 +32,9 @@ import type { GraphDocument } from "../graph/graph-types.js";
 import type { ReadinessReport, ReadinessCheck } from "../../schemas/analyzer-schema.js";
 import { analyzeScope } from "./scope-analyzer.js";
 import { analyzePrdQuality } from "./prd-quality.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "definition-of-ready.ts" });
 
 /** checkDefinitionOfReady — auto-generated description placeholder. */
 export function checkDefinitionOfReady(doc: GraphDocument): ReadinessReport {
@@ -131,7 +133,7 @@ export function checkDefinitionOfReady(doc: GraphDocument): ReadinessReport {
   const passedCount = checks.filter((c) => c.passed).length;
   const summary = `Definition of Ready: ${passedCount}/${checks.length} checks passed. ${readyForNextPhase ? "Ready para DESIGN." : "Não atende os critérios."}`;
 
-  logger.info("definition-of-ready", { passedCount, total: checks.length, ready: readyForNextPhase });
+  log.info("definition-of-ready", { passedCount, total: checks.length, ready: readyForNextPhase });
 
   return { readyForNextPhase, checks, blockers, warnings, summary };
 }

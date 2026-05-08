@@ -30,8 +30,10 @@ import {
 } from "../../core/skills/skill-store.js";
 import { CustomSkillInputSchema } from "../../schemas/skill.schema.js";
 import type { LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
+
+const log = createLogger({ layer: "api", source: "skills.ts" });
 
 interface SkillResponse {
   name: string;
@@ -57,7 +59,7 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
       if (!project) return null;
       return { db: storeRef.current.getDb(), projectId: project.id };
     } catch (err) {
-      logger.debug("skills:getProjectContextFailure", { error: err instanceof Error ? err.message : String(err) });
+      log.debug("skills:getProjectContextFailure", { error: err instanceof Error ? err.message : String(err) });
       return null;
     }
   }
@@ -111,7 +113,7 @@ export function createSkillsRouter(getBasePath: () => string, storeRef?: StoreRe
             const content = await readFile(skill.filePath, "utf-8");
             tokens = estimateTokens(content);
           } catch (err) {
-            logger.debug("skills:fileUnreadable", { error: err instanceof Error ? err.message : String(err) });
+            log.debug("skills:fileUnreadable", { error: err instanceof Error ? err.message : String(err) });
             // file unreadable — default to 0
           }
 

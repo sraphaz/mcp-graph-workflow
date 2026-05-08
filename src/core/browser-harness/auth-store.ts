@@ -11,7 +11,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync, unlinkSy
 import { join, dirname } from "node:path";
 import { z } from "zod/v4";
 import { ValidationError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "auth-store.ts" });
 
 export type LlmProvider = "anthropic" | "copilot";
 
@@ -139,7 +141,7 @@ export class AuthStore {
       updatedAt: new Date().toISOString(),
     };
     this.writeFile(next);
-    logger.info("bh:auth:save", { provider: input.provider, fingerprint: fingerprint(input.apiKey) });
+    log.info("bh:auth:save", { provider: input.provider, fingerprint: fingerprint(input.apiKey) });
     return this.read();
   }
 
@@ -166,7 +168,7 @@ export class AuthStore {
   clear(): void {
     if (existsSync(this.filePath)) {
       unlinkSync(this.filePath);
-      logger.info("bh:auth:clear", {});
+      log.info("bh:auth:clear", {});
     }
   }
 
@@ -176,7 +178,7 @@ export class AuthStore {
       const raw = readFileSync(this.filePath, "utf8");
       return AuthFileSchema.parse(JSON.parse(raw));
     } catch (err) {
-      logger.warn("bh:auth:read_failed", { error: err instanceof Error ? err.message : String(err) });
+      log.warn("bh:auth:read_failed", { error: err instanceof Error ? err.message : String(err) });
       return null;
     }
   }
@@ -193,7 +195,7 @@ export class AuthStore {
     if (process.platform !== "win32") {
       const mode = statSync(this.filePath).mode & 0o777;
       if (mode !== 0o600) {
-        logger.warn("bh:auth:mode_unexpected", { mode: mode.toString(8) });
+        log.warn("bh:auth:mode_unexpected", { mode: mode.toString(8) });
       }
     }
   }

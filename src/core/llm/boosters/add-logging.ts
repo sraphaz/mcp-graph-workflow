@@ -13,7 +13,7 @@
  *
  * Pure transform: at the start of every exported async function (declared
  * with `export async function name(...)`) that lacks a `logger.` call in
- * its body, insert one structured `logger.debug("module:fn", { ... })`
+ * its body, insert one structured `log.debug("module:fn", { ... })`
  * line tagged with the parameter names — uses the project logger, never
  * console. Adds the canonical logger import when missing.
  *

@@ -7,8 +7,10 @@
  * chat completions). Uses fetch — no SDK dependency.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { OperationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "llm-client.ts" });
 
 export type LlmProvider = "anthropic" | "copilot";
 
@@ -195,7 +197,7 @@ export class LlmClient {
           this.retry.maxDelayMs ?? 8000,
           this.retry.baseDelayMs * 2 ** (attempt - 1),
         );
-        logger.warn("bh:llm:retry", { attempt, status, delayMs: delay });
+        log.warn("bh:llm:retry", { attempt, status, delayMs: delay });
         await new Promise((r) => setTimeout(r, delay));
       }
     }

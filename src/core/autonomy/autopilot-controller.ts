@@ -44,7 +44,9 @@ const EvaluateInputSchema = z.object({
   ragRelevance: z.number().min(0).max(1),
   historicalSuccessRate: z.number().min(0).max(1),
 });
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "autopilot-controller.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -123,7 +125,7 @@ export class AutopilotController {
       consecutiveFailures: 0,
     };
 
-    logger.info("autopilot:start", { sessionId: this.session.id, sprintId });
+    log.info("autopilot:start", { sessionId: this.session.id, sprintId });
     return this.session;
   }
 
@@ -143,7 +145,7 @@ export class AutopilotController {
     if (this.session.tasksCompleted > 0 &&
         this.session.tasksCompleted % this.config.checkpointEvery === 0) {
       this.session.status = "checkpoint";
-      logger.info("autopilot:checkpoint", {
+      log.info("autopilot:checkpoint", {
         tasksCompleted: this.session.tasksCompleted,
         interval: this.config.checkpointEvery,
       });
@@ -158,7 +160,7 @@ export class AutopilotController {
     if (this.session.consecutiveFailures >= this.config.maxConsecutiveFailures) {
       this.session.status = "paused";
       const reason = `${this.session.consecutiveFailures} consecutive failure(s) — requires human review`;
-      logger.warn("autopilot:pause:failures", {
+      log.warn("autopilot:pause:failures", {
         consecutiveFailures: this.session.consecutiveFailures,
       });
       this.config.onEscalation?.(input.nextNodeType, "pause", reason, { consecutiveFailures: this.session.consecutiveFailures });
@@ -168,7 +170,7 @@ export class AutopilotController {
     // Guardrail 3: Pause on risk/decision nodes (non-negotiable)
     if (PAUSE_NODE_TYPES.has(input.nextNodeType)) {
       const reason = `Node type '${input.nextNodeType}' requires human review (risk/decision)`;
-      logger.info("autopilot:pause:risk-node", { nodeType: input.nextNodeType });
+      log.info("autopilot:pause:risk-node", { nodeType: input.nextNodeType });
       this.config.onEscalation?.(input.nextNodeType, "pause", reason, { nodeType: input.nextNodeType });
       return { action: "pause", reason, confidence: 50 };
     }
@@ -176,7 +178,7 @@ export class AutopilotController {
     // Guardrail 4: Pause if harness score too low (non-negotiable)
     if (input.harnessScore < this.config.minHarnessScore) {
       const reason = `Harness score ${input.harnessScore} below minimum ${this.config.minHarnessScore} — quality gap risk`;
-      logger.warn("autopilot:pause:harness", {
+      log.warn("autopilot:pause:harness", {
         harnessScore: input.harnessScore,
         minRequired: this.config.minHarnessScore,
       });
@@ -218,7 +220,7 @@ export class AutopilotController {
       this.session.consecutiveFailures++;
     }
 
-    logger.debug("autopilot:record", {
+    log.debug("autopilot:record", {
       taskId,
       success,
       completed: this.session.tasksCompleted,
@@ -233,7 +235,7 @@ export class AutopilotController {
   pause(reason: string): void {
     if (!this.session) return;
     this.session.status = "paused";
-    logger.info("autopilot:pause:manual", { reason });
+    log.info("autopilot:pause:manual", { reason });
   }
 
   /**
@@ -243,7 +245,7 @@ export class AutopilotController {
     if (!this.session) return;
     this.session.status = "running";
     this.session.consecutiveFailures = 0;
-    logger.info("autopilot:resume");
+    log.info("autopilot:resume");
   }
 
   /**

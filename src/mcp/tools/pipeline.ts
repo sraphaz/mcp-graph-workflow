@@ -27,9 +27,11 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { ToolPipeline, type ToolHandler } from "../../core/pipeline/tool-pipeline.js";
 import { PipelineStepSchema } from "../../schemas/pipeline.schema.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { McpGraphError, NodeNotFoundError } from "../../core/utils/errors.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "pipeline.ts" });
 
 /**
  * Build a map of simple tool handlers for the pipeline.
@@ -107,7 +109,7 @@ export function registerPipeline(server: McpServer, store: SqliteStore): void {
         .describe("Pipeline steps to execute in sequence (max 10)"),
     },
     async ({ steps }) => {
-      logger.debug("tool:pipeline", { stepCount: steps.length });
+      log.debug("tool:pipeline", { stepCount: steps.length });
 
       const project = store.getProject();
       if (!project) {
@@ -128,7 +130,7 @@ export function registerPipeline(server: McpServer, store: SqliteStore): void {
 
       try {
         const resultValue = await pipeline.execute(parsedSteps);
-        logger.info("tool:pipeline:ok", {
+        log.info("tool:pipeline:ok", {
           stepsTotal: resultValue.stepsTotal,
           stepsCompleted: resultValue.stepsCompleted,
           stepsFailed: resultValue.stepsFailed,
@@ -137,7 +139,7 @@ export function registerPipeline(server: McpServer, store: SqliteStore): void {
         return mcpText(resultValue);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        logger.error("tool:pipeline:error", { error: message });
+        log.error("tool:pipeline:error", { error: message });
         return mcpError(message);
       }
     },

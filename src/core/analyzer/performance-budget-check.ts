@@ -24,7 +24,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "performance-budget-check.ts" });
 
 export type BudgetStatus = "untested" | "passing" | "failing";
 
@@ -60,7 +62,7 @@ export function analyzePerformanceBudgets(doc: GraphDocument): PerformanceBudget
     budgets.push({ nodeId: node.id, title: node.title, metric, threshold, status });
   }
 
-  logger.debug("analyzer:performance-budget", {
+  log.debug("analyzer:performance-budget", {
     totalBudgets: budgetNodes.length,
     untestedCount,
   });

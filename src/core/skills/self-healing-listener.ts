@@ -26,8 +26,10 @@ import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import type { GraphEventBus } from "../events/event-bus.js";
 import type { GraphEvent } from "../events/event-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { classifyError } from "../utils/error-classifier.js";
+
+const log = createLogger({ layer: "core", source: "self-healing-listener.ts" });
 
 export interface SelfHealingOptions {
   memoriesDir: string;
@@ -131,7 +133,7 @@ export function registerSelfHealingListener(options: SelfHealingOptions): () => 
 
     // Deduplication: skip if memory already exists
     if (existsSync(memoryPath)) {
-      logger.debug("self-healing:skip-duplicate", { memoryName });
+      log.debug("self-healing:skip-duplicate", { memoryName });
       return;
     }
 
@@ -139,7 +141,7 @@ export function registerSelfHealingListener(options: SelfHealingOptions): () => 
     const content = buildHealingMemory(errorCategory, errorMessage, toolName);
     try {
       writeFileSync(memoryPath, content, "utf-8");
-      logger.info("self-healing:memory-created", { memoryName, category: errorCategory });
+      log.info("self-healing:memory-created", { memoryName, category: errorCategory });
 
       // Emit healing event
       eventBus.emitTyped("healing:memory_created", {
@@ -148,7 +150,7 @@ export function registerSelfHealingListener(options: SelfHealingOptions): () => 
         errorHash,
       });
     } catch (err) {
-      logger.error("self-healing:write-failed", { memoryName, error: String(err) });
+      log.error("self-healing:write-failed", { memoryName, error: String(err) });
     }
   };
 

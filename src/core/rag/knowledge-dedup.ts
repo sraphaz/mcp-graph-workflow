@@ -23,7 +23,9 @@
 
 import type Database from "better-sqlite3";
 import { jaccardSimilarity } from "../context/rule-compressor.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "knowledge-dedup.ts" });
 
 const DEDUP_THRESHOLD = 0.7;
 
@@ -78,7 +80,7 @@ export function findDuplicates(db: Database.Database, threshold = DEDUP_THRESHOL
     }
   }
 
-  logger.debug("knowledge-dedup:findDuplicates", { checked: docs.length, found: duplicates.length });
+  log.debug("knowledge-dedup:findDuplicates", { checked: docs.length, found: duplicates.length });
   return duplicates;
 }
 
@@ -120,6 +122,6 @@ export function findContradictions(db: Database.Database): Contradiction[] {
     }
   }
 
-  logger.debug("knowledge-dedup:findContradictions", { checked: docs.length, found: contradictions.length });
+  log.debug("knowledge-dedup:findContradictions", { checked: docs.length, found: contradictions.length });
   return contradictions;
 }

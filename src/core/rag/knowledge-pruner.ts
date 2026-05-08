@@ -21,8 +21,10 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { findDuplicates } from "./knowledge-dedup.js";
+
+const log = createLogger({ layer: "rag", source: "knowledge-pruner.ts" });
 
 export type PruneStrategy = "age" | "quality" | "dedup";
 
@@ -83,7 +85,7 @@ export function pruneKnowledge(
     db.prepare(`DELETE FROM knowledge_documents WHERE id IN (${placeholders})`).run(...targetIds);
   }
 
-  logger.info("knowledge-pruner:prune", {
+  log.info("knowledge-pruner:prune", {
     strategy,
     dryRun,
     pruned: targetIds.length,

@@ -23,7 +23,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "sprint-health.ts" });
 
 export interface SprintHealthReport {
   sprint: string | null;
@@ -96,7 +98,7 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
   if (blockedRatio > 0.3 || burndownRatio < 0.2) health = "critical";
   else if (blockedRatio > 0.1 || tasksWithoutAC > tasks.length * 0.3) health = "at_risk";
 
-  logger.info("sprint-health", { sprint: sprintFilter ?? "all", health, tasks: tasks.length });
+  log.info("sprint-health", { sprint: sprintFilter ?? "all", health, tasks: tasks.length });
 
   // Harness delta (non-blocking)
   let harnessDelta: { current: number; grade: string } | null = null;

@@ -27,7 +27,9 @@
  * Based on: CPU Pipeline Architecture — anticipate next instruction.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "task-prefetcher.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -77,7 +79,7 @@ export class TaskPrefetcher {
       createdAt: Date.now(),
     });
 
-    logger.debug("prefetcher:stored", { nodeId, queryLen: data.query.length });
+    log.debug("prefetcher:stored", { nodeId, queryLen: data.query.length });
   }
 
   /**
@@ -96,12 +98,12 @@ export class TaskPrefetcher {
     if (Date.now() - entry.createdAt > this.ttlMs) {
       this.cache.delete(nodeId);
       this.misses++;
-      logger.debug("prefetcher:expired", { nodeId });
+      log.debug("prefetcher:expired", { nodeId });
       return null;
     }
 
     this.hits++;
-    logger.debug("prefetcher:hit", { nodeId });
+    log.debug("prefetcher:hit", { nodeId });
     return entry.data;
   }
 
@@ -113,7 +115,7 @@ export class TaskPrefetcher {
     if (!this.cache.has(requestedNodeId) && this.cache.size > 0) {
       const count = this.cache.size;
       this.cache.clear();
-      logger.debug("prefetcher:invalidated", { requestedNodeId, clearedEntries: count });
+      log.debug("prefetcher:invalidated", { requestedNodeId, clearedEntries: count });
     }
   }
 

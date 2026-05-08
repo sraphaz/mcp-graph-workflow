@@ -26,7 +26,9 @@
  * Based on: "Harness Engineering for Coding Agent Users" (Böckeler, Thoughtworks 2026)
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "fitness-functions.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -107,7 +109,7 @@ export function checkDependencyDirection(files: FileContent[]): FitnessCheckResu
     }
   }
 
-  logger.debug(`Fitness: dependency_direction checked=${files.length} violations=${violations.length}`);
+  log.debug(`Fitness: dependency_direction checked=${files.length} violations=${violations.length}`);
 
   return {
     name: "dependency_direction",
@@ -197,7 +199,7 @@ export function checkCircularDependencies(files: FileContent[]): FitnessCheckRes
     rule: "No circular dependencies between modules",
   }));
 
-  logger.debug(`Fitness: circular_deps modules=${graph.size} cycles=${cycles.length}`);
+  log.debug(`Fitness: circular_deps modules=${graph.size} cycles=${cycles.length}`);
 
   return {
     name: "circular_deps",
@@ -247,7 +249,7 @@ export function checkBarrelIntegrity(dirs: DirectoryInfo[]): FitnessCheckResult 
     }
   }
 
-  logger.debug(`Fitness: barrel_integrity dirs=${checkedDirs} violations=${violations.length}`);
+  log.debug(`Fitness: barrel_integrity dirs=${checkedDirs} violations=${violations.length}`);
 
   return {
     name: "barrel_integrity",

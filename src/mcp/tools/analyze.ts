@@ -64,11 +64,13 @@ import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { checkDefinitionOfDone } from "../../core/implementer/definition-of-done.js";
 import { checkTddAdherence } from "../../core/implementer/tdd-checker.js";
 import { calculateSprintProgress } from "../../core/implementer/sprint-progress.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { buildMemoryHealthReport } from "../../core/utils/memory-telemetry.js";
 import { wrapDesignPhaseAdvisory } from "../../core/analyzer/out-of-phase-advisory.js";
 import { validateFilesCitations } from "../../core/citations/citation-validator.js";
+
+const log = createLogger({ layer: "mcp", source: "analyze.ts" });
 
 const ANALYZE_MODES = z.enum([
   "prd_quality",
@@ -150,31 +152,31 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
       window: z.number().int().positive().optional().describe("Window size for 'success_rate' mode — defaults to 10."),
     },
     async ({ mode, nodeId, window }) => {
-      logger.debug("tool:analyze", { mode, nodeId });
+      log.debug("tool:analyze", { mode, nodeId });
       const doc = store.toGraphDocument();
 
       switch (mode) {
         case "prd_quality": {
           const report = analyzePrdQuality(doc);
-          logger.info("tool:analyze:prd_quality:ok", { score: report.score, grade: report.grade });
+          log.info("tool:analyze:prd_quality:ok", { score: report.score, grade: report.grade });
           return mcpText({ ok: true, mode, ...report });
         }
 
         case "scope": {
           const analysis = analyzeScope(doc);
-          logger.info("tool:analyze:scope:ok", { orphans: analysis.orphans.length });
+          log.info("tool:analyze:scope:ok", { orphans: analysis.orphans.length });
           return mcpText({ ok: true, mode, ...analysis });
         }
 
         case "ready": {
           const readiness = checkDefinitionOfReady(doc);
-          logger.info("tool:analyze:ready:ok", { ready: readiness.readyForNextPhase });
+          log.info("tool:analyze:ready:ok", { ready: readiness.readyForNextPhase });
           return mcpText({ ok: true, mode, ...readiness });
         }
 
         case "risk": {
           const matrix = assessRisks(doc);
-          logger.info("tool:analyze:risk:ok", { total: matrix.summary.total });
+          log.info("tool:analyze:risk:ok", { total: matrix.summary.total });
           return mcpText({ ok: true, mode, ...matrix });
         }
 
@@ -187,19 +189,19 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             return mcpError(`Node not found: ${nodeId}`);
           }
           const blockers = findTransitiveBlockers(doc, nodeId);
-          logger.info("tool:analyze:blockers:ok", { nodeId, blockerCount: blockers.length });
+          log.info("tool:analyze:blockers:ok", { nodeId, blockerCount: blockers.length });
           return mcpText({ ok: true, mode, nodeId, blockers });
         }
 
         case "cycles": {
           const cycles = detectCycles(doc);
-          logger.info("tool:analyze:cycles:ok", { cycleCount: cycles.length });
+          log.info("tool:analyze:cycles:ok", { cycleCount: cycles.length });
           return mcpText({ ok: true, mode, cycles });
         }
 
         case "critical_path": {
           const path = findCriticalPath(doc);
-          logger.info("tool:analyze:critical_path:ok", { pathLength: path.length });
+          log.info("tool:analyze:critical_path:ok", { pathLength: path.length });
           return mcpText({ ok: true, mode, criticalPath: path });
         }
 
@@ -208,14 +210,14 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           if (nodeId) {
             results = results.filter((r) => r.node.id === nodeId);
           }
-          logger.info("tool:analyze:decompose:ok", { count: results.length });
+          log.info("tool:analyze:decompose:ok", { count: results.length });
           return mcpText({ ok: true, mode, results });
         }
 
         case "adr": {
           const phase = detectCurrentPhase(doc);
           const adrReport = validateAdrs(doc);
-          logger.info("tool:analyze:adr:ok", { grade: adrReport.overallGrade });
+          log.info("tool:analyze:adr:ok", { grade: adrReport.overallGrade });
           const response: Record<string, unknown> = { ok: true, mode, ...adrReport };
           if (phase !== "DESIGN") response._info = `Modo adr é específico da fase DESIGN (fase atual: ${phase})`;
           return mcpText(response);
@@ -224,35 +226,35 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         case "traceability": {
           const phase = detectCurrentPhase(doc);
           const traceReport = buildTraceabilityMatrix(doc);
-          logger.info("tool:analyze:traceability:ok", { coverageRate: traceReport.coverageRate });
+          log.info("tool:analyze:traceability:ok", { coverageRate: traceReport.coverageRate });
           return mcpText(wrapDesignPhaseAdvisory(phase, mode, traceReport as unknown as Record<string, unknown>));
         }
 
         case "coupling": {
           const phase = detectCurrentPhase(doc);
           const couplingReport = analyzeCoupling(doc);
-          logger.info("tool:analyze:coupling:ok", { highCoupling: couplingReport.highCouplingNodes.length });
+          log.info("tool:analyze:coupling:ok", { highCoupling: couplingReport.highCouplingNodes.length });
           return mcpText(wrapDesignPhaseAdvisory(phase, mode, couplingReport as unknown as Record<string, unknown>));
         }
 
         case "interfaces": {
           const phase = detectCurrentPhase(doc);
           const ifReport = checkInterfaces(doc);
-          logger.info("tool:analyze:interfaces:ok", { overallScore: ifReport.overallScore });
+          log.info("tool:analyze:interfaces:ok", { overallScore: ifReport.overallScore });
           return mcpText(wrapDesignPhaseAdvisory(phase, mode, ifReport as unknown as Record<string, unknown>));
         }
 
         case "tech_risk": {
           const phase = detectCurrentPhase(doc);
           const techRiskReport = assessTechRisks(doc);
-          logger.info("tool:analyze:tech_risk:ok", { riskScore: techRiskReport.riskScore });
+          log.info("tool:analyze:tech_risk:ok", { riskScore: techRiskReport.riskScore });
           return mcpText(wrapDesignPhaseAdvisory(phase, mode, techRiskReport as unknown as Record<string, unknown>));
         }
 
         case "design_ready": {
           const phase = detectCurrentPhase(doc);
           const readinessReport = checkDesignReadiness(doc);
-          logger.info("tool:analyze:design_ready:ok", { ready: readinessReport.ready, grade: readinessReport.grade });
+          log.info("tool:analyze:design_ready:ok", { ready: readinessReport.ready, grade: readinessReport.grade });
           return mcpText(wrapDesignPhaseAdvisory(phase, mode, readinessReport as unknown as Record<string, unknown>));
         }
 
@@ -266,7 +268,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           }
           const phase = detectCurrentPhase(doc);
           const dodReport = checkDefinitionOfDone(doc, nodeId);
-          logger.info("tool:analyze:implement_done:ok", { nodeId, ready: dodReport.ready, grade: dodReport.grade });
+          log.info("tool:analyze:implement_done:ok", { nodeId, ready: dodReport.ready, grade: dodReport.grade });
           const dodResponse: Record<string, unknown> = { ok: true, mode, ...dodReport };
           if (phase !== "IMPLEMENT") dodResponse._info = `Modo implement_done é específico da fase IMPLEMENT (fase atual: ${phase})`;
           return mcpText(dodResponse);
@@ -278,7 +280,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           }
           const phase = detectCurrentPhase(doc);
           const tddReport = checkTddAdherence(doc, nodeId);
-          logger.info("tool:analyze:tdd_check:ok", { tasks: tddReport.tasks.length, overallTestability: tddReport.overallTestability });
+          log.info("tool:analyze:tdd_check:ok", { tasks: tddReport.tasks.length, overallTestability: tddReport.overallTestability });
           const tddResponse: Record<string, unknown> = { ok: true, mode, ...tddReport };
           if (phase !== "IMPLEMENT") tddResponse._info = `Modo tdd_check é específico da fase IMPLEMENT (fase atual: ${phase})`;
           return mcpText(tddResponse);
@@ -287,7 +289,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         case "progress": {
           const phase = detectCurrentPhase(doc);
           const progressReport = calculateSprintProgress(doc, nodeId);
-          logger.info("tool:analyze:progress:ok", { done: progressReport.burndown.done, total: progressReport.burndown.total });
+          log.info("tool:analyze:progress:ok", { done: progressReport.burndown.done, total: progressReport.burndown.total });
           const progressResponse: Record<string, unknown> = { ok: true, mode, ...progressReport };
           if (phase !== "IMPLEMENT") progressResponse._info = `Modo progress é específico da fase IMPLEMENT (fase atual: ${phase})`;
           return mcpText(progressResponse);
@@ -296,7 +298,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         case "validate_ready": {
           const phase = detectCurrentPhase(doc);
           const valReport = checkValidationReadiness(doc);
-          logger.info("tool:analyze:validate_ready:ok", { ready: valReport.ready, grade: valReport.grade });
+          log.info("tool:analyze:validate_ready:ok", { ready: valReport.ready, grade: valReport.grade });
           const valResponse: Record<string, unknown> = { ok: true, mode, ...valReport };
           if (phase !== "VALIDATE" && phase !== "IMPLEMENT") valResponse._info = `Modo validate_ready é específico das fases IMPLEMENT/VALIDATE (fase atual: ${phase})`;
           return mcpText(valResponse);
@@ -304,20 +306,20 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "done_integrity": {
           const doneReport = checkDoneIntegrity(doc);
-          logger.info("tool:analyze:done_integrity:ok", { passed: doneReport.passed, issues: doneReport.issues.length });
+          log.info("tool:analyze:done_integrity:ok", { passed: doneReport.passed, issues: doneReport.issues.length });
           return mcpText({ ok: true, mode, ...doneReport });
         }
 
         case "status_flow": {
           const flowReport = checkStatusFlow(doc);
-          logger.info("tool:analyze:status_flow:ok", { complianceRate: flowReport.complianceRate });
+          log.info("tool:analyze:status_flow:ok", { complianceRate: flowReport.complianceRate });
           return mcpText({ ok: true, mode, ...flowReport });
         }
 
         case "review_ready": {
           const phase = detectCurrentPhase(doc);
           const revReport = checkReviewReadiness(doc);
-          logger.info("tool:analyze:review_ready:ok", { ready: revReport.ready, grade: revReport.grade });
+          log.info("tool:analyze:review_ready:ok", { ready: revReport.ready, grade: revReport.grade });
           const revResponse: Record<string, unknown> = { ok: true, mode, ...revReport };
           if (phase !== "REVIEW" && phase !== "VALIDATE") revResponse._info = `Modo review_ready é específico das fases VALIDATE/REVIEW (fase atual: ${phase})`;
           return mcpText(revResponse);
@@ -328,7 +330,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const ks = new KnowledgeStore(store.getDb());
           const knowledgeCount = ks.count();
           const hoReport = checkHandoffReadiness(doc, { knowledgeCount });
-          logger.info("tool:analyze:handoff_ready:ok", { ready: hoReport.ready, grade: hoReport.grade });
+          log.info("tool:analyze:handoff_ready:ok", { ready: hoReport.ready, grade: hoReport.grade });
           const hoResponse: Record<string, unknown> = { ok: true, mode, ...hoReport };
           if (phase !== "HANDOFF" && phase !== "REVIEW") hoResponse._info = `Modo handoff_ready é específico das fases REVIEW/HANDOFF (fase atual: ${phase})`;
           return mcpText(hoResponse);
@@ -336,7 +338,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "doc_completeness": {
           const docReport = checkDocCompleteness(doc);
-          logger.info("tool:analyze:doc_completeness:ok", { coverageRate: docReport.coverageRate });
+          log.info("tool:analyze:doc_completeness:ok", { coverageRate: docReport.coverageRate });
           return mcpText({ ok: true, mode, ...docReport });
         }
 
@@ -347,7 +349,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const ksD = new KnowledgeStore(store.getDb());
           const knowledgeCountD = ksD.count();
           const deployReport = checkDeployReadiness(doc, { hasSnapshots, knowledgeCount: knowledgeCountD });
-          logger.info("tool:analyze:deploy_ready:ok", { ready: deployReport.ready, grade: deployReport.grade });
+          log.info("tool:analyze:deploy_ready:ok", { ready: deployReport.ready, grade: deployReport.grade });
           const deployResponse: Record<string, unknown> = { ok: true, mode, ...deployReport };
           if (phase !== "DEPLOY" && phase !== "HANDOFF") deployResponse._info = `Modo deploy_ready é específico das fases HANDOFF/DEPLOY (fase atual: ${phase})`;
           return mcpText(deployResponse);
@@ -371,7 +373,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             task_summary: `${doneTasks.length}/${tasks.length} tasks done`,
           };
           const releaseReady = allDone && blockedCount === 0 && inProgressCount === 0 && hasSnapshots;
-          logger.info("tool:analyze:release_check:ok", { releaseReady });
+          log.info("tool:analyze:release_check:ok", { releaseReady });
           const releaseResponse: Record<string, unknown> = { ok: true, mode, releaseReady, checks: releaseChecks };
           if (phase !== "DEPLOY") releaseResponse._info = `Modo release_check é específico da fase DEPLOY (fase atual: ${phase})`;
           return mcpText(releaseResponse);
@@ -384,7 +386,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const ksL = new KnowledgeStore(store.getDb());
           const knowledgeCountL = ksL.count();
           const lisReport = checkListeningReadiness(doc, { hasSnapshots, knowledgeCount: knowledgeCountL });
-          logger.info("tool:analyze:listening_ready:ok", { ready: lisReport.ready, grade: lisReport.grade });
+          log.info("tool:analyze:listening_ready:ok", { ready: lisReport.ready, grade: lisReport.grade });
           const lisResponse: Record<string, unknown> = { ok: true, mode, ...lisReport };
           if (phase !== "LISTENING" && phase !== "HANDOFF") lisResponse._info = `Modo listening_ready é específico das fases HANDOFF/LISTENING (fase atual: ${phase})`;
           return mcpText(lisResponse);
@@ -392,13 +394,13 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "backlog_health": {
           const healthReport = analyzeBacklogHealth(doc);
-          logger.info("tool:analyze:backlog_health:ok", { clean: healthReport.cleanForNewCycle, stale: healthReport.staleTasks.length });
+          log.info("tool:analyze:backlog_health:ok", { clean: healthReport.cleanForNewCycle, stale: healthReport.staleTasks.length });
           return mcpText({ ok: true, mode, ...healthReport });
         }
 
         case "sprint_health": {
           const sprintHealthReport = analyzeSprintHealth(doc, nodeId);
-          logger.info("tool:analyze:sprint_health:ok", { health: sprintHealthReport.health, tasks: sprintHealthReport.metrics.taskCount });
+          log.info("tool:analyze:sprint_health:ok", { health: sprintHealthReport.health, tasks: sprintHealthReport.metrics.taskCount });
           return mcpText({ ok: true, mode, ...sprintHealthReport });
         }
 
@@ -409,61 +411,61 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
 
         case "contract_coverage": {
           const ccReport = analyzeContractCoverage(doc);
-          logger.info("tool:analyze:contract_coverage:ok", { totalContracts: ccReport.totalContracts, coveragePercent: ccReport.coveragePercent });
+          log.info("tool:analyze:contract_coverage:ok", { totalContracts: ccReport.totalContracts, coveragePercent: ccReport.coveragePercent });
           return mcpText({ ok: true, mode, ...ccReport });
         }
 
         case "data_integrity": {
           const diReport = analyzeDataIntegrity(doc);
-          logger.info("tool:analyze:data_integrity:ok", { totalTables: diReport.totalTables, validCount: diReport.validCount });
+          log.info("tool:analyze:data_integrity:ok", { totalTables: diReport.totalTables, validCount: diReport.validCount });
           return mcpText({ ok: true, mode, ...diReport });
         }
 
         case "formula_consistency": {
           const fcReport = analyzeFormulaConsistency(doc);
-          logger.info("tool:analyze:formula_consistency:ok", { totalFormulas: fcReport.totalFormulas, validCount: fcReport.validCount, conflicts: fcReport.conflicts.length });
+          log.info("tool:analyze:formula_consistency:ok", { totalFormulas: fcReport.totalFormulas, validCount: fcReport.validCount, conflicts: fcReport.conflicts.length });
           return mcpText({ ok: true, mode, ...fcReport });
         }
 
         case "performance_budget": {
           const pbReport = analyzePerformanceBudgets(doc);
-          logger.info("tool:analyze:performance_budget:ok", { totalBudgets: pbReport.totalBudgets, untestedCount: pbReport.untestedCount });
+          log.info("tool:analyze:performance_budget:ok", { totalBudgets: pbReport.totalBudgets, untestedCount: pbReport.untestedCount });
           return mcpText({ ok: true, mode, ...pbReport });
         }
 
         case "state_completeness": {
           const scReport = analyzeStateCompleteness(doc);
-          logger.info("tool:analyze:state_completeness:ok", { totalMachines: scReport.totalMachines, validCount: scReport.validCount });
+          log.info("tool:analyze:state_completeness:ok", { totalMachines: scReport.totalMachines, validCount: scReport.validCount });
           return mcpText({ ok: true, mode, ...scReport });
         }
 
         case "scenario_coverage": {
           const scenReport = analyzeScenarioCoverage(doc);
-          logger.info("tool:analyze:scenario_coverage:ok", { totalScenarios: scenReport.totalScenarios, coveragePercent: scenReport.coveragePercent });
+          log.info("tool:analyze:scenario_coverage:ok", { totalScenarios: scenReport.totalScenarios, coveragePercent: scenReport.coveragePercent });
           return mcpText({ ok: true, mode, ...scenReport });
         }
 
         case "asset_blockers": {
           const abReport = analyzeAssetBlockers(doc);
-          logger.info("tool:analyze:asset_blockers:ok", { pendingAssets: abReport.pendingAssets, blockedTaskCount: abReport.blockedTaskCount });
+          log.info("tool:analyze:asset_blockers:ok", { pendingAssets: abReport.pendingAssets, blockedTaskCount: abReport.blockedTaskCount });
           return mcpText({ ok: true, mode, ...abReport });
         }
 
         case "config_coverage": {
           const ccfReport = analyzeConfigCoverage(doc);
-          logger.info("tool:analyze:config_coverage:ok", { totalConfigs: ccfReport.totalConfigs, coveragePercent: ccfReport.coveragePercent });
+          log.info("tool:analyze:config_coverage:ok", { totalConfigs: ccfReport.totalConfigs, coveragePercent: ccfReport.coveragePercent });
           return mcpText({ ok: true, mode, ...ccfReport });
         }
 
         case "metric_coverage": {
           const mcReport = analyzeMetricCoverage(doc);
-          logger.info("tool:analyze:metric_coverage:ok", { totalMetrics: mcReport.totalMetrics, coveragePercent: mcReport.coveragePercent });
+          log.info("tool:analyze:metric_coverage:ok", { totalMetrics: mcReport.totalMetrics, coveragePercent: mcReport.coveragePercent });
           return mcpText({ ok: true, mode, ...mcReport });
         }
 
         case "concurrency_risk": {
           const crReport = analyzeConcurrencyRisk(doc);
-          logger.info("tool:analyze:concurrency_risk:ok", { totalRisks: crReport.totalRisks, entityConflicts: crReport.entityConflicts.length });
+          log.info("tool:analyze:concurrency_risk:ok", { totalRisks: crReport.totalRisks, entityConflicts: crReport.entityConflicts.length });
           return mcpText({ ok: true, mode, ...crReport });
         }
 
@@ -477,7 +479,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             }
           }
           const simReport = simulateEconomy(doc, simParams);
-          logger.info("tool:analyze:economy_simulation:ok", { risk: simReport.inflationRisk, net: simReport.netFlowPerDay });
+          log.info("tool:analyze:economy_simulation:ok", { risk: simReport.inflationRisk, net: simReport.netFlowPerDay });
           return mcpText({ ok: true, mode: "economy_simulation", ...simReport });
         }
 
@@ -489,14 +491,14 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const { smartDecompose } = await import("../../core/planner/smart-decompose.js");
           const decomposeResult = smartDecompose(store, nodeId);
           if (!decomposeResult) return mcpText({ ok: false, mode: "smart_decompose", message: "Node has no acceptance criteria" });
-          logger.info("tool:analyze:smart_decompose:ok", { subtasks: decomposeResult.subtasks.length });
+          log.info("tool:analyze:smart_decompose:ok", { subtasks: decomposeResult.subtasks.length });
           return mcpText({ ok: true, mode: "smart_decompose", ...decomposeResult });
         }
 
         case "code_sync": {
           const { syncGraphFromCode } = await import("../../core/code/graph-sync.js");
           const syncReport = syncGraphFromCode(store);
-          logger.info("tool:analyze:code_sync:ok", { staleRefs: syncReport.staleRefs.length, suggestions: syncReport.suggestions.length });
+          log.info("tool:analyze:code_sync:ok", { staleRefs: syncReport.staleRefs.length, suggestions: syncReport.suggestions.length });
           return mcpText({ ok: true, mode: "code_sync", ...syncReport });
         }
 
@@ -506,35 +508,35 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           if (!project) return mcpError("No active project");
           captureFlowSnapshot(store, project.id);
           const cfdData = getCfdData(store, project.id);
-          logger.info("tool:analyze:cfd:ok", { dataPoints: cfdData.length });
+          log.info("tool:analyze:cfd:ok", { dataPoints: cfdData.length });
           return mcpText({ ok: true, mode: "cfd", dataPoints: cfdData.length, data: cfdData });
         }
 
         case "security_scan": {
           const { checkSecurityScan } = await import("../../core/analyzer/security-scanner.js");
           const report = checkSecurityScan(process.cwd());
-          logger.info("tool:analyze:security_scan:ok", { score: report.score, grade: report.grade });
+          log.info("tool:analyze:security_scan:ok", { score: report.score, grade: report.grade });
           return mcpText({ ok: true, ...report });
         }
 
         case "code_quality": {
           const { checkCodeQuality } = await import("../../core/analyzer/code-quality-checker.js");
           const report = checkCodeQuality(process.cwd());
-          logger.info("tool:analyze:code_quality:ok", { score: report.score, grade: report.grade });
+          log.info("tool:analyze:code_quality:ok", { score: report.score, grade: report.grade });
           return mcpText({ ok: true, ...report });
         }
 
         case "test_coverage": {
           const { checkTestCoverage } = await import("../../core/analyzer/test-coverage-checker.js");
           const report = checkTestCoverage(process.cwd());
-          logger.info("tool:analyze:test_coverage:ok", { score: report.score, grade: report.grade });
+          log.info("tool:analyze:test_coverage:ok", { score: report.score, grade: report.grade });
           return mcpText({ ok: true, ...report });
         }
 
         case "observability_check": {
           const { checkObservability } = await import("../../core/analyzer/observability-checker.js");
           const report = checkObservability(process.cwd());
-          logger.info("tool:analyze:observability_check:ok", { score: report.score, grade: report.grade });
+          log.info("tool:analyze:observability_check:ok", { score: report.score, grade: report.grade });
           return mcpText({ ok: true, ...report });
         }
 
@@ -544,7 +546,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const report = runHarnessScan(process.cwd(), store.getDb(), undefined, {
             projectId: activeProject?.id,
           });
-          logger.info("tool:analyze:harness_scan:ok", { score: report.score, grade: report.grade });
+          log.info("tool:analyze:harness_scan:ok", { score: report.score, grade: report.grade });
 
           // Index scan result in KnowledgeStore for RAG retrieval (non-blocking)
           try {
@@ -589,7 +591,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           }));
 
           if (history.length === 0) {
-            logger.info("tool:analyze:harness_trend:no_data");
+            log.info("tool:analyze:harness_trend:no_data");
             return mcpText({ ok: true, mode, history: [], trend: "no_data", delta: 0 });
           }
 
@@ -607,7 +609,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             trend = "degrading";
           }
 
-          logger.info("tool:analyze:harness_trend:ok", { entries: history.length, trend, delta });
+          log.info("tool:analyze:harness_trend:ok", { entries: history.length, trend, delta });
           return mcpText({ ok: true, mode, history, trend, delta });
         }
 
@@ -616,7 +618,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const { evaluate: evalRemediation } = await import("../../core/harness/remediation-engine.js");
           const remReport = remScan(process.cwd(), store.getDb(), undefined, { collectViolations: true });
           const suggestions = evalRemediation(remReport.violations ?? [], store.getDb());
-          logger.info("tool:analyze:harness_remediate:ok", { score: remReport.score, suggestions: suggestions.length });
+          log.info("tool:analyze:harness_remediate:ok", { score: remReport.score, suggestions: suggestions.length });
           return mcpText({
             ok: true,
             mode,
@@ -656,7 +658,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           });
 
           const message = advice.length === 0 ? "Harness score healthy — all dimensions >= 70" : `${advice.length} dimension(s) need improvement`;
-          logger.info("tool:analyze:harness_advice:ok", { score: adviceReport.score, dimensions: advice.length });
+          log.info("tool:analyze:harness_advice:ok", { score: adviceReport.score, dimensions: advice.length });
           return mcpText({ ok: true, mode, score: adviceReport.score, grade: adviceReport.grade, advice, message });
         }
 
@@ -702,7 +704,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         case "orphan_tasks": {
           const { detectOrphanTasks } = await import("../../core/analyzer/orphan-task-detector.js");
           const orphans = detectOrphanTasks(store, process.cwd());
-          logger.info("tool:analyze:orphan_tasks:ok", { count: orphans.length });
+          log.info("tool:analyze:orphan_tasks:ok", { count: orphans.length });
           return mcpText({
             ok: true,
             mode,
@@ -717,7 +719,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
         case "memory_health": {
           const agentCount = (store as unknown as { connections?: { size: number } }).connections?.size ?? 0;
           const report = buildMemoryHealthReport({ agentCount });
-          logger.info("tool:analyze:memory_health:ok", { level: report.heap.level, heapUsedMb: report.heap.heapUsedMb });
+          log.info("tool:analyze:memory_health:ok", { level: report.heap.level, heapUsedMb: report.heap.heapUsedMb });
           return mcpText(JSON.stringify(report, null, 2));
         }
 
@@ -747,7 +749,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             }
           }
           const resultValue = validateFilesCitations(files);
-          logger.info("tool:analyze:citation_groundedness:ok", {
+          log.info("tool:analyze:citation_groundedness:ok", {
             nodeId,
             checked: resultValue.checkedCount,
             violations: resultValue.violations.length,
@@ -785,7 +787,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             tool,
             input: (input && typeof input === "object") ? (input as Record<string, unknown>) : null,
           });
-          logger.info("tool:analyze:approval_check:ok", {
+          log.info("tool:analyze:approval_check:ok", {
             tool,
             requires_approval: resultValue.requires_approval,
             severity: resultValue.severity,
@@ -820,11 +822,11 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             );
             recordSnapshot(store.getDb(), report);
           } catch (err) {
-            logger.warn("tool:analyze:prd_lifecycle_health:snapshot_failed", {
+            log.warn("tool:analyze:prd_lifecycle_health:snapshot_failed", {
               error: String(err),
             });
           }
-          logger.info("tool:analyze:prd_lifecycle_health:ok", {
+          log.info("tool:analyze:prd_lifecycle_health:ok", {
             nodeId,
             passedAll: report.passedAll,
             passedCount: report.passedCount,
@@ -840,7 +842,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             window: window ?? 10,
             epicId: nodeId ?? null,
           });
-          logger.info("tool:analyze:success_rate:ok", {
+          log.info("tool:analyze:success_rate:ok", {
             samples: resultValue.samples,
             passed: resultValue.passed,
             successRate: resultValue.successRate,
@@ -854,7 +856,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           );
           const sprintLabel = nodeId; // optional sprint filter via nodeId param
           const resultValue = computeCapacityHealth(doc, sprintLabel);
-          logger.info("tool:analyze:capacity_health:ok", {
+          log.info("tool:analyze:capacity_health:ok", {
             sprintLabel: resultValue.sprintLabel,
             withinTolerance: resultValue.withinTolerance,
           });
@@ -866,7 +868,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             "../../core/analyzer/evolution-audit.js"
           );
           const resultValue = analyzeEvolutionAudit(doc);
-          logger.info("tool:analyze:evolution_audit:ok", {
+          log.info("tool:analyze:evolution_audit:ok", {
             totalRegenerated: resultValue.totalRegenerated,
             totalRegenerations: resultValue.totalRegenerations,
           });
@@ -880,7 +882,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           const project = store.getActiveProject();
           const projectId = project?.id ?? "default";
           const summary = aggregateSavings(store.getDb(), projectId);
-          logger.info("tool:analyze:harness_savings:ok", {
+          log.info("tool:analyze:harness_savings:ok", {
             totalBlocks: summary.totalBlocks,
             totalSavingsTokens: summary.totalSavingsTokens,
           });
@@ -910,7 +912,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             args: ["-granularity=file", "-output=json", `-dir=${cwd}`],
           });
           if (!goResult.ok) {
-            logger.warn("tool:analyze:feature_depth:go_failed", {
+            log.warn("tool:analyze:feature_depth:go_failed", {
               exitCode: goResult.exitCode,
             });
             return mcpText({
@@ -922,7 +924,7 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             });
           }
           const parsed = parseFeatureDepthAudit(goResult.stdout);
-          logger.info("tool:analyze:feature_depth:ok", {
+          log.info("tool:analyze:feature_depth:ok", {
             totalFiles: parsed.totalFiles,
             avgScore: parsed.avgScore,
           });

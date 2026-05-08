@@ -22,8 +22,10 @@
 import { readdir } from "node:fs/promises";
 import { join, extname } from "node:path";
 import { parseSifFile } from "./sif-parser.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SiebelSifParseResult } from "../../schemas/siebel.schema.js";
+
+const log = createLogger({ layer: "core", source: "sif-batch-importer.ts" });
 
 export interface BatchImportOptions {
   concurrency?: number;
@@ -96,7 +98,7 @@ export async function batchImportSifs(
     }
   }
 
-  logger.info("Batch SIF import complete", {
+  log.info("Batch SIF import complete", {
     totalFiles: String(sifFiles.length),
     success: String(results.length),
     errors: String(errors.length),

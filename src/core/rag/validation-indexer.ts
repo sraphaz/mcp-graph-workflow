@@ -21,7 +21,9 @@
  */
 
 import type { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "validation-indexer.ts" });
 
 export interface AcResult {
   criterion: string;
@@ -72,7 +74,7 @@ export function indexAcValidationResult(
     },
   });
 
-  logger.info("Validation result indexed", { nodeId: input.nodeId, passRate });
+  log.info("Validation result indexed", { nodeId: input.nodeId, passRate });
 
   return { documentsIndexed: 1 };
 }

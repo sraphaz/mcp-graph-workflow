@@ -21,8 +21,10 @@
  */
 
 import { assertTrustedMcpServer, type AllowlistOptions } from "../security/registry-allowlist.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { getErrorMessage } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "mcp-servers-config.ts" });
 
 export const MCP_SERVER_NAMES = [
   "mcp-graph",
@@ -93,7 +95,7 @@ export function buildMcpServersConfig(
         assertTrustedMcpServer(entry, options.allowlist);
       } catch (err) {
         if (mode === "strict") throw err;
-        logger.warn("mcp:registry:untrusted", { name, reason: getErrorMessage(err) });
+        log.warn("mcp:registry:untrusted", { name, reason: getErrorMessage(err) });
       }
     }
   }

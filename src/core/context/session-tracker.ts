@@ -27,7 +27,9 @@
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
 import { estimateTokens } from "./token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "session-tracker.ts" });
 
 export interface DeltaResult {
   newChunks: string[];
@@ -96,7 +98,7 @@ export class SessionTracker {
     });
 
     insertAll();
-    logger.debug("session-tracker:trackSent", { sessionId, chunksCount: chunks.length });
+    log.debug("session-tracker:trackSent", { sessionId, chunksCount: chunks.length });
   }
 
   /**
@@ -144,7 +146,7 @@ export class SessionTracker {
       .prepare("DELETE FROM session_chunks WHERE session_id = ?")
       .run(sessionId);
     this.cache.delete(sessionId);
-    logger.debug("session-tracker:clearSession", { sessionId });
+    log.debug("session-tracker:clearSession", { sessionId });
   }
 
   /** Current L1 cache size (for observability / tests). */
@@ -166,7 +168,7 @@ export class SessionTracker {
       }
     }
     if (evicted > 0) {
-      logger.debug("session-tracker:cleanupStale", { evicted, remaining: this.cache.size });
+      log.debug("session-tracker:cleanupStale", { evicted, remaining: this.cache.size });
     }
     return evicted;
   }
@@ -184,7 +186,7 @@ export class SessionTracker {
       .prepare("DELETE FROM session_chunks WHERE tracked_at < ?")
       .run(cutoffIso);
     if (resultValue.changes > 0) {
-      logger.debug("session-tracker:cleanupStaleDb", {
+      log.debug("session-tracker:cleanupStaleDb", {
         cutoffIso,
         rowsDeleted: resultValue.changes,
       });
@@ -221,7 +223,7 @@ export class SessionTracker {
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey !== undefined && oldestKey !== sessionId) {
         this.cache.delete(oldestKey);
-        logger.debug("session-tracker:evict", { sessionId: oldestKey });
+        log.debug("session-tracker:evict", { sessionId: oldestKey });
       }
     }
 

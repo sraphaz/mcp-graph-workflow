@@ -29,7 +29,9 @@
 
 import type { GraphDocument, GraphEdge } from "../graph/graph-types.js";
 import type { EdgeConsistencyIssue, EdgeConsistencyReport } from "../../schemas/validator-schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "edge-consistency-checker.ts" });
 
 /** Return canonical key for a node pair, direction-independent. */
 function pairKey(a: string, b: string): string {
@@ -120,7 +122,7 @@ export function checkEdgeConsistency(doc: GraphDocument): EdgeConsistencyReport 
   }
 
   const passed = issues.length === 0;
-  logger.info("edge-consistency-check", { passed, issueCount: issues.length, edgeCount: doc.edges.length });
+  log.info("edge-consistency-check", { passed, issueCount: issues.length, edgeCount: doc.edges.length });
 
   return { issues, passed };
 }

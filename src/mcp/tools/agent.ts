@@ -9,7 +9,9 @@ import { SqliteStore } from "../../core/store/sqlite-store.js";
 import { AgentRegistry } from "../../core/store/agent-registry.js";
 import { listAgents } from "../../core/agents/agent-format-generator.js";
 import { mcpText, mcpError, type McpToolResponse } from "../response-helpers.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "mcp", source: "agent.ts" });
 
 // Phases where agent spawning is allowed
 const SPAWN_ALLOWED_PHASES = new Set(["IMPLEMENT", "VALIDATE"]);
@@ -83,7 +85,7 @@ export function buildAgentHandler(store: SqliteStore): (input: AgentToolInput) =
           }
 
           registry.registerAgent(input.agentName, [input.phase ?? currentPhase]);
-          logger.info("agent-tool:spawn", { agentName: input.agentName, phase: currentPhase });
+          log.info("agent-tool:spawn", { agentName: input.agentName, phase: currentPhase });
           return mcpText({
             ok: true,
             spawned: input.agentName,
@@ -96,7 +98,7 @@ export function buildAgentHandler(store: SqliteStore): (input: AgentToolInput) =
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      logger.error("agent-tool:error", { action: input.action, error: msg });
+      log.error("agent-tool:error", { action: input.action, error: msg });
       return mcpError(msg);
     }
   };

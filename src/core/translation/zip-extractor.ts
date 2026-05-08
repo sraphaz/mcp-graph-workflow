@@ -17,8 +17,10 @@
 
 import AdmZip from "adm-zip";
 import path from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { ExtractedFile } from "./translation-project-types.js";
+
+const log = createLogger({ layer: "core", source: "zip-extractor.ts" });
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -155,7 +157,7 @@ export function extractZip(zipPath: string): ExtractedFile[] {
     zip = new AdmZip(zipPath);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    logger.error(`Failed to open ZIP file: ${message}`, { zipPath });
+    log.error(`Failed to open ZIP file: ${message}`, { zipPath });
     return [];
   }
 
@@ -186,7 +188,7 @@ export function extractZip(zipPath: string): ExtractedFile[] {
     // Skip files exceeding max size
     if (entry.header.size > MAX_FILE_SIZE_BYTES) {
       filteredCount++;
-      logger.debug(`Skipping large file: ${entryPath}`, {
+      log.debug(`Skipping large file: ${entryPath}`, {
         sizeBytes: entry.header.size,
         maxBytes: MAX_FILE_SIZE_BYTES,
       });
@@ -201,7 +203,7 @@ export function extractZip(zipPath: string): ExtractedFile[] {
       }
     } catch {
       filteredCount++;
-      logger.debug(`Skipping unreadable entry: ${entryPath}`);
+      log.debug(`Skipping unreadable entry: ${entryPath}`);
       continue;
     }
 
@@ -211,7 +213,7 @@ export function extractZip(zipPath: string): ExtractedFile[] {
       content = entry.getData().toString("utf-8");
     } catch {
       filteredCount++;
-      logger.debug(`Failed to read entry as UTF-8: ${entryPath}`);
+      log.debug(`Failed to read entry as UTF-8: ${entryPath}`);
       continue;
     }
 
@@ -227,7 +229,7 @@ export function extractZip(zipPath: string): ExtractedFile[] {
     });
   }
 
-  logger.info(`ZIP extraction complete`, {
+  log.info(`ZIP extraction complete`, {
     zipPath,
     totalEntries: entries.length,
     filtered: filteredCount,

@@ -28,8 +28,10 @@
  */
 
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { StoreAdapter, StoreId, FederatedResultItem } from "./federated-query.js";
+
+const log = createLogger({ layer: "core", source: "federated-trace.ts" });
 
 export interface TraceStep {
   readonly storeId: StoreId;
@@ -91,7 +93,7 @@ export async function tracedFederatedQuery(
       partial = true;
       warnings.push(`Store "${adapter.storeId}" unavailable: ${msg}`);
       steps.push({ storeId: adapter.storeId, latencyMs, resultCount: 0, error: msg });
-      logger.warn("federated-trace:store_offline", { traceId, storeId: adapter.storeId, error: msg });
+      log.warn("federated-trace:store_offline", { traceId, storeId: adapter.storeId, error: msg });
     }
   }
 

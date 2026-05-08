@@ -31,7 +31,9 @@ import { EmbeddingStore, type SimilarityResult } from "./embedding-store.js";
 import { TfIdfEmbeddingCache } from "./tfidf-embedding-cache.js";
 import { tokenize } from "../search/tokenizer.js";
 import { generateEmbedding } from "./embedding-generator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "rag-pipeline.ts" });
 
 /** Chunk size for embedding batch processing — configurable via env to tune GC pressure. */
 export const EMBEDDING_BATCH_SIZE: number = (() => {
@@ -213,7 +215,7 @@ export async function indexNodeEmbeddings(
 ): Promise<number> {
   const nodes = store.getAllNodes();
   if (nodes.length === 0) {
-    logger.info("No nodes to index for embeddings");
+    log.info("No nodes to index for embeddings");
     return 0;
   }
 
@@ -256,8 +258,8 @@ export async function indexNodeEmbeddings(
   }
 
   const durationMs = Math.round(performance.now() - t0);
-  logger.debug("rag:fit+embed:nodes", { vocabSize: vectorizer.vocabSize, indexed, durationMs });
-  logger.info(`Indexed ${indexed} node embeddings (vocab size: ${vectorizer.vocabSize})`);
+  log.debug("rag:fit+embed:nodes", { vocabSize: vectorizer.vocabSize, indexed, durationMs });
+  log.info(`Indexed ${indexed} node embeddings (vocab size: ${vectorizer.vocabSize})`);
   return indexed;
 }
 
@@ -274,7 +276,7 @@ export async function indexAllEmbeddings(
   const knowledgeDocs = knowledgeStore.list({ limit: 10000 });
 
   if (nodes.length === 0 && knowledgeDocs.length === 0) {
-    logger.info("No documents to index for embeddings");
+    log.info("No documents to index for embeddings");
     return { nodes: 0, knowledge: 0 };
   }
 
@@ -334,7 +336,7 @@ export async function indexAllEmbeddings(
   }
 
   const tfidfDurationMs = Math.round(performance.now() - t0);
-  logger.debug("rag:fit+embed:all:tfidf", { vocabSize: vectorizer.vocabSize, indexedNodes, indexedKnowledge, durationMs: tfidfDurationMs });
+  log.debug("rag:fit+embed:all:tfidf", { vocabSize: vectorizer.vocabSize, indexedNodes, indexedKnowledge, durationMs: tfidfDurationMs });
 
   // ONNX embedding pass — generate 384-dim neural embeddings alongside TF-IDF
   // Uses batchProcess with EMBEDDING_BATCH_SIZE chunks + setImmediate yield between
@@ -363,11 +365,11 @@ export async function indexAllEmbeddings(
   });
   const onnxDurationMs = Math.round(performance.now() - t1);
   if (onnxFailed > 0 && allDocuments.length > 0 && onnxFailed / allDocuments.length > 0.5) {
-    logger.warn("rag:onnx:high-failure-rate", { onnxFailed, total: allDocuments.length, failureRate: Math.round((onnxFailed / allDocuments.length) * 100) });
+    log.warn("rag:onnx:high-failure-rate", { onnxFailed, total: allDocuments.length, failureRate: Math.round((onnxFailed / allDocuments.length) * 100) });
   }
-  logger.debug("rag:fit+embed:all:onnx", { onnxIndexed, onnxFailed, durationMs: onnxDurationMs });
+  log.debug("rag:fit+embed:all:onnx", { onnxIndexed, onnxFailed, durationMs: onnxDurationMs });
 
-  logger.info(
+  log.info(
     `Indexed all embeddings (vocab size: ${vectorizer.vocabSize})`,
     { nodes: indexedNodes, knowledge: indexedKnowledge, onnx: onnxIndexed },
   );
@@ -393,7 +395,7 @@ export async function incrementalIndex(
 
   // If no active vocabulary, do a full index instead
   if (!activeVectorizer || activeVectorizer.vocabSize === 0) {
-    logger.info("No active vocabulary — performing full index for incremental request");
+    log.info("No active vocabulary — performing full index for incremental request");
     const resultValue = await indexAllEmbeddings(store, embeddingStore);
     return { indexed: resultValue.nodes + resultValue.knowledge, fullReindex: true };
   }
@@ -404,7 +406,7 @@ export async function incrementalIndex(
   for (const docId of docIds) {
     const doc = knowledgeStore.getById(docId);
     if (!doc) {
-      logger.debug("Incremental index: doc not found, skipping", { docId });
+      log.debug("Incremental index: doc not found, skipping", { docId });
       continue;
     }
 
@@ -439,7 +441,7 @@ export async function incrementalIndex(
     indexed++;
   }
 
-  logger.info("Incremental embedding index complete", { indexed, total: docIds.length });
+  log.info("Incremental embedding index complete", { indexed, total: docIds.length });
   return { indexed, fullReindex: false };
 }
 
@@ -467,6 +469,6 @@ export async function semanticSearch(
   const results = embeddingStore.findSimilar(queryVector, limit);
   const durationMs = Math.round(performance.now() - t0);
 
-  logger.debug("rag:search", { query: query.slice(0, 80), resultCount: results.length, cacheHit, durationMs });
+  log.debug("rag:search", { query: query.slice(0, 80), resultCount: results.length, cacheHit, durationMs });
   return results;
 }

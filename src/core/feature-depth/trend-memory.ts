@@ -20,8 +20,10 @@
 
 import type Database from "better-sqlite3";
 import { writeMemory } from "../memory/memory-reader.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { Quadrant } from "./quadrant.js";
+
+const log = createLogger({ layer: "core", source: "trend-memory.ts" });
 
 export interface TrendSnapshot {
   readonly date: string; // YYYY-MM-DD
@@ -65,7 +67,7 @@ export function buildTrendSnapshot(db: Database.Database, when: Date = new Date(
       )
       .all() as BaselineRowSql[];
   } catch (err) {
-    logger.warn("feature-depth:trend-query-failed", {
+    log.warn("feature-depth:trend-query-failed", {
       error: err instanceof Error ? err.message : String(err),
     });
     return null;

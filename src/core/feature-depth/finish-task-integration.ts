@@ -21,7 +21,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { writeMemory } from "../memory/memory-reader.js";
 import { scoreFile, type FileScore } from "./score-file.js";
 import { quadrantOf } from "./quadrant.js";
@@ -37,6 +37,8 @@ import {
   getBaseline,
   upsertBaseline,
 } from "./baselines-store.js";
+
+const log = createLogger({ layer: "core", source: "finish-task-integration.ts" });
 
 export interface FeatureDepthFileResult {
   readonly relPath: string;
@@ -147,7 +149,7 @@ async function writeCrossingMemory(
   try {
     await writeMemory(projectRoot, memoryName, content);
   } catch (err) {
-    logger.warn("feature-depth:memory-write-failed", {
+    log.warn("feature-depth:memory-write-failed", {
       relPath: result.relPath,
       error: err instanceof Error ? err.message : String(err),
     });

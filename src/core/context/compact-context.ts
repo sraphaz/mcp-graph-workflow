@@ -20,7 +20,9 @@ import type { GraphNode, GraphEdge } from "../graph/graph-types.js";
 import type { GraphSnapshot } from "../store/graph-snapshot-cache.js";
 import { getNodeAcFromStore } from "../utils/ac-helpers.js";
 import { estimateTokens } from "./token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "compact-context.ts" });
 
 // ── Constants ────────────────────────────────────────────
 
@@ -244,7 +246,7 @@ export function buildTaskContext(
 
   const node = resolveNode(nodeId);
   if (!node) {
-    logger.warn(`buildTaskContext: node ${nodeId} not found`);
+    log.warn(`buildTaskContext: node ${nodeId} not found`);
     return null;
   }
 
@@ -413,7 +415,7 @@ export function buildTaskContext(
     metrics,
   };
 
-  logger.info(`Context for ${nodeId}: ${metrics.estimatedTokens} tokens, ${metrics.reductionPercent}% reduction`);
+  log.info(`Context for ${nodeId}: ${metrics.estimatedTokens} tokens, ${metrics.reductionPercent}% reduction`);
 
   return contextPayload;
 }

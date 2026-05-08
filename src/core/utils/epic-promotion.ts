@@ -23,7 +23,9 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "./logger.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger({ layer: "core", source: "epic-promotion.ts" });
 
 export interface EpicPromotionResult {
   parentId: string;
@@ -71,7 +73,7 @@ export function checkEpicPromotion(
       suggestion: `Todas as ${siblings.length} tasks filhas estão done. Considere marcar "${parent.title}" (${parent.id}) como done.`,
     };
   } catch (err) {
-    logger.debug("epic-promotion:check_failed", { error: String(err) });
+    log.debug("epic-promotion:check_failed", { error: String(err) });
     return null;
   }
 }
@@ -103,7 +105,7 @@ export function autoPromoteEpic(
     // Promote parent to done
     store.updateNodeStatus(parent.id, "done");
     resultValue.promoted.push(parent.id);
-    logger.info("epic-promotion:auto_promoted", {
+    log.info("epic-promotion:auto_promoted", {
       nodeId: parent.id,
       title: parent.title,
       childrenDone: siblings.length,
@@ -114,7 +116,7 @@ export function autoPromoteEpic(
     const parentResult = autoPromoteEpic(store, parent.id, depth + 1);
     resultValue.promoted.push(...parentResult.promoted);
   } catch (err) {
-    logger.debug("epic-promotion:auto_promote_failed", { error: String(err) });
+    log.debug("epic-promotion:auto_promote_failed", { error: String(err) });
   }
 
   return resultValue;
@@ -146,13 +148,13 @@ export function cascadeDownOnDone(
     }
 
     if (resultValue.cascaded.length > 0) {
-      logger.info("epic-promotion:cascade_down", {
+      log.info("epic-promotion:cascade_down", {
         parentId: nodeId,
         cascadedCount: resultValue.cascaded.length,
       });
     }
   } catch (err) {
-    logger.debug("epic-promotion:cascade_down_failed", { error: String(err) });
+    log.debug("epic-promotion:cascade_down_failed", { error: String(err) });
   }
 
   return resultValue;

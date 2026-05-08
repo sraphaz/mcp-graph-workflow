@@ -24,7 +24,9 @@
  * content are preserved verbatim across re-scaffolds.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "interface-scaffolder.ts" });
 
 // --- Types ---
 
@@ -95,7 +97,7 @@ export function scaffoldInterface(
   const interfaceContent = renderInterfaceFile(spec, preservedBlocks);
   const testContent = renderTestFile(spec, interfaceDir, testDir);
 
-  logger.info("interface-scaffolder", {
+  log.info("interface-scaffolder", {
     nodeId: spec.id,
     name: spec.name,
     methodCount: String(spec.methods.length),

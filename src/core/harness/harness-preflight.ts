@@ -24,7 +24,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "harness-preflight.ts" });
 
 export interface HarnessPreflightWarning {
   score: number;
@@ -58,7 +60,7 @@ export function getHarnessPreflightWarning(db: Database.Database): HarnessPrefli
       message,
     };
   } catch (err) {
-    logger.warn("harness:preflight:error", { error: String(err) });
+    log.warn("harness:preflight:error", { error: String(err) });
     return null;
   }
 }
@@ -144,7 +146,7 @@ export function getHarnessRegressionReport(
       delta,
     };
   } catch (err) {
-    logger.warn("harness:regression:error", { error: String(err) });
+    log.warn("harness:regression:error", { error: String(err) });
     return null;
   }
 }

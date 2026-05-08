@@ -58,11 +58,13 @@ import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import type { SiebelObject, SiebelObjectType, SiebelEnvironmentType, SiebelSifParseResult } from "../../schemas/siebel.schema.js";
 import { STORE_DIR } from "../../core/utils/constants.js";
 import { assertPathInsideProject } from "../../core/utils/fs.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
 import type { McpToolResponse } from "../response-helpers.js";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
+const log = createLogger({ layer: "mcp", source: "siebel-handlers.ts" });
 
 // Type for the flat params object from siebel.ts
 interface SiebelParams {
@@ -137,7 +139,7 @@ export async function handleSiebelAnalyze(store: SqliteStore, params: SiebelPara
     return mcpError("analyzeMode is required for analyze action");
   }
 
-  logger.info("tool:siebel:analyze", { analyzeMode: action, objectName, objectType });
+  log.info("tool:siebel:analyze", { analyzeMode: action, objectName, objectType });
 
   // Get dependencies from SIF content or stored knowledge
   let dependencies;
@@ -319,7 +321,7 @@ export async function handleSiebelCompose(store: SqliteStore, params: SiebelPara
     return mcpError("composerAction is required for compose action");
   }
 
-  logger.info("tool:siebel:compose", { composerAction: action, envName, objectName });
+  log.info("tool:siebel:compose", { composerAction: action, envName, objectName });
 
   // build_package doesn't need environment
   if (action === "build_package") {
@@ -396,7 +398,7 @@ export async function handleSiebelEnv(_store: SqliteStore, params: SiebelParams)
     return mcpError("envAction is required for env action");
   }
 
-  logger.info("tool:siebel:env", { envAction: action, name });
+  log.info("tool:siebel:env", { envAction: action, name });
 
   const graphDir = path.join(process.cwd(), STORE_DIR);
 
@@ -449,7 +451,7 @@ export async function handleSiebelGenerate(store: SqliteStore, params: SiebelPar
     return mcpError("generateAction is required for generate action");
   }
 
-  logger.info("tool:siebel:generate", { generateAction: action });
+  log.info("tool:siebel:generate", { generateAction: action });
 
   if (action === "templates") {
     const templates = listTemplates();
@@ -683,7 +685,7 @@ export async function handleSiebelImportDocs(store: SqliteStore, params: SiebelP
     return mcpError("docType is required for import_docs action");
   }
 
-  logger.info("tool:siebel:import_docs", { filePath, fileName, docType });
+  log.info("tool:siebel:import_docs", { filePath, fileName, docType });
 
   // Security: validate file path is inside project directory
   if (filePath) assertPathInsideProject(filePath);
@@ -753,7 +755,7 @@ export async function handleSiebelImportDocs(store: SqliteStore, params: SiebelP
   documentsIndexed = docs.length;
   indexEntitiesForDocs(store.getDb(), docs.map((d) => d.id));
 
-  logger.info("Documentation indexed", {
+  log.info("Documentation indexed", {
     fileName,
     docType,
     chunks: String(chunks.length),
@@ -776,7 +778,7 @@ export async function handleSiebelImportDocs(store: SqliteStore, params: SiebelP
 export async function handleSiebelImportSif(store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { filePath, content, fileName, directory, concurrency, mapToGraph } = params;
 
-  logger.info("tool:siebel:import_sif", { filePath, fileName, directory, concurrency, mapToGraph });
+  log.info("tool:siebel:import_sif", { filePath, fileName, directory, concurrency, mapToGraph });
 
   // Security: validate paths are inside project directory
   if (filePath) assertPathInsideProject(filePath);
@@ -837,7 +839,7 @@ export async function handleSiebelSearch(store: SqliteStore, params: SiebelParam
     return mcpError("query is required for search action");
   }
 
-  logger.info("tool:siebel:search", { query, objectType, limit });
+  log.info("tool:siebel:search", { query, objectType, limit });
 
   const knowledgeStore = new KnowledgeStore(store.getDb());
   const effectiveLimit = limit ?? 10;
@@ -876,7 +878,7 @@ export async function handleSiebelSearch(store: SqliteStore, params: SiebelParam
 export async function handleSiebelValidate(_store: SqliteStore, params: SiebelParams): Promise<McpToolResponse> {
   const { filePath, content, fileName, validateMode: mode, ruleSetName, checkDeps, checkCircular, prefix } = params;
 
-  logger.info("tool:siebel:validate", { filePath, fileName, mode });
+  log.info("tool:siebel:validate", { filePath, fileName, mode });
 
   let parseResult: SiebelSifParseResult;
   if (filePath) {
@@ -1042,7 +1044,7 @@ export async function handleSiebelBatchImportSif(store: SqliteStore, params: Sie
     return mcpError("batch_import_sif supports at most 50 files");
   }
 
-  logger.info("tool:siebel:batch_import_sif", { fileCount: files.length, mapToGraph });
+  log.info("tool:siebel:batch_import_sif", { fileCount: files.length, mapToGraph });
 
   const results: Array<{ fileName: string; ok: boolean; objectCount?: number; error?: string }> = [];
   let totalNodesCreated = 0;
@@ -1126,7 +1128,7 @@ function importSingleSif(
     resultValue.documentsIndexed = indexResult.documentsIndexed;
     indexEntitiesForSource(store.getDb(), "siebel_sif");
   } catch (indexErr) {
-    logger.warn("Siebel knowledge indexing failed (non-fatal)", {
+    log.warn("Siebel knowledge indexing failed (non-fatal)", {
       error: String(indexErr),
     });
   }
@@ -1147,18 +1149,18 @@ function loadReferenceObjects(knowledgeStore: KnowledgeStore): SiebelObject[] {
         const parseResult = parseSifContent(doc.content, doc.title);
         objects.push(...parseResult.objects);
       } catch (err) {
-        logger.debug("scaffold:docParseFailure", { error: err instanceof Error ? err.message : String(err) });
+        log.debug("scaffold:docParseFailure", { error: err instanceof Error ? err.message : String(err) });
       }
     }
 
-    logger.debug("scaffold:loadReferenceObjects", {
+    log.debug("scaffold:loadReferenceObjects", {
       docsFound: String(sifDocs.length),
       objectsLoaded: String(objects.length),
     });
 
     return objects;
   } catch (err) {
-    logger.debug("scaffold:knowledgeSearchFailure", { error: err instanceof Error ? err.message : String(err) });
+    log.debug("scaffold:knowledgeSearchFailure", { error: err instanceof Error ? err.message : String(err) });
     return [];
   }
 }

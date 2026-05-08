@@ -30,7 +30,9 @@
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
 import type { AcQualityReport, AcNodeReport, InvestCheck } from "../../schemas/ac-quality-schema.js";
 import { parseAc } from "./ac-parser.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "ac-validator.ts" });
 
 const VAGUE_TERMS = [
   "apropriado", "appropriate", "adequado", "adequate",
@@ -98,7 +100,7 @@ export function validateAcQuality(doc: GraphDocument, nodeId?: string, all?: boo
     ? `AC Quality: ${overallScore}/100 across ${reports.length} nodes. ${reports.filter((r) => r.score >= 80).length} nodes with good AC quality.`
     : "Nenhum node com acceptance criteria encontrado.";
 
-  logger.info("ac-validator", { nodeCount: reports.length, overallScore });
+  log.info("ac-validator", { nodeCount: reports.length, overallScore });
 
   return { nodes: reports, overallScore, summary };
 }

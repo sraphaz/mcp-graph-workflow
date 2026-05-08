@@ -31,7 +31,9 @@ import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { McpGraphError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "delivery-checklist.ts" });
 
 export interface HandoffReadinessOptions {
   knowledgeCount?: number;
@@ -185,7 +187,7 @@ export function checkHandoffReadiness(
       });
     }
   } catch (err) {
-    logger.debug("handoff-readiness: harness scan failed", { error: getErrorMessage(err) });
+    log.debug("handoff-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──
@@ -203,7 +205,7 @@ export function checkHandoffReadiness(
     ? `Handoff Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `Handoff Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("handoff-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("handoff-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { checks, ready, score, grade, summary };
 }

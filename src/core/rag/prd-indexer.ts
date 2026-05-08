@@ -22,8 +22,10 @@
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { chunkText } from "./chunk-text.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
+
+const log = createLogger({ layer: "rag", source: "prd-indexer.ts" });
 
 export interface PrdIndexResult {
   documentsIndexed: number;
@@ -68,7 +70,7 @@ export function indexPrdContent(
   const chunks = chunkText(content);
 
   if (chunks.length === 0) {
-    logger.info("No content to index from PRD", { sourceFile });
+    log.info("No content to index from PRD", { sourceFile });
     return { documentsIndexed: 0, sourceFile, pruned: 0 };
   }
 
@@ -104,11 +106,11 @@ export function indexPrdContent(
     const resultValue = knowledgeStore.autoprune(options.budget);
     pruned = resultValue.removed;
     if (pruned > 0) {
-      logger.info("PRD index budget enforced", { sourceFile, budget: options.budget, pruned });
+      log.info("PRD index budget enforced", { sourceFile, budget: options.budget, pruned });
     }
   }
 
-  logger.info("PRD content indexed", { sourceFile, chunks: docs.length, pruned });
+  log.info("PRD content indexed", { sourceFile, chunks: docs.length, pruned });
 
   return { documentsIndexed: docs.length, sourceFile, pruned };
 }

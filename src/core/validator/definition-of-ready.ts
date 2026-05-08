@@ -33,7 +33,9 @@ import { scoreToGrade } from "../utils/grading.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { McpGraphError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "definition-of-ready.ts" });
 
 /** Run IMPLEMENT-to-VALIDATE gate checks on the graph. */
 export function checkValidationReadiness(doc: GraphDocument): ValidationReadinessReport {
@@ -195,7 +197,7 @@ export function checkValidationReadiness(doc: GraphDocument): ValidationReadines
       });
     }
   } catch (err) {
-    logger.debug("validation-readiness: harness scan failed", { error: getErrorMessage(err) });
+    log.debug("validation-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──
@@ -213,7 +215,7 @@ export function checkValidationReadiness(doc: GraphDocument): ValidationReadines
     ? `Validation Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `Validation Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("validation-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("validation-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { checks, ready, score, grade, summary };
 }

@@ -29,7 +29,9 @@ import type { GraphDocument, GraphNode, GraphEdge } from "../graph/graph-types.j
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
 import { getNodeAcTexts } from "../utils/ac-helpers.js";
 import { PlannerError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "next-task.ts" });
 
 export interface NextTaskResult {
   node: GraphNode;
@@ -63,7 +65,7 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
   // Step 1.5: Exclude tasks locked by other agents (teamTask mode)
   if (lockedTaskIds && lockedTaskIds.size > 0) {
     eligible = eligible.filter((n) => !lockedTaskIds.has(n.id));
-    logger.debug("next:lock-filter", { excluded: lockedTaskIds.size, remaining: eligible.length });
+    log.debug("next:lock-filter", { excluded: lockedTaskIds.size, remaining: eligible.length });
   }
 
   // Step 1.6: Exclude candidates whose touchedFiles overlap with in-flight files
@@ -74,10 +76,10 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
       if (!Array.isArray(touchedFiles)) return true;
       return !touchedFiles.some((f) => inFlightTouchedFiles.has(String(f)));
     });
-    logger.debug("next:file-overlap-filter", { excluded: before - eligible.length, remaining: eligible.length });
+    log.debug("next:file-overlap-filter", { excluded: before - eligible.length, remaining: eligible.length });
   }
 
-  logger.debug("Next task candidates", {
+  log.debug("Next task candidates", {
     eligible: eligible.length,
     total: doc.nodes.length,
   });
@@ -116,7 +118,7 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
       return { node, pendingDeps: unresolvedDepCount.get(node.id) ?? 0 };
     });
     withDepCount.sort((a, b) => a.pendingDeps - b.pendingDeps);
-    logger.debug("next:all-blocked", {
+    log.debug("next:all-blocked", {
       eligibleCount: eligible.length,
       bestPendingDeps: withDepCount[0].pendingDeps,
     });
@@ -175,7 +177,7 @@ export function findNextTask(doc: GraphDocument, options?: NextTaskOptions): Nex
   if (best.priority <= 2) reasons.push("alta prioridade");
   if (best.xpSize && XP_SIZE_ORDER[best.xpSize] <= 2) reasons.push("baixa complexidade");
 
-  logger.debug("next:selected", {
+  log.debug("next:selected", {
     nodeId: best.id,
     title: best.title,
     priority: best.priority,

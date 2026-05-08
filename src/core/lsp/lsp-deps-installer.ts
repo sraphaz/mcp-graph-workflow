@@ -23,8 +23,10 @@
 
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { whichCommand } from "../utils/platform.js";
+
+const log = createLogger({ layer: "core", source: "lsp-deps-installer.ts" });
 
 const execAsync = promisify(execFile);
 
@@ -95,7 +97,7 @@ export const LSP_SYSTEM_PACKAGES: Record<string, { command: string; installHint:
 export async function checkLspDep(languageId: string, command: string): Promise<LspDepResult> {
   try {
     await execAsync(whichCommand(), [command]);
-    logger.info("LSP server available", { languageId, command });
+    log.info("LSP server available", { languageId, command });
     return {
       name: command,
       languageId,
@@ -155,7 +157,7 @@ function getServerCommand(languageId: string): string | null {
 export async function installLspDeps(detectedLanguages: string[]): Promise<LspDepResult[]> {
   if (detectedLanguages.length === 0) return [];
 
-  logger.info("Checking LSP server dependencies", {
+  log.info("Checking LSP server dependencies", {
     languages: detectedLanguages.join(", "),
   });
 
@@ -172,7 +174,7 @@ export async function installLspDeps(detectedLanguages: string[]): Promise<LspDe
   const available = results.filter((r) => r.status === "already_available").length;
   const missing = results.filter((r) => r.status === "not_found").length;
 
-  logger.info("LSP dependency check complete", {
+  log.info("LSP dependency check complete", {
     total: String(results.length),
     available: String(available),
     missing: String(missing),

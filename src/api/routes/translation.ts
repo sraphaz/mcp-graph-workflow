@@ -30,8 +30,10 @@ import { loadAndSeedRegistry } from "../../core/translation/ucr/construct-seed.j
 import { CodeStore } from "../../core/code/code-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexTranslationEvidence } from "../../core/rag/translation-indexer.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { McpGraphError } from "../../core/utils/errors.js";
+
+const log = createLogger({ layer: "api", source: "translation.ts" });
 
 const AnalyzeSchema = z.object({
   code: z.string().min(1),
@@ -114,7 +116,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
       });
       res.json(analysis);
     } catch (err) {
-      logger.error("Translation analyze failed", { error: err });
+      log.error("Translation analyze failed", { error: err });
       res.status(500).json({ error: "Analysis failed" });
     }
   });
@@ -142,7 +144,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
       res.status(201).json(resultValue);
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation job creation failed", { error: err });
+      log.error("Translation job creation failed", { error: err });
       eventBus?.emit({ type: "translation:error", timestamp: new Date().toISOString(), payload: { error: String(err) } });
       res.status(status).json({ error: err instanceof Error ? err.message : "Job creation failed" });
     }
@@ -155,7 +157,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
       const jobs = getStore().listJobs(projectId);
       res.json({ jobs });
     } catch (err) {
-      logger.error("Translation list failed", { error: err });
+      log.error("Translation list failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "List failed" });
     }
   });
@@ -170,7 +172,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
       }
       res.json(job);
     } catch (err) {
-      logger.error("Translation get failed", { error: err });
+      log.error("Translation get failed", { error: err });
       res.status(500).json({ error: "Get failed" });
     }
   });
@@ -205,14 +207,14 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
           });
         }
       } catch (indexErr) {
-        logger.error("Translation evidence indexing failed (non-blocking)", { error: indexErr });
+        log.error("Translation evidence indexing failed (non-blocking)", { error: indexErr });
       }
 
       eventBus?.emit({ type: "translation:finalized", timestamp: new Date().toISOString(), payload: { jobId: req.params.id, confidence: resultValue.evidence?.confidenceScore } });
       res.json(resultValue);
     } catch (err) {
       const status = errorStatus(err);
-      logger.error("Translation finalize failed", { error: err });
+      log.error("Translation finalize failed", { error: err });
       eventBus?.emit({ type: "translation:error", timestamp: new Date().toISOString(), payload: { jobId: req.params.id, error: String(err) } });
       res.status(status).json({ error: err instanceof Error ? err.message : "Finalize failed" });
     }
@@ -228,7 +230,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
       }
       res.status(204).send();
     } catch (err) {
-      logger.error("Translation delete failed", { error: err });
+      log.error("Translation delete failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "Delete failed" });
     }
   });
@@ -252,7 +254,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
         avgConfidence,
       });
     } catch (err) {
-      logger.error("Translation stats failed", { error: err });
+      log.error("Translation stats failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "Stats failed" });
     }
   });
@@ -298,7 +300,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
         })),
       });
     } catch (err) {
-      logger.error("Translation knowledge failed", { error: err });
+      log.error("Translation knowledge failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "Knowledge failed" });
     }
   });
@@ -332,7 +334,7 @@ export function createTranslationRouter(storeRef: StoreRef, eventBus?: GraphEven
         })),
       });
     } catch (err) {
-      logger.error("Translation knowledge search failed", { error: err });
+      log.error("Translation knowledge search failed", { error: err });
       res.status(errorStatus(err)).json({ error: err instanceof Error ? err.message : "Search failed" });
     }
   });

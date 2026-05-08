@@ -34,7 +34,9 @@ import type { TargetSdk } from "../../core/davinci/pom-generator.js";
 import { generateGuiDescriptor, generatePfInfDescriptor } from "../../core/davinci/descriptor-generator.js";
 import { generatePlugin } from "../../core/davinci/plugin-generator.js";
 import { mcpText, mcpError } from "../response-helpers.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "mcp", source: "davinci.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Action handlers                                                    */
@@ -68,7 +70,7 @@ function handleAnalyze(params: DavinciParams): ReturnType<typeof mcpText> {
     return mcpError("Missing required param 'code' for action=analyze");
   }
 
-  logger.info("davinci: analyzing code", { codeLength: code.length, codeLocation });
+  log.info("davinci: analyzing code", { codeLength: code.length, codeLocation });
 
   const analysis = parseDaVinciCode(code, {
     codeLocation: codeLocation ?? undefined,
@@ -94,7 +96,7 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
     return mcpError("Missing required param 'projectDir' for action=build");
   }
 
-  logger.info("davinci: build requested", { projectDir, checkOnly, jobId });
+  log.info("davinci: build requested", { projectDir, checkOnly, jobId });
 
   const env = checkBuildEnvironment();
 
@@ -122,7 +124,7 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
       const davinciStore = new DaVinciStore(store.getDb());
       davinciStore.updateJob(jobId, { status: "building" });
     } catch (err) {
-      logger.warn("davinci: failed to update job to building", { jobId, error: String(err) });
+      log.warn("davinci: failed to update job to building", { jobId, error: String(err) });
     }
   }
 
@@ -140,9 +142,9 @@ async function handleBuild(params: DavinciParams, store: SqliteStore): Promise<R
         jarPath: resultValue.jarPath,
         buildOutput: resultValue.stdout.slice(0, 5000),
       });
-      logger.info("davinci: job build updated", { jobId, success: resultValue.success });
+      log.info("davinci: job build updated", { jobId, success: resultValue.success });
     } catch (err) {
-      logger.warn("davinci: failed to update job after build", { jobId, error: String(err) });
+      log.warn("davinci: failed to update job after build", { jobId, error: String(err) });
     }
   }
 
@@ -230,9 +232,9 @@ function convertSingle(
       warnings: [...pluginResult.warnings, ...preValidation.issues.map((i) => `[${i.severity}] ${i.message}`)],
     });
     jobId = job.id;
-    logger.info("davinci: job persisted", { jobId, pluginName });
+    log.info("davinci: job persisted", { jobId, pluginName });
   } catch (err) {
-    logger.warn("davinci: failed to persist job", { error: String(err) });
+    log.warn("davinci: failed to persist job", { error: String(err) });
   }
 
   return {
@@ -270,7 +272,7 @@ function handleConvert(params: DavinciParams, store: SqliteStore): ReturnType<ty
     return mcpError("Missing required params for action=convert: code, pluginName, packageName, className");
   }
 
-  logger.info("davinci: converting code", { pluginName, targetSdk });
+  log.info("davinci: converting code", { pluginName, targetSdk });
 
   const sdk: TargetSdk = targetSdk ?? "pingfederate";
   const resultValue = convertSingle(code, pluginName, packageName, className, sdk, pluginType, store);
@@ -283,7 +285,7 @@ function handleBatchConvert(params: DavinciParams, store: SqliteStore): ReturnTy
     return mcpError("Missing required param 'files' for action=batch_convert (array of objects, max 50)");
   }
 
-  logger.info("davinci: batch converting", { count: files.length });
+  log.info("davinci: batch converting", { count: files.length });
 
   const results: Array<Record<string, unknown>> = [];
   let successCount = 0;
@@ -371,7 +373,7 @@ export function registerDavinci(server: McpServer, store: SqliteStore): void {
     },
     async (params) => {
       const { action } = params;
-      logger.info("tool:davinci", { action });
+      log.info("tool:davinci", { action });
 
       try {
         switch (action) {
@@ -387,7 +389,7 @@ export function registerDavinci(server: McpServer, store: SqliteStore): void {
             return mcpError(`Unknown davinci action: ${action}`);
         }
       } catch (err) {
-        logger.error("tool:davinci failed", { action, error: err instanceof Error ? err.message : String(err) });
+        log.error("tool:davinci failed", { action, error: err instanceof Error ? err.message : String(err) });
         return mcpError(err instanceof Error ? err : String(err));
       }
     },

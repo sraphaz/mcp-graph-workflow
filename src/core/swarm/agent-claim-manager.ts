@@ -6,8 +6,10 @@
 import type Database from "better-sqlite3";
 import { LockManager } from "../store/lock-manager.js";
 import { McpGraphError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { getSharedHookBus } from "../hooks/shared-hook-bus.js";
+
+const log = createLogger({ layer: "core", source: "agent-claim-manager.ts" });
 
 const CLAIM_TTL_SECONDS = 300;
 
@@ -44,7 +46,7 @@ export class AgentClaimManager {
     });
     try {
       const resultValue = this.locks.acquire(resourceId, agentId, ttlSeconds);
-      logger.debug("swarm:claim", { resourceId, agentId });
+      log.debug("swarm:claim", { resourceId, agentId });
       void getSharedHookBus().emit({
         channel: "agent:post-spawn",
         timestamp: new Date().toISOString(),
@@ -75,7 +77,7 @@ export class AgentClaimManager {
   release(leaseToken: string): void {
     try {
       this.locks.release(leaseToken);
-      logger.debug("swarm:release", { leaseToken });
+      log.debug("swarm:release", { leaseToken });
     } catch {
       // token already gone — idempotent
     }
@@ -85,7 +87,7 @@ export class AgentClaimManager {
   sweepStale(): number {
     const count = this.locks.cleanExpired();
     if (count > 0) {
-      logger.info("swarm:sweep", { swept: count });
+      log.info("swarm:sweep", { swept: count });
     }
     return count;
   }

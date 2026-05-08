@@ -24,7 +24,9 @@ import type {
   SiebelObjectRef,
   SiebelImpactResult,
 } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "dependency-analyzer.ts" });
 
 export interface DependencyPath {
   path: SiebelObjectRef[];
@@ -90,7 +92,7 @@ export function analyzeSiebelImpact(
   const totalAffected = allDependents.length;
   const riskLevel = calculateRisk(totalAffected);
 
-  logger.debug("Siebel impact analysis", {
+  log.debug("Siebel impact analysis", {
     target: targetKey,
     direct: String(directDependents.length),
     transitive: String(transitiveDependents.length),

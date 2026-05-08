@@ -23,7 +23,9 @@
  */
 
 import type { SiebelObject, SiebelObjectType } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "sif-diff.ts" });
 
 // --- Types ---
 
@@ -211,7 +213,7 @@ export function diffSifObjects(
     },
   };
 
-  logger.debug("sif-diff", {
+  log.debug("sif-diff", {
     added: String(added.length),
     removed: String(removed.length),
     modified: String(modified.length),

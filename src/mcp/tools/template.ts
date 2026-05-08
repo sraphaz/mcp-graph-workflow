@@ -26,8 +26,10 @@ import {
 } from "../../core/templates/template-engine.js";
 import { generateId } from "../../core/utils/id.js";
 import { now } from "../../core/utils/time.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "template.ts" });
 
 const NodeDefinitionSchema = z.object({
   type: z.enum(["task", "subtask"]),
@@ -83,7 +85,7 @@ export function registerTemplate(server: McpServer, store: SqliteStore): void {
         .describe("Parent node ID for created nodes (optional for 'apply')"),
     },
     async ({ action, name, description, definition, templateId, variables, parentId }) => {
-      logger.debug("tool:template", { action, name, templateId });
+      log.debug("tool:template", { action, name, templateId });
 
       switch (action) {
         case "create": {
@@ -114,7 +116,7 @@ export function registerTemplate(server: McpServer, store: SqliteStore): void {
 
           try {
             store.insertNode(milestoneNode);
-            logger.info("tool:template:created", { nodeId, name });
+            log.info("tool:template:created", { nodeId, name });
             return mcpText({
               ok: true,
               templateId: nodeId,
@@ -129,7 +131,7 @@ export function registerTemplate(server: McpServer, store: SqliteStore): void {
 
         case "list": {
           const templates = listTemplates(store);
-          logger.info("tool:template:list", { count: templates.length });
+          log.info("tool:template:list", { count: templates.length });
           return mcpText({ templates, count: templates.length });
         }
 
@@ -154,7 +156,7 @@ export function registerTemplate(server: McpServer, store: SqliteStore): void {
             return instantiateTemplate(store, templateDef, variables ?? {}, parentId);
           })();
 
-          logger.info("tool:template:applied", {
+          log.info("tool:template:applied", {
             templateId,
             nodes: resultValue.nodesCreated.length,
             edges: resultValue.edgesCreated.length,

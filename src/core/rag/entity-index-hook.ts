@@ -26,7 +26,9 @@
 import type Database from "better-sqlite3";
 import { indexDocument } from "./entity-indexer.js";
 import { EntityStore } from "./entity-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "entity-index-hook.ts" });
 
 /**
  * Index entities from a single knowledge document into the KG.
@@ -38,7 +40,7 @@ export function indexEntitiesForDoc(db: Database.Database, docId: string): void 
     if (!store.hasKgTables()) return;
     indexDocument(db, docId);
   } catch (err) {
-    logger.warn("entity-index-hook:doc-failed", { docId, error: String(err) });
+    log.warn("entity-index-hook:doc-failed", { docId, error: String(err) });
   }
 }
 
@@ -55,11 +57,11 @@ export function indexEntitiesForDocs(db: Database.Database, docIds: string[]): v
       try {
         indexDocument(db, docId);
       } catch (err) {
-        logger.warn("entity-index-hook:doc-failed", { docId, error: String(err) });
+        log.warn("entity-index-hook:doc-failed", { docId, error: String(err) });
       }
     }
   } catch (err) {
-    logger.warn("entity-index-hook:batch-failed", { count: docIds.length, error: String(err) });
+    log.warn("entity-index-hook:batch-failed", { count: docIds.length, error: String(err) });
   }
 }
 
@@ -81,12 +83,12 @@ export function indexEntitiesForSource(db: Database.Database, sourceType: string
       try {
         indexDocument(db, doc.id);
       } catch (err) {
-        logger.warn("entity-index-hook:doc-failed", { docId: doc.id, error: String(err) });
+        log.warn("entity-index-hook:doc-failed", { docId: doc.id, error: String(err) });
       }
     }
 
-    logger.debug("entity-index-hook:source-complete", { sourceType, count: docs.length });
+    log.debug("entity-index-hook:source-complete", { sourceType, count: docs.length });
   } catch (err) {
-    logger.warn("entity-index-hook:source-failed", { sourceType, error: String(err) });
+    log.warn("entity-index-hook:source-failed", { sourceType, error: String(err) });
   }
 }

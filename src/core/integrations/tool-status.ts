@@ -18,8 +18,10 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { whichCommand } from "../utils/platform.js";
+
+const log = createLogger({ layer: "core", source: "tool-status.ts" });
 
 export interface ToolInfo {
   installed: boolean;
@@ -45,7 +47,7 @@ async function isCommandInstalled(command: string): Promise<boolean> {
     await exec(whichCommand(), [command]);
     return true;
   } catch (err) {
-    logger.debug("probe:command:fail", { command, error: err instanceof Error ? err.message : String(err) });
+    log.debug("probe:command:fail", { command, error: err instanceof Error ? err.message : String(err) });
     return false;
   }
 }
@@ -58,7 +60,7 @@ async function readMemoryNames(basePath: string): Promise<string[]> {
     const { listMemories } = await import("../memory/memory-reader.js");
     return await listMemories(basePath);
   } catch (err) {
-    logger.debug("memories:list:fail", { error: err instanceof Error ? err.message : String(err) });
+    log.debug("memories:list:fail", { error: err instanceof Error ? err.message : String(err) });
     return [];
   }
 }
@@ -89,7 +91,7 @@ function getCodeGraphStatus(basePath: string): { indexed: boolean; symbolCount: 
  * Detect status of all ecosystem tools.
  */
 export async function getIntegrationsStatus(basePath: string): Promise<IntegrationsStatus> {
-  logger.info("Checking integrations status", { basePath });
+  log.info("Checking integrations status", { basePath });
 
   const [memoryNames, playwrightInstalled] =
     await Promise.all([

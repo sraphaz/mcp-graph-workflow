@@ -23,7 +23,9 @@ import {
   toLlmRequest,
   toOpenAiResponse,
 } from "./openai-shape.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "server.ts" });
 
 export interface ProxyServerOptions {
   gateway: LlmGateway;
@@ -54,7 +56,7 @@ export async function startProxyServer(opts: ProxyServerOptions): Promise<ProxyS
   const host = opts.host ?? "127.0.0.1";
   const server = createServer((req, res) => {
     void handleRequest(req, res, opts).catch((err) => {
-      logger.error("proxy:unexpected_error", { error: err instanceof Error ? err.message : String(err) });
+      log.error("proxy:unexpected_error", { error: err instanceof Error ? err.message : String(err) });
       writeJson(res, 500, { error: { type: "internal_error", message: "internal error" } });
     });
   });
@@ -69,7 +71,7 @@ export async function startProxyServer(opts: ProxyServerOptions): Promise<ProxyS
 
   const addr = server.address();
   const actualPort = typeof addr === "object" && addr ? addr.port : opts.port;
-  logger.info("proxy:listening", { host, port: actualPort });
+  log.info("proxy:listening", { host, port: actualPort });
 
   return {
     server,

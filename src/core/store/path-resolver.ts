@@ -29,8 +29,10 @@ import { existsSync, mkdirSync } from "node:fs";
 import Database from "better-sqlite3";
 import { STORE_DIR, DB_FILE, GLOBAL_DB_DIR } from "../utils/constants.js";
 import { configureDb, runMigrations } from "./migrations.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "path-resolver.ts" });
 
 export type StoreMode = "local" | "global" | "explicit";
 
@@ -71,7 +73,7 @@ export function resolveStorePath(options?: ResolveOptions): ResolvedStore {
 
   // 1. Explicit mode: --db flag or MCP_GRAPH_DB env
   if (options?.explicitDb) {
-    logger.debug("path-resolver:explicit", { dbPath: options.explicitDb });
+    log.debug("path-resolver:explicit", { dbPath: options.explicitDb });
     return {
       mode: "explicit",
       dbPath: options.explicitDb,
@@ -83,7 +85,7 @@ export function resolveStorePath(options?: ResolveOptions): ResolvedStore {
   // 2. Local mode: {cwd}/workflow-graph/graph.db
   const localDbPath = path.join(cwd, STORE_DIR, DB_FILE);
   if (existsSync(localDbPath)) {
-    logger.debug("path-resolver:local", { dbPath: localDbPath });
+    log.debug("path-resolver:local", { dbPath: localDbPath });
     return {
       mode: "local",
       dbPath: localDbPath,
@@ -95,7 +97,7 @@ export function resolveStorePath(options?: ResolveOptions): ResolvedStore {
   // 3. Global mode: ~/.mcp-graph/graph.db
   const globalDbPath = path.join(globalDir, DB_FILE);
   if (existsSync(globalDbPath)) {
-    logger.debug("path-resolver:global", { dbPath: globalDbPath });
+    log.debug("path-resolver:global", { dbPath: globalDbPath });
     return {
       mode: "global",
       dbPath: globalDbPath,
@@ -106,7 +108,7 @@ export function resolveStorePath(options?: ResolveOptions): ResolvedStore {
 
   // 4. No DB found — create global if requested
   if (createGlobal) {
-    logger.info("path-resolver:create-global", { globalDir });
+    log.info("path-resolver:create-global", { globalDir });
     mkdirSync(globalDir, { recursive: true });
     // Bug #057: ensure db.close() even if configureDb/runMigrations throw
     const db = new Database(globalDbPath);

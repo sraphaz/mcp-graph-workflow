@@ -26,7 +26,9 @@
 
 import { SemanticCache, type SemanticCacheOptions } from "./semantic-cache.js";
 import { TfIdfVectorizer } from "./rag-pipeline.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "rag-semantic-cache-layer.ts" });
 
 export interface CacheHitResult {
   result: unknown;
@@ -85,7 +87,7 @@ export class RagSemanticCacheLayer {
     const embedding = this.vectorizer.embed(query);
     this.cache.set(query, embedding, result);
 
-    logger.debug("rag-semantic-cache:store", { query: query.slice(0, 50) });
+    log.debug("rag-semantic-cache:store", { query: query.slice(0, 50) });
   }
 
   /**
@@ -96,14 +98,14 @@ export class RagSemanticCacheLayer {
   lookup(query: string): CacheHitResult | null {
     const exact = this.cache.getExact(query);
     if (exact !== undefined) {
-      logger.debug("rag-semantic-cache:exact_hit", { query: query.slice(0, 50) });
+      log.debug("rag-semantic-cache:exact_hit", { query: query.slice(0, 50) });
       return { result: exact, type: "exact", _cache_hit: true };
     }
 
     const embedding = this.vectorizer.embed(query);
     const similar = this.cache.getSimilar(embedding);
     if (similar !== undefined) {
-      logger.debug("rag-semantic-cache:similar_hit", { query: query.slice(0, 50) });
+      log.debug("rag-semantic-cache:similar_hit", { query: query.slice(0, 50) });
       return { result: similar, type: "similar", _cache_hit: true };
     }
 

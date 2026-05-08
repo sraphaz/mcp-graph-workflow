@@ -29,7 +29,9 @@ import type { GraphNode } from "../graph/graph-types.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { buildTaskContext, type TaskContext } from "./compact-context.js";
 import { estimateTokens } from "./token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tiered-context.ts" });
 
 export type ContextTier = "summary" | "brief" | "standard" | "deep";
 
@@ -140,7 +142,7 @@ export function buildTieredContext(
   const text = JSON.stringify(deepPayload);
   deepPayload.estimatedTokens = estimateTokens(text);
 
-  logger.debug("Tiered context built", { nodeId, tier, tokens: deepPayload.estimatedTokens });
+  log.debug("Tiered context built", { nodeId, tier, tokens: deepPayload.estimatedTokens });
 
   return deepPayload;
 }
@@ -171,7 +173,7 @@ function findRelevantKnowledge(
       score: Math.round(r.score * 1000) / 1000,
     }));
   } catch (err) {
-    logger.debug("tiered-context: knowledge fetch failed", { error: getErrorMessage(err) });
+    log.debug("tiered-context: knowledge fetch failed", { error: getErrorMessage(err) });
     return [];
   }
 }

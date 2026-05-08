@@ -26,7 +26,9 @@
  * for execution graph RAG scoring.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "personalized-pagerank.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -148,7 +150,7 @@ export function computePPR(input: PprInput): PprResult {
     resultValue.set(nodeIds[i], scores[i]);
   }
 
-  logger.debug("ppr:computed", {
+  log.debug("ppr:computed", {
     nodes: nVar,
     seeds: validSeeds.length,
     iterations,

@@ -17,7 +17,9 @@
 
 import { z } from "zod/v4";
 import { execSync } from "node:child_process";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "fallback-resolver.ts" });
 
 export const ToolAvailabilitySchema = z.object({
   docker: z.boolean(),
@@ -43,10 +45,10 @@ export class FallbackResolver {
   async checkDockerAvailability(): Promise<boolean> {
     try {
       execSync("docker --version", { stdio: "pipe" });
-      logger.debug("fallback-resolver:checkDockerAvailability", { available: true });
+      log.debug("fallback-resolver:checkDockerAvailability", { available: true });
       return true;
     } catch {
-      logger.debug("fallback-resolver:checkDockerAvailability", { available: false });
+      log.debug("fallback-resolver:checkDockerAvailability", { available: false });
       return false;
     }
   }
@@ -57,10 +59,10 @@ export class FallbackResolver {
   async checkPodmanAvailability(): Promise<boolean> {
     try {
       execSync("podman --version", { stdio: "pipe" });
-      logger.debug("fallback-resolver:checkPodmanAvailability", { available: true });
+      log.debug("fallback-resolver:checkPodmanAvailability", { available: true });
       return true;
     } catch {
-      logger.debug("fallback-resolver:checkPodmanAvailability", { available: false });
+      log.debug("fallback-resolver:checkPodmanAvailability", { available: false });
       return false;
     }
   }
@@ -69,7 +71,7 @@ export class FallbackResolver {
    * Check if process isolation is available (always true, fallback method).
    */
   async checkProcessAvailability(): Promise<boolean> {
-    logger.debug("fallback-resolver:checkProcessAvailability", { available: true });
+    log.debug("fallback-resolver:checkProcessAvailability", { available: true });
     return true;
   }
 
@@ -116,7 +118,7 @@ export class FallbackResolver {
 
     FallbackResultSchema.parse(resultValue);
 
-    logger.info("fallback-resolver:resolveExecutionMode", {
+    log.info("fallback-resolver:resolveExecutionMode", {
       executionMode,
       fallbackChain: fallbackChain.join(" → "),
     });

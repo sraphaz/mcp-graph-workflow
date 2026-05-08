@@ -23,8 +23,10 @@
 
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { whichCommand } from "../utils/platform.js";
+
+const log = createLogger({ layer: "core", source: "mcp-deps-installer.ts" });
 
 const execAsync = promisify(execFile);
 
@@ -53,7 +55,7 @@ async function checkContext7(): Promise<InstallResult> {
 
   const npxAvailable = await isCommandAvailable("npx");
   if (npxAvailable) {
-    logger.info("Context7 available via npx", { name });
+    log.info("Context7 available via npx", { name });
     return { name, status: "already_available", message: "npx available — context7 runs via npx -y @upstash/context7-mcp" };
   }
 
@@ -65,7 +67,7 @@ async function checkPlaywright(): Promise<InstallResult> {
 
   const npxAvailable = await isCommandAvailable("npx");
   if (npxAvailable) {
-    logger.info("Playwright MCP available via npx", { name });
+    log.info("Playwright MCP available via npx", { name });
     return { name, status: "already_available", message: "npx available — playwright runs via npx @playwright/mcp@latest" };
   }
 
@@ -77,7 +79,7 @@ async function checkPlaywright(): Promise<InstallResult> {
  * Never throws — returns status for each dependency.
  */
 export async function installAllMcpDeps(_basePath: string): Promise<InstallResult[]> {
-  logger.info("Checking MCP ecosystem dependencies");
+  log.info("Checking MCP ecosystem dependencies");
 
   const results = await Promise.all([
     checkContext7(),
@@ -85,7 +87,7 @@ export async function installAllMcpDeps(_basePath: string): Promise<InstallResul
   ]);
 
   const summary = results.map((r) => `${r.name}: ${r.status}`).join(", ");
-  logger.info("MCP dependencies check complete", { summary });
+  log.info("MCP dependencies check complete", { summary });
 
   return results;
 }

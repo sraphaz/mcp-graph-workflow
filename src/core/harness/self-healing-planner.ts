@@ -28,7 +28,9 @@
  * Part of the Autonomous Agent AAA+ pipeline — Pilar 3: Anti-Hallucination.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "self-healing-planner.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -116,7 +118,7 @@ export function identifyQuickWins(dimensions: DimensionScore[]): QuickWin[] {
 
   const wins = candidates.slice(0, MAX_QUICK_WINS);
 
-  logger.debug("self-healing:quick-wins", {
+  log.debug("self-healing:quick-wins", {
     total: dimensions.length,
     belowThreshold: candidates.length,
     selected: wins.length,
@@ -145,7 +147,7 @@ export function generateMicroPRPlan(win: QuickWin, dryRun: boolean): MicroPRPlan
   const branch = `harness/improve-${win.dimension}`;
 
   if (estimatedLines > MAX_LINES_PER_PR) {
-    logger.info("self-healing:plan-rejected", {
+    log.info("self-healing:plan-rejected", {
       dimension: win.dimension,
       estimatedLines,
       maxAllowed: MAX_LINES_PER_PR,
@@ -163,7 +165,7 @@ export function generateMicroPRPlan(win: QuickWin, dryRun: boolean): MicroPRPlan
     };
   }
 
-  logger.debug("self-healing:plan-generated", {
+  log.debug("self-healing:plan-generated", {
     dimension: win.dimension,
     estimatedDelta: pointsToFix,
     estimatedLines,

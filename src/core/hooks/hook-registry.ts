@@ -3,10 +3,12 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { HookTimeoutError, HookCircuitOpenError } from "./hook-types.js";
 import type { HookEvent, HookRegistration } from "./hook-types.js";
 import type { HookStatsStore } from "./hook-stats-store.js";
+
+const log = createLogger({ layer: "core", source: "hook-registry.ts" });
 
 interface CircuitState {
   failures: number;
@@ -91,7 +93,7 @@ export class HookRegistry {
         this.statsStore?.record(reg.id, Date.now() - startedAt, message);
         throw err;
       }
-      logger.error("Hook handler error", { id: reg.id, error: message });
+      log.error("Hook handler error", { id: reg.id, error: message });
       this.statsStore?.record(reg.id, Date.now() - startedAt, message);
       throw err;
     }
@@ -126,7 +128,7 @@ export class HookRegistry {
 
     if (state.failures >= this.maxFailures) {
       state.disabled = true;
-      logger.warn("Hook circuit opened", {
+      log.warn("Hook circuit opened", {
         audit: true,
         handlerId: id,
         failures: state.failures,

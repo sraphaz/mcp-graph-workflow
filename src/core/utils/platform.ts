@@ -22,7 +22,9 @@
  */
 
 import { execFileSync, type ChildProcess } from "node:child_process";
-import { logger } from "./logger.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger({ layer: "core", source: "platform.ts" });
 
 export const IS_WINDOWS: boolean = process.platform === "win32";
 
@@ -47,7 +49,7 @@ export function killProcess(proc: ChildProcess): void {
       try {
         execFileSync("taskkill", ["/pid", String(proc.pid), "/T", "/F"]);
       } catch {
-        logger.debug("taskkill failed, process may have already exited", { pid: proc.pid });
+        log.debug("taskkill failed, process may have already exited", { pid: proc.pid });
       }
     }
   } else {

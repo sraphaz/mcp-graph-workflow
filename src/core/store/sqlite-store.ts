@@ -31,7 +31,7 @@ import { buildIndexes } from "../graph/graph-indexes.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
 import { configureDb, runMigrations } from "./migrations.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { GraphNotInitializedError, ValidationError, SnapshotNotFoundError, McpGraphError, ConflictError } from "../utils/errors.js";
 import { GraphNodeSchema } from "../../schemas/node.schema.js";
 import { GraphEdgeSchema } from "../../schemas/edge.schema.js";
@@ -41,6 +41,8 @@ import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { normalizeNewlines } from "../utils/text.js";
 import { AsyncMutex } from "../utils/async-mutex.js";
 import { timedQuery } from "../utils/slow-query-logger.js";
+
+const log = createLogger({ layer: "core", source: "sqlite-store.ts" });
 
 /** Options for mutation operations (multi-agent support, ADR-10). */
 export interface MutationOptions {
@@ -114,11 +116,11 @@ function safeJsonStringify(value: unknown, field: string, nodeId: string): strin
       return v;
     });
     if (hadNonFinite) {
-      logger.warn("Non-finite number sanitized to null in node field", { nodeId, field });
+      log.warn("Non-finite number sanitized to null in node field", { nodeId, field });
     }
     return resultValue;
   } catch (err) {
-    logger.warn("Failed to serialize node field", { nodeId, field, error: String(err) });
+    log.warn("Failed to serialize node field", { nodeId, field, error: String(err) });
     throw new ValidationError(
       `Invalid JSON in field '${field}' for node '${nodeId}': ${String(err)}`,
       [{ field, nodeId, error: String(err) }],
@@ -172,7 +174,7 @@ function rowToNode(row: NodeRow): GraphNode {
   if (row.estimate_minutes != null) node.estimateMinutes = row.estimate_minutes;
   if (row.tags) {
     try { node.tags = JSON.parse(row.tags); } catch {
-      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "tags" });
+      log.warn("corrupt JSON in node field", { nodeId: row.id, field: "tags" });
       node.tags = [];
     }
   }
@@ -180,19 +182,19 @@ function rowToNode(row: NodeRow): GraphNode {
   if (row.sprint) node.sprint = row.sprint;
   if (row.acceptance_criteria) {
     try { node.acceptanceCriteria = JSON.parse(row.acceptance_criteria); } catch {
-      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "acceptanceCriteria" });
+      log.warn("corrupt JSON in node field", { nodeId: row.id, field: "acceptanceCriteria" });
       node.acceptanceCriteria = [];
     }
   }
   if (row.test_files) {
     try { node.testFiles = JSON.parse(row.test_files); } catch {
-      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "testFiles" });
+      log.warn("corrupt JSON in node field", { nodeId: row.id, field: "testFiles" });
       node.testFiles = [];
     }
   }
   if (row.metadata) {
     try { node.metadata = JSON.parse(row.metadata); } catch {
-      logger.warn("corrupt JSON in node field", { nodeId: row.id, field: "metadata" });
+      log.warn("corrupt JSON in node field", { nodeId: row.id, field: "metadata" });
       node.metadata = {};
     }
   }
@@ -229,14 +231,14 @@ function edgeToRow(edge: GraphEdge, projectId: string): EdgeRow {
         return v;
       });
     } catch (err) {
-      logger.warn("Failed to serialize edge metadata", { edgeId: edge.id, error: String(err) });
+      log.warn("Failed to serialize edge metadata", { edgeId: edge.id, error: String(err) });
       throw new ValidationError(
         `Invalid JSON in field 'metadata' for edge '${edge.id}': ${String(err)}`,
         [{ field: "metadata", edgeId: edge.id, error: String(err) }],
       );
     }
     if (hadNonFinite) {
-      logger.warn("Non-finite number sanitized to null in edge metadata", { edgeId: edge.id });
+      log.warn("Non-finite number sanitized to null in edge metadata", { edgeId: edge.id });
     }
   }
   if (metadataJson && metadataJson.length > MAX_EDGE_METADATA_SIZE) {
@@ -349,7 +351,7 @@ export class SqliteStore {
       .get() as { id: string } | undefined;
     if (row) store.projectId = row.id;
 
-    logger.info(`Store opened${basePath === ":memory:" ? " (in-memory)" : ` at ${basePath}`}`);
+    log.info(`Store opened${basePath === ":memory:" ? " (in-memory)" : ` at ${basePath}`}`);
     return store;
   }
 
@@ -374,7 +376,7 @@ export class SqliteStore {
       .get() as { id: string } | undefined;
     if (row) store.projectId = row.id;
 
-    logger.info(`Store opened at ${dbPath}`);
+    log.info(`Store opened at ${dbPath}`);
     return store;
   }
 
@@ -419,7 +421,7 @@ export class SqliteStore {
         .get(name) as ProjectRow | undefined;
       if (existing) {
         this.projectId = existing.id;
-        logger.info("Project activated by name", { name, projectId: existing.id });
+        log.info("Project activated by name", { name, projectId: existing.id });
         return rowToProject(existing);
       }
     }
@@ -431,7 +433,7 @@ export class SqliteStore {
       .get(projectName) as ProjectRow | undefined;
     if (existing) {
       this.projectId = existing.id;
-      logger.info("Project activated by name", { name: projectName, projectId: existing.id });
+      log.info("Project activated by name", { name: projectName, projectId: existing.id });
       return rowToProject(existing);
     }
 
@@ -442,7 +444,7 @@ export class SqliteStore {
         .get() as ProjectRow | undefined;
       if (anyProject) {
         this.projectId = anyProject.id;
-        logger.info("Project activated (existing)", { name: anyProject.name, projectId: anyProject.id });
+        log.info("Project activated (existing)", { name: anyProject.name, projectId: anyProject.id });
         return rowToProject(anyProject);
       }
     }
@@ -457,7 +459,7 @@ export class SqliteStore {
       .run(id, projectName, timestamp, timestamp);
 
     this.projectId = id;
-    logger.info(`Project initialized: ${projectName} (${id})`);
+    log.info(`Project initialized: ${projectName} (${id})`);
     return { id, name: projectName, createdAt: timestamp, updatedAt: timestamp };
   }
 
@@ -491,7 +493,7 @@ export class SqliteStore {
       throw new ValidationError(`Project not found: ${projectId}`, []);
     }
     this.projectId = projectId;
-    logger.info("Project activated", { projectId });
+    log.info("Project activated", { projectId });
   }
 
   /**
@@ -515,7 +517,7 @@ export class SqliteStore {
     const existing = this.findProjectByPath(fsPath);
     if (existing) {
       this.projectId = existing.id;
-      logger.info("Project found by path", { name: existing.name, fsPath, projectId: existing.id });
+      log.info("Project found by path", { name: existing.name, fsPath, projectId: existing.id });
       return existing;
     }
 
@@ -529,7 +531,7 @@ export class SqliteStore {
       .run(id, name, fsPath, timestamp, timestamp);
 
     this.projectId = id;
-    logger.info(`Project registered: ${name} at ${fsPath} (${id})`);
+    log.info(`Project registered: ${name} at ${fsPath} (${id})`);
     return { id, name, fsPath, createdAt: timestamp, updatedAt: timestamp };
   }
 
@@ -541,7 +543,7 @@ export class SqliteStore {
     this.db
       .prepare("UPDATE projects SET fs_path = ?, updated_at = ? WHERE id = ?")
       .run(fsPath, timestamp, projectId);
-    logger.info("Project fs_path updated", { projectId, fsPath });
+    log.info("Project fs_path updated", { projectId, fsPath });
   }
 
   private ensureProject(): string {
@@ -959,7 +961,7 @@ export class SqliteStore {
 
   deleteNode(id: string): boolean {
     const pid = this.ensureProject();
-    logger.debug("tx:delete-node", { id });
+    log.debug("tx:delete-node", { id });
 
     // Bug #050: collect events inside transaction, emit AFTER commit
     const deletedNodeIds: string[] = [];
@@ -1035,7 +1037,7 @@ export class SqliteStore {
       const fromExists = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?").get(edge.from, pid);
       const toExists = this.db.prepare("SELECT 1 FROM nodes WHERE id = ? AND project_id = ?").get(edge.to, pid);
       if (!fromExists || !toExists) {
-        logger.debug("edge:insert:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to, fromExists: !!fromExists, toExists: !!toExists });
+        log.debug("edge:insert:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to, fromExists: !!fromExists, toExists: !!toExists });
         return false;
       }
       const row = edgeToRow(edge, pid);
@@ -1094,11 +1096,11 @@ export class SqliteStore {
    */
   clearImportedNodes(sourceFile: string): { nodesDeleted: number; edgesDeleted: number } {
     const pid = this.ensureProject();
-    logger.debug("tx:clear-imported", { sourceFile });
+    log.debug("tx:clear-imported", { sourceFile });
 
     // Safety snapshot before destructive operation
     const snapshotId = this.createSnapshot();
-    logger.info("clear-imported:snapshot-created", { sourceFile, snapshotId });
+    log.info("clear-imported:snapshot-created", { sourceFile, snapshotId });
 
     const cleared = this.db.transaction(() => {
       // Find node IDs from this source file
@@ -1144,9 +1146,9 @@ export class SqliteStore {
 
   bulkInsert(nodes: GraphNode[], edges: GraphEdge[]): void {
     const pid = this.ensureProject();
-    logger.info(`Bulk insert: ${nodes.length} nodes, ${edges.length} edges`);
+    log.info(`Bulk insert: ${nodes.length} nodes, ${edges.length} edges`);
 
-    logger.debug("tx:bulk-insert:start");
+    log.debug("tx:bulk-insert:start");
     this.db.transaction(() => {
       for (const node of nodes) {
         const row = nodeToRow(node, pid);
@@ -1171,7 +1173,7 @@ export class SqliteStore {
         const fromExists = nodeExistsStmt.get(edge.from, pid);
         const toExists = nodeExistsStmt.get(edge.to, pid);
         if (!fromExists || !toExists) {
-          logger.debug("bulk-insert:edge:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to });
+          log.debug("bulk-insert:edge:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to });
           continue;
         }
         const row = edgeToRow(edge, pid);
@@ -1185,7 +1187,7 @@ export class SqliteStore {
           .run(row);
       }
     })();
-    logger.debug("tx:bulk-insert:done");
+    log.debug("tx:bulk-insert:done");
     this._eventBus?.emitTyped("import:completed", { nodesCreated: nodes.length, edgesCreated: edges.length });
   }
 
@@ -1196,7 +1198,7 @@ export class SqliteStore {
    */
   mergeInsert(nodes: GraphNode[], edges: GraphEdge[]): { nodesInserted: number; edgesInserted: number } {
     const pid = this.ensureProject();
-    logger.info("merge-insert:start", { nodes: nodes.length, edges: edges.length });
+    log.info("merge-insert:start", { nodes: nodes.length, edges: edges.length });
 
     let nodesInserted = 0;
     let edgesInserted = 0;
@@ -1226,7 +1228,7 @@ export class SqliteStore {
         const fromExists = nodeExistsStmt.get(edge.from, pid);
         const toExists = nodeExistsStmt.get(edge.to, pid);
         if (!fromExists || !toExists) {
-          logger.debug("merge-insert:edge:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to });
+          log.debug("merge-insert:edge:skipped:missing-node", { edgeId: edge.id, from: edge.from, to: edge.to });
           continue;
         }
         const row = edgeToRow(edge, pid);
@@ -1242,7 +1244,7 @@ export class SqliteStore {
       }
     })();
 
-    logger.info("merge-insert:done", { nodesInserted, edgesInserted });
+    log.info("merge-insert:done", { nodesInserted, edgesInserted });
     this._eventBus?.emitTyped("import:completed", { nodesCreated: nodesInserted, edgesCreated: edgesInserted });
     return { nodesInserted, edgesInserted };
   }
@@ -1363,7 +1365,7 @@ export class SqliteStore {
 
   bulkUpdateStatus(ids: string[], status: NodeStatus): { updated: string[]; notFound: string[] } {
     this.ensureProject();
-    logger.debug("tx:bulk-update-status", { count: ids.length, status });
+    log.debug("tx:bulk-update-status", { count: ids.length, status });
     const updated: string[] = [];
     const notFound: string[] = [];
 
@@ -1385,7 +1387,7 @@ export class SqliteStore {
 
   restoreSnapshot(snapshotId: number): { nodesValid: number; nodesInvalid: number; edgesRestored: number } {
     const pid = this.ensureProject();
-    logger.debug("tx:restore-snapshot", { snapshotId });
+    log.debug("tx:restore-snapshot", { snapshotId });
     const row = this.db
       .prepare("SELECT data FROM snapshots WHERE rowid = ? AND project_id = ?")
       .get(snapshotId, pid) as { data: string } | undefined;
@@ -1415,7 +1417,7 @@ export class SqliteStore {
         validNodes.push(resultValue.data as GraphNode);
       } else {
         nodesInvalid++;
-        logger.warn("Invalid node in snapshot — skipped", {
+        log.warn("Invalid node in snapshot — skipped", {
           snapshotId,
           nodeId: (node as unknown as Record<string, unknown>).id ?? "unknown",
           issues: resultValue.error.issues.map((i) => i.message).join("; "),
@@ -1460,7 +1462,7 @@ export class SqliteStore {
     })();
 
     if (nodesInvalid > 0) {
-      logger.info("Snapshot restored with invalid nodes skipped", {
+      log.info("Snapshot restored with invalid nodes skipped", {
         snapshotId,
         nodesValid: validNodes.length,
         nodesInvalid,

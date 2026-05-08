@@ -24,7 +24,9 @@
 import { DocsCacheStore } from "../docs/docs-cache-store.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { chunkText } from "./chunk-text.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "docs-indexer.ts" });
 
 export interface DocsIndexResult {
   docsFound: number;
@@ -43,7 +45,7 @@ export function indexCachedDocs(
   const allDocs = docsCacheStore.listCached();
 
   if (allDocs.length === 0) {
-    logger.info("No cached docs to index");
+    log.info("No cached docs to index");
     return { docsFound: 0, documentsIndexed: 0, skippedDuplicates: 0 };
   }
 
@@ -84,7 +86,7 @@ export function indexCachedDocs(
     }
   }
 
-  logger.info("Cached docs indexed", {
+  log.info("Cached docs indexed", {
     docsFound: allDocs.length,
     documentsIndexed,
     skippedDuplicates,

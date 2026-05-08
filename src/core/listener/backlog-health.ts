@@ -22,7 +22,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { BacklogHealthReport } from "../../schemas/listener-schema.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "backlog-health.ts" });
 /** Simple string keywords matched via `.includes()` */
 const TECH_DEBT_SIMPLE_KEYWORDS = ["tech-debt", "refactor", "debt", "cleanup", "deprecat"];
 
@@ -107,7 +109,7 @@ export function analyzeBacklogHealth(doc: GraphDocument): BacklogHealthReport {
     priorityDistribution[pKey] = (priorityDistribution[pKey] ?? 0) + 1;
   }
 
-  logger.info("backlog-health", {
+  log.info("backlog-health", {
     backlogCount: backlogTasks.length,
     readyCount: readyTasks.length,
     staleCount: staleTasks.length,

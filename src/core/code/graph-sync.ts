@@ -21,7 +21,9 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "graph-sync.ts" });
 
 export interface SyncReport {
   staleRefs: string[];
@@ -115,7 +117,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
     }
   }
 
-  logger.info("graph-sync:completed", {
+  log.info("graph-sync:completed", {
     staleRefs: staleRefs.length,
     autoFilled: autoFilledTestFiles.length,
     symbolChanges: symbolChanges.length,

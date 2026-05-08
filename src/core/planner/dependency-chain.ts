@@ -20,7 +20,9 @@
  */
 
 import type { GraphDocument, GraphNode } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "dependency-chain.ts" });
 
 /**
  * Find all transitive blockers for a given node.
@@ -55,7 +57,7 @@ export function findTransitiveBlockers(doc: GraphDocument, nodeId: string): Grap
     }
   }
 
-  logger.info(`Transitive blockers for ${nodeId}: ${blockers.length} found`);
+  log.info(`Transitive blockers for ${nodeId}: ${blockers.length} found`);
   return blockers;
 }
 
@@ -109,7 +111,7 @@ export function detectCycles(doc: GraphDocument): string[][] {
     }
   }
 
-  logger.info(`Cycle detection: ${cycles.length} cycles found`);
+  log.info(`Cycle detection: ${cycles.length} cycles found`);
   return cycles;
 }
 
@@ -145,7 +147,7 @@ export function findCriticalPath(doc: GraphDocument): GraphNode[] {
   // E5-T03: Pre-check for cycles before topological sort
   const cycles = detectCycles(doc);
   if (cycles.length > 0) {
-    logger.warn("critical-path:cycles-detected", { cycleCount: cycles.length });
+    log.warn("critical-path:cycles-detected", { cycleCount: cycles.length });
     return []; // Return empty path instead of invalid result
   }
 
@@ -208,6 +210,6 @@ export function findCriticalPath(doc: GraphDocument): GraphNode[] {
   // A single-node "path" is not a meaningful dependency chain
   if (path.length <= 1) return [];
 
-  logger.info(`Critical path: ${path.length} nodes, ${maxDist} total minutes`);
+  log.info(`Critical path: ${path.length} nodes, ${maxDist} total minutes`);
   return path;
 }

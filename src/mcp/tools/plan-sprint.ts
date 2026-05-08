@@ -23,8 +23,10 @@ import { findEnhancedNextTask } from "../../core/planner/enhanced-next.js";
 import { autoDecomposeLarge } from "../../core/planner/auto-decompose.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexEntitiesForDoc } from "../../core/rag/entity-index-hook.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "plan-sprint.ts" });
 
 /** registerPlanSprint — auto-generated description placeholder. */
 export function registerPlanSprint(server: McpServer, store: SqliteStore): void {
@@ -46,7 +48,7 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
         .describe("When true, L/XL tasks with 2-8 ACs and no children are split into subtasks before the report is generated. Opt-in (default: false)."),
     },
     async ({ mode, capacityPoints, autoDecompose }) => {
-      logger.debug("tool:plan_sprint", { mode: mode ?? "report", autoDecompose });
+      log.debug("tool:plan_sprint", { mode: mode ?? "report", autoDecompose });
 
       // Pre-process: auto-decompose large tasks so the report reflects the
       // post-split graph. Opt-in to avoid surprising users who hand-manage
@@ -55,12 +57,12 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
       if (autoDecompose) {
         try {
           decomposition = autoDecomposeLarge(store);
-          logger.info("tool:plan_sprint:auto_decompose", {
+          log.info("tool:plan_sprint:auto_decompose", {
             decomposed: decomposition.decomposed.length,
             skipped: decomposition.skipped.length,
           });
         } catch (err) {
-          logger.warn("tool:plan_sprint:auto_decompose_failed", { error: String(err) });
+          log.warn("tool:plan_sprint:auto_decompose_failed", { error: String(err) });
         }
       }
 
@@ -73,7 +75,7 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
           return mcpText({ message: "No tasks available" });
         }
 
-        logger.info("tool:plan_sprint:ok", { mode: "next", taskId: resultValue.task.node.id });
+        log.info("tool:plan_sprint:ok", { mode: "next", taskId: resultValue.task.node.id });
         return mcpText({
           task: {
             id: resultValue.task.node.id,
@@ -115,10 +117,10 @@ export function registerPlanSprint(server: McpServer, store: SqliteStore): void 
         });
         indexEntitiesForDoc(store.getDb(), sprintDoc.id);
       } catch (err) {
-        logger.warn("tool:plan_sprint:knowledge_index_failed", { error: String(err) });
+        log.warn("tool:plan_sprint:knowledge_index_failed", { error: String(err) });
       }
 
-      logger.info("tool:plan_sprint:ok", { mode: "report" });
+      log.info("tool:plan_sprint:ok", { mode: "report" });
       return mcpText({
         ...report,
         ...(decomposition ? { autoDecomposition: decomposition } : {}),

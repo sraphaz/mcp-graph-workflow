@@ -25,7 +25,9 @@ import { fileURLToPath } from "node:url";
 import { UcrSeedDataSchema } from "./construct-types.js";
 import type { UcrSeedData } from "./construct-types.js";
 import type { ConstructRegistry, SeedResult } from "./construct-registry.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "construct-seed.ts" });
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SEED_PATH = resolve(__dirname, "construct-seed-data.json");
@@ -44,7 +46,7 @@ export function seedRegistryFromFile(registry: ConstructRegistry, filePath: stri
 
   const resultValue = registry.seedFromJson(validated);
 
-  logger.info("ucr:seed:file", {
+  log.info("ucr:seed:file", {
     file: filePath,
     categories: resultValue.categories,
     constructs: resultValue.constructs,

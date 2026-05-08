@@ -22,7 +22,9 @@ import type { StoreRef } from "../../core/store/store-manager.js";
 import { readFileContent, isSupportedFormat } from "../../core/parser/file-reader.js";
 import { extractEntities } from "../../core/parser/extract.js";
 import { convertToGraph } from "../../core/importer/prd-to-graph.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "import.ts" });
 
 const upload = multer({
   dest: "/tmp/mcp-graph-uploads/",
@@ -95,7 +97,7 @@ export function createImportRouter(storeRef: StoreRef): Router {
         store.recordImport(sourceFileName, stats.nodesCreated, stats.edgesCreated);
         store.createSnapshot();
 
-        logger.info("Import via API complete", {
+        log.info("Import via API complete", {
           file: sourceFileName,
           nodes: stats.nodesCreated,
           edges: stats.edgesCreated,
@@ -128,7 +130,7 @@ async function cleanupFile(filePath: string): Promise<void> {
   try {
     await unlink(filePath);
   } catch (err) {
-    logger.debug("import:fileCleanupFailure", { error: err instanceof Error ? err.message : String(err) });
+    log.debug("import:fileCleanupFailure", { error: err instanceof Error ? err.message : String(err) });
     // File may already be cleaned up
   }
 }

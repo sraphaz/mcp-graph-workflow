@@ -32,7 +32,9 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "quality-policy.ts" });
 
 // ── Interfaces ─────────────────────────────────────────
 
@@ -146,7 +148,7 @@ export class QualityPolicyStore {
       "INSERT INTO quality_policies (id, name, gates, active, created_at, updated_at) VALUES (?, ?, ?, 0, ?, ?)",
     ).run(id, name, JSON.stringify(gates), timestamp, timestamp);
 
-    logger.debug("policy:created", { id, name, gateCount: gates.length });
+    log.debug("policy:created", { id, name, gateCount: gates.length });
     return id;
   }
 
@@ -157,7 +159,7 @@ export class QualityPolicyStore {
       this.db.prepare("UPDATE quality_policies SET active = 1, updated_at = ? WHERE id = ?").run(now(), policyId);
     });
     tx();
-    logger.debug("policy:activated", { policyId });
+    log.debug("policy:activated", { policyId });
   }
 
   /** Get the currently active policy. */

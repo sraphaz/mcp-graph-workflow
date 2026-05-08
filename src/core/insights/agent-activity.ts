@@ -16,7 +16,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "agent-activity.ts" });
 
 const HEARTBEAT_TIMEOUT_MS = 60_000; // 60 seconds
 
@@ -50,7 +52,7 @@ interface TaskLockRow {
  * Derives agent status from most recent heartbeat event.
  */
 export function getAgentActivity(db: Database.Database): AgentActivityInfo[] {
-  logger.debug("agent-activity:query");
+  log.debug("agent-activity:query");
 
   const now = Date.now();
 

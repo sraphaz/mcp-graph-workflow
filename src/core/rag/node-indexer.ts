@@ -27,7 +27,9 @@ import type Database from "better-sqlite3";
 import type { GraphNode, NodeType, NodeStatus } from "../graph/graph-types.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { indexEntitiesForDoc } from "./entity-index-hook.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "node-indexer.ts" });
 
 /**
  * Index a single graph node as a knowledge document.
@@ -79,9 +81,9 @@ export function indexNodeAsKnowledge(db: Database.Database, node: GraphNode): vo
     // Extract entities from the node content
     indexEntitiesForDoc(db, doc.id);
 
-    logger.debug("node-indexer:indexed", { nodeId: node.id, docId: doc.id });
+    log.debug("node-indexer:indexed", { nodeId: node.id, docId: doc.id });
   } catch (err) {
-    logger.warn("node-indexer:index-failed", { nodeId: node.id, error: String(err) });
+    log.warn("node-indexer:index-failed", { nodeId: node.id, error: String(err) });
   }
 }
 
@@ -102,7 +104,7 @@ export function removeNodeFromKnowledge(db: Database.Database, nodeId: string): 
       ks.delete(doc.id);
     }
   } catch (err) {
-    logger.warn("node-indexer:remove-failed", { nodeId, error: String(err) });
+    log.warn("node-indexer:remove-failed", { nodeId, error: String(err) });
   }
 }
 
@@ -136,14 +138,14 @@ export function indexAllNodes(db: Database.Database, projectId?: string): { inde
         indexNodeAsKnowledge(db, node);
         indexed++;
       } catch (rowErr) {
-        logger.warn("node-indexer:row-parse-failed", { rowId: row.id, error: String(rowErr) });
+        log.warn("node-indexer:row-parse-failed", { rowId: row.id, error: String(rowErr) });
       }
     }
 
-    logger.info("node-indexer:all-indexed", { indexed });
+    log.info("node-indexer:all-indexed", { indexed });
     return { indexed };
   } catch (err) {
-    logger.warn("node-indexer:index-all-failed", { error: String(err) });
+    log.warn("node-indexer:index-all-failed", { error: String(err) });
     return { indexed: 0 };
   }
 }

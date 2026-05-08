@@ -16,7 +16,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "lsp-cache.ts" });
 
 /**
  * SQLite-backed cache for LSP results with mtime-based invalidation.
@@ -54,7 +56,7 @@ export class LspCache {
       CREATE INDEX IF NOT EXISTS idx_lsp_cache_lang ON lsp_cache(project_id, language_id);
     `);
 
-    logger.debug("lsp-cache:ensureTable", { status: "ok" });
+    log.debug("lsp-cache:ensureTable", { status: "ok" });
   }
 
   /* ------------------------------------------------------------------ */
@@ -102,7 +104,7 @@ export class LspCache {
       )
       .run(projectId, cacheKey, operation, languageId, filePath, resultJson, fileMtime, createdAt);
 
-    logger.debug("lsp-cache:set", { projectId, cacheKey, operation, languageId, filePath });
+    log.debug("lsp-cache:set", { projectId, cacheKey, operation, languageId, filePath });
   }
 
   /* ------------------------------------------------------------------ */
@@ -118,7 +120,7 @@ export class LspCache {
       )
       .run(projectId, filePath, filePath);
 
-    logger.debug("lsp-cache:invalidateFile", { projectId, filePath, deleted: resultValue.changes });
+    log.debug("lsp-cache:invalidateFile", { projectId, filePath, deleted: resultValue.changes });
     return resultValue.changes;
   }
 
@@ -128,7 +130,7 @@ export class LspCache {
       .prepare(`DELETE FROM lsp_cache WHERE project_id = ? AND language_id = ?`)
       .run(projectId, languageId);
 
-    logger.debug("lsp-cache:invalidateLanguage", { projectId, languageId, deleted: resultValue.changes });
+    log.debug("lsp-cache:invalidateLanguage", { projectId, languageId, deleted: resultValue.changes });
     return resultValue.changes;
   }
 
@@ -138,7 +140,7 @@ export class LspCache {
       .prepare(`DELETE FROM lsp_cache WHERE project_id = ?`)
       .run(projectId);
 
-    logger.debug("lsp-cache:invalidateAll", { projectId, deleted: resultValue.changes });
+    log.debug("lsp-cache:invalidateAll", { projectId, deleted: resultValue.changes });
     return resultValue.changes;
   }
 
@@ -155,7 +157,7 @@ export class LspCache {
       )
       .run(maxAgeDays);
 
-    logger.info("lsp-cache:prune", { maxAgeDays, pruned: resultValue.changes });
+    log.info("lsp-cache:prune", { maxAgeDays, pruned: resultValue.changes });
     return resultValue.changes;
   }
 

@@ -21,7 +21,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { CouplingReport, NodeCouplingMetrics } from "../../schemas/designer-schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "coupling-analyzer.ts" });
 
 function calculateDepth(nodeId: string, parentMap: Map<string, string | null | undefined>): number {
   let depth = 0;
@@ -89,7 +91,7 @@ export function analyzeCoupling(doc: GraphDocument): CouplingReport {
   const avgFanOut = metrics.reduce((sum, m) => sum + m.fanOut, 0) / metrics.length;
   const avgInstability = metrics.reduce((sum, m) => sum + m.instability, 0) / metrics.length;
 
-  logger.info("coupling-analyzer", { nodeCount: metrics.length, highCoupling: highCouplingNodes.length, isolated: isolatedNodes.length });
+  log.info("coupling-analyzer", { nodeCount: metrics.length, highCoupling: highCouplingNodes.length, isolated: isolatedNodes.length });
 
   return { nodes: metrics, highCouplingNodes, isolatedNodes, avgFanIn, avgFanOut, avgInstability };
 }

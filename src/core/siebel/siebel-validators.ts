@@ -23,7 +23,9 @@
 
 import type { SiebelObject, SiebelObjectType, SiebelDependency } from "../../schemas/siebel.schema.js";
 import { detectCircularDeps } from "./dependency-analyzer.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "siebel-validators.ts" });
 
 // ============================================================
 // 10.2 — Security Validation
@@ -141,7 +143,7 @@ export function validateSecurity(objects: readonly SiebelObject[]): SecurityVali
   const hasIssues = sensitiveFields.length > 0 || dangerousOperations.length > 0 || visibilityIssues.length > 0;
   const status = sensitiveFields.length > 0 ? "invalid" as const : hasIssues ? "warnings" as const : "valid" as const;
 
-  logger.debug("validate-security", {
+  log.debug("validate-security", {
     sensitiveFields: String(sensitiveFields.length),
     dangerousOps: String(dangerousOperations.length),
     visibilityIssues: String(visibilityIssues.length),
@@ -262,7 +264,7 @@ export function validatePerformance(objects: readonly SiebelObject[]): Performan
   const hasErrors = issues.some((i) => i.severity === "error");
   const status = hasErrors ? "invalid" as const : issues.length > 0 ? "warnings" as const : "valid" as const;
 
-  logger.debug("validate-performance", { issueCount: String(issues.length), status });
+  log.debug("validate-performance", { issueCount: String(issues.length), status });
 
   return { status, issues };
 }
@@ -389,7 +391,7 @@ export function validateMigrationReadiness(
   const hasYellow = checklist.some((c) => c.status === "yellow");
   const status = hasRed ? "invalid" as const : hasYellow ? "warnings" as const : "valid" as const;
 
-  logger.debug("validate-migration-readiness", {
+  log.debug("validate-migration-readiness", {
     unresolvedDeps: String(unresolvedDeps.length),
     hasCycles: String(hasCycles),
     hardcodedValues: String(hardcodedValues.length),

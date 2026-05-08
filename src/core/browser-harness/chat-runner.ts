@@ -22,10 +22,12 @@ import type {
 } from "../../schemas/browser-harness.schema.js";
 import { isDomainAllowed } from "./guardrail-loader.js";
 import { HarnessSafetyViolation } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { LlmPlanner } from "./llm-planner.js";
 import type { BrowserEventBus, BrowserEvent, WatchdogVerdict } from "./event-bus.js";
 import { attachCdpTranslator } from "./event-translator.js";
+
+const log = createLogger({ layer: "core", source: "chat-runner.ts" });
 
 export type StepEvent =
   | { type: "plan"; steps: PlannedStep[] }
@@ -65,7 +67,7 @@ export class ChatRunner {
   /** Hot-swap the LLM planner. `null` reverts to the regex fallback. */
   setLlmPlanner(planner: LlmPlanner | null): void {
     this.llmPlanner = planner;
-    logger.info("bh:chat:planner", { mode: planner ? "llm" : "regex" });
+    log.info("bh:chat:planner", { mode: planner ? "llm" : "regex" });
   }
 
   on(listener: StepEventListener): () => void {
@@ -135,7 +137,7 @@ export class ChatRunner {
             const shot = await this.runtime.invoke(input.cdp, "screenshot", {}) as { base64?: string };
             if (shot?.base64) pngBytes = Buffer.from(shot.base64, "base64");
           } catch (err) {
-            logger.debug("bh:chat:auto-screenshot:fail", { error: err instanceof Error ? err.message : String(err) });
+            log.debug("bh:chat:auto-screenshot:fail", { error: err instanceof Error ? err.message : String(err) });
           }
         }
       } catch (err) {
@@ -195,7 +197,7 @@ export class ChatRunner {
         try {
           screenshotPath = this.runs.saveScreenshot(run.id, rVar.index, png);
         } catch (err) {
-          logger.warn("bh:chat:screenshot:save:fail", { error: err instanceof Error ? err.message : String(err) });
+          log.warn("bh:chat:screenshot:save:fail", { error: err instanceof Error ? err.message : String(err) });
         }
       }
       updatedResults.push({
@@ -219,7 +221,7 @@ export class ChatRunner {
     try {
       return await this.llmPlanner.plan(input.prompt);
     } catch (err) {
-      logger.warn("bh:chat:llm-planner:fallback", {
+      log.warn("bh:chat:llm-planner:fallback", {
         error: err instanceof Error ? err.message : String(err),
       });
       return this.generatePlan(input.prompt);
@@ -229,7 +231,7 @@ export class ChatRunner {
   private emit(event: StepEvent): void {
     for (const fn of this.listeners) {
       try { fn(event); } catch (err) {
-        logger.warn("bh:chat:emit:error", { error: err instanceof Error ? err.message : String(err) });
+        log.warn("bh:chat:emit:error", { error: err instanceof Error ? err.message : String(err) });
       }
     }
   }
@@ -264,7 +266,7 @@ export class ChatRunner {
           throw new HarnessSafetyViolation("watchdog_blocked", `${vVar.watchdog}: ${vVar.message}`);
         }
         if (vVar.level === "warn") {
-          logger.warn("bh:watchdog:warn", { watchdog: vVar.watchdog, message: vVar.message });
+          log.warn("bh:watchdog:warn", { watchdog: vVar.watchdog, message: vVar.message });
         }
       }
     }

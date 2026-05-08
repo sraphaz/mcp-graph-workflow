@@ -25,7 +25,9 @@
 
 import type Database from "better-sqlite3";
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "knowledge-synthesizer.ts" });
 
 const MIN_DOCS_FOR_SYNTHESIS = 3;
 
@@ -52,7 +54,7 @@ export function runSynthesisCycle(db: Database.Database): SynthesisResult {
   strategies.sprintTrends = sprintCount;
   synthesized += sprintCount;
 
-  logger.info("Synthesis cycle complete", { synthesized, strategies });
+  log.info("Synthesis cycle complete", { synthesized, strategies });
   return { synthesized, strategies };
 }
 

@@ -26,7 +26,9 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { EmbeddingStore } from "../../core/rag/embedding-store.js";
 import { indexAllEmbeddings, semanticSearch } from "../../core/rag/rag-pipeline.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "rag.ts" });
 
 const RagQuerySchema = z.object({
   query: z.string().min(1),
@@ -67,7 +69,7 @@ export function createRagRouter(storeRef: StoreRef): Router {
       if (!indexed) {
         const resultValue = await indexAllEmbeddings(storeRef.current, embeddingStore);
         indexed = (resultValue.nodes + resultValue.knowledge) > 0;
-        logger.info("RAG index built on first query", { nodes: resultValue.nodes, knowledge: resultValue.knowledge });
+        log.info("RAG index built on first query", { nodes: resultValue.nodes, knowledge: resultValue.knowledge });
       }
 
       const results = await semanticSearch(embeddingStore, query, limit ?? 10);

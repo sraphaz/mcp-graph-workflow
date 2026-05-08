@@ -28,7 +28,9 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "experiment-runner.ts" });
 
 // ── Interfaces ─────────────────────────────────────────
 
@@ -122,7 +124,7 @@ export class ExperimentRunner {
     // Keep full config (with targetFn) in memory
     this.configs.set(id, config);
 
-    logger.debug("experiment:created", { id, name, datasetId });
+    log.debug("experiment:created", { id, name, datasetId });
     return id;
   }
 
@@ -199,7 +201,7 @@ export class ExperimentRunner {
       "UPDATE eval_experiments SET status = 'completed', summary = ?, completed_at = ? WHERE id = ?",
     ).run(JSON.stringify(summary), now(), experimentId);
 
-    logger.debug("experiment:completed", { experimentId, resultCount: entries.length, avgScores });
+    log.debug("experiment:completed", { experimentId, resultCount: entries.length, avgScores });
     return summary;
   }
 

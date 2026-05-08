@@ -29,7 +29,9 @@ import type { GraphNode, GraphEdge } from "../graph/graph-types.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { tokenize } from "../search/tokenizer.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "community-summarizer.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -134,7 +136,7 @@ export function detectCommunities(nodes: GraphNode[], edges: GraphEdge[]): Commu
     });
   }
 
-  logger.debug("community-summarizer:detect", {
+  log.debug("community-summarizer:detect", {
     nodes: nodes.length,
     edges: edges.length,
     communities: communities.length,
@@ -244,7 +246,7 @@ export function rebuildCommunities(store: SqliteStore): CommunitySummaryResult[]
   const db = store.getDb();
   const project = store.getProject();
   if (!project) {
-    logger.warn("community-summarizer:rebuild", { message: "No active project" });
+    log.warn("community-summarizer:rebuild", { message: "No active project" });
     return [];
   }
 
@@ -328,7 +330,7 @@ export function rebuildCommunities(store: SqliteStore): CommunitySummaryResult[]
 
   transaction();
 
-  logger.info("community-summarizer:rebuild", {
+  log.info("community-summarizer:rebuild", {
     communities: summaries.length,
     totalNodes: nodes.length,
   });

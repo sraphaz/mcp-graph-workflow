@@ -12,7 +12,9 @@ import {
   generateHandlerId,
   type ImportEnvelope,
 } from "../import-helpers.js";
-import { logger } from "../../utils/logger.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "copilot.ts" });
 
 /**
  * GitHub Copilot CLI provider — reads `.github/hooks/*.{json,toml}`.
@@ -99,7 +101,7 @@ export function importCopilotSettings(opts: CopilotImportOptions = {}): ImportEn
     }
   }
 
-  logger.info("hooks:import:done", {
+  log.info("hooks:import:done", {
     provider: "copilot",
     source,
     imported: envelope.imported.length,
@@ -167,7 +169,7 @@ function entryToHandler(entry: CopilotHookEntry, idx: number): HookHandlerConfig
  * the gap so users see it explicitly.
  */
 export function installCopilotEventBridge(): () => void {
-  logger.warn("copilot:event-bridge:not-implemented-in-v1", {
+  log.warn("copilot:event-bridge:not-implemented-in-v1", {
     note: "session.on() observer needs gh copilot subprocess wrap; planned for v2",
   });
   return () => { /* no-op */ };

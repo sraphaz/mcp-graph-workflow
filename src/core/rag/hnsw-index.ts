@@ -25,7 +25,9 @@
  * Falls back to linear scan for < 100 vectors (overhead not worthwhile).
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "hnsw-index.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -297,7 +299,7 @@ export class HNSWIndex {
       this.insertIntoGraph(node);
     }
 
-    logger.debug("hnsw:rebuild", { nodes: allNodes.length, maxLevel: this.maxLevel });
+    log.debug("hnsw:rebuild", { nodes: allNodes.length, maxLevel: this.maxLevel });
   }
 
   /** Insert a node into the HNSW graph structure. */

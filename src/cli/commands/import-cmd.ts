@@ -22,7 +22,9 @@ import { readFileContent } from "../../core/parser/file-reader.js";
 import { extractEntities } from "../../core/parser/extract.js";
 import { convertToGraph } from "../../core/importer/prd-to-graph.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "import-cmd.ts" });
 
 function output(msg: string): void {
   process.stdout.write(msg + "\n");
@@ -42,14 +44,14 @@ export function importCommand(): Command {
 
       if (!store.getProject()) {
         store.initProject(path.basename(opts.dir));
-        logger.info("Project initialized", { name: path.basename(opts.dir) });
+        log.info("Project initialized", { name: path.basename(opts.dir) });
       }
 
       // B14 (node_6b7d86d7238a): refuse to re-import the same source file by
       // default. Without this guard a CI loop or accidental double-invoke
       // doubled every node and edge in the graph.
       if (!opts.force && store.hasImport(filePath)) {
-        logger.error(`Source already imported: ${filePath}. Pass --force to re-import (will create duplicate nodes).`);
+        log.error(`Source already imported: ${filePath}. Pass --force to re-import (will create duplicate nodes).`);
         store.close();
         process.exit(1);
       }
@@ -71,12 +73,12 @@ export function importCommand(): Command {
         // parser miss. Exit 1 with a hint unless the caller opted in via
         // --allow-empty. Empty files (size 0) still pass through silently.
         if (graph.nodes.length === 0 && resultValue.text.length > 0 && !opts.allowEmpty) {
-          logger.error(`No entities extracted from ${filePath} (text length ${resultValue.text.length}). Pass --allow-empty if this is intentional.`);
+          log.error(`No entities extracted from ${filePath} (text length ${resultValue.text.length}). Pass --allow-empty if this is intentional.`);
           store.close();
           process.exit(1);
         }
       } catch (err) {
-        logger.error(`Import failed: ${getErrorMessage(err)}`);
+        log.error(`Import failed: ${getErrorMessage(err)}`);
         // Bug #056: close store before exit to prevent connection leak
         store.close();
         process.exit(1);

@@ -21,8 +21,10 @@ import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import type { LockManager } from "../../core/store/lock-manager.js";
 import { finishTask } from "../../core/pipeline/finish-task.js";
 import { runQualityGates } from "../../core/pipeline/quality-gates-runner.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "finish-task.ts" });
 
 /** registerFinishTask — auto-generated description placeholder. */
 export function registerFinishTask(server: McpServer, store: SqliteStore, lockManager?: LockManager): void {
@@ -52,11 +54,11 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       })).optional().describe("v11 Context-Pollination: structured outputs to persist in subtask_artifacts. Optional — omit to keep v10 behavior."),
     },
     async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, artifacts }) => {
-      logger.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
+      log.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
       const resultValue = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts });
 
-      logger.info("tool:finish_task:ok", {
+      log.info("tool:finish_task:ok", {
         nodeId,
         status: resultValue.status,
         dodGrade: resultValue.dodReport.grade,
@@ -128,7 +130,7 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
         const gatesResult = runQualityGates(process.cwd(), qualityGates);
         if (gatesResult) {
           response._quality_gates = gatesResult;
-          logger.info("tool:finish_task:quality_gates", {
+          log.info("tool:finish_task:quality_gates", {
             modes: gatesResult.modes,
             overallScore: gatesResult.overallScore,
             overallGrade: gatesResult.overallGrade,

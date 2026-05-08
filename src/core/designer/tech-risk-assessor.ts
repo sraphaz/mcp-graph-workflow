@@ -21,7 +21,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { TechRiskReport, TechRiskEntry, TechRiskCategory, TechRiskProbability, MitigationLevel } from "../../schemas/designer-schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "tech-risk-assessor.ts" });
 
 const CATEGORY_KEYWORDS: Record<TechRiskCategory, string[]> = {
   integration: ["integration", "api", "third-party", "external", "webhook", "endpoint"],
@@ -160,7 +162,7 @@ export function assessTechRisks(doc: GraphDocument): TechRiskReport {
     .filter((r) => r.score >= 6)
     .map((r) => r.nodeId);
 
-  logger.info("tech-risk-assessor", { explicit: risks.length, inferred: inferredRisks.length, riskScore });
+  log.info("tech-risk-assessor", { explicit: risks.length, inferred: inferredRisks.length, riskScore });
 
   return { risks, inferredRisks, riskScore, highRisks };
 }

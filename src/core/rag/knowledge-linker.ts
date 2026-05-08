@@ -26,7 +26,9 @@ import type Database from "better-sqlite3";
 import type { KnowledgeDocument } from "../../schemas/knowledge.schema.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "knowledge-linker.ts" });
 
 interface DocWithMeta {
   id: string;
@@ -120,7 +122,7 @@ export function linkBySharedContext(db: Database.Database): { relationsCreated: 
     }
   })();
 
-  logger.info("Knowledge linking completed", { relationsCreated });
+  log.info("Knowledge linking completed", { relationsCreated });
   return { relationsCreated };
 }
 

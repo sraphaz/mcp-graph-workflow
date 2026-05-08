@@ -33,7 +33,9 @@ import type {
   SiebelDependency,
   SiebelDependencyRelation,
 } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "auto-wiring.ts" });
 
 // --- Public types ---
 
@@ -248,7 +250,7 @@ function generateReport(
 export function autoWireDependencies(request: AutoWireRequest): AutoWireResult {
   const { newObjects, repository } = request;
 
-  logger.debug("auto-wiring: analyzing dependencies", {
+  log.debug("auto-wiring: analyzing dependencies", {
     newCount: newObjects.length,
     repoCount: repository.length,
   });
@@ -297,7 +299,7 @@ export function autoWireDependencies(request: AutoWireRequest): AutoWireResult {
 
   const report = generateReport(wiredEdges, missingDependencies);
 
-  logger.info("auto-wiring: complete", {
+  log.info("auto-wiring: complete", {
     wired: wiredEdges.length,
     missing: missingDependencies.length,
   });

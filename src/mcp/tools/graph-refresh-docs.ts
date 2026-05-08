@@ -34,8 +34,10 @@ import { createMcpContext7Fetcher } from "../../core/docs/mcp-context7-fetcher.j
 import { detectStack } from "../../core/docs/stack-detector.js";
 import { indexCachedDocs } from "../../core/rag/docs-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "graph-refresh-docs.ts" });
 
 /** registerGraphRefreshDocs — auto-generated description placeholder. */
 export function registerGraphRefreshDocs(server: McpServer, store: SqliteStore): void {
@@ -47,7 +49,7 @@ export function registerGraphRefreshDocs(server: McpServer, store: SqliteStore):
       libraries: z.array(z.string()).optional().describe("Specific library names to sync (overrides auto-detection)"),
     },
     async ({ basePath, libraries }) => {
-      logger.debug("tool:graph_refresh_docs", { basePath });
+      log.debug("tool:graph_refresh_docs", { basePath });
       const projectPath = basePath ?? process.cwd();
       const docsCacheStore = new DocsCacheStore(store.getDb());
       const knowledgeStore = new KnowledgeStore(store.getDb());
@@ -87,7 +89,7 @@ export function registerGraphRefreshDocs(server: McpServer, store: SqliteStore):
       const indexResult = indexCachedDocs(knowledgeStore, docsCacheStore);
       indexEntitiesForSource(store.getDb(), "docs");
 
-      logger.info("tool:graph_refresh_docs:ok", {
+      log.info("tool:graph_refresh_docs:ok", {
         librariesProcessed: results.length,
         knowledgeIndexed: indexResult.documentsIndexed,
       });

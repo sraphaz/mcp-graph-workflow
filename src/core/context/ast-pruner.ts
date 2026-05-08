@@ -29,7 +29,9 @@
  * Uses regex-based parsing (no TSC dependency) for < 100ms performance.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "ast-pruner.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -313,7 +315,7 @@ export function pruneFile(options: PruneOptions): PrunedFile {
     ? Math.round((totalPrunedLines / originalLines) * 100)
     : 0;
 
-  logger.debug("ast-pruner:prune", {
+  log.debug("ast-pruner:prune", {
     originalLines,
     prunedLines: totalPrunedLines,
     reductionPercent,

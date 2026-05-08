@@ -17,7 +17,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import { findCriticalPath } from "../planner/dependency-chain.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "bottleneck-detector.ts" });
 
 export interface BlockedTaskInfo {
   id: string;
@@ -49,7 +51,7 @@ export function detectBottlenecks(doc: GraphDocument): BottleneckReport {
   if (!doc) return { blockedTasks: [], criticalPath: null, missingAcceptanceCriteria: [], oversizedTasks: [] };
   if (!doc?.nodes) return { blockedTasks: [], criticalPath: null, missingAcceptanceCriteria: [], oversizedTasks: [] };
   if (!doc?.edges) return { blockedTasks: [], criticalPath: null, missingAcceptanceCriteria: [], oversizedTasks: [] };
-  logger.info("Detecting bottlenecks", { nodes: doc?.nodes?.length ?? 0, edges: doc?.edges?.length ?? 0 });
+  log.info("Detecting bottlenecks", { nodes: doc?.nodes?.length ?? 0, edges: doc?.edges?.length ?? 0 });
 
   const nodeMap = new Map(doc?.nodes?.map((n) => [n?.id, n]) ?? []);
   const doneIds = new Set(doc?.nodes?.filter((n) => n?.status === "done")?.map((n) => n?.id) ?? []);
@@ -137,7 +139,7 @@ export function detectBottlenecks(doc: GraphDocument): BottleneckReport {
     )
     ?.map((n) => ({ id: n?.id ?? "", title: n?.title ?? "", estimateMinutes: n?.estimateMinutes ?? 0 })) ?? [];
 
-  logger.info("Bottleneck detection complete", {
+  log.info("Bottleneck detection complete", {
     blocked: blockedTasks?.length ?? 0,
     missingAC: missingAcceptanceCriteria?.length ?? 0,
     oversized: oversizedTasks?.length ?? 0,

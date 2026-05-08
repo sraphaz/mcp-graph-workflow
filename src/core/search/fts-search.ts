@@ -17,9 +17,11 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphNode } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { deterministicRank } from "./deterministic-ranker.js";
 import { rerankWithTfIdf } from "./tfidf.js";
+
+const log = createLogger({ layer: "core", source: "fts-search.ts" });
 
 export interface SearchResult {
   node: GraphNode;
@@ -151,11 +153,11 @@ export function searchNodes(
 ): SearchResult[] {
   const { limit = 20, rerank = false, fuzzy = false, fuzzyThreshold = 0.6 } = options;
   const sanitized = sanitizeFtsQuery(query);
-  logger.debug("FTS search start", { query, sanitized, rerank });
+  log.debug("FTS search start", { query, sanitized, rerank });
 
   // Bug #063: if sanitization produces empty query (e.g. query="*"), return empty early
   if (sanitized === '""') {
-    logger.info("FTS search: query sanitized to empty", { originalQuery: query });
+    log.info("FTS search: query sanitized to empty", { originalQuery: query });
     return [];
   }
 
@@ -163,14 +165,14 @@ export function searchNodes(
   const startMs = performance.now();
   const candidateLimit = rerank ? Math.min(limit * 3, 100) : limit;
   const ftsResults = store.searchNodes(sanitized, candidateLimit);
-  logger.debug("FTS search complete", {
+  log.debug("FTS search complete", {
     resultCount: ftsResults.length,
     durationMs: Math.round(performance.now() - startMs),
   });
 
   // Fuzzy fallback: when FTS5 returns nothing and fuzzy is enabled
   if (ftsResults.length === 0 && fuzzy) {
-    logger.debug("FTS returned 0 results, trying fuzzy fallback", { query });
+    log.debug("FTS returned 0 results, trying fuzzy fallback", { query });
     return fuzzyFallback(store, query, limit, fuzzyThreshold);
   }
 

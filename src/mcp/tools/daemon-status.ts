@@ -17,8 +17,10 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDaemonStatus } from "../daemon/daemon-registry.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "daemon-status.ts" });
 
 /**
  * `daemon_status` — inspect the live daemon runtime (mode, connected clients,
@@ -34,7 +36,7 @@ export function registerDaemonStatus(server: McpServer): void {
     {},
     async () => {
       const status = getDaemonStatus();
-      logger.debug("tool:daemon_status", { mode: status.mode, clients: status.clientCount });
+      log.debug("tool:daemon_status", { mode: status.mode, clients: status.clientCount });
       return mcpText(status);
     },
   );

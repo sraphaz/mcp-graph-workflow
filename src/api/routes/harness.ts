@@ -21,7 +21,7 @@
  */
 
 import { Router } from "express";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { runHarnessScanCached } from "../../core/harness/harness-cache.js";
 import { runHarnessScan } from "../../core/harness/harness-scan-runner.js";
@@ -29,6 +29,8 @@ import { IssuePatternTracker } from "../../core/harness/issue-pattern-tracker.js
 import { detectCurrentPhase } from "../../core/planner/lifecycle-phase.js";
 import { evaluate as evaluateRemediations } from "../../core/harness/remediation-engine.js";
 import { SuppressionStore } from "../../core/harness/remediation-suppression.js";
+
+const log = createLogger({ layer: "api", source: "harness.ts" });
 
 /** createHarnessRouter — auto-generated description placeholder. */
 export function createHarnessRouter(storeRef: StoreRef): Router {
@@ -62,7 +64,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
         currentPhase,
       });
     } catch (err) {
-      logger.error("api:harness:score:error", { error: String(err) });
+      log.error("api:harness:score:error", { error: String(err) });
       next(err);
     }
   });
@@ -113,7 +115,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, history, trend, delta });
     } catch (err) {
-      logger.error("api:harness:trend:error", { error: String(err) });
+      log.error("api:harness:trend:error", { error: String(err) });
       next(err);
     }
   });
@@ -157,7 +159,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, history, total: history.length });
     } catch (err) {
-      logger.error("api:harness:history:error", { error: String(err) });
+      log.error("api:harness:history:error", { error: String(err) });
       next(err);
     }
   });
@@ -206,7 +208,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, min, max, avg, stddev, direction, dataPoints: scores.length });
     } catch (err) {
-      logger.error("api:harness:trends:error", { error: String(err) });
+      log.error("api:harness:trends:error", { error: String(err) });
       next(err);
     }
   });
@@ -245,7 +247,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, score: cached.score, grade: cached.grade, advice, message });
     } catch (err) {
-      logger.error("api:harness:advice:error", { error: String(err) });
+      log.error("api:harness:advice:error", { error: String(err) });
       next(err);
     }
   });
@@ -262,7 +264,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, patterns, stats, threshold: 3 });
     } catch (err) {
-      logger.error("api:harness:patterns:error", { error: String(err) });
+      log.error("api:harness:patterns:error", { error: String(err) });
       next(err);
     }
   });
@@ -321,7 +323,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, events });
     } catch (err) {
-      logger.error("api:harness:events:error", { error: String(err) });
+      log.error("api:harness:events:error", { error: String(err) });
       next(err);
     }
   });
@@ -356,7 +358,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
         totalViolations: scan.violations?.length ?? 0,
       });
     } catch (err) {
-      logger.error("api:harness:remediate:error", { error: String(err) });
+      log.error("api:harness:remediate:error", { error: String(err) });
       next(err);
     }
   });
@@ -378,10 +380,10 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
       const suppressionStore = new SuppressionStore(store.getDb());
       suppressionStore.suppress(file, violationType, dimension ?? "unknown", reason);
 
-      logger.info("api:harness:remediate:suppress:ok", { file, violationType });
+      log.info("api:harness:remediate:suppress:ok", { file, violationType });
       res.status(201).json({ ok: true, file, violationType, suppressed: true });
     } catch (err) {
-      logger.error("api:harness:remediate:suppress:error", { error: String(err) });
+      log.error("api:harness:remediate:suppress:error", { error: String(err) });
       next(err);
     }
   });
@@ -397,7 +399,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
 
       res.json({ ok: true, suppressions, total: suppressions.length });
     } catch (err) {
-      logger.error("api:harness:remediate:suppressions:error", { error: String(err) });
+      log.error("api:harness:remediate:suppressions:error", { error: String(err) });
       next(err);
     }
   });
@@ -421,7 +423,7 @@ export function createHarnessRouter(storeRef: StoreRef): Router {
     } catch (err) {
       // Table may not exist yet
       res.json({ violations: [], total: 0 });
-      logger.debug("api:harness:contract-violations:empty", { error: String(err) });
+      log.debug("api:harness:contract-violations:empty", { error: String(err) });
     }
   });
 

@@ -28,7 +28,9 @@ import { checkDoneIntegrity } from "../validator/done-integrity-checker.js";
 import { checkStatusFlow } from "../validator/status-flow-checker.js";
 import { checkEdgeConsistency } from "../validator/edge-consistency-checker.js";
 import { GraphIntegrityError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "graph-health-scanner.ts" });
 
 export interface HealthIssue {
   severity: "critical" | "warning" | "info";
@@ -68,7 +70,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       });
     }
   } catch (err) {
-    logger.debug("graph-health: cycle detection skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: cycle detection skipped", { error: getErrorMessage(err) });
   }
 
   // 2. Orphan detection via scope analysis
@@ -83,7 +85,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       });
     }
   } catch (err) {
-    logger.debug("graph-health: scope analysis skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: scope analysis skipped", { error: getErrorMessage(err) });
   }
 
   // 3. Backlog health — stuck and stale tasks
@@ -98,7 +100,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       });
     }
   } catch (err) {
-    logger.debug("graph-health: backlog health skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: backlog health skipped", { error: getErrorMessage(err) });
   }
 
   // 4. Done integrity — done tasks with unresolved deps or blocked status
@@ -113,7 +115,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       });
     }
   } catch (err) {
-    logger.debug("graph-health: done integrity skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: done integrity skipped", { error: getErrorMessage(err) });
   }
 
   // 5. Status flow — tasks done without proper transitions
@@ -128,7 +130,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       });
     }
   } catch (err) {
-    logger.debug("graph-health: status flow skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: status flow skipped", { error: getErrorMessage(err) });
   }
 
   // 6. Edge consistency — relation name vs. direction
@@ -143,7 +145,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       });
     }
   } catch (err) {
-    logger.debug("graph-health: edge consistency skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: edge consistency skipped", { error: getErrorMessage(err) });
   }
 
   // 7. Oversized tasks — tasks with too many children and no decomposition
@@ -162,7 +164,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
       }
     }
   } catch (err) {
-    logger.debug("graph-health: oversized check skipped", { error: getErrorMessage(err) });
+    log.debug("graph-health: oversized check skipped", { error: getErrorMessage(err) });
   }
 
   const elapsed = performance.now() - start;
@@ -173,7 +175,7 @@ export function scanGraphHealth(doc: GraphDocument): HealthReport {
     total: issues.length,
   };
 
-  logger.info("graph-health:scan", { nodeCount: doc.nodes.length, edgeCount: doc.edges.length, ...summary, ms: elapsed.toFixed(1) });
+  log.info("graph-health:scan", { nodeCount: doc.nodes.length, edgeCount: doc.edges.length, ...summary, ms: elapsed.toFixed(1) });
 
   return {
     scannedAt: new Date().toISOString(),

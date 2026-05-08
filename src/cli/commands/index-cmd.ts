@@ -24,7 +24,9 @@ import { indexMemories } from "../../core/rag/memory-indexer.js";
 import { indexCachedDocs } from "../../core/rag/docs-indexer.js";
 import { indexAllEmbeddings } from "../../core/rag/rag-pipeline.js";
 import { getErrorMessage } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "index-cmd.ts" });
 
 function output(msg: string): void {
   process.stdout.write(msg + "\n");
@@ -67,7 +69,7 @@ export function indexCommand(): Command {
           output(`  Total knowledge documents: ${totalKnowledge}`);
         }
       } catch (err) {
-        logger.error(`Indexing failed: ${getErrorMessage(err)}`);
+        log.error(`Indexing failed: ${getErrorMessage(err)}`);
         process.exit(1);
       } finally {
         store.close();

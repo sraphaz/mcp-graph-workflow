@@ -28,8 +28,10 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "graph-rollback.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -69,7 +71,7 @@ export function createCheckpoint(store: SqliteStore, nodeId: string): GraphCheck
     createdAt: new Date().toISOString(),
   };
 
-  logger.info("graph-rollback:checkpoint-created", {
+  log.info("graph-rollback:checkpoint-created", {
     nodeId,
     snapshotId,
     nodeCount: checkpoint.nodeCount,
@@ -97,7 +99,7 @@ export function rollbackToCheckpoint(
     const resultValue = store.restoreSnapshot(checkpoint?.snapshotId);
     const mttrMs = Math.round(performance.now() - start);
 
-    logger.info("graph-rollback:restored", {
+    log.info("graph-rollback:restored", {
       nodeId: checkpoint?.nodeId ?? "",
       snapshotId: checkpoint?.snapshotId ?? 0,
       nodesRestored: resultValue?.nodesValid ?? 0,
@@ -113,7 +115,7 @@ export function rollbackToCheckpoint(
   } catch (err) {
     const mttrMs = Math.round(performance.now() - start);
 
-    logger.error("graph-rollback:failed", {
+    log.error("graph-rollback:failed", {
       nodeId: checkpoint?.nodeId ?? "",
       snapshotId: checkpoint?.snapshotId ?? 0,
       error: String(err),

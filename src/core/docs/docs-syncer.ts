@@ -16,7 +16,9 @@
  */
 
 import type { DocsCacheStore, CachedDoc } from "./docs-cache-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "docs-syncer.ts" });
 
 export interface Context7Fetcher {
   resolveLibraryId(name: string): Promise<string>;
@@ -33,7 +35,7 @@ export class DocsSyncer {
   }
 
   async syncLib(libName: string): Promise<CachedDoc> {
-    logger.info(`Syncing docs for: ${libName}`);
+    log.info(`Syncing docs for: ${libName}`);
 
     const libId = await this.fetcher.resolveLibraryId(libName);
     const content = await this.fetcher.queryDocs(libId);
@@ -49,7 +51,7 @@ export class DocsSyncer {
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const staleLibs = this.cacheStore.getStaleLibs(ONE_DAY_MS);
 
-    logger.info(`Syncing ${staleLibs.length} stale libs`);
+    log.info(`Syncing ${staleLibs.length} stale libs`);
 
     const results: CachedDoc[] = [];
 
@@ -58,7 +60,7 @@ export class DocsSyncer {
         const doc = await this.syncLib(lib.libName);
         results.push(doc);
       } catch (err) {
-        logger.error(`Failed to sync ${lib.libName}`, {
+        log.error(`Failed to sync ${lib.libName}`, {
           error: err instanceof Error ? err.message : String(err),
         });
       }

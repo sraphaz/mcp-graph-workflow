@@ -34,7 +34,9 @@ import type {
 } from "../../schemas/siebel.schema.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "sif-to-graph.ts" });
 
 /** Siebel types mapped to task nodes (core/backend objects). */
 const TASK_TYPES: Set<SiebelObjectType> = new Set([
@@ -157,7 +159,7 @@ export function convertSifToGraph(parseResult: SiebelSifParseResult): SifToGraph
     }
   }
 
-  logger.info("SIF converted to graph", {
+  log.info("SIF converted to graph", {
     nodes: String(nodes.length),
     edges: String(edges.length),
     epicId,

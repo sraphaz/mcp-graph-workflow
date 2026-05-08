@@ -39,9 +39,11 @@ import { importAiderSettings, installAiderBridge } from "../../core/hooks/provid
 import { importContinueSettings } from "../../core/hooks/providers/continue.js";
 import { importClineSettings } from "../../core/hooks/providers/cline.js";
 import type { HookStatsStore } from "../../core/hooks/hook-stats-store.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import { OperationError } from "../../core/utils/errors.js";
+
+const log = createLogger({ layer: "mcp", source: "hooks.ts" });
 
 export const HookHandlerKindSchema = z.enum(["shell", "inline-unsafe", "mjs-module"]);
 export type HookHandlerKind = z.infer<typeof HookHandlerKindSchema>;
@@ -172,15 +174,15 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
             const handler = async (event: Parameters<Parameters<HookRegistry["register"]>[0]["handler"]>[0]): Promise<void> => {
               const resultValue = await runShellHandler(shellConfig, event);
               if (resultValue.decision === "block") {
-                logger.warn("hooks:shell:block", { id, channel: event.channel, stderr: resultValue.stderr });
+                log.warn("hooks:shell:block", { id, channel: event.channel, stderr: resultValue.stderr });
                 throw new OperationError(resultValue.stderr || `hook "${id}" blocked`);
               }
               if (resultValue.decision === "warn") {
-                logger.warn("hooks:shell:warn", { id, exitCode: resultValue.exitCode, timedOut: resultValue.timedOut, stderr: resultValue.stderr });
+                log.warn("hooks:shell:warn", { id, exitCode: resultValue.exitCode, timedOut: resultValue.timedOut, stderr: resultValue.stderr });
               }
             };
             registry.register({ id, channel, handler, priority: 0 });
-            logger.info("hooks:register", { id, channel, kind, command: input.command });
+            log.info("hooks:register", { id, channel, kind, command: input.command });
             return mcpText({ ok: true, handlerId: id, channel, kind });
           }
 
@@ -192,7 +194,7 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
             );
           }
           if (!input.handlerCode) return mcpError("handlerCode is required for register with kind=inline-unsafe");
-          logger.warn("hooks:register:inline-unsafe", { id, channel, reason: "MCP_GRAPH_HOOKS_INLINE_UNSAFE=true" });
+          log.warn("hooks:register:inline-unsafe", { id, channel, reason: "MCP_GRAPH_HOOKS_INLINE_UNSAFE=true" });
           const fn = new Function("return " + input.handlerCode)() as (event: unknown) => Promise<void>;
           if (typeof fn !== "function") {
             return mcpError("handlerCode must evaluate to a function");
@@ -205,7 +207,7 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
           if (!input.handlerId) return mcpError("handlerId is required for unregister");
           const id = input.handlerId;
           registry.unregister(id);
-          logger.info("hooks:unregister", { id });
+          log.info("hooks:unregister", { id });
           return mcpText({ ok: true, handlerId: id });
         }
 
@@ -315,7 +317,7 @@ export function buildHooksHandler(registry: HookRegistry = sharedRegistry): (inp
         }
       }
     } catch (err) {
-      logger.error("hooks:error", { action: input.action, error: String(err) });
+      log.error("hooks:error", { action: input.action, error: String(err) });
       return mcpError(`hooks ${input.action} failed: ${String(err)}`);
     }
   };

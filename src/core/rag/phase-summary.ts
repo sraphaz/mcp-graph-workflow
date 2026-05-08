@@ -23,10 +23,12 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 
 import { TASK_TYPES, DESIGN_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
+
+const log = createLogger({ layer: "rag", source: "phase-summary.ts" });
 
 export interface PhaseSummaryResult {
   indexed: boolean;
@@ -60,10 +62,10 @@ export function generateAndIndexPhaseSummary(
       },
     });
 
-    logger.info("Phase summary indexed", { fromPhase, toPhase });
+    log.info("Phase summary indexed", { fromPhase, toPhase });
     return { indexed: true, summaryText };
   } catch (err) {
-    logger.warn("Phase summary indexing failed", { error: String(err) });
+    log.warn("Phase summary indexing failed", { error: String(err) });
     return { indexed: false, summaryText };
   }
 }

@@ -24,7 +24,9 @@
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import type { KnowledgeDocument } from "../../schemas/knowledge.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "challenge-indexer.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -79,7 +81,7 @@ export function indexChallengeReport(
     },
   });
 
-  logger.info("challenge-indexer:indexed", {
+  log.info("challenge-indexer:indexed", {
     nodeId: report.nodeId,
     grade: report.grade,
     docId: doc.id,
@@ -104,7 +106,7 @@ export function searchChallengeHistory(
     .filter((r) => r.sourceType === "challenge_report")
     .slice(0, limit);
 
-  logger.debug("challenge-indexer:search", {
+  log.debug("challenge-indexer:search", {
     query,
     totalResults: allResults.length,
     challengeResults: filtered.length,

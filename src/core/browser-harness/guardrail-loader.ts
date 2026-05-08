@@ -14,7 +14,9 @@ import {
   HarnessGuardrailSchema,
   type HarnessGuardrail,
 } from "../../schemas/browser-harness.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "guardrail-loader.ts" });
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -43,7 +45,7 @@ function resolveSkillPath(): string | null {
 export function loadGuardrail(skillPath?: string): HarnessGuardrail {
   const path = skillPath ?? resolveSkillPath();
   if (!path) {
-    logger.debug("bh:guardrail:default", { reason: "SKILL.md not found, using permissive defaults" });
+    log.debug("bh:guardrail:default", { reason: "SKILL.md not found, using permissive defaults" });
     return defaultGuardrail();
   }
   try {
@@ -57,7 +59,7 @@ export function loadGuardrail(skillPath?: string): HarnessGuardrail {
       selfHealPolicy: fm.selfHealPolicy ?? {},
     });
   } catch (err) {
-    logger.warn("bh:guardrail:load:error", { error: err instanceof Error ? err.message : String(err) });
+    log.warn("bh:guardrail:load:error", { error: err instanceof Error ? err.message : String(err) });
     return defaultGuardrail();
   }
 }

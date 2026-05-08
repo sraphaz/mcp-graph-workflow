@@ -22,7 +22,9 @@
 
 import type Database from "better-sqlite3";
 import { RelevanceTracker } from "./relevance-tracker.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "relevance-boost.ts" });
 
 export interface ScoredResult {
   id: string;
@@ -55,7 +57,7 @@ export function applyRelevanceBoosts<T extends ScoredResult>(
   }
 
   if (boostedCount > 0) {
-    logger.debug("relevance-boost:applied", { boostedCount, totalResults: results.length });
+    log.debug("relevance-boost:applied", { boostedCount, totalResults: results.length });
   }
 
   return results;

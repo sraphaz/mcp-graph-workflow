@@ -20,7 +20,9 @@ import {
   recordSnapshot,
   computeSuccessRate,
 } from "../../core/analyzer/lifecycle-health-snapshots.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "api", source: "lifecycle-health.ts" });
 
 const TrendQuerySchema = z.object({
   window: z.coerce.number().int().positive().max(100).optional(),
@@ -128,7 +130,7 @@ export function createLifecycleHealthRouter(storeRef: StoreRef): Router {
       try {
         recordSnapshot(store.getDb(), report);
       } catch (err) {
-        logger.warn("api:lifecycle-health:snapshot_failed", { error: String(err) });
+        log.warn("api:lifecycle-health:snapshot_failed", { error: String(err) });
       }
       res.json(report);
     } catch (err) {

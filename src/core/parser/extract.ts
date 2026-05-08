@@ -25,7 +25,9 @@ import { segment } from "./segment.js";
 import { extractTableSections } from "./segment.js";
 import { classifySection, classifyText, classifyTableRows } from "./classify.js";
 import type { ClassifiedBlock, ClassifiedItem, BlockType } from "./classify.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "extract.ts" });
 
 export interface ExtractionResult {
   blocks: ClassifiedBlock[];
@@ -50,11 +52,11 @@ function countByType(blocks: ClassifiedBlock[], items: ClassifiedItem[], type: B
 
 /** Parse raw PRD text into classified entities (epics, tasks, risks, AC, etc.). */
 export function extractEntities(rawText: string): ExtractionResult {
-  logger.info(`Extracting entities from ${rawText.length} chars`);
+  log.info(`Extracting entities from ${rawText.length} chars`);
   const normalized = normalize(rawText);
   const rawSections = segment(normalized);
   const sections = extractTableSections(rawSections);
-  logger.info(`Segmented into ${sections.length} sections (${rawSections.length} raw + ${sections.length - rawSections.length} tables)`);
+  log.info(`Segmented into ${sections.length} sections (${rawSections.length} raw + ${sections.length - rawSections.length} tables)`);
 
   const blocks: ClassifiedBlock[] = sections.map((sec) => {
     // Classify table sections using table-specific heuristics
@@ -143,7 +145,7 @@ export function extractEntities(rawText: string): ExtractionResult {
 
   const allItems = blocks.flatMap((b) => b.items);
 
-  logger.info(`Extraction complete: ${blocks.length} blocks, ${allItems.length} items`);
+  log.info(`Extraction complete: ${blocks.length} blocks, ${allItems.length} items`);
 
   return {
     blocks,

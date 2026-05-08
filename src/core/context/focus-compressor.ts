@@ -25,7 +25,9 @@
 import { rankChunksByBm25 } from "./bm25-compressor.js";
 import { compressText } from "./compress-text.js";
 import { estimateTokens } from "./token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "focus-compressor.ts" });
 
 export type PressureLevel = "none" | "medium" | "high" | "critical";
 
@@ -198,7 +200,7 @@ export function compressWithFocus(
   const outputTokens = estimateTokens(compressed);
   const avgScore = ranked.length > 0 ? ranked.reduce((s, r) => s + r.score, 0) / ranked.length : 0;
 
-  logger.debug("focus-compressor", {
+  log.debug("focus-compressor", {
     focusTopic,
     inputTokens,
     outputTokens,

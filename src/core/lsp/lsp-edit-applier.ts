@@ -27,7 +27,9 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import type { LspWorkspaceEdit, LspTextEdit, EditApplyResult } from "./lsp-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "lsp-edit-applier.ts" });
 
 /**
  * Groups edits by file path.
@@ -190,7 +192,7 @@ export class LspEditApplier {
         const newContent = applyEditsToContent(content, sortedEdits);
         await writeFile(filePath, newContent, "utf-8");
         filesModified.push(filePath);
-        logger.debug("LSP edit applied", { file: filePath, edits: edits.length });
+        log.debug("LSP edit applied", { file: filePath, edits: edits.length });
       } catch (err) {
         errors.push(`Failed to write ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
 
@@ -201,7 +203,7 @@ export class LspEditApplier {
             try {
               await writeFile(modifiedFile, backup, "utf-8");
             } catch (rollbackErr) {
-              logger.error("Rollback failed", {
+              log.error("Rollback failed", {
                 file: modifiedFile,
                 error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
               });
@@ -231,9 +233,9 @@ export class LspEditApplier {
     for (const [filePath, content] of result.backups) {
       try {
         await writeFile(filePath, content, "utf-8");
-        logger.debug("LSP edit rolled back", { file: filePath });
+        log.debug("LSP edit rolled back", { file: filePath });
       } catch (err) {
-        logger.error("Rollback failed", {
+        log.error("Rollback failed", {
           file: filePath,
           error: err instanceof Error ? err.message : String(err),
         });

@@ -32,7 +32,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "token-budget-policy.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -175,7 +177,7 @@ export class TokenBudgetPolicy {
        WHERE state_phase = ? AND state_grade = ? AND action_preset = ?`,
     ).run(newQ, visits, now, phase, grade, preset);
 
-    logger.debug("token-budget-policy:update", {
+    log.debug("token-budget-policy:update", {
       phase, grade, preset, reward, oldQ: currentQ, newQ, visits,
     });
 
@@ -203,7 +205,7 @@ export class TokenBudgetPolicy {
 
     const maxQ = Math.max(...values);
     if (Math.abs(maxQ - mean) > DIVERGENCE_SIGMA * sigma) {
-      logger.warn("token-budget-policy:divergence-reset", {
+      log.warn("token-budget-policy:divergence-reset", {
         phase, grade, maxQ, mean, sigma,
       });
 
@@ -243,6 +245,6 @@ export class TokenBudgetPolicy {
       `UPDATE token_budget_policy SET q_value = 0, visits = 0, updated_at = ?`,
     ).run(new Date().toISOString());
 
-    logger.info("token-budget-policy:reset");
+    log.info("token-budget-policy:reset");
   }
 }

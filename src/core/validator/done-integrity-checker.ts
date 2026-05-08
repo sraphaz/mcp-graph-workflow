@@ -22,7 +22,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { DoneIntegrityReport, DoneIntegrityIssue } from "../../schemas/validator-schema.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "done-integrity-checker.ts" });
 
 /** Validate that done tasks have consistent state and deps. */
 export function checkDoneIntegrity(doc: GraphDocument): DoneIntegrityReport {
@@ -62,7 +64,7 @@ export function checkDoneIntegrity(doc: GraphDocument): DoneIntegrityReport {
   const passed = issues.length === 0;
   // Bug #074: indicate vacuous pass when no done tasks exist
   const info = doneTasks.length === 0 ? "0 done tasks to check — vacuous pass" : undefined;
-  logger.info("done-integrity-check", { passed, issueCount: issues.length, doneTasks: doneTasks.length });
+  log.info("done-integrity-check", { passed, issueCount: issues.length, doneTasks: doneTasks.length });
 
   return { issues, passed, ...(info ? { info } : {}) };
 }

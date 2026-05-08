@@ -33,7 +33,9 @@ import { TASK_TYPES } from "../utils/node-type-sets.js";
 import { nodeHasAc } from "../utils/ac-helpers.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { McpGraphError, getErrorMessage } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "review-readiness.ts" });
 
 /** Run VALIDATE-to-REVIEW gate checks on the graph. */
 export function checkReviewReadiness(doc: GraphDocument): ReviewReadinessReport {
@@ -194,7 +196,7 @@ export function checkReviewReadiness(doc: GraphDocument): ReviewReadinessReport 
       });
     }
   } catch (err) {
-    logger.debug("review-readiness: harness scan failed", { error: getErrorMessage(err) });
+    log.debug("review-readiness: harness scan failed", { error: getErrorMessage(err) });
   }
 
   // ── Scoring ──
@@ -212,7 +214,7 @@ export function checkReviewReadiness(doc: GraphDocument): ReviewReadinessReport 
     ? `Review Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `Review Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("review-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("review-readiness", { ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { checks, ready, score, grade, summary };
 }

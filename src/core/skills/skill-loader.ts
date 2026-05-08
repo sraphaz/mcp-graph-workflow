@@ -22,7 +22,7 @@
  */
 
 import { CustomSkillInputSchema, type CustomSkillInput } from "../../schemas/skill.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 
 export interface SkillMarkdownResult {
   ok: boolean;
@@ -164,7 +164,7 @@ export function parseSkillMarkdown(content: string): SkillMarkdownResult {
   const parsed = CustomSkillInputSchema.safeParse(raw);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
-    logger.warn("skill-loader:validation_failed", { issues });
+    log.warn("skill-loader:validation_failed", { issues });
     return { ok: false, error: `Validation failed: ${issues}` };
   }
 
@@ -173,6 +173,8 @@ export function parseSkillMarkdown(content: string): SkillMarkdownResult {
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+
+const log = createLogger({ layer: "core", source: "skill-loader.ts" });
 
 export interface DirSkillsResult {
   loaded: CustomSkillInput[];

@@ -30,7 +30,9 @@ import type {
   AddTranslationProjectFileInput,
 } from "./translation-project-types.js";
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "translation-project-store.ts" });
 
 // --- Row types (snake_case from SQLite) ---
 
@@ -125,7 +127,7 @@ export class TranslationProjectStore {
       now,
     );
 
-    logger.info("translation-project:create", { projectId: id, name: input.name });
+    log.info("translation-project:create", { projectId: id, name: input.name });
     return this.getProject(id) as TranslationProject;
   }
 
@@ -171,7 +173,7 @@ export class TranslationProjectStore {
 
     this.db.prepare(`UPDATE translation_projects SET ${sets.join(", ")} WHERE id = ?`).run(...values, id);
 
-    logger.debug("translation-project:update", { projectId: id, fields: Object.keys(input) });
+    log.debug("translation-project:update", { projectId: id, fields: Object.keys(input) });
     return this.getProject(id);
   }
 
@@ -180,7 +182,7 @@ export class TranslationProjectStore {
     this.db.prepare("DELETE FROM translation_project_files WHERE translation_project_id = ?").run(id);
     const resultValue = this.db.prepare("DELETE FROM translation_projects WHERE id = ?").run(id);
     if (resultValue.changes > 0) {
-      logger.info("translation-project:delete", { projectId: id });
+      log.info("translation-project:delete", { projectId: id });
     }
     return resultValue.changes > 0;
   }
@@ -202,7 +204,7 @@ export class TranslationProjectStore {
       now,
     );
 
-    logger.debug("translation-project:addFile", { fileId: id, filePath: input.filePath });
+    log.debug("translation-project:addFile", { fileId: id, filePath: input.filePath });
     return this.getFile(id) as TranslationProjectFile;
   }
 
@@ -248,7 +250,7 @@ export class TranslationProjectStore {
 
     this.db.prepare(`UPDATE translation_project_files SET ${sets.join(", ")} WHERE id = ?`).run(...values, fileId);
 
-    logger.debug("translation-project:updateFile", { fileId, fields: Object.keys(input) });
+    log.debug("translation-project:updateFile", { fileId, fields: Object.keys(input) });
     return this.getFile(fileId);
   }
 

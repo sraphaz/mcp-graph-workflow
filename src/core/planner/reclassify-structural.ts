@@ -11,7 +11,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "reclassify-structural.ts" });
 
 const STRUCTURAL_HEADING_PATTERNS: RegExp[] = [
   /^\s*TIER\s+[A-Z]\s*[—-]/i,
@@ -91,9 +93,9 @@ export function reclassifyStructural(
       const resultValue = store.updateNode(candidate.nodeId, { metadata: nextMetadata });
       if (resultValue) applied++;
     }
-    logger.info("reclassify-structural:applied", { applied, totalCandidates: candidates.length });
+    log.info("reclassify-structural:applied", { applied, totalCandidates: candidates.length });
   } else {
-    logger.info("reclassify-structural:dry-run", { totalCandidates: candidates.length });
+    log.info("reclassify-structural:dry-run", { totalCandidates: candidates.length });
   }
 
   return { candidates, totalCandidates: candidates.length, applied };

@@ -30,11 +30,13 @@ import { NodeNotFoundError } from "../../core/utils/errors.js";
 import { DEFAULT_NODE_STATUS, DEFAULT_NODE_PRIORITY } from "../../core/utils/constants.js";
 import { generateId } from "../../core/utils/id.js";
 import { now } from "../../core/utils/time.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { checkCircularity } from "../../core/utils/circularity.js";
 import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
 import { indexNodeAsKnowledge, removeNodeFromKnowledge } from "../../core/rag/node-indexer.js";
 import { extractAgentId } from "../agent-identity.js";
+
+const log = createLogger({ layer: "mcp", source: "node.ts" });
 
 /** registerNode — auto-generated description placeholder. */
 export function registerNode(server: McpServer, store: SqliteStore): void {
@@ -82,7 +84,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
     },
     async ({ action, id, type, title, description, status, priority, xpSize, estimateMinutes, tags, parentId, sprint, acceptanceCriteria, acceptanceCriteria_append, testFiles, blocked, autoSequence, metadata, nodes, evolutionReason }, extra) => {
       const agentId = extractAgentId(extra);
-      logger.debug("tool:node", { action, id, type, title, agentId });
+      log.debug("tool:node", { action, id, type, title, agentId });
 
       if (action === "add") {
         if (!type || !title) {
@@ -171,7 +173,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         }
 
         indexNodeAsKnowledge(store.getDb(), node);
-        logger.info("tool:node:add:ok", { nodeId: node.id, type: node.type });
+        log.info("tool:node:add:ok", { nodeId: node.id, type: node.type });
         return mcpText({ ok: true, node });
       }
 
@@ -258,12 +260,12 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
         const updated = store.updateNode(id, fields, { agentId });
         if (!updated) {
           const err = new NodeNotFoundError(id);
-          logger.warn("tool:node:update:fail", { error: err.message });
+          log.warn("tool:node:update:fail", { error: err.message });
           return mcpError(err);
         }
 
         indexNodeAsKnowledge(store.getDb(), updated);
-        logger.info("tool:node:update:ok", { id });
+        log.info("tool:node:update:ok", { id });
         return mcpText({ ok: true, node: updated });
       }
 
@@ -366,7 +368,7 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
           }
         }
 
-        logger.info("tool:node:batch_add:ok", { inserted: inserted.length, errors: errors.length });
+        log.info("tool:node:batch_add:ok", { inserted: inserted.length, errors: errors.length });
         return mcpText({ ok: true, inserted, errors });
       }
 
@@ -381,11 +383,11 @@ export function registerNode(server: McpServer, store: SqliteStore): void {
       const deleted = store.deleteNode(id);
       if (!deleted) {
         const err = new NodeNotFoundError(id);
-        logger.warn("tool:node:delete:fail", { error: err.message });
+        log.warn("tool:node:delete:fail", { error: err.message });
         return mcpError(err);
       }
 
-      logger.info("tool:node:delete:ok", { id });
+      log.info("tool:node:delete:ok", { id });
       return mcpText({ ok: true, deletedId: id });
     },
   );

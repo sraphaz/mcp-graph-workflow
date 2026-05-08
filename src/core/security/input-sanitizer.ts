@@ -20,12 +20,14 @@
  * Inspired by hermes-agent security hardening. Detection-only mode: logs, does not block.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type {
   SanitizationReport,
   ExfiltrationReport,
   ToolArgsSanitizationResult,
 } from "../../schemas/security.schema.js";
+
+const log = createLogger({ layer: "core", source: "input-sanitizer.ts" });
 
 export type { SanitizationReport, ExfiltrationReport, ToolArgsSanitizationResult };
 
@@ -190,7 +192,7 @@ export function sanitizeToolArgs(args: Record<string, unknown>): ToolArgsSanitiz
   const sanitized = sanitizeRecord(args);
 
   if (anyInjection) {
-    logger.warn("security:sanitize_tool_args", { injectionDetected: true });
+    log.warn("security:sanitize_tool_args", { injectionDetected: true });
   }
 
   return { sanitized, injectionDetected: anyInjection, invisibleCharsRemoved: totalInvisible };

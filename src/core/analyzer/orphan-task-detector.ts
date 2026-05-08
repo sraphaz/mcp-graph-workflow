@@ -30,7 +30,9 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { GraphNode } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "orphan-task-detector.ts" });
 
 export interface OrphanEvidence {
   type: "file_exists" | "test_exists" | "code_symbol_match" | "title_heuristic";
@@ -83,7 +85,7 @@ export function detectOrphanTasks(
     }
   }
 
-  logger.debug("orphan-detector:scan", {
+  log.debug("orphan-detector:scan", {
     checked: candidates.length,
     orphansFound: orphans.length,
   });

@@ -25,7 +25,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "config-coverage.ts" });
 
 export interface ConfigCoverageReport {
   totalConfigs: number;
@@ -68,7 +70,7 @@ export function analyzeConfigCoverage(doc: GraphDocument): ConfigCoverageReport 
     ? Math.round((referencedCount / configNodes.length) * 100)
     : 100;
 
-  logger.debug("analyzer:config-coverage", {
+  log.debug("analyzer:config-coverage", {
     totalConfigs: configNodes.length,
     orphans: orphanConfigs.length,
     undefined: referencedButUndefined.length,

@@ -28,7 +28,7 @@ import { nodeHasAc, getNodeAcTexts } from "../utils/ac-helpers.js";
 import { findTransitiveBlockers } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { isCorePath } from "../citations/citation-validator.js";
 import { hasCitation } from "../citations/citation-extractor.js";
 import { getTouchedFiles } from "../planner/touched-files.js";
@@ -36,6 +36,8 @@ import { evaluateComplexityBudget } from "./complexity-budget.js";
 import { evaluateSurgicalScope } from "./surgical-scope.js";
 import { existsSync, readFileSync } from "node:fs";
 import { join as joinPath, isAbsolute } from "node:path";
+
+const log = createLogger({ layer: "core", source: "definition-of-done.ts" });
 
 const LARGE_XP_THRESHOLD = 4; // L=4, XL=5
 
@@ -262,7 +264,7 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     ? `DoD Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `DoD Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  logger.info("definition-of-done", { nodeId, ready, score, grade, passed: passedChecks, total: totalChecks });
+  log.info("definition-of-done", { nodeId, ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { nodeId, title: node.title, checks, ready, score, grade, summary };
 }

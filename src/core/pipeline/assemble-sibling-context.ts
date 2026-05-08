@@ -24,8 +24,10 @@ import type {
   SubtaskArtifact,
 } from "../store/subtask-artifacts-store.js";
 import { estimateTokens } from "../context/token-estimator.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { OperationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "assemble-sibling-context.ts" });
 
 export interface AssembleSiblingContextOptions {
   epicId: string;
@@ -197,7 +199,7 @@ export function assembleSiblingContext(
   // warning and return empty (per ADR-0047 the fallback is created_at, but
   // without any dep signal we can't know which siblings matter; emptiness is safer).
   if (ancestors.size === 0) {
-    logger.warn("assembly:missing_deps_fallback", {
+    log.warn("assembly:missing_deps_fallback", {
       epicId: opts.epicId,
       subtaskId: opts.subtaskId,
       siblingCount: siblings.length,
@@ -229,7 +231,7 @@ export function assembleSiblingContext(
   // 4. Topological sort
   const sortedIds = topologicalSort(ancestorNodes, depsMap);
   if (!sortedIds) {
-    logger.warn("assembly:cycle_detected", {
+    log.warn("assembly:cycle_detected", {
       epicId: opts.epicId,
       subtaskId: opts.subtaskId,
     });
@@ -277,7 +279,7 @@ export function assembleSiblingContext(
   }
 
   if (truncatedCount > 0) {
-    logger.info("assembly:truncated", {
+    log.info("assembly:truncated", {
       epicId: opts.epicId,
       subtaskId: opts.subtaskId,
       truncatedCount,

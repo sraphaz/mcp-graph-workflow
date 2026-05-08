@@ -52,8 +52,10 @@ import { indexAllNodes } from "../../core/rag/node-indexer.js";
 import { indexCodeAnalysis } from "../../core/rag/code-context-indexer.js";
 import { reindexCodeForProject } from "../../core/code/code-indexer.js";
 import { invalidateRagCache } from "./context.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "knowledge.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Action handlers                                                    */
@@ -155,7 +157,7 @@ function handleStats(store: SqliteStore, topK: number | undefined): ReturnType<t
     tokenSavings: savingsReport,
   };
 
-  logger.info("tool:knowledge:stats:ok", { totalDocs });
+  log.info("tool:knowledge:stats:ok", { totalDocs });
   return mcpText(stats);
 }
 
@@ -185,7 +187,7 @@ async function handleExport(
     const absolutePath = assertPathInsideProject(targetPath);
     writeFileSync(absolutePath, JSON.stringify(resultValue.package, null, 2), "utf-8");
 
-    logger.info("tool:knowledge:export:ok", { path: absolutePath, ...resultValue.stats });
+    log.info("tool:knowledge:export:ok", { path: absolutePath, ...resultValue.stats });
     return mcpText({
       ok: true,
       action: "export",
@@ -212,7 +214,7 @@ async function handleExport(
 
     const resultValue = await importKnowledge(db, basePath, parsed.data);
 
-    logger.info("tool:knowledge:export:import:ok", {
+    log.info("tool:knowledge:export:import:ok", {
       documentsImported: resultValue.documentsImported,
       documentsSkipped: resultValue.documentsSkipped,
       memoriesImported: resultValue.memoriesImported,
@@ -243,7 +245,7 @@ async function handleExport(
 
     const preview = await previewImport(db, basePath, parsed.data);
 
-    logger.info("tool:knowledge:export:preview:ok", {
+    log.info("tool:knowledge:export:preview:ok", {
       newDocuments: preview.newDocuments,
       existingDocuments: preview.existingDocuments,
     });
@@ -272,7 +274,7 @@ function handleFeedback(
   // Bug #084: pass empty string instead of undefined when no query provided
   applyFeedback(store.getDb(), docId, query || "", feedbackType, contextObj);
 
-  logger.info("tool:knowledge:feedback:ok", { docId, feedbackType });
+  log.info("tool:knowledge:feedback:ok", { docId, feedbackType });
   return mcpText({
     ok: true,
     docId,
@@ -311,7 +313,7 @@ function handleBatchFeedback(
   const succeeded = results.filter((r) => r.ok).length;
   const failed = results.filter((r) => !r.ok).length;
 
-  logger.info("tool:knowledge:batch_feedback:ok", { succeeded, failed, total: feedbackItems.length });
+  log.info("tool:knowledge:batch_feedback:ok", { succeeded, failed, total: feedbackItems.length });
   return mcpText({ ok: true, succeeded, failed, total: feedbackItems.length, results });
 }
 
@@ -332,7 +334,7 @@ function handlePrune(
     const ks = new KnowledgeStore(db);
     const budgetLimit = maxDocs ?? 100;
     const resultValue = ks.autoprune(budgetLimit, isDryRun);
-    logger.info("tool:knowledge:prune:budget", { pruned: resultValue.removed, budget: budgetLimit, dryRun: isDryRun });
+    log.info("tool:knowledge:prune:budget", { pruned: resultValue.removed, budget: budgetLimit, dryRun: isDryRun });
     return mcpText({ strategy: "budget", pruned: resultValue.removed, prunedIds: resultValue.removedIds, dryRun: isDryRun, budget: budgetLimit, remaining: ks.count() });
   }
 
@@ -343,7 +345,7 @@ function handlePrune(
     // Dedup now deletes older docs in each pair (unless dryRun)
     const resultValue = pruneKnowledge(db, { strategy: "dedup", dryRun: isDryRun });
 
-    logger.info("tool:knowledge:prune:dedup", {
+    log.info("tool:knowledge:prune:dedup", {
       duplicates: duplicates.length,
       contradictions: contradictions.length,
       deleted: resultValue.pruned,
@@ -372,7 +374,7 @@ function handlePrune(
     dryRun: isDryRun,
   });
 
-  logger.info("tool:knowledge:prune:ok", {
+  log.info("tool:knowledge:prune:ok", {
     strategy,
     pruned: resultValue.pruned,
     dryRun: isDryRun,
@@ -446,7 +448,7 @@ export async function handleReindex(
       const activeProject = store.getActiveProject();
       results.graph = indexAllNodes(store.getDb(), activeProject?.id);
     } catch (err) {
-      logger.warn("node-indexer:reindex-failed", { error: String(err) });
+      log.warn("node-indexer:reindex-failed", { error: String(err) });
       results.graph = { error: "Graph node reindex failed" };
     }
   }
@@ -483,7 +485,7 @@ export async function handleReindex(
       results.code = { symbolIndex, ragContext };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.warn("code-indexer:reindex-failed", { error: errorMsg });
+      log.warn("code-indexer:reindex-failed", { error: errorMsg });
       results.code = { error: `Code symbol reindex failed: ${errorMsg}` };
     }
   }
@@ -492,7 +494,7 @@ export async function handleReindex(
     try {
       results.entities = reindexEntities(store.getDb());
     } catch (err) {
-      logger.warn("entity-indexer:reindex-failed", { error: String(err) });
+      log.warn("entity-indexer:reindex-failed", { error: String(err) });
       results.entities = { error: "Entity reindex failed" };
     }
   }
@@ -503,14 +505,14 @@ export async function handleReindex(
       const summaries = rebuildCommunities(store);
       results.community = { communitiesRebuilt: summaries.length };
     } catch (err) {
-      logger.warn("community-summarizer:reindex-failed", { error: String(err) });
+      log.warn("community-summarizer:reindex-failed", { error: String(err) });
       results.community = { error: "Community rebuild failed" };
     }
   }
 
   results.totalKnowledge = knowledgeStore.count();
 
-  logger.info("tool:knowledge:reindex:ok", { totalKnowledge: results.totalKnowledge });
+  log.info("tool:knowledge:reindex:ok", { totalKnowledge: results.totalKnowledge });
   return mcpText(results);
 }
 
@@ -565,7 +567,7 @@ export function registerKnowledge(server: McpServer, store: SqliteStore): void {
     },
     async (params) => {
       const { action } = params;
-      logger.info("tool:knowledge", { action });
+      log.info("tool:knowledge", { action });
 
       try {
         switch (action) {
@@ -612,7 +614,7 @@ export function registerKnowledge(server: McpServer, store: SqliteStore): void {
             return mcpError(`Unknown knowledge action: ${action}`);
         }
       } catch (err) {
-        logger.error("tool:knowledge failed", { action, error: err instanceof Error ? err.message : String(err) });
+        log.error("tool:knowledge failed", { action, error: err instanceof Error ? err.message : String(err) });
         return mcpError(err instanceof Error ? err : String(err));
       }
     },

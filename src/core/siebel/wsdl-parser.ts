@@ -21,8 +21,10 @@
  */
 
 import { XMLParser } from "fast-xml-parser";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "wsdl-parser.ts" });
 
 // ---- Result types ----
 
@@ -156,7 +158,7 @@ export function parseWsdlContent(content: string, fileName: string): WsdlParseRe
     parsedAt: new Date().toISOString(),
   };
 
-  logger.info("WSDL parsed", {
+  log.info("WSDL parsed", {
     fileName,
     operations: String(operations.length),
     types: String(types.length),

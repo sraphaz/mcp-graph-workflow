@@ -21,8 +21,10 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { WsdlParseResult, WsdlOperation, WsdlComplexType } from "../siebel/wsdl-parser.js";
+
+const log = createLogger({ layer: "rag", source: "wsdl-indexer.ts" });
 
 export interface WsdlIndexResult {
   documentsIndexed: number;
@@ -107,7 +109,7 @@ export function indexWsdlContent(
 
   const docs = knowledgeStore.insertChunks(chunks);
 
-  logger.info("WSDL content indexed", {
+  log.info("WSDL content indexed", {
     sourceFile: metadata.fileName,
     operations: String(operations.length),
     types: String(types.length),

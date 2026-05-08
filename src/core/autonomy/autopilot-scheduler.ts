@@ -11,7 +11,9 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "autopilot-scheduler.ts" });
 
 export const DEFAULT_TICK_MS = 5 * 60 * 1000; // 5 min
 
@@ -61,7 +63,7 @@ export class AutopilotScheduler {
     if (this.timer) return;
     this.timer = setInterval(() => {
       void this.tick().catch((err) => {
-        logger.error("autopilot-scheduler:tick-error", {
+        log.error("autopilot-scheduler:tick-error", {
           error: err instanceof Error ? err.message : String(err),
         });
       });
@@ -78,17 +80,17 @@ export class AutopilotScheduler {
 
   async tick(): Promise<void> {
     if (isAutopilotPaused()) {
-      logger.debug("autopilot-scheduler:paused");
+      log.debug("autopilot-scheduler:paused");
       return;
     }
 
     const node = pickNextReadyNode(this.db);
     if (!node) {
-      logger.debug("autopilot-scheduler:no-ready-node");
+      log.debug("autopilot-scheduler:no-ready-node");
       return;
     }
 
-    logger.info("autopilot-scheduler:dispatch", {
+    log.info("autopilot-scheduler:dispatch", {
       nodeId: node.id,
       title: node.title,
       priority: node.priority,
@@ -97,7 +99,7 @@ export class AutopilotScheduler {
     try {
       await this.dispatcher(node.id);
     } catch (err) {
-      logger.error("autopilot-scheduler:dispatch-failed", {
+      log.error("autopilot-scheduler:dispatch-failed", {
         nodeId: node.id,
         error: err instanceof Error ? err.message : String(err),
       });

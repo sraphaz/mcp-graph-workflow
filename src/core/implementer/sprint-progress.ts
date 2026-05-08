@@ -25,7 +25,9 @@ import type { SprintProgressReport, VelocityTrendDirection } from "../../schemas
 import { calculateVelocity } from "../planner/velocity.js";
 import { findTransitiveBlockers, findCriticalPath } from "../planner/dependency-chain.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "sprint-progress.ts" });
 
 /**
  * Calculate sprint progress with burndown, velocity, blockers, and ETA.
@@ -81,7 +83,7 @@ export function calculateSprintProgress(
 
   const summary = `Sprint Progress: ${done}/${total} done (${donePercent}%). ${blocked} blocked, ${criticalPathRemaining} on critical path.${estimatedCompletionDays !== null ? ` ETA: ~${estimatedCompletionDays} days.` : ""}`;
 
-  logger.info("sprint-progress", {
+  log.info("sprint-progress", {
     sprint: sprint ?? "(all)",
     done,
     total,

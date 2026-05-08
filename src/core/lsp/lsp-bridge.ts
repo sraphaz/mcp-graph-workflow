@@ -41,7 +41,9 @@ import type {
 import type { LspServerManager } from "./lsp-server-manager.js";
 import type { LspCache } from "./lsp-cache.js";
 import type { LspDiagnosticsCollector } from "./lsp-diagnostics.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "lsp-bridge.ts" });
 
 // ---------------------------------------------------------------------------
 // Raw LSP response types (from the protocol, before normalization)
@@ -215,7 +217,7 @@ export class LspBridge {
     const client = await this.manager.getClientForFile(absPath);
 
     if (!client) {
-      logger.warn("lsp-bridge:rename no server available", { file });
+      log.warn("lsp-bridge:rename no server available", { file });
       return null;
     }
 
@@ -237,7 +239,7 @@ export class LspBridge {
 
       return this.normalizeWorkspaceEdit(raw);
     } catch (err) {
-      logger.error("lsp-bridge:rename failed", {
+      log.error("lsp-bridge:rename failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -255,7 +257,7 @@ export class LspBridge {
     );
 
     if (!client) {
-      logger.warn("lsp-bridge:callHierarchyIncoming no server available", { file });
+      log.warn("lsp-bridge:callHierarchyIncoming no server available", { file });
       return [];
     }
 
@@ -289,7 +291,7 @@ export class LspBridge {
 
       return incoming.map((call) => this.normalizeCallHierarchyItem(call.from));
     } catch (err) {
-      logger.error("lsp-bridge:callHierarchyIncoming failed", {
+      log.error("lsp-bridge:callHierarchyIncoming failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -307,7 +309,7 @@ export class LspBridge {
     );
 
     if (!client) {
-      logger.warn("lsp-bridge:callHierarchyOutgoing no server available", { file });
+      log.warn("lsp-bridge:callHierarchyOutgoing no server available", { file });
       return [];
     }
 
@@ -341,7 +343,7 @@ export class LspBridge {
 
       return outgoing.map((call) => this.normalizeCallHierarchyItem(call.to));
     } catch (err) {
-      logger.error("lsp-bridge:callHierarchyOutgoing failed", {
+      log.error("lsp-bridge:callHierarchyOutgoing failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -389,7 +391,7 @@ export class LspBridge {
     const client = await this.manager.getClientForFile(absPath);
 
     if (!client) {
-      logger.warn("lsp-bridge:formatDocument no server available", { file });
+      log.warn("lsp-bridge:formatDocument no server available", { file });
       return [];
     }
 
@@ -418,7 +420,7 @@ export class LspBridge {
         newText: edit.newText,
       }));
     } catch (err) {
-      logger.error("lsp-bridge:formatDocument failed", {
+      log.error("lsp-bridge:formatDocument failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -438,7 +440,7 @@ export class LspBridge {
     const client = await this.manager.getClientForFile(absPath);
 
     if (!client) {
-      logger.warn("lsp-bridge:formatRange no server available", { file });
+      log.warn("lsp-bridge:formatRange no server available", { file });
       return [];
     }
 
@@ -471,7 +473,7 @@ export class LspBridge {
         newText: edit.newText,
       }));
     } catch (err) {
-      logger.error("lsp-bridge:formatRange failed", {
+      log.error("lsp-bridge:formatRange failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -491,7 +493,7 @@ export class LspBridge {
     const client = await this.manager.getClientForFile(absPath);
 
     if (!client) {
-      logger.warn("lsp-bridge:getCodeActions no server available", { file });
+      log.warn("lsp-bridge:getCodeActions no server available", { file });
       return [];
     }
 
@@ -538,7 +540,7 @@ export class LspBridge {
 
       return actions;
     } catch (err) {
-      logger.error("lsp-bridge:getCodeActions failed", {
+      log.error("lsp-bridge:getCodeActions failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });
@@ -565,7 +567,7 @@ export class LspBridge {
       contentChanges: [{ text: content }],
     });
 
-    logger.debug("lsp-bridge:document-changed", { file, version: newVersion });
+    log.debug("lsp-bridge:document-changed", { file, version: newVersion });
   }
 
   // -----------------------------------------------------------------------
@@ -588,7 +590,7 @@ export class LspBridge {
     if (this.cache && mtime) {
       const cached = this.cache.get("default", cacheKey, mtime);
       if (cached != null) {
-        logger.debug("lsp-bridge:cache-hit", { operation, file });
+        log.debug("lsp-bridge:cache-hit", { operation, file });
         return cached as T;
       }
     }
@@ -596,7 +598,7 @@ export class LspBridge {
     // 2. Get client
     const client = await this.manager.getClientForFile(absPath);
     if (!client) {
-      logger.warn("lsp-bridge:no-server", { operation, file });
+      log.warn("lsp-bridge:no-server", { operation, file });
       return null;
     }
 
@@ -615,7 +617,7 @@ export class LspBridge {
 
       return resultValue;
     } catch (err) {
-      logger.error("lsp-bridge:request-failed", {
+      log.error("lsp-bridge:request-failed", {
         operation,
         file,
         lspMethod,
@@ -656,9 +658,9 @@ export class LspBridge {
       });
 
       this.documentVersions.set(uri, 1);
-      logger.debug("lsp-bridge:document-opened", { file, languageId });
+      log.debug("lsp-bridge:document-opened", { file, languageId });
     } catch (err) {
-      logger.warn("lsp-bridge:didOpen-failed", {
+      log.warn("lsp-bridge:didOpen-failed", {
         file,
         error: err instanceof Error ? err.message : String(err),
       });

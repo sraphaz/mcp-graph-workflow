@@ -22,7 +22,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { StatusFlowReport, StatusFlowViolation } from "../../schemas/validator-schema.js";
 import { TASK_TYPES } from "../utils/node-type-sets.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "status-flow-checker.ts" });
 
 /** Validate done tasks went through proper status transitions. */
 export function checkStatusFlow(doc: GraphDocument): StatusFlowReport {
@@ -47,7 +49,7 @@ export function checkStatusFlow(doc: GraphDocument): StatusFlowReport {
     ? 100
     : Math.round(((doneTasks.length - violations.length) / doneTasks.length) * 100);
 
-  logger.info("status-flow-check", { complianceRate, violationCount: violations.length });
+  log.info("status-flow-check", { complianceRate, violationCount: violations.length });
 
   return { violations, complianceRate };
 }

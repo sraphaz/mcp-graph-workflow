@@ -11,7 +11,9 @@
  * kept warm afterwards. Callers should `terminate()` on shutdown.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "ocr-service.ts" });
 
 const DOM_TEXT_SUFFICIENT_CHARS = 20;
 
@@ -58,7 +60,7 @@ export class OcrService {
       const { data } = await worker.recognize(pngBytes);
       return { text: data.text.trim(), confidence: data.confidence };
     } catch (err) {
-      logger.warn("journey:ocr:recognise:fail", { error: err instanceof Error ? err.message : String(err) });
+      log.warn("journey:ocr:recognise:fail", { error: err instanceof Error ? err.message : String(err) });
       return { text: "", confidence: 0 };
     }
   }
@@ -71,7 +73,7 @@ export class OcrService {
     try {
       await wVar.terminate();
     } catch (err) {
-      logger.debug("journey:ocr:terminate:fail", { error: err instanceof Error ? err.message : String(err) });
+      log.debug("journey:ocr:terminate:fail", { error: err instanceof Error ? err.message : String(err) });
     }
   }
 
@@ -89,7 +91,7 @@ export class OcrService {
 
   private async spawnWorker(): Promise<WorkerLike> {
     const lang = this.opts.lang ?? "eng";
-    logger.info("journey:ocr:spawn", { lang });
+    log.info("journey:ocr:spawn", { lang });
     const mod = await import("tesseract.js");
     const createWorker = (mod as unknown as {
       createWorker: (lang: string) => Promise<WorkerLike>;

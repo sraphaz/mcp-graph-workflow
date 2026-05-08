@@ -29,7 +29,9 @@ import { promisify } from "node:util";
 import { LspClient } from "./lsp-client.js";
 import { ServerRegistry } from "./server-registry.js";
 import type { LspServerConfig, LspServerState } from "./lsp-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "lsp-server-manager.ts" });
 
 const execAsync = promisify(exec);
 
@@ -71,14 +73,14 @@ export class LspServerManager {
     // 2. Get config from registry
     const config = this.registry.getConfigForLanguage(languageId);
     if (!config) {
-      logger.debug("LspServerManager: no config for language", { languageId });
+      log.debug("LspServerManager: no config for language", { languageId });
       return null;
     }
 
     // 3. Check if installed
     const installed = await this.isServerInstalled(languageId);
     if (!installed) {
-      logger.warn("LspServerManager: server binary not found", {
+      log.warn("LspServerManager: server binary not found", {
         languageId,
         command: config.command,
       });
@@ -113,7 +115,7 @@ export class LspServerManager {
       // 6. Set up keepAlive timer
       this.resetKeepAlive(languageId);
 
-      logger.info("LspServerManager: server started", {
+      log.info("LspServerManager: server started", {
         languageId,
         pid: String(client.pid ?? "unknown"),
       });
@@ -121,7 +123,7 @@ export class LspServerManager {
       return client;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.error("LspServerManager: failed to start server", {
+      log.error("LspServerManager: failed to start server", {
         languageId,
         error: errorMsg,
       });
@@ -152,7 +154,7 @@ export class LspServerManager {
   async getClientForFile(filePath: string): Promise<LspClient | null> {
     const languageId = this.registry.getLanguageForFile(filePath);
     if (!languageId) {
-      logger.debug("LspServerManager: no language mapping for file", { filePath });
+      log.debug("LspServerManager: no language mapping for file", { filePath });
       return null;
     }
     return this.ensureServer(languageId);
@@ -239,7 +241,7 @@ export class LspServerManager {
       managed.intentionalStop = true;
 
       if (managed.state.status === "ready") {
-        logger.info("LspServerManager: stopping server", { languageId });
+        log.info("LspServerManager: stopping server", { languageId });
         stopPromises.push(managed.client.stop());
       }
     }
@@ -295,7 +297,7 @@ export class LspServerManager {
 
     managed.lastActivity = Date.now();
     managed.keepAliveTimer = setTimeout(() => {
-      logger.info("LspServerManager: keep-alive timeout, stopping server", {
+      log.info("LspServerManager: keep-alive timeout, stopping server", {
         languageId,
       });
       void this.stopServer(languageId);
@@ -327,7 +329,7 @@ export class LspServerManager {
     };
 
     if (managed.restartCount >= MAX_RESTART_ATTEMPTS) {
-      logger.error("LspServerManager: max restart attempts reached", {
+      log.error("LspServerManager: max restart attempts reached", {
         languageId,
         restartCount: String(managed.restartCount),
       });
@@ -337,7 +339,7 @@ export class LspServerManager {
     managed.restartCount++;
     const delay = 1000 * Math.pow(2, managed.restartCount - 1);
 
-    logger.warn("LspServerManager: server crashed, restarting", {
+    log.warn("LspServerManager: server crashed, restarting", {
       languageId,
       restartCount: String(managed.restartCount),
       delayMs: String(delay),
@@ -368,13 +370,13 @@ export class LspServerManager {
 
       this.resetKeepAlive(languageId);
 
-      logger.info("LspServerManager: server restarted successfully", {
+      log.info("LspServerManager: server restarted successfully", {
         languageId,
         attempt: String(managed.restartCount),
       });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.error("LspServerManager: restart failed", {
+      log.error("LspServerManager: restart failed", {
         languageId,
         error: errorMsg,
       });

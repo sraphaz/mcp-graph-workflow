@@ -17,7 +17,9 @@
 
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { createCheckpoint, rollbackToCheckpoint, type GraphCheckpoint } from "./graph-rollback.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "recovery-orchestrator.ts" });
 
 export interface RecoveryConfig { maxRetries: number; }
 export interface RecoveryResult { rolledBack: boolean; attempt: number; canRetry: boolean; escalate: boolean; mttrMs: number; error?: string; }
@@ -38,7 +40,7 @@ export class RecoveryOrchestrator {
   beginTask(nodeId: string): GraphCheckpoint {
     const checkpoint = createCheckpoint(this.store, nodeId);
     this.checkpoints.set(nodeId, checkpoint);
-    logger.info("recovery:begin", { nodeId, snapshotId: checkpoint.snapshotId });
+    log.info("recovery:begin", { nodeId, snapshotId: checkpoint.snapshotId });
     return checkpoint;
   }
 
@@ -55,13 +57,13 @@ export class RecoveryOrchestrator {
     const canRetry = attempt < this.config.maxRetries;
     const escalate = !canRetry;
     if (escalate) { this.escalationCount++; this.checkpoints.delete(nodeId); this.retryCounts.delete(nodeId); }
-    logger.info("recovery:fail", { nodeId, reason, attempt, canRetry, escalate, rolledBack, mttrMs });
+    log.info("recovery:fail", { nodeId, reason, attempt, canRetry, escalate, rolledBack, mttrMs });
     return { rolledBack, attempt, canRetry, escalate, mttrMs };
   }
 
   succeedTask(nodeId: string): void {
     this.checkpoints.delete(nodeId); this.retryCounts.delete(nodeId); this.successCount++;
-    logger.info("recovery:succeed", { nodeId });
+    log.info("recovery:succeed", { nodeId });
   }
 
   hasCheckpoint(nodeId: string): boolean { return this.checkpoints.has(nodeId); }

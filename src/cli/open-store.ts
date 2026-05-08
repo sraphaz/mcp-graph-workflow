@@ -18,7 +18,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { SqliteStore } from "../core/store/sqlite-store.js";
-import { logger } from "../core/utils/logger.js";
+import { createLogger } from "../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "open-store.ts" });
 
 export interface OpenStoreOptions {
   /**
@@ -43,7 +45,7 @@ export function openStoreOrFail(dir: string, opts: OpenStoreOptions = {}): Sqlit
   if (opts.requireExisting === true) {
     const dbPath = join(dir, "workflow-graph", "graph.db");
     if (!existsSync(dbPath)) {
-      logger.error(`No mcp-graph project at ${dir}. Run 'mcp-graph init' to create one.`);
+      log.error(`No mcp-graph project at ${dir}. Run 'mcp-graph init' to create one.`);
       process.exit(1);
     }
   }
@@ -52,8 +54,8 @@ export function openStoreOrFail(dir: string, opts: OpenStoreOptions = {}): Sqlit
   } catch (err) {
     const e = err as { code?: string; message?: string };
     if (e?.code === "SQLITE_NOTADB" || e?.code === "SQLITE_CORRUPT") {
-      logger.error(`Database corrupt at ${dir}/workflow-graph/graph.db: ${e.message ?? "unknown sqlite error"}`);
-      logger.error(`Fix: rm -rf ${dir}/workflow-graph && mcp-graph init`);
+      log.error(`Database corrupt at ${dir}/workflow-graph/graph.db: ${e.message ?? "unknown sqlite error"}`);
+      log.error(`Fix: rm -rf ${dir}/workflow-graph && mcp-graph init`);
       process.exit(1);
     }
     throw err;

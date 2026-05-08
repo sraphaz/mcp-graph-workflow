@@ -8,7 +8,9 @@ import { join, relative } from "node:path";
 import { getSharedHookBus } from "./shared-hook-bus.js";
 import type { HookDedupStore } from "./dedup-store.js";
 import type { AgentSource } from "./config-loader.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "fs-watcher.ts" });
 
 /**
  * Sprint M4 (Multi-CLI PRD) — minimal fs-watcher using node:fs.watch.
@@ -50,7 +52,7 @@ const DEFAULT_IGNORE = [
 /** installFsWatcher — auto-generated description placeholder. */
 export function installFsWatcher(opts: FsWatcherOptions): () => void {
   if (!existsSync(opts.basePath)) {
-    logger.warn("hooks:fs-watcher:basepath_missing", { basePath: opts.basePath });
+    log.warn("hooks:fs-watcher:basepath_missing", { basePath: opts.basePath });
     return () => { /* no-op */ };
   }
 
@@ -78,11 +80,11 @@ export function installFsWatcher(opts: FsWatcherOptions): () => void {
       );
     });
   } catch (err) {
-    logger.warn("hooks:fs-watcher:start_failed", { basePath: opts.basePath, error: String(err) });
+    log.warn("hooks:fs-watcher:start_failed", { basePath: opts.basePath, error: String(err) });
     return () => { /* no-op */ };
   }
 
-  logger.info("hooks:fs-watcher:installed", { basePath: opts.basePath, ignorePatterns: ignorePatterns.length });
+  log.info("hooks:fs-watcher:installed", { basePath: opts.basePath, ignorePatterns: ignorePatterns.length });
 
   return () => {
     for (const timer of debounceTimers.values()) clearTimeout(timer);
@@ -118,7 +120,7 @@ function dispatchChange(
   const agentSource = inferAgentSource(filePath);
   const dedupKey = `${agentSource}:${filePath}:${toolName}`;
   if (dedupStore && !dedupStore.shouldEmit(dedupKey)) {
-    logger.debug("hooks:fs-watcher:dedup_suppressed", { key: dedupKey });
+    log.debug("hooks:fs-watcher:dedup_suppressed", { key: dedupKey });
     return;
   }
   void getSharedHookBus().emit({

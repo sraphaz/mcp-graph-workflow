@@ -15,9 +15,11 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
 import type { PluginManifest as SchemaPluginManifest } from "../../schemas/plugin.schema.js";
+
+const log = createLogger({ layer: "core", source: "plugin-registry.ts" });
 
 export type PluginManifest = SchemaPluginManifest;
 
@@ -72,7 +74,7 @@ export class PluginRegistry {
     };
 
     this.plugins.set(manifest.name, registration);
-    logger.info(`Plugin registered: ${manifest.name}@${manifest.version}`);
+    log.info(`Plugin registered: ${manifest.name}@${manifest.version}`);
   }
 
   remove(name: string): void {
@@ -87,7 +89,7 @@ export class PluginRegistry {
     }
 
     this.plugins.delete(name);
-    logger.info(`Plugin removed: ${name}`);
+    log.info(`Plugin removed: ${name}`);
   }
 
   enable(name: string): void {
@@ -96,7 +98,7 @@ export class PluginRegistry {
       throw new PluginNotFoundError(name);
     }
     plugin.status = "enabled";
-    logger.info(`Plugin enabled: ${name}`);
+    log.info(`Plugin enabled: ${name}`);
   }
 
   disable(name: string): void {
@@ -105,7 +107,7 @@ export class PluginRegistry {
       throw new PluginNotFoundError(name);
     }
     plugin.status = "disabled";
-    logger.info(`Plugin disabled: ${name}`);
+    log.info(`Plugin disabled: ${name}`);
   }
 
   get(name: string): PluginRegistration | undefined {

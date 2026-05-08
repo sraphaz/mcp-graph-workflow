@@ -19,8 +19,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { wrapToolsWithGates } from "../unified-gate.js";
 import { LockManager } from "../../core/store/lock-manager.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { isToolVisibleForProfile, type ProfileFilter } from "./taxonomy.js";
+
+const log = createLogger({ layer: "mcp", source: "index.ts" });
 
 // T2.5 — Lazy MCP tool imports.
 //
@@ -46,7 +48,7 @@ export async function registerAllTools(
     const teamTaskMode = store.getProjectSetting("team_task_mode");
     if (teamTaskMode === "on") {
       lockManager = new LockManager(store.getDb());
-      logger.info("tools:teamTask:enabled", { lockManager: true });
+      log.info("tools:teamTask:enabled", { lockManager: true });
     }
   } catch {
     // Project may not be initialized yet — no team task mode

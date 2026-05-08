@@ -21,7 +21,9 @@
  */
 
 import type { WsdlParseResult, WsdlField } from "./wsdl-parser.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "wsdl-doc-generator.ts" });
 
 function formatFieldType(field: WsdlField): string {
   const base = field.type;
@@ -86,7 +88,7 @@ export function generateWsdlDocumentation(wsdl: WsdlParseResult): string {
   if (wsdl.operations.length === 0) {
     sections.push("No operations defined in this WSDL.\n");
 
-    logger.info("WSDL documentation generated", { serviceName, operations: "0" });
+    log.info("WSDL documentation generated", { serviceName, operations: "0" });
     return sections.join("\n");
   }
 
@@ -118,7 +120,7 @@ export function generateWsdlDocumentation(wsdl: WsdlParseResult): string {
     sections.push(renderSequenceDiagram(op.name, serviceName, op.soapAction));
   }
 
-  logger.info("WSDL documentation generated", {
+  log.info("WSDL documentation generated", {
     serviceName,
     operations: String(wsdl.operations.length),
   });

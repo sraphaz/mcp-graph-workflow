@@ -8,8 +8,10 @@
 
 import { z } from "zod/v4";
 import { PlannedStepSchema, type PlannedStep } from "../../schemas/browser-harness.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { OperationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "llm-planner.ts" });
 
 export interface LlmLike {
   generate(messages: ReadonlyArray<{ role: "system" | "user" | "assistant"; content: string }>): Promise<{ text: string }>;
@@ -101,7 +103,7 @@ export class LlmPlanner {
       } catch (err) {
         lastErr = err;
         feedback = err instanceof Error ? err.message : String(err);
-        logger.warn("bh:llm-planner:retry", { attempt, error: feedback });
+        log.warn("bh:llm-planner:retry", { attempt, error: feedback });
       }
     }
     throw lastErr instanceof Error

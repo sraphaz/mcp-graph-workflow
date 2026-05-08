@@ -16,11 +16,13 @@
  */
 
 import { Router } from "express";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import { buildTaskContext, computeLayeredMetrics, type LayeredTokenMetrics } from "../../core/context/compact-context.js";
 import { detectCycles } from "../../core/planner/dependency-chain.js";
 import { ToolTokenStore, type ToolTokenSummary } from "../../core/store/tool-token-store.js";
+
+const log = createLogger({ layer: "api", source: "benchmark.ts" });
 
 /** createBenchmarkRouter — auto-generated description placeholder. */
 export function createBenchmarkRouter(storeRef: StoreRef): Router {
@@ -141,7 +143,7 @@ export function createBenchmarkRouter(storeRef: StoreRef): Router {
           toolTokenUsage = tokenStore.getSummary(project.id);
         }
       } catch (err) {
-        logger.debug("benchmark:toolTokenStoreUnavailable", { error: err instanceof Error ? err.message : String(err) });
+        log.debug("benchmark:toolTokenStoreUnavailable", { error: err instanceof Error ? err.message : String(err) });
         // Pre-migration: table may not exist yet
       }
 

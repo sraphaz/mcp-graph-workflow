@@ -22,8 +22,10 @@ import { JourneyStore } from "../../core/journey/journey-store.js";
 import { KnowledgeStore } from "../../core/store/knowledge-store.js";
 import { indexJourneyMaps } from "../../core/rag/journey-indexer.js";
 import { indexEntitiesForSource } from "../../core/rag/entity-index-hook.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "journey.ts" });
 
 function getJourneyStore(store: SqliteStore): JourneyStore {
   const project = store.getProject();
@@ -50,14 +52,14 @@ export function registerJourney(server: McpServer, store: SqliteStore): void {
         .describe("Search query for screens (required for 'search')"),
     },
     async ({ action, mapId, query }) => {
-      logger.debug("tool:journey", { action, mapId, query });
+      log.debug("tool:journey", { action, mapId, query });
 
       const journeyStore = getJourneyStore(store);
 
       switch (action) {
         case "list": {
           const maps = journeyStore.listMaps();
-          logger.info("tool:journey:list", { count: maps.length });
+          log.info("tool:journey:list", { count: maps.length });
           return mcpText({
             action: "list",
             total: maps.length,
@@ -110,7 +112,7 @@ export function registerJourney(server: McpServer, store: SqliteStore): void {
             path: v.path.map((id) => screenMap.get(id)?.title ?? id),
           }));
 
-          logger.info("tool:journey:get", { mapId, screens: map.screens.length });
+          log.info("tool:journey:get", { mapId, screens: map.screens.length });
           return mcpText({
             action: "get",
             id: map.id,
@@ -172,7 +174,7 @@ export function registerJourney(server: McpServer, store: SqliteStore): void {
             }
           }
 
-          logger.info("tool:journey:search", { query, results: results.length });
+          log.info("tool:journey:search", { query, results: results.length });
           return mcpText({
             action: "search",
             query,
@@ -185,7 +187,7 @@ export function registerJourney(server: McpServer, store: SqliteStore): void {
           const knowledgeStore = new KnowledgeStore(store.getDb());
           const resultValue = indexJourneyMaps(knowledgeStore, journeyStore);
           indexEntitiesForSource(store.getDb(), "journey");
-          logger.info("tool:journey:index", { mapsIndexed: resultValue.mapsIndexed, documentsIndexed: resultValue.documentsIndexed });
+          log.info("tool:journey:index", { mapsIndexed: resultValue.mapsIndexed, documentsIndexed: resultValue.documentsIndexed });
           return mcpText({
             action: "index",
             mapsIndexed: resultValue.mapsIndexed,

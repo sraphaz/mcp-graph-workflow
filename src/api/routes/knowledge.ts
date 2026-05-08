@@ -29,8 +29,10 @@ import { chunkText } from "../../core/rag/chunk-text.js";
 import { exportKnowledge, importKnowledge, previewImport } from "../../core/knowledge/knowledge-packager.js";
 import { KnowledgePackageSchema } from "../../schemas/knowledge-package.schema.js";
 import { applyFeedback } from "../../core/rag/knowledge-feedback.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { safeParseInt } from "../../core/utils/parse-query.js";
+
+const log = createLogger({ layer: "api", source: "knowledge.ts" });
 
 const UploadSchema = z.object({
   title: z.string().min(1),
@@ -85,7 +87,7 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
         })),
       );
 
-      logger.info("Knowledge uploaded", { title, chunks: docs.length });
+      log.info("Knowledge uploaded", { title, chunks: docs.length });
 
       res.status(201).json({
         ok: true,
@@ -221,7 +223,7 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
         includeRelations: true,
       });
 
-      logger.info("knowledge:export:ok", { ...resultValue.stats });
+      log.info("knowledge:export:ok", { ...resultValue.stats });
       res.json({ ok: true, package: resultValue.package, stats: resultValue.stats });
     } catch (err) {
       next(err);
@@ -244,7 +246,7 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
       const basePath = process.cwd();
       const resultValue = await importKnowledge(db, basePath, parsed.data);
 
-      logger.info("knowledge:import:ok", { documentsImported: resultValue.documentsImported });
+      log.info("knowledge:import:ok", { documentsImported: resultValue.documentsImported });
       res.json({ ok: true, resultValue });
     } catch (err) {
       next(err);
@@ -267,7 +269,7 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
       const basePath = process.cwd();
       const preview = await previewImport(db, basePath, parsed.data);
 
-      logger.info("knowledge:preview:ok", { newDocuments: preview.newDocuments });
+      log.info("knowledge:preview:ok", { newDocuments: preview.newDocuments });
       res.json({ ok: true, preview });
     } catch (err) {
       next(err);
@@ -291,7 +293,7 @@ export function createKnowledgeRouter(storeRef: StoreRef): Router {
       const contextObj = context ? { note: context } : undefined;
       applyFeedback(db, id, query ?? "", action as "helpful" | "unhelpful" | "outdated", contextObj);
 
-      logger.info("knowledge:feedback:ok", { docId: id, action });
+      log.info("knowledge:feedback:ok", { docId: id, action });
       res.json({ ok: true, docId: id, action });
     } catch (err) {
       next(err);

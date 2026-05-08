@@ -26,7 +26,9 @@
  */
 
 import { tokenize } from "../search/tokenizer.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "query-expander.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -84,7 +86,7 @@ export function expandQuery(
   try {
     docs = retriever(query, cfg.topK);
   } catch {
-    logger.debug("query-expander: retriever failed, returning original query");
+    log.debug("query-expander: retriever failed, returning original query");
     return { expandedQuery: query, addedTerms: [], expanded: false };
   }
 
@@ -107,7 +109,7 @@ export function expandQuery(
   // Build expanded query: original + expansion terms
   const expandedQuery = `${query} ${expansionTerms.join(" ")}`;
 
-  logger.debug("query-expander:expanded", {
+  log.debug("query-expander:expanded", {
     original: query,
     addedTerms: expansionTerms,
     docCount: docs.length,

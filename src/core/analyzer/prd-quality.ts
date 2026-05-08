@@ -29,7 +29,9 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { PrdQualityReport, PrdQualitySection, SectionQuality } from "../../schemas/analyzer-schema.js";
 import { scoreToGrade } from "../utils/grading.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "prd-quality.ts" });
 
 const SECTION_WEIGHTS = {
   requirements: 25,
@@ -187,7 +189,7 @@ export function analyzePrdQuality(doc: GraphDocument): PrdQualityReport {
 
   const summary = `PRD Quality: ${grade} (${score}/100). ${readyForDesign ? "Pronto para DESIGN." : "Não atende os critérios mínimos para avançar."}`;
 
-  logger.info("prd-quality", { score, grade, readyForDesign });
+  log.info("prd-quality", { score, grade, readyForDesign });
 
   return { score, grade, sections, readyForDesign, summary };
 }

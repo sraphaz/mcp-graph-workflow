@@ -21,8 +21,10 @@
  */
 
 import { createHash } from "crypto";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { SpecStore } from "./spec-store.js";
+
+const log = createLogger({ layer: "core", source: "sync-engine.ts" });
 
 export interface SpecImpact {
   specId: string;
@@ -94,7 +96,7 @@ export function syncSpecToGraph(
   const updated = specStore.get(specId);
   const newVersion = updated?.version ?? spec.version + 1;
 
-  logger.info("Spec synced", { specId, newVersion, oldHash: spec.content_hash, newHash });
+  log.info("Spec synced", { specId, newVersion, oldHash: spec.content_hash, newHash });
 
   return {
     changed: true,

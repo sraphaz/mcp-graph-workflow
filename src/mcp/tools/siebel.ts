@@ -26,9 +26,10 @@ import { z } from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SqliteStore } from "../../core/store/sqlite-store.js";
 import { SiebelObjectTypeSchema, SiebelEnvironmentTypeSchema } from "../../schemas/siebel.schema.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpError } from "../response-helpers.js";
 import {
+
   handleSiebelAnalyze,
   handleSiebelCompose,
   handleSiebelEnv,
@@ -39,6 +40,8 @@ import {
   handleSiebelValidate,
   handleSiebelBatchImportSif,
 } from "./siebel-handlers.js";
+
+const log = createLogger({ layer: "mcp", source: "siebel.ts" });
 
 /** registerSiebel — auto-generated description placeholder. */
 export function registerSiebel(server: McpServer, store: SqliteStore): void {
@@ -134,7 +137,7 @@ export function registerSiebel(server: McpServer, store: SqliteStore): void {
     },
     async (params) => {
       const { action } = params;
-      logger.info("tool:siebel", { action });
+      log.info("tool:siebel", { action });
 
       try {
         switch (action) {
@@ -160,7 +163,7 @@ export function registerSiebel(server: McpServer, store: SqliteStore): void {
             return mcpError(`Unknown siebel action: ${action}`);
         }
       } catch (err) {
-        logger.error("tool:siebel failed", { action, error: err instanceof Error ? err.message : String(err) });
+        log.error("tool:siebel failed", { action, error: err instanceof Error ? err.message : String(err) });
         return mcpError(err instanceof Error ? err : String(err));
       }
     },

@@ -27,8 +27,10 @@
 import type ts from "typescript";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { AnalyzedFile, CodeAnalyzer, CodeRelation, CodeSymbol } from "./code-types.js";
+
+const log = createLogger({ layer: "core", source: "ts-analyzer.ts" });
 
 type PartialSymbol = Omit<CodeSymbol, "id" | "projectId" | "indexedAt">;
 type PartialRelation = Omit<CodeRelation, "id" | "projectId" | "indexedAt">;
@@ -47,7 +49,7 @@ async function loadTypeScript(): Promise<typeof ts | null> {
     tsModule = mod.default ?? mod;
     return tsModule;
   } catch {
-    logger.warn("ts-analyzer:typescript-unavailable", {
+    log.warn("ts-analyzer:typescript-unavailable", {
       message: "typescript not found — code analysis disabled",
     });
     return null;
@@ -105,7 +107,7 @@ export async function analyzeFile(filePath: string, basePath: string): Promise<A
   // Second pass: extract symbols and relations
   visitNode(tsLib, sourceFile, sourceFile, relativePath, symbols, relations, importMap, null);
 
-  logger.debug("ts-analyzer:file", {
+  log.debug("ts-analyzer:file", {
     file: relativePath,
     symbols: symbols.length,
     relations: relations.length,

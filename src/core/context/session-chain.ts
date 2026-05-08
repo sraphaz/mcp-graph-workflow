@@ -21,8 +21,10 @@
  */
 
 import { generateId } from "../utils/id.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { SessionRecallStore, type SessionSummary } from "./session-recall.js";
+
+const log = createLogger({ layer: "core", source: "session-chain.ts" });
 
 export class SessionChainManager {
   private recallStore: SessionRecallStore;
@@ -45,7 +47,7 @@ export class SessionChainManager {
       topics: ["session_chain", reason],
     });
 
-    logger.info("session-chain:created", { parentSessionId, childSessionId, reason });
+    log.info("session-chain:created", { parentSessionId, childSessionId, reason });
     return childSessionId;
   }
 

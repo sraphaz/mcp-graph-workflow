@@ -9,7 +9,9 @@
 
 import WebSocket from "ws";
 import { CdpConnectionError, CdpProtocolError } from "../utils/errors.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "cdp-client.ts" });
 
 type CdpResultHandler = {
   resolve: (value: unknown) => void;
@@ -62,8 +64,8 @@ export class CdpClient {
         ws.removeListener("error", onError);
         ws.on("message", (data: Buffer | ArrayBuffer | Buffer[]) => this.handleMessage(data));
         ws.on("close", () => this.handleClose());
-        ws.on("error", (err: Error) => logger.warn("cdp:ws:error", { error: err.message }));
-        logger.info("cdp:connected", { endpoint: this.endpoint });
+        ws.on("error", (err: Error) => log.warn("cdp:ws:error", { error: err.message }));
+        log.info("cdp:connected", { endpoint: this.endpoint });
         resolve();
       };
       const onError = (err: Error): void => {
@@ -158,7 +160,7 @@ export class CdpClient {
     try {
       msg = JSON.parse(text);
     } catch (err) {
-      logger.warn("cdp:parse:error", { error: err instanceof Error ? err.message : String(err) });
+      log.warn("cdp:parse:error", { error: err instanceof Error ? err.message : String(err) });
       return;
     }
 
@@ -180,7 +182,7 @@ export class CdpClient {
       if (bucket) {
         for (const fn of bucket) {
           try { fn(msg.params ?? {}); } catch (err) {
-            logger.warn("cdp:listener:error", { method: msg.method, error: err instanceof Error ? err.message : String(err) });
+            log.warn("cdp:listener:error", { method: msg.method, error: err instanceof Error ? err.message : String(err) });
           }
         }
       }
@@ -195,6 +197,6 @@ export class CdpClient {
       h.reject(new CdpConnectionError(this.endpoint, "socket closed unexpectedly"));
     }
     this.pending.clear();
-    logger.info("cdp:closed", { endpoint: this.endpoint });
+    log.info("cdp:closed", { endpoint: this.endpoint });
   }
 }

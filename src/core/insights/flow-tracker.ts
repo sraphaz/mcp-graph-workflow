@@ -23,7 +23,9 @@
 import type { SqliteStore } from "../store/sqlite-store.js";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "flow-tracker.ts" });
 
 export interface FlowSnapshot {
   id: string;
@@ -108,7 +110,7 @@ export function captureFlowSnapshot(
       snapshot.blockedCount, snapshot.doneCount, snapshot.sprint, snapshot.createdAt,
     );
 
-    logger.info("flow-tracker:snapshot_captured", {
+    log.info("flow-tracker:snapshot_captured", {
       projectId,
       date: today,
       sprint: sprintValue,
@@ -117,7 +119,7 @@ export function captureFlowSnapshot(
 
     return snapshot;
   } catch (err) {
-    logger.warn("flow-tracker:capture_failed", { error: String(err) });
+    log.warn("flow-tracker:capture_failed", { error: String(err) });
     return null;
   }
 }
@@ -178,7 +180,7 @@ export function getCfdData(
       createdAt: r.created_at,
     }));
   } catch (err) {
-    logger.warn("flow-tracker:query_failed", { error: String(err) });
+    log.warn("flow-tracker:query_failed", { error: String(err) });
     return [];
   }
 }

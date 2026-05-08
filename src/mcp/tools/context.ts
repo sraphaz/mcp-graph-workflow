@@ -44,8 +44,10 @@ import { RagTracer } from "../../core/rag/rag-trace.js";
 import { detectCurrentPhase, type LifecyclePhase } from "../../core/planner/lifecycle-phase.js";
 import { DEFAULT_TOKEN_BUDGET } from "../../core/utils/constants.js";
 import { NodeNotFoundError } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError, normalizeNewlines } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "context.ts" });
 
 /* ------------------------------------------------------------------ */
 /*  Module-level singletons (shared across calls)                      */
@@ -68,7 +70,7 @@ function getSessionTracker(store: SqliteStore): SessionTracker {
         sessionTracker?.cleanupStale();
         sessionTracker?.cleanupStaleDb();
       } catch (err) {
-        logger.warn("session-tracker:periodic-cleanup-failed", {
+        log.warn("session-tracker:periodic-cleanup-failed", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -91,7 +93,7 @@ const contextCache = new ResponseCache({ ttlMs: 5 * 60 * 1000, maxSize: 50 });
 export function invalidateRagCache(): void {
   ragCache.invalidateAll();
   contextCache.invalidateAll();
-  logger.debug("context:rag_cache_invalidated");
+  log.debug("context:rag_cache_invalidated");
 }
 
 /* ------------------------------------------------------------------ */
@@ -123,12 +125,12 @@ function handleCompact(
     return mcpError("action=compact requires 'id' param (node ID)");
   }
 
-  logger.debug("tool:context:compact", { id, sessionId });
+  log.debug("tool:context:compact", { id, sessionId });
   const ctx = buildTaskContext(store, id);
 
   if (!ctx) {
     const err = new NodeNotFoundError(id);
-    logger.warn("tool:context:compact:fail", { error: err.message });
+    log.warn("tool:context:compact:fail", { error: err.message });
     return mcpError(err);
   }
 
@@ -139,11 +141,11 @@ function handleCompact(
   if (sessionId) {
     const tracker = getSessionTracker(store);
     const resultValue = applySessionDelta(tracker, sessionId, ctx);
-    logger.info("tool:context:compact:ok", { id, sessionId, savings: resultValue._session_savings });
+    log.info("tool:context:compact:ok", { id, sessionId, savings: resultValue._session_savings });
     return mcpText({ ...resultValue.context, _session_savings: resultValue._session_savings });
   }
 
-  logger.info("tool:context:compact:ok", { id });
+  log.info("tool:context:compact:ok", { id });
   return mcpText(ctx);
 }
 
@@ -157,7 +159,7 @@ async function handleRag(
     return mcpError("action=rag requires 'query' param");
   }
 
-  logger.debug("tool:context:rag", { query, detail, sessionId });
+  log.debug("tool:context:rag", { query, detail, sessionId });
 
   /** Wrap response with session delta if sessionId is present. */
   const wrapWithSession = (data: Record<string, unknown>): ReturnType<typeof mcpText> => {
@@ -166,7 +168,7 @@ async function handleRag(
     }
     const tracker = getSessionTracker(store);
     const resultValue = applyRagSessionDelta(tracker, sessionId, data);
-    logger.info("tool:context:rag:session", { sessionId, savings: resultValue._session_savings });
+    log.info("tool:context:rag:session", { sessionId, savings: resultValue._session_savings });
     return mcpText({ ...resultValue.response, _session_savings: resultValue._session_savings });
   };
   const budget = tokenBudget ?? DEFAULT_TOKEN_BUDGET;
@@ -174,7 +176,7 @@ async function handleRag(
   // Semantic cache — check before any pipeline execution
   const semanticHit = semanticCache.lookup(query);
   if (semanticHit) {
-    logger.info("tool:context:rag:semantic_cache_hit", { query, type: semanticHit.type });
+    log.info("tool:context:rag:semantic_cache_hit", { query, type: semanticHit.type });
     return wrapWithSession({
       ...(semanticHit.result as Record<string, unknown>),
       _cache_hit: true,
@@ -192,7 +194,7 @@ async function handleRag(
     });
   } catch {
     // Phase detection may fail if no project loaded — proceed without phase
-    logger.debug("tool:context:rag:phase_detection_skipped");
+    log.debug("tool:context:rag:phase_detection_skipped");
   }
 
   if (detail) {
@@ -200,7 +202,7 @@ async function handleRag(
     const detailCacheKey = `detail:${detail}:${query.trim().toLowerCase()}:${budget}`;
     const cachedDetail = contextCache.get(detailCacheKey);
     if (cachedDetail) {
-      logger.debug("context:rag:detail_cache_hit", { query, detail });
+      log.debug("context:rag:detail_cache_hit", { query, detail });
       return wrapWithSession(cachedDetail as unknown as Record<string, unknown>);
     }
 
@@ -213,7 +215,7 @@ async function handleRag(
 
     contextCache.set(detailCacheKey, ctx);
     semanticCache.store(query, ctx);
-    logger.info("tool:context:rag:ok", { query, detail, phase: currentPhase, strategy });
+    log.info("tool:context:rag:ok", { query, detail, phase: currentPhase, strategy });
     return wrapWithSession(ctx as unknown as Record<string, unknown>);
   }
 
@@ -239,7 +241,7 @@ async function handleRag(
     // Stage 2: Cache check
     const cached = ragCache.get(effectiveQuery);
     if (cached) {
-      logger.debug("context:rag:cache_hit", { query: effectiveQuery });
+      log.debug("context:rag:cache_hit", { query: effectiveQuery });
       const cachedCited = buildCitedContext(cached);
       tracer.startStage("citation");
       tracer.endStage("citation", { inputCount: cached.length, outputCount: cachedCited.citations.length });
@@ -324,7 +326,7 @@ async function handleRag(
     }
 
     const trace = tracer.finalize();
-    logger.info("tool:context:rag:ok", {
+    log.info("tool:context:rag:ok", {
       query,
       strategy: "multi",
       phase: currentPhase,
@@ -375,7 +377,7 @@ async function handleRag(
   const defaultCacheKey = `default:${query.trim().toLowerCase()}:${budget}`;
   const cachedDefault = contextCache.get(defaultCacheKey);
   if (cachedDefault) {
-    logger.debug("context:rag:default_cache_hit", { query });
+    log.debug("context:rag:default_cache_hit", { query });
     return wrapWithSession(cachedDefault as unknown as Record<string, unknown>);
   }
 
@@ -383,7 +385,7 @@ async function handleRag(
 
   contextCache.set(defaultCacheKey, ctx);
   semanticCache.store(query, ctx);
-  logger.info("tool:context:rag:ok", { query, tier: "standard", phase: currentPhase });
+  log.info("tool:context:rag:ok", { query, tier: "standard", phase: currentPhase });
   return wrapWithSession(ctx as unknown as Record<string, unknown>);
 }
 
@@ -400,11 +402,11 @@ function handleCompress(params: ContextParams): ReturnType<typeof mcpText> {
   const normalizedText = normalizeNewlines(text) ?? text;
   const maxTokens = max_tokens ?? 2000;
 
-  logger.debug("tool:context:compress", { format, maxTokens, inputLength: text.length });
+  log.debug("tool:context:compress", { format, maxTokens, inputLength: text.length });
 
   const resultValue = compressText(normalizedText, format, maxTokens);
 
-  logger.info("tool:context:compress:ok", {
+  log.info("tool:context:compress:ok", {
     format,
     inputTokens: resultValue.stats.input_tokens,
     outputTokens: resultValue.stats.output_tokens,
@@ -428,7 +430,7 @@ function handleBatchCompress(params: ContextParams): ReturnType<typeof mcpText> 
     return mcpError("action=batch_compress allows max 50 items");
   }
 
-  logger.debug("tool:context:batch_compress", { count: texts.length });
+  log.debug("tool:context:batch_compress", { count: texts.length });
 
   const results = texts.map((item, index) => {
     const normalizedText = normalizeNewlines(item.text) ?? item.text;
@@ -446,7 +448,7 @@ function handleBatchCompress(params: ContextParams): ReturnType<typeof mcpText> 
   const totalInputTokens = results.reduce((sum, r) => sum + r.stats.input_tokens, 0);
   const totalOutputTokens = results.reduce((sum, r) => sum + r.stats.output_tokens, 0);
 
-  logger.info("tool:context:batch_compress:ok", {
+  log.info("tool:context:batch_compress:ok", {
     count: texts.length,
     totalInputTokens,
     totalOutputTokens,
@@ -481,11 +483,11 @@ function handleFocusCompress(params: ContextParams): ReturnType<typeof mcpText> 
   const normalizedText = normalizeNewlines(text) ?? text;
   const maxTokens = max_tokens ?? 2000;
 
-  logger.debug("tool:context:focus_compress", { focus, maxTokens, inputLength: text.length });
+  log.debug("tool:context:focus_compress", { focus, maxTokens, inputLength: text.length });
 
   const resultValue = compressWithFocus(normalizedText, focus, maxTokens);
 
-  logger.info("tool:context:focus_compress:ok", {
+  log.info("tool:context:focus_compress:ok", {
     focus,
     inputTokens: resultValue.stats.inputTokens,
     outputTokens: resultValue.stats.outputTokens,
@@ -553,7 +555,7 @@ export function registerContext(server: McpServer, store: SqliteStore): void {
     },
     async (params) => {
       const resolvedAction = params.action ?? "compact";
-      logger.info("tool:context", { action: resolvedAction });
+      log.info("tool:context", { action: resolvedAction });
 
       try {
         switch (resolvedAction) {
@@ -571,7 +573,7 @@ export function registerContext(server: McpServer, store: SqliteStore): void {
             return mcpError(`Unknown context action: ${resolvedAction}`);
         }
       } catch (err) {
-        logger.error("tool:context failed", { action: resolvedAction, error: err instanceof Error ? err.message : String(err) });
+        log.error("tool:context failed", { action: resolvedAction, error: err instanceof Error ? err.message : String(err) });
         return mcpError(err instanceof Error ? err : String(err));
       }
     },

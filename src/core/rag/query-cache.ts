@@ -28,7 +28,9 @@
 
 import { LRUCache } from "lru-cache";
 import type { RankedResult } from "./multi-strategy-retrieval.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "query-cache.ts" });
 
 export interface CacheOptions {
   ttlMs: number;
@@ -115,7 +117,7 @@ export class QueryCache {
   invalidateAll(): void {
     const count = this.cache.size;
     this.cache.clear();
-    logger.debug("Query cache invalidated", { entriesCleared: count });
+    log.debug("Query cache invalidated", { entriesCleared: count });
   }
 
   /**

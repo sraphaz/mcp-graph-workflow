@@ -27,8 +27,10 @@ import { RecoveryMetricsStore } from "../../core/autonomy/recovery-metrics-store
 import { ToolTokenStore, type UsageStats } from "../../core/store/tool-token-store.js";
 import { calculateCost } from "../../core/observability/cost-tracker.js";
 import { calculateDoraMetrics } from "../../core/insights/dora-metrics.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "metrics.ts" });
 
 /**
  * Response shape for `metrics({mode: "dora_metrics"})` — V11 Maestro Phase 5.4.
@@ -135,11 +137,11 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
       sinceDays: z.number().int().positive().optional().describe("Window for tool_usage mode (count calls in the last N days). Default: all time."),
     },
     async ({ mode, sprint, sinceDays }) => {
-      logger.debug("tool:metrics", { mode, sprint, sinceDays });
+      log.debug("tool:metrics", { mode, sprint, sinceDays });
 
       if (mode === "dora_metrics") {
         const resValue = buildDoraMetricsResponse(store);
-        logger.info("tool:metrics:dora_metrics:ok", {
+        log.info("tool:metrics:dora_metrics:ok", {
           deployFreq: resValue.metrics.deploymentFrequency,
         });
         return mcpText(resValue);
@@ -147,7 +149,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
 
       if (mode === "tool_usage") {
         const resValue = buildToolUsageResponse(store, sinceDays);
-        logger.info("tool:metrics:tool_usage:ok", {
+        log.info("tool:metrics:tool_usage:ok", {
           totalDistinctTools: resValue.totalDistinctTools,
           sinceDays: resValue.sinceDays,
         });
@@ -175,7 +177,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         const budget = budgetStr ? parseFloat(budgetStr) : null;
         const budgetExceeded = budget !== null && totalCost.totalUsd > budget;
 
-        logger.info("tool:metrics:cost:ok", { totalCost: totalCost.totalUsd, budget });
+        log.info("tool:metrics:cost:ok", { totalCost: totalCost.totalUsd, budget });
         return mcpText({
           ok: true,
           mode: "cost",
@@ -198,7 +200,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
           const filtered = summary.sprints.filter((s) => s.sprint === sprint);
           // Bug #039: warn when sprint filter finds nothing instead of returning global stats
           if (filtered.length === 0) {
-            logger.info("tool:metrics:velocity:ok", { sprintCount: 0, sprintFilter: sprint });
+            log.info("tool:metrics:velocity:ok", { sprintCount: 0, sprintFilter: sprint });
             return mcpText({
               ok: true,
               mode: "velocity",
@@ -211,7 +213,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
           summary.sprints = filtered;
         }
 
-        logger.info("tool:metrics:velocity:ok", { sprintCount: summary.sprints.length });
+        log.info("tool:metrics:velocity:ok", { sprintCount: summary.sprints.length });
         return mcpText({ ok: true, mode: "velocity", ...summary });
       }
 
@@ -296,7 +298,7 @@ export function registerMetrics(server: McpServer, store: SqliteStore): void {
         }
       } catch { /* recovery_metrics table may not exist */ }
 
-      logger.info("tool:metrics:stats:ok", { totalNodes: stats.totalNodes, totalEdges: stats.totalEdges });
+      log.info("tool:metrics:stats:ok", { totalNodes: stats.totalNodes, totalEdges: stats.totalEdges });
       return mcpText({
         ok: true,
         mode: "stats",

@@ -20,7 +20,9 @@
  * ADR-10: bridge over GraphEventBus with before/after semantics and abort().
  */
 
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "hook-system.ts" });
 
 export type HookPoint =
   | "before:tool_call"
@@ -66,7 +68,7 @@ export class HookSystem {
     // Sort by priority (lower = earlier)
     existing.sort((a, b) => a.priority - b.priority);
     this.hooks.set(registration.hookPoint, existing);
-    logger.debug(`Hook registered: ${registration.pluginName} on ${registration.hookPoint} (priority ${registration.priority})`);
+    log.debug(`Hook registered: ${registration.pluginName} on ${registration.hookPoint} (priority ${registration.priority})`);
   }
 
   async executeHooks(hookPoint: HookPoint, data: Record<string, unknown>): Promise<HookExecutionResult> {
@@ -103,7 +105,7 @@ export class HookSystem {
         const msg = err instanceof Error ? err.message : String(err);
         errors.push(msg);
         hooksCalled++;
-        logger.error(`Hook error: ${reg.pluginName} on ${hookPoint}`, { error: msg });
+        log.error(`Hook error: ${reg.pluginName} on ${hookPoint}`, { error: msg });
         // Continue — error boundary
       }
     }
@@ -120,7 +122,7 @@ export class HookSystem {
         this.hooks.set(hookPoint, filtered);
       }
     }
-    logger.debug(`Hooks removed for plugin: ${pluginName}`);
+    log.debug(`Hooks removed for plugin: ${pluginName}`);
   }
 
   listHooks(): Array<{ pluginName: string; hookPoint: HookPoint; priority: number }> {

@@ -32,8 +32,10 @@ import { generateSuggestions } from "../../core/kanban/kanban-orchestrator.js";
 import { validateMove } from "../../core/kanban/kanban-validator.js";
 import { DEFAULT_KANBAN_CONFIG, COLUMN_TITLES } from "../../core/kanban/kanban-types.js";
 import type { KanbanBoard, KanbanConfig } from "../../core/kanban/kanban-types.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText } from "../response-helpers.js";
+
+const log = createLogger({ layer: "mcp", source: "kanban.ts" });
 
 const KANBAN_SETTINGS_KEY = "kanban_config";
 
@@ -95,7 +97,7 @@ export function registerKanban(server: McpServer, store: SqliteStore): void {
       swimlane: z.enum(["none", "epic", "sprint"]).optional().describe("Swimlane grouping mode (for 'board')"),
     },
     async ({ action, nodeId, newStatus, swimlane }) => {
-      logger.debug("tool:kanban", { action, nodeId, newStatus, swimlane });
+      log.debug("tool:kanban", { action, nodeId, newStatus, swimlane });
 
       const config = loadConfig(store);
       if (swimlane) {

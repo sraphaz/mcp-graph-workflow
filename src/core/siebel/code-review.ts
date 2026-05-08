@@ -24,7 +24,9 @@
  */
 
 import type { SiebelObject } from "../../schemas/siebel.schema.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "code-review.ts" });
 
 // --- Public types ---
 
@@ -309,7 +311,7 @@ export function reviewSiebelCode(
   objects: readonly SiebelObject[],
   options: ReviewOptions,
 ): CodeReviewResult {
-  logger.debug("code-review: starting review", { objectCount: objects.length, prefix: options.prefix });
+  log.debug("code-review: starting review", { objectCount: objects.length, prefix: options.prefix });
 
   const allIssues: ReviewIssue[] = [
     ...checkNaming(objects, options),
@@ -322,7 +324,7 @@ export function reviewSiebelCode(
 
   const { score, breakdown } = calculateScore(allIssues, objects.length);
 
-  logger.info("code-review: complete", {
+  log.info("code-review: complete", {
     objectCount: objects.length,
     issues: allIssues.length,
     score,

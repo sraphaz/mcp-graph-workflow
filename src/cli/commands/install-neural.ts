@@ -25,7 +25,9 @@ import {
   getOnnxProvider,
   isOnnxAvailable,
 } from "../../core/rag/onnx-embeddings.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+
+const log = createLogger({ layer: "cli", source: "install-neural.ts" });
 
 function realNpmInstall(pkg: string): Promise<NpmInstallResult> {
   return new Promise((resolve) => {
@@ -82,7 +84,7 @@ export function installNeuralCommand(): Command {
         deps,
       );
 
-      logger.info("install-neural", {
+      log.info("install-neural", {
         status: resultValue.status,
         steps: resultValue.steps,
         modelsDir: opts.modelsDir,

@@ -23,7 +23,9 @@
 import { readAllMemories } from "../memory/memory-reader.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { chunkText } from "./chunk-text.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "rag", source: "memory-indexer.ts" });
 
 export interface MemoryIndexResult {
   memoriesFound: number;
@@ -42,7 +44,7 @@ export async function indexMemories(
   const memories = await readAllMemories(basePath);
 
   if (memories.length === 0) {
-    logger.info("No memories found to index", { basePath });
+    log.info("No memories found to index", { basePath });
     return { memoriesFound: 0, documentsIndexed: 0, skippedDuplicates: 0 };
   }
 
@@ -74,7 +76,7 @@ export async function indexMemories(
     }
   }
 
-  logger.info("Memories indexed", {
+  log.info("Memories indexed", {
     memoriesFound: memories.length,
     documentsIndexed,
     skippedDuplicates,

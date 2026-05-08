@@ -33,9 +33,11 @@ import { LspEditApplier } from "../../core/lsp/lsp-edit-applier.js";
 import { ServerRegistry } from "../../core/lsp/server-registry.js";
 import { detectProjectLanguages } from "../../core/lsp/language-detector.js";
 import { estimateTokens } from "../../core/context/token-estimator.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
 import { mcpText, mcpError } from "../response-helpers.js";
 import type { LspCodeAction } from "../../core/lsp/lsp-types.js";
+
+const log = createLogger({ layer: "mcp", source: "code-intelligence.ts" });
 
 // ---------------------------------------------------------------------------
 // Mode enum
@@ -182,7 +184,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
     },
     async ({ mode, file, line, character, query, newName, startLine, endLine, endCharacter, actionIndex, actionKinds }) => {
       try {
-        logger.info("tool:code_intelligence", {
+        log.info("tool:code_intelligence", {
           mode,
           file: file ?? "",
           ...(actionIndex !== undefined ? { actionIndex } : {}),
@@ -546,7 +548,7 @@ export function registerCodeIntelligence(server: McpServer, store: SqliteStore):
             return mcpError(`Unknown mode: ${mode}`);
         }
       } catch (err) {
-        logger.error("code_intelligence:error", {
+        log.error("code_intelligence:error", {
           mode,
           file: file ?? "",
           error: err instanceof Error ? err.message : String(err),

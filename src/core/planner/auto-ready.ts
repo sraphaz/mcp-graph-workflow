@@ -16,7 +16,9 @@
  */
 
 import type { GraphDocument } from "../graph/graph-types.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "auto-ready.ts" });
 
 export interface AutoReadyReport {
   candidates: Array<{
@@ -78,7 +80,7 @@ export function analyzeAutoReady(doc: GraphDocument): AutoReadyReport {
     });
   }
 
-  logger.info("auto-ready", { candidates: candidates.length });
+  log.info("auto-ready", { candidates: candidates.length });
 
   return { candidates, totalCandidates: candidates.length };
 }

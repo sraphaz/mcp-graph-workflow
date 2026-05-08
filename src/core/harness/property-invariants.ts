@@ -29,7 +29,9 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import { detectCycles } from "../planner/dependency-chain.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "property-invariants.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -139,7 +141,7 @@ export function checkInvariants(
       const violations = invariant.check(doc);
       allViolations.push(...violations);
     } catch (err) {
-      logger.warn("property-invariants:check-error", {
+      log.warn("property-invariants:check-error", {
         invariantId: invariant.id,
         error: String(err),
       });
@@ -147,7 +149,7 @@ export function checkInvariants(
   }
   const durationMs = Math.round(performance.now() - start);
   if (allViolations.length > 0) {
-    logger.info("property-invariants:violations", {
+    log.info("property-invariants:violations", {
       count: allViolations.length,
       invariants: [...new Set(allViolations.map((v) => v.invariantId))],
       durationMs,
