@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.5.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.4.0...mcp-graph-v13.5.0) (2026-05-08)
+
+
+### Features
+
+* **help:** add version topic + ECS error context + logger.event ([#321](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/321)) ([eb8d141](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/eb8d1417f26f468495ace36c4044075f06855509))
+* **obs-90:** observability epic — layer tagging, ECS shape, client logger, logs UI ([#334](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/334)) ([917fe8c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/917fe8c23c9f0014a3aff3215368ff7ab3cc4b68))
+
 ## [13.4.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.3.4...mcp-graph-v13.4.0) (2026-05-03)
 
 
