@@ -79,6 +79,8 @@ browser-*
 !src/mcp/tools/browser-pilot.ts
 !src/core/skills/browser-skill-proposer.ts
 !src/tests/browser-*.test.ts
+!src/tests/browser-harness/
+!src/tests/browser-harness/**
 !src/tests/extracta-tdd-integration.test.ts
 !src/tests/finish-task-browser-skill.test.ts
 
