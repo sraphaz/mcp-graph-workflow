@@ -44,13 +44,10 @@ import { runTestGate, type TestGateResult, type TestGateMode } from "../harness/
 import { checkInvariants, getBuiltInInvariants, type InvariantResult } from "../harness/property-invariants.js";
 import { discoverTestFiles } from "../harness/test-discovery.js";
 import { runSyntheticValidation, type SyntheticValidationResult } from "../harness/synthetic-validation-gate.js";
-import {
-  runFeatureDepthCheck,
-  type FeatureDepthReport,
-} from "../feature-depth/finish-task-integration.js";
+import { runSentruxAdvisoryCheck, type SentruxAdvisoryResult } from "./sentrux-advisory-check.js";
+import { SentruxMcpAdapter } from "../integrations/sentrux-mcp-adapter.js";
 import { analyzeTrajectory } from "../skills/trajectory-analyzer.js";
 import { proposeSkillFromTrajectory, type SkillProposal } from "../skills/auto-skill-proposer.js";
-import { getTouchedFiles } from "../planner/touched-files.js";
 import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branch.js";
 import { SubtaskArtifactsStore, type ArtifactKind } from "../store/subtask-artifacts-store.js";
 import type { LockManager } from "../store/lock-manager.js";
@@ -122,12 +119,11 @@ export interface FinishTaskResult {
   /** Synthetic mutation validation result (advisory) */
   syntheticValidation?: SyntheticValidationResult | null;
   /**
-   * Feature-depth per-file check — present when the node carries
-   * touchedFiles metadata. Advisory by default: regressions appear in
-   * `featureDepth.warnings` (not in `blockers`). Upward quadrant
-   * crossings auto-emit memory entries as a side effect.
+   * Sentrux advisory check result — present when a sentruxSessionId is passed.
+   * Advisory only: never blocks task completion. Replaces feature-depth gate.
+   * §EPIC-sentrux-adoption / Task 2.5
    */
-  featureDepth?: FeatureDepthReport | null;
+  sentruxCheck?: SentruxAdvisoryResult | null;
   /**
    * v11 Context-Pollination: ids dos artifacts persistidos nesta chamada.
    * Sempre presente; [] quando options.artifacts vazio/ausente ou dedup resultou em zero novos.
@@ -344,33 +340,18 @@ export async function finishTask(
     log.warn("pipeline:finish_task:test_gate_failed", { error: String(err) });
   }
 
-  // 2.0c. Feature-depth check — per-file regression gate + quadrant
-  // crossing → memory writes. Advisory: warnings surface in the
-  // result but never push to `blockers`. UPSERTs the new baseline
-  // for every touched file as a side effect (best-effort, errors
-  // are swallowed by the DAO so a baselines issue never blocks the
-  // task). See src/core/feature-depth/finish-task-integration.ts.
-  let featureDepthReport: FeatureDepthReport | null = null;
+  // 2.0c. Sentrux advisory check — replaces feature-depth regression gate.
+  // §EPIC-sentrux-adoption / Task 2.5: behavior-first, never blocks.
+  const _sentruxAdapter = new SentruxMcpAdapter();
+  let sentruxCheck: SentruxAdvisoryResult | null = null;
   try {
-    const node = store.getNodeById(nodeId);
-    const touchedFiles = node ? getTouchedFiles(node) : [];
-    if (touchedFiles.length > 0) {
-      featureDepthReport = await runFeatureDepthCheck({
-        store,
-        projectRoot: process.cwd(),
-        nodeId,
-        touchedFiles,
-      });
-      // Strict mode (set_phase({ featureDepth: "strict" })) — promote
-      // regressions from advisory warnings to blockers. Mode is resolved
-      // inside the integration; the report's `blockers` array is empty
-      // when mode is "advisory" or "off".
-      if (featureDepthReport.blockers.length > 0) {
-        blockers.push(...featureDepthReport.blockers);
-      }
+    const sessionId = (options as Record<string, unknown>)?.["sentruxSessionId"] as string | null ?? null;
+    sentruxCheck = await runSentruxAdvisoryCheck(_sentruxAdapter, sessionId);
+    if (sentruxCheck.warned && sentruxCheck.message) {
+      log.warn("pipeline:finish_task:sentrux_advisory", { message: sentruxCheck.message });
     }
   } catch (err) {
-    log.warn("pipeline:finish_task:feature_depth_failed", { error: String(err) });
+    log.warn("pipeline:finish_task:sentrux_advisory_failed", { error: String(err) });
   }
 
   // 2a. Verify task ownership in teamTask mode
@@ -882,7 +863,7 @@ export async function finishTask(
     invariantResult,
     ...(discoveredTestFiles.length > 0 ? { discoveredTestFiles } : {}),
     syntheticValidation,
-    featureDepth: featureDepthReport,
+    sentruxCheck,
     skillProposal,
   };
 }
