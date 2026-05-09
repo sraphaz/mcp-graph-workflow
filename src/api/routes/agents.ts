@@ -182,5 +182,36 @@ export function createAgentsRouter(storeRef: StoreRef): Router {
     }
   });
 
+  // §EPIC-agent-explode-view Task 1.1 — snapshot of current agent state
+  router.get("/now", (_req, res, next) => {
+    try {
+      const db = storeRef.current.getDb();
+      const phase = detectCurrentPhase(storeRef.current.toGraphDocument());
+
+      const activeSession = db.prepare<[], { id: string; tasks_completed: number }>(
+        `SELECT id, tasks_completed FROM autopilot_sessions WHERE status = 'running' ORDER BY started_at DESC LIMIT 1`
+      ).get() ?? null;
+
+      const lastTool = db.prepare<[], { tool_name: string; called_at: string }>(
+        `SELECT tool_name, called_at FROM tool_token_usage ORDER BY called_at DESC LIMIT 1`
+      ).get() ?? null;
+
+      if (!activeSession) {
+        res.json({ phase, idle: true, activeSession: null, currentTool: null });
+        return;
+      }
+
+      res.json({
+        phase,
+        idle: false,
+        activeSession: activeSession.id,
+        activeRun: { runId: activeSession.id, currentStep: activeSession.tasks_completed },
+        currentTool: lastTool ? { name: lastTool.tool_name, calledAt: lastTool.called_at } : null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   return router;
 }
