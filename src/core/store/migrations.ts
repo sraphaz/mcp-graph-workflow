@@ -2274,6 +2274,29 @@ const migrations: Migration[] = [
         ON harness_savings_ledger(session_id) WHERE session_id IS NOT NULL;
     `,
   },
+  {
+    version: 88,
+    // §EPIC-unified-observability — Task 1.1: event store for observability
+    // events. Indexed on (subjectRef_kind, subjectRef_id) for efficient
+    // per-subject queries. subjectRef columns are flat for SQLite indexability.
+    description: "events table — unified observability event store",
+    sql: `
+      CREATE TABLE IF NOT EXISTS events (
+        id               TEXT PRIMARY KEY,
+        kind             TEXT NOT NULL,
+        subjectRef_kind  TEXT NOT NULL,
+        subjectRef_id    TEXT NOT NULL,
+        payload          TEXT,
+        timestamp        TEXT NOT NULL,
+        projectId        TEXT,
+        sessionId        TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_events_subject
+        ON events(subjectRef_kind, subjectRef_id);
+      CREATE INDEX IF NOT EXISTS idx_events_kind_time
+        ON events(kind, timestamp DESC);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
