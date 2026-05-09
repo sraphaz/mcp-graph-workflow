@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.13.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.12.0...mcp-graph-v13.13.0) (2026-05-09)
+
+
+### Features
+
+* **atomic-files:** types + interface — AtomicFile, AtomicFileMode, WriteResult (Task 1.1) ([#359](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/359)) ([d21f2b5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d21f2b5a94467bb1444d0f7e1be8c7d222abbeeb))
+* **sentrux:** violations catalog — 0 real violations, 3 false positives (Task 0.4) ([#358](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/358)) ([17af200](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/17af2003ee200080cbfc43e09f766347a6d0728a))
+
 ## [13.12.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.11.0...mcp-graph-v13.12.0) (2026-05-09)
 
 
