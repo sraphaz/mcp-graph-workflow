@@ -2297,6 +2297,18 @@ const migrations: Migration[] = [
         ON events(kind, timestamp DESC);
     `,
   },
+  {
+    version: 89,
+    // §EPIC-unified-observability — Task 1.3: add parentEventId and durationMs
+    // to events table for causality chain traversal and latency metrics.
+    description: "events: parentEventId + durationMs columns",
+    sql: `
+      ALTER TABLE events ADD COLUMN parentEventId TEXT;
+      ALTER TABLE events ADD COLUMN durationMs INTEGER;
+      CREATE INDEX IF NOT EXISTS idx_events_parent
+        ON events(parentEventId) WHERE parentEventId IS NOT NULL;
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
