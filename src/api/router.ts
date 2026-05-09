@@ -39,6 +39,7 @@ import { createBenchmarkRouter } from "./routes/benchmark.js";
 import { createHarnessRouter } from "./routes/harness.js";
 import { createLifecycleHealthRouter } from "./routes/lifecycle-health.js";
 import { createBrowserHarnessRouter } from "./routes/browser-harness.js";
+import { createBrowserTestsRouter } from "./routes/browser-tests.js";
 import { createAutonomyRouter } from "./routes/autonomy.js";
 import { createLogsRouter } from "./routes/logs.js";
 import { createJourneyRouter } from "./routes/journey.js";
@@ -107,6 +108,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/harness", createHarnessRouter(storeRef));
   router.use("/lifecycle-health", createLifecycleHealthRouter(storeRef));
   router.use("/browser-harness", createBrowserHarnessRouter(storeRef, getBasePath));
+  router.use("/browser-tests", createBrowserTestsRouter(storeRef, getBasePath));
   router.use("/autonomy", createAutonomyRouter(storeRef));
   router.use("/siebel", createSiebelRouter(storeRef, getBasePath));
   router.use("/logs", createLogsRouter());

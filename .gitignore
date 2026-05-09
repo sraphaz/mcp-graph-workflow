@@ -78,6 +78,7 @@ browser-*
 !src/core/browser-harness/**
 !src/mcp/tools/browser-pilot.ts
 !src/core/skills/browser-skill-proposer.ts
+!src/api/routes/browser-tests.ts
 !src/tests/browser-*.test.ts
 !src/tests/browser-harness/
 !src/tests/browser-harness/**
