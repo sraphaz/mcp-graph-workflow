@@ -50,6 +50,8 @@ export const OpenAICompatibleProviderConfigSchema = z.object({
   costPerToken: z.number().nonnegative().default(0),
   /** Health probe endpoint relative to baseUrl. */
   healthEndpoint: z.string().default("/v1/models"),
+  /** Embedding model IDs served by this provider (distinct from chat models). Default []. */
+  embeddingModels: z.array(z.string().min(1)).default([]),
 });
 
 export type OpenAICompatibleProviderConfig = z.infer<
