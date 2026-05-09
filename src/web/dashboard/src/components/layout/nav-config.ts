@@ -19,7 +19,6 @@ import {
   GitFork,
   ClipboardList,
   Route,
-  Network,
   Brain,
   BarChart3,
   Zap,
@@ -47,7 +46,6 @@ export type TabId =
   | "prd-backlog"
   | "kanban"
   | "journey"
-  | "gitnexus"
   | "memories"
   | "insights"
   | "skills"
@@ -100,7 +98,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Intelligence",
     icon: Brain,
     items: [
-      { id: "gitnexus", label: "Code Graph", icon: Network },
       { id: "memories", label: "Memories", icon: Brain },
       { id: "insights", label: "Insights", icon: BarChart3 },
       { id: "skills", label: "Skills", icon: Zap },

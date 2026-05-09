@@ -35,7 +35,6 @@ const GraphTab = lazy(() => import("@/components/tabs/graph-tab").then((m) => ({
 const PrdBacklogTab = lazy(() => import("@/components/tabs/prd-backlog-tab").then((m) => ({ default: m.PrdBacklogTab })));
 const KanbanTab = lazy(() => import("@/components/tabs/kanban-tab").then((m) => ({ default: m.KanbanTab })));
 const JourneyTab = lazy(() => import("@/components/tabs/journey-tab").then((m) => ({ default: m.JourneyTab })));
-const GitNexusTab = lazy(() => import("@/components/tabs/gitnexus-tab").then((m) => ({ default: m.GitNexusTab })));
 const MemoriesTab = lazy(() => import("@/components/tabs/memories-tab").then((m) => ({ default: m.MemoriesTab })));
 const InsightsTab = lazy(() => import("@/components/tabs/insights-tab").then((m) => ({ default: m.InsightsTab })));
 const SkillsTab = lazy(() => import("@/components/tabs/skills-tab").then((m) => ({ default: m.SkillsTab })));
@@ -60,7 +59,6 @@ const TAB_LABELS: Record<TabId, string> = {
   "prd-backlog": "PRD & Backlog",
   kanban: "Kanban",
   journey: "Journey",
-  gitnexus: "Code Graph",
   siebel: "Siebel",
   lsp: "LSP",
   memories: "Memories",
@@ -244,7 +242,6 @@ function AppContent(): React.JSX.Element {
                   {activeTab === "prd-backlog" && <PrdBacklogTab graph={graph} loading={loading} error={error} onRetry={handleRefresh} />}
                   {activeTab === "kanban" && <KanbanTab onNavigate={setActiveTab} />}
                   {activeTab === "journey" && <JourneyTab />}
-                  {activeTab === "gitnexus" && <GitNexusTab />}
                   {activeTab === "memories" && <MemoriesTab />}
                   {activeTab === "insights" && <InsightsTab />}
                   {activeTab === "skills" && <SkillsTab />}
