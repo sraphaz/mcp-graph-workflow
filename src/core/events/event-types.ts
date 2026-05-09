@@ -115,7 +115,9 @@ export type GraphEventType =
   | "subtask_artifact:created"
   // Memory pressure events (EPIC 12 — Memory & CPU Guard)
   | "memory:pressure_warning"
-  | "memory:pressure_critical";
+  | "memory:pressure_critical"
+  // Sentrux integration events (§EPIC-sentrux-adoption)
+  | "sentrux:scan_complete";
 
 export interface GraphEvent {
   type: GraphEventType;
@@ -319,5 +321,18 @@ export interface SubtaskArtifactCreatedEvent extends GraphEvent {
     kind: "diff" | "file" | "interface" | "decision" | "note";
     contentHash: string;
     path: string | null;
+  };
+}
+
+// ── Sentrux integration (§EPIC-sentrux-adoption) ─────────────
+
+export interface SentruxScanCompleteEvent extends GraphEvent {
+  type: "sentrux:scan_complete";
+  payload: {
+    runId: string;
+    issuesFound: number;
+    severity: "ok" | "warn" | "error";
+    timestamp: string;
+    details?: Record<string, unknown>;
   };
 }
