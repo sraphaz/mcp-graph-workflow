@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.6.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.5.0...mcp-graph-v13.6.0) (2026-05-09)
+
+
+### Features
+
+* **dashboard:** tab audit script + inventory (Task 1.1) ([#338](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/338)) ([bf501e3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/bf501e3c0066b05ba28b1fe73de3ff828c841e52))
+* **model-hub:** vLLM HTTP adapter — health + streaming (Task 1.1) ([#336](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/336)) ([c9ac66e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c9ac66ecd221ab67d59513e649cc368f52bbab69))
+
 ## [13.5.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.4.0...mcp-graph-v13.5.0) (2026-05-08)
 
 
