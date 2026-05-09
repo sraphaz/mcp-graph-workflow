@@ -37,7 +37,7 @@ import {
   LlmTransportError,
 } from "../errors.js";
 import { withRetry, type RetryConfig } from "../retry.js";
-import type { LlmRequest, LlmResponse, LlmUsage, ModelSpec } from "../types.js";
+import type { LlmRequest, LlmResponse, LlmUsage, ModelSpec, EmbedRequest, EmbedResponse } from "../types.js";
 import type { ProviderAdapter } from "./base.js";
 import { OperationError } from "../../utils/errors.js";
 
@@ -261,6 +261,52 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
     const rate = this.options.costPerToken ?? 0;
     if (rate === 0) return 0;
     return (usage.inputTokens + usage.outputTokens) * rate;
+  }
+
+  /**
+   * POST /v1/embeddings — OpenAI-compatible embedding endpoint.
+   * Derives URL from baseUrl by replacing /chat/completions with /embeddings.
+   * Errors mapped identically to generate(): 401→Auth, 429→RateLimit, 5xx→Transport.
+   */
+  async embed(req: EmbedRequest): Promise<EmbedResponse> {
+    const embeddingsUrl = this.options.baseUrl.replace(/\/chat\/completions\/?$/, "/embeddings");
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (this.options.apiKey) headers.authorization = `Bearer ${this.options.apiKey}`;
+
+    const body = { model: req.model, input: req.input };
+
+    interface EmbedResponseBody {
+      data: Array<{ embedding: number[] }>;
+      usage?: { prompt_tokens?: number };
+    }
+
+    const response = await withRetry(async () => {
+      let res: Response;
+      try {
+        res = await this.fetch(embeddingsUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+        });
+      } catch (cause) {
+        throw new LlmTransportError(
+          this.providerId,
+          cause instanceof Error ? cause.message : String(cause),
+        );
+      }
+      if (!res.ok) {
+        const text = await readBody(res);
+        if (res.status === 401 || res.status === 403) throw new LlmAuthError(this.providerId, `${res.status}: ${text}`);
+        if (res.status === 429) throw new LlmRateLimitError(this.providerId, parseRetryAfter(res.headers));
+        throw new LlmTransportError(this.providerId, `${res.status}: ${text}`);
+      }
+      return (await res.json()) as EmbedResponseBody;
+    }, this.retry);
+
+    return {
+      vectors: response.data.map((d) => d.embedding),
+      usage: { inputTokens: response.usage?.prompt_tokens ?? 0 },
+    };
   }
 
   /**
