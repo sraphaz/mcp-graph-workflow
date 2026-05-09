@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.7.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.6.0...mcp-graph-v13.7.0) (2026-05-09)
+
+
+### Features
+
+* **agent-explode-view:** GET /agents/now + useAgentState hook ([#341](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/341)) ([888b7a0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/888b7a0db38581a145d53dd212ef646792265f5d))
+* **model-hub:** Zod config schema + LocalBackendAdapter interface ([#339](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/339)) ([f6fe8fc](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f6fe8fc259725e25de1c6f2d935d2d83cfbc9436))
+
 ## [13.6.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.5.0...mcp-graph-v13.6.0) (2026-05-09)
 
 
