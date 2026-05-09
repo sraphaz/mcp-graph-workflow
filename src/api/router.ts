@@ -108,7 +108,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/harness", createHarnessRouter(storeRef));
   router.use("/lifecycle-health", createLifecycleHealthRouter(storeRef));
   router.use("/browser-harness", createBrowserHarnessRouter(storeRef, getBasePath));
-  router.use("/browser-tests", createBrowserTestsRouter(storeRef, getBasePath));
+  router.use("/browser-tests", createBrowserTestsRouter(storeRef, getBasePath, eventBus ?? undefined));
   router.use("/autonomy", createAutonomyRouter(storeRef));
   router.use("/siebel", createSiebelRouter(storeRef, getBasePath));
   router.use("/logs", createLogsRouter());
