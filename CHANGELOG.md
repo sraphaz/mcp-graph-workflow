@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.9.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.8.0...mcp-graph-v13.9.0) (2026-05-09)
+
+
+### Features
+
+* **credential-pool:** Task 1.1 — Zod schema CredentialPoolEntry ([#348](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/348)) ([f94fafc](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f94fafce37f3fb40531bc051b8ada2b9d14e70c8))
+* **domain-skills:** aggregateBySite() — pure skill candidate aggregator ([#346](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/346)) ([8788a15](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/8788a155488baead13cd37168d2bd34ff53c03c7))
+
 ## [13.8.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.7.0...mcp-graph-v13.8.0) (2026-05-09)
 
 
