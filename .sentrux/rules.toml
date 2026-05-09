@@ -1,0 +1,17 @@
+# .sentrux/rules.toml — mcp-graph architecture governance rules
+# §ADR-0060 — behavior-first gate (supersedes ADR-0058)
+
+[[rules]]
+id = "core-no-cli"
+description = "src/core must not import from src/cli — dependency direction enforcement"
+guard = "src/core/**"
+forbidden = ["src/cli/**"]
+severity = "error"
+
+[[rules]]
+id = "provider-sdk-confinement"
+description = "openai / anthropic SDK imports confined to src/core/llm/adapters — §ADR-deterministic-first"
+guard = "src/**"
+allowed_zone = "src/core/llm/adapters/**"
+forbidden_imports = ["openai", "@anthropic-ai/sdk", "@google/genai"]
+severity = "error"
