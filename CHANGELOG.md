@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.10.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.9.0...mcp-graph-v13.10.0) (2026-05-09)
+
+
+### Features
+
+* **credential-pool:** Task 1.2 — CredentialPool round-robin + circuit breaker ([#349](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/349)) ([d176eea](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d176eea257707f024d1e0a26accf5c106ffe2bfa))
+* **event-store:** Task 1.1 — Zod schema + migration v88 for events table ([#351](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/351)) ([d47152d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d47152da85e8b13f5ad42f1301fadc22b6e34ee3))
+
 ## [13.9.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.8.0...mcp-graph-v13.9.0) (2026-05-09)
 
 
