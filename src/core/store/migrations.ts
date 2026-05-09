@@ -2334,6 +2334,27 @@ const migrations: Migration[] = [
         ON browser_test_runs(status);
     `,
   },
+  {
+    version: 91,
+    description: "failure_signals table for §EPIC-self-healing collector",
+    sql: `
+      CREATE TABLE IF NOT EXISTS failure_signals (
+        id          TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        source      TEXT NOT NULL,
+        signalKind  TEXT NOT NULL,
+        context     TEXT NOT NULL DEFAULT '{}',
+        severity    TEXT NOT NULL,
+        timestamp   TEXT NOT NULL,
+        rawError    TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_failure_signals_kind
+        ON failure_signals(signalKind);
+      CREATE INDEX IF NOT EXISTS idx_failure_signals_source
+        ON failure_signals(source);
+      CREATE INDEX IF NOT EXISTS idx_failure_signals_timestamp
+        ON failure_signals(timestamp);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */
