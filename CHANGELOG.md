@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.11.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.10.0...mcp-graph-v13.11.0) (2026-05-09)
+
+
+### Features
+
+* **event-store:** Task 1.2 — EventWriter buffered flush + circuit breaker ([#352](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/352)) ([da9f344](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/da9f3445d92102261b8dd19bf81411b405cb78c9))
+* **event-store:** Task 1.3 — Query API + migration v89 ([#354](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/354)) ([0ef4f75](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/0ef4f7566fd64d94b4a09d4813ab3606e0cf2c67))
+
 ## [13.10.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.9.0...mcp-graph-v13.10.0) (2026-05-09)
 
 
