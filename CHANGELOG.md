@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.8.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.7.0...mcp-graph-v13.8.0) (2026-05-09)
+
+
+### Features
+
+* **embeddings:** extend ProviderAdapter with optional embed() + Zod schemas ([#343](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/343)) ([d29d56b](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/d29d56bf9d656736168bcb36bab1f8e0fc7ba808))
+* **vendor-scan:** pure walkVendor() function — Task 1.1 ([#345](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/345)) ([a6e60d6](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a6e60d6e3cb913f99eef990c7cb54b78a71b227f))
+
 ## [13.7.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.6.0...mcp-graph-v13.7.0) (2026-05-09)
 
 
