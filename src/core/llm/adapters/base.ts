@@ -6,10 +6,11 @@
  * Each LLM provider implements this interface. Gateway routes by model id.
  */
 
-import type { LlmRequest, LlmResponse, ModelSpec, ProviderName } from "../types.js";
+import type { LlmRequest, LlmResponse, ModelSpec, ProviderName, EmbedRequest, EmbedResponse } from "../types.js";
 
 export interface ProviderAdapter {
   readonly name: ProviderName;
   generate(req: LlmRequest): Promise<LlmResponse>;
   models(): ModelSpec[];
+  embed?(req: EmbedRequest): Promise<EmbedResponse>;
 }

@@ -87,6 +87,18 @@ export const LlmResponseSchema = z.object({
 });
 export type LlmResponse = z.infer<typeof LlmResponseSchema>;
 
+export const EmbedRequestSchema = z.object({
+  model: z.string().default("text-embedding-3-small"),
+  input: z.union([z.string(), z.array(z.string())]),
+});
+export type EmbedRequest = z.infer<typeof EmbedRequestSchema>;
+
+export const EmbedResponseSchema = z.object({
+  vectors: z.array(z.array(z.number())).min(1),
+  usage: z.object({ inputTokens: z.number().int().nonnegative() }),
+});
+export type EmbedResponse = z.infer<typeof EmbedResponseSchema>;
+
 export const BudgetScopeSchema = z.object({
   scope: z.enum(["cell", "run", "project", "session"]),
   scopeId: z.string().optional(),
