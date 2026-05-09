@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.12.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.11.0...mcp-graph-v13.12.0) (2026-05-09)
+
+
+### Features
+
+* **browser-harness:** Task 4.1 — BrowserTestNode schema + migration v90 ([#355](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/355)) ([5f8556a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/5f8556ac400fd4efd54379430e7c3fdd04987e36))
+* **sentrux:** starter rules.toml with layer conventions (Task 0.3) ([#357](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/357)) ([e222d85](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/e222d85b01ddb7737373bedcc0534d71322b7efe))
+
 ## [13.11.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.10.0...mcp-graph-v13.11.0) (2026-05-09)
 
 
