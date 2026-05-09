@@ -2309,6 +2309,31 @@ const migrations: Migration[] = [
         ON events(parentEventId) WHERE parentEventId IS NOT NULL;
     `,
   },
+  {
+    version: 90,
+    // §EPIC-browser-harness — Task 4.1: browser_test_runs table stores
+    // execution records with evidences and pathTaken as JSON columns.
+    description: "browser_test_runs table for browser harness execution nodes",
+    sql: `
+      CREATE TABLE IF NOT EXISTS browser_test_runs (
+        id            TEXT PRIMARY KEY,
+        runId         TEXT NOT NULL,
+        targetUrl     TEXT NOT NULL,
+        featureNodeId TEXT NOT NULL,
+        adrNodeId     TEXT,
+        unitTestPath  TEXT,
+        status        TEXT NOT NULL CHECK(status IN ('running','pass','fail','broken')),
+        evidences     TEXT NOT NULL DEFAULT '[]',
+        pathTaken     TEXT NOT NULL DEFAULT '[]',
+        startedAt     TEXT NOT NULL,
+        endedAt       TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_browser_test_feature
+        ON browser_test_runs(featureNodeId);
+      CREATE INDEX IF NOT EXISTS idx_browser_test_status
+        ON browser_test_runs(status);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

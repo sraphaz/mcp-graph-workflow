@@ -81,6 +81,8 @@ browser-*
 !src/tests/browser-*.test.ts
 !src/tests/browser-harness/
 !src/tests/browser-harness/**
+!src/tests/schemas/browser-test-schema.test.ts
+!src/schemas/browser-test.schema.ts
 !src/tests/extracta-tdd-integration.test.ts
 !src/tests/finish-task-browser-skill.test.ts
 

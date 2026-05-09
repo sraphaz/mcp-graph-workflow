@@ -27,6 +27,8 @@ export const NodeTypeSchema = z.enum([
   "constitution",
   // Journey execution
   "journey_run",
+  // Browser harness execution nodes
+  "browser_test",
 ]);
 
 export const NodeStatusSchema = z.enum([

@@ -39,7 +39,9 @@ export type NodeType =
   // Spec-driven development types
   | "constitution"
   // Journey execution
-  | "journey_run";
+  | "journey_run"
+  // Browser harness execution nodes
+  | "browser_test";
 
 export type NodeStatus =
   | "backlog"
