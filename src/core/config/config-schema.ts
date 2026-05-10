@@ -17,7 +17,7 @@
 
 import { z } from "zod/v4";
 import { LspConfigOverrideSchema } from "../lsp/lsp-types.js";
-import { BROWSER_PILOT_MODELS } from "../../schemas/browser-pilot.schema.js";
+const BROWSER_PILOT_MODELS = ["claude-3.5-sonnet", "gpt-4o", "gpt-4o-mini", "o1", "o1-mini"] as const;
 
 export const ContextModeSchema = z.enum(["ultra-lean", "lean", "full"]);
 export type ContextMode = z.infer<typeof ContextModeSchema>;

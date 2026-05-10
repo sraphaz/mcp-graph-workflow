@@ -20,7 +20,7 @@ import Database from "better-sqlite3";
 import { runMigrations, configureDb } from "../core/store/migrations.js";
 import { HelpersRegistry } from "../core/browser-harness/helpers-registry.js";
 import { HelpersRuntime } from "../core/browser-harness/helpers-runtime.js";
-import { SelfHealService, type SelfHealInput } from "../core/browser-harness/self-heal.js";
+import { SelfHealService, type SelfHealInput } from "../core/browser-harness/helper-validator.js";
 import { HelperValidationError } from "../core/utils/errors.js";
 import type { HarnessGuardrail } from "../schemas/browser-harness.schema.js";
 

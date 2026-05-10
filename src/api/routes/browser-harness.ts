@@ -6,7 +6,6 @@
  *   POST   /sessions                 — start a new session (connect to CDP)
  *   DELETE /sessions/:id             — stop a session
  *   GET    /helpers                  — list helpers
- *   POST   /sessions/:id/chat        — submit a chat prompt, returns SSE
  *   GET    /runs                     — list past runs
  *   GET    /runs/:id                 — fetch a single run
  *   GET    /runs/:id/report.html     — self-contained HTML report
@@ -25,8 +24,6 @@ import {
   loadGuardrail,
   seedBuiltInHelpers,
 } from "../../core/browser-harness/index.js";
-import { ChatRunner } from "../../core/browser-harness/chat-runner.js";
-import { persistBrowserSkillInput } from "../../core/skills/browser-skill-proposer.js";
 import { RunsStore } from "../../core/browser-harness/runs-store.js";
 import {
   buildHtmlReport,
@@ -44,7 +41,6 @@ interface BrowserHarnessRuntime {
   selfHeal: SelfHealService;
   sessions: SessionStore;
   runs: RunsStore;
-  chat: ChatRunner;
 }
 
 const runtimes = new WeakMap<object, BrowserHarnessRuntime>();
@@ -59,9 +55,8 @@ function getRuntime(storeRef: StoreRef, basePath: string): BrowserHarnessRuntime
     const runs = new RunsStore(db, basePath);
     const selfHeal = new SelfHealService(db, registry, runtime);
     const sessions = new SessionStore(db);
-    const chat = new ChatRunner(registry, runtime, runs, selfHeal);
     seedBuiltInHelpers(registry);
-    bundle = { registry, runtime, selfHeal, sessions, runs, chat };
+    bundle = { registry, runtime, selfHeal, sessions, runs };
     runtimes.set(key, bundle);
   }
   return bundle;
@@ -107,62 +102,6 @@ export function createBrowserHarnessRouter(
     const bundle = getRuntime(storeRef, getBasePath());
     const helpers = bundle.registry.list(origin);
     res.json({ ok: true, helpers });
-  });
-
-  // SSE chat endpoint
-  router.post("/sessions/:id/chat", async (req, res, next) => {
-    try {
-      const bundle = getRuntime(storeRef, getBasePath());
-      const session = bundle.sessions.get(req.params.id);
-      const prompt = String(req.body?.prompt ?? "");
-      if (!prompt) {
-        res.status(400).json({ ok: false, error: "prompt required" });
-        return;
-      }
-      const guardrail = loadGuardrail();
-
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache, no-transform");
-      res.setHeader("Connection", "keep-alive");
-      res.flushHeaders?.();
-
-      const send = (event: unknown): void => {
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
-      };
-      const off = bundle.chat.on(send);
-
-      try {
-        const run = await bundle.chat.run({
-          sessionId: session.meta.id,
-          cdp: session.cdp,
-          prompt,
-          guardrail,
-          nodeId: req.body?.nodeId ?? null,
-        });
-        // §extracta-completion — persist browserSkillInput on the node so
-        // finish_task's hook can auto-write a domain skill later.
-        const nodeId = req.body?.nodeId;
-        if (nodeId && run.verdict === "pass") {
-          try {
-            persistBrowserSkillInput(storeRef.current, {
-              nodeId: String(nodeId),
-              prompt,
-              run,
-            });
-          } catch (err) {
-            log.warn("api:bh:chat:skill_input_persist_failed", { error: String(err) });
-          }
-        }
-        send({ type: "done", runId: run.id });
-      } catch (err) {
-        send({ type: "error", error: err instanceof Error ? err.message : String(err) });
-      } finally {
-        off();
-        res.end();
-      }
-    } catch (err) {
-      next(err);
-    }
   });
 
   router.get("/runs", (_req, res) => {

@@ -114,7 +114,6 @@ export async function registerAllTools(
   if (visible("pipeline")) (await import("./pipeline.js")).registerPipeline(server, store);
   if (visible("daemon_status")) (await import("./daemon-status.js")).registerDaemonStatus(server);
   if (visible("browser_harness")) (await import("./browser-harness.js")).registerBrowserHarnessTool(server, store);
-  if (visible("browser_pilot_run")) (await import("./browser-pilot.js")).registerBrowserPilotTool(server, store);
   if (visible("query_graph")) (await import("./query-graph.js")).registerQueryGraph(server, store);
   wrapToolsWithGates(server, store);
 }

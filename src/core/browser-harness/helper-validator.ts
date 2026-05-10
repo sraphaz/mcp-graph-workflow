@@ -2,8 +2,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright © 2026 Diego Lima Nogueira de Paula
  *
- * Self-heal validator: when the agent submits a new helper source, scan it
- * for forbidden APIs, enforce the size cap, parse it, and persist.
+ * Validador de admissão para helpers que o host envia: quando o agente submete
+ * uma nova fonte de helper, verifica APIs proibidas, aplica o limite de tamanho,
+ * faz parse e persiste. Não envolve LLM — é puramente determinístico.
  */
 
 import type Database from "better-sqlite3";
@@ -19,7 +20,7 @@ import { generateId } from "../utils/id.js";
 import { createLogger } from "../utils/logger.js";
 import { validateSource } from "../security/ast-source-validator.js";
 
-const log = createLogger({ layer: "core", source: "self-heal.ts" });
+const log = createLogger({ layer: "core", source: "helper-validator.ts" });
 
 const FORBIDDEN_TOKENS = [
   /\brequire\s*\(/,
@@ -79,7 +80,7 @@ export class SelfHealService {
       bytes: input.source.length,
     }, { ok: true });
 
-    log.info("bh:self-heal:add", { name: record.name, version: record.version });
+    log.info("bh:helper-validator:add", { name: record.name, version: record.version });
     return { name: record.name, version: record.version };
   }
 
@@ -130,7 +131,6 @@ export class SelfHealService {
     }
 
     if (!/^\s*\(?\s*async\b|^\s*\(?\s*function\b|^\s*\(/m.test(input.source.trim())) {
-      // basic sanity: must look like a function expression
       errors.push("source must be a function expression (async/function/arrow)");
     }
 

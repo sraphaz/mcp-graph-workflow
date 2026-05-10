@@ -71,7 +71,6 @@ export const TOOL_TAXONOMY: Record<string, ToolProfile> = {
   // ----- expert (everything else) — specialized / experimental / heavy -----
   agent_format: "expert",
   browser_harness: "expert",
-  browser_pilot_run: "expert",
   clone_node: "expert",
   code_intelligence: "expert",
   constitution: "expert",
