@@ -12,6 +12,9 @@ import { withRetry, type RetryConfig, DEFAULT_RETRY } from "../retry.js";
 import type { LlmRequest, LlmResponse, ModelSpec } from "../types.js";
 import type { ProviderAdapter } from "./base.js";
 import { OperationError } from "../../utils/errors.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "llm/adapters/openai.ts" });
 
 const OPENAI_DEFAULT_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -171,7 +174,7 @@ export class OpenAIAdapter implements ProviderAdapter {
           const usage = event["usage"] as Record<string, unknown> | undefined;
           if (typeof usage?.["prompt_tokens"] === "number") inputTokens = usage["prompt_tokens"] as number;
           if (typeof usage?.["completion_tokens"] === "number") outputTokens = usage["completion_tokens"] as number;
-        } catch { /* ignore malformed SSE lines */ }
+        } catch (e) { log.debug("intentional swallow", { error: e, reason: "ignore malformed SSE line" }); }
       }
     }
 

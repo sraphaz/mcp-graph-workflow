@@ -118,8 +118,8 @@ function resolveGrammarPath(languageId: string): string | null {
       log.debug("treesitter-manager:resolved-bundled", { languageId, path: bundled });
       return bundled;
     }
-  } catch {
-    // Bundled path not found — fall through to npm-package strategies
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "bundled WASM path not found, falling through to npm-package strategies" });
   }
 
   // Strategy 1: require.resolve from CWD
@@ -128,8 +128,8 @@ function resolveGrammarPath(languageId: string): string | null {
     const pkgDir = pkgMain.replace(/[/\\]package\.json$/, "");
     const wasmPath = join(pkgDir, entry.wasm);
     if (existsSync(wasmPath)) return wasmPath;
-  } catch {
-    // Not found at CWD level — try relative to this package
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "WASM not found at CWD level, trying relative to this package" });
   }
 
   // Strategy 2: resolve relative to this file (for nested node_modules)
@@ -142,8 +142,8 @@ function resolveGrammarPath(languageId: string): string | null {
       log.debug("treesitter-manager:resolved-relative", { languageId, wasmPath });
       return wasmPath;
     }
-  } catch {
-    // Not found relative to this file either
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "WASM not found relative to this file either" });
   }
 
   // Strategy 3: walk up from __dirname to find node_modules with the grammar
@@ -160,8 +160,8 @@ function resolveGrammarPath(languageId: string): string | null {
       if (parent === searchDir) break;
       searchDir = parent;
     }
-  } catch {
-    // Walk failed
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "node_modules walk for WASM failed" });
   }
 
   log.debug("treesitter-manager:pkg-not-found", { languageId, pkg: entry.pkg });

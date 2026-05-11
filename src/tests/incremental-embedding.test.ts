@@ -15,7 +15,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { KnowledgeStore } from "../core/store/knowledge-store.js";
 import { EmbeddingStore } from "../core/rag/embedding-store.js";
@@ -38,6 +38,12 @@ describe("Incremental Embedding Updates", () => {
     store.initProject("test-project");
     embeddingStore = new EmbeddingStore(store);
     knowledgeStore = new KnowledgeStore(store.getDb());
+  });
+
+  afterEach(() => {
+    if (tmpDir && fs.existsSync(tmpDir)) {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 
   it("should do full index when no vocabulary exists", async () => {

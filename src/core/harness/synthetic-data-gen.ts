@@ -228,8 +228,8 @@ function getChecks(schema: z.ZodType): { min?: number; max?: number } {
         if (checkType === "less_than") resultValue.max = checkDef.value as number;
       }
     }
-  } catch {
-    // Graceful fallback
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "graceful fallback when reading Zod string constraints" });
   }
 
   return resultValue;
@@ -248,8 +248,8 @@ function getEnumValues(schema: z.ZodType): string[] {
       if (Array.isArray(entries)) return [...entries];
       return Object.values(entries);
     }
-  } catch {
-    // Graceful fallback
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "graceful fallback when reading Zod enum entries" });
   }
   return [];
 }

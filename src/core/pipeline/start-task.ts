@@ -28,8 +28,6 @@ import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
 import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/task-readiness-score.js";
-import { getTouchedFiles } from "../planner/touched-files.js";
-import { getBaseline } from "../feature-depth/baselines-store.js";
 import { buildTaskContext } from "../context/compact-context.js";
 import type { GraphSnapshot } from "../store/graph-snapshot-cache.js";
 import { assembleContext } from "../context/context-assembler.js";
@@ -56,7 +54,7 @@ import { enforceWipAndFileGates } from "./wip-gate.js";
 import { assembleSiblingContext } from "./assemble-sibling-context.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
-import { createShadowBranch } from "../autonomy/shadow-branch.js";
+import { createShadowBranch, type ShadowBranchHandle } from "../autonomy/shadow-branch.js";
 import { createLogger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 import { extractOfferedDocIds } from "../rag/rag-feedback.js";
@@ -111,8 +109,8 @@ export interface StartTaskResult {
   prefetchHit?: boolean;
   /** Graph checkpoint for rollback on failure (Phase D — Autonomous Loop) */
   checkpoint?: GraphCheckpoint;
-  /** Shadow branch name for isolated execution (Phase D — Git Transactional Layer) */
-  shadowBranch?: string;
+  /** Shadow branch handle for isolated execution (Phase D — Git Transactional Layer) */
+  shadowBranch?: ShadowBranchHandle;
   /**
    * Model routing hint — combines xpSize, AC quality, harness, dependency depth
    * and issue-pattern history into a preferred Claude model (haiku/sonnet/opus).
@@ -301,10 +299,6 @@ export function startTask(
   // empirical pass-rate overrides the heuristic recommendation.
   let modelHint: TaskReadinessScore | undefined;
   try {
-    const touched = getTouchedFiles(taskNode);
-    const primaryFile = touched.length > 0 ? touched[0] : null;
-    const fdBaseline = primaryFile ? getBaseline(store.getDb(), primaryFile) : null;
-
     let empiricalOverride: { model: ModelPreference; basedOn: number; passRate: number } | undefined;
     try {
       const runs = new EvalRunStore(store.getDb());
@@ -322,7 +316,7 @@ export function startTask(
 
     modelHint = computeTaskReadinessScore(taskNode, doc, {
       harnessScore: harnessWarning ? harnessWarning.score : null,
-      featureDepthScore: fdBaseline?.score ?? null,
+      featureDepthScore: null,
       empiricalOverride,
     });
   } catch (err) {
@@ -397,7 +391,7 @@ export function startTask(
 
   // 6b. Create checkpoint for rollback on failure (Phase D — Autonomous Loop)
   let checkpoint: GraphCheckpoint | undefined;
-  let shadowBranch: string | undefined;
+  let shadowBranch: ShadowBranchHandle | undefined;
   if (startedAt) {
     try {
       checkpoint = createCheckpoint(store, taskNode.id);
@@ -410,8 +404,8 @@ export function startTask(
     try {
       const branchResult = createShadowBranch(taskNode.id);
       if (branchResult.created) {
-        shadowBranch = branchResult.branchName;
-        log.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: shadowBranch });
+        shadowBranch = branchResult;
+        log.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: branchResult.branchName, worktreePath: branchResult.worktreePath });
       }
     } catch (err) {
       log.warn("pipeline:start_task:shadow_branch_failed", { error: String(err) });
@@ -461,8 +455,8 @@ export function startTask(
         { limit: 5 },
       );
     }
-  } catch {
-    // Non-fatal — skill retrieval is advisory.
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "non-fatal, skill retrieval is advisory" });
   }
 
   // §EPIC-13.2 — persist ambiguityAudit + emit advisory warning

@@ -70,6 +70,7 @@ if (isMcpClient) {
   const { reviewDepthCommand } = await import("./commands/review-depth.js");
   const { updateCommand } = await import("./commands/update.js");
   const { browserHarnessCommand } = await import("./commands/browser-harness.js");
+  const { browserTestsCommand } = await import("./commands/browser-tests.js");
   // v11 lifecycle + ops wrappers (delegate to @mcp-graph-workflow/cli bundle)
   const { nextCommand } = await import("./commands/next.js");
   const { startCommand } = await import("./commands/start.js");
@@ -107,6 +108,7 @@ if (isMcpClient) {
   program.addCommand(reviewDepthCommand());
   program.addCommand(updateCommand());
   program.addCommand(browserHarnessCommand());
+  program.addCommand(browserTestsCommand());
   // v11 lifecycle + ops (delegated)
   program.addCommand(nextCommand());
   program.addCommand(startCommand());

@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "clean": "rimraf dist",
-    "build": "npm run clean && esbuild src/cli.tsx --bundle --platform=node --target=node20 --format=esm --outfile=dist/cli.mjs --banner:js=\"#!/usr/bin/env node\" --tree-shaking=true --minify --define:DEV=false --define:process.env.NODE_ENV='\"production\"' --drop:debugger --jsx=automatic --jsx-import-source=react --external:react-devtools-core --external:fsevents --packages=external",
+    "build": "npm run clean && esbuild src/cli.tsx --bundle --platform=node --target=node20 --format=esm --outfile=dist/cli.mjs --banner:js=\"#!/usr/bin/env node\" --tree-shaking=true --minify --define:DEV=false --define:process.env.NODE_ENV='\"production\"' --drop:debugger --jsx=automatic --jsx-import-source=react --external:react-devtools-core --external:fsevents --external:better-sqlite3 --external:@modelcontextprotocol/sdk",
     "compile": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

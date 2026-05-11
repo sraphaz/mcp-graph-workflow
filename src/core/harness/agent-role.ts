@@ -73,8 +73,8 @@ export function registerAgentRole(
         warning = `Role already registered for ${taskId}: was '${parsed.role}', overwriting with '${role}'`;
         log.warn("agent-role:overwrite", { taskId, oldRole: parsed.role, newRole: role });
       }
-    } catch {
-      // Corrupted setting — overwrite silently
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "corrupted agent-role setting, overwriting silently" });
     }
   }
 

@@ -116,6 +116,6 @@ export async function learnFromProject(
     log.warn("cross-project:learn_failed", { sourcePath, error: String(err) });
     return { imported: 0, skipped: 0, categories: {}, sourceProject: sourcePath };
   } finally {
-    try { sourceDb.close(); } catch { /* best-effort */ }
+    try { sourceDb.close(); } catch (e) { log.debug("intentional swallow", { error: e, reason: "best-effort close of source database" }); }
   }
 }

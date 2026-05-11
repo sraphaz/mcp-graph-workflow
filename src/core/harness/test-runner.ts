@@ -184,8 +184,8 @@ function parseVitestJson(stdout: string): VitestJsonResult | null {
   // Try direct parse first
   try {
     return JSON.parse(stdout) as VitestJsonResult;
-  } catch {
-    // JSON might be mixed with other output — find the last { ... } block
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "JSON may be mixed with other output, scanning for last JSON block" });
   }
 
   // Find the last JSON object in the output

@@ -89,8 +89,8 @@ export function calculateMetrics(doc: GraphDocument): MetricsReport {
         : 0,
       avgCompletionHours: velocity.overall.avgCompletionHours ?? 0,
     };
-  } catch {
-    // Velocity calculation may fail with no sprints
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "velocity calculation may fail with no sprints" });
   }
 
   // Sprint progress

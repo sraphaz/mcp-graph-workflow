@@ -17,6 +17,9 @@ import { withRetry, type RetryConfig, DEFAULT_RETRY } from "../retry.js";
 import type { LlmRequest, LlmResponse, ModelSpec } from "../types.js";
 import type { ProviderAdapter } from "./base.js";
 import { OperationError } from "../../utils/errors.js";
+import { createLogger } from "../../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "llm/adapters/anthropic.ts" });
 
 const ANTHROPIC_DEFAULT_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -215,7 +218,7 @@ export class AnthropicAdapter implements ProviderAdapter {
             const uVar = event["usage"] as Record<string, unknown> | undefined;
             if (typeof uVar?.["output_tokens"] === "number") outputTokens = uVar["output_tokens"] as number;
           }
-        } catch { /* ignore malformed SSE lines */ }
+        } catch (e) { log.debug("intentional swallow", { error: e, reason: "ignore malformed SSE line" }); }
       }
     }
 

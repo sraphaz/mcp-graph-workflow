@@ -135,8 +135,8 @@ export async function checkSqliteDatabase(basePath: string): Promise<CheckResult
         suggestion: "Re-run 'mcp-graph init' or restore from a snapshot",
       };
     }
-  } catch {
-    // statSync race with deletion; fall through to open attempt
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "statSync race with deletion, falling through to open attempt" });
   }
   try {
     const db = new Database(dbPath, { readonly: true });
@@ -195,8 +195,8 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
         suggestion: "Re-run 'mcp-graph init' or restore from a snapshot",
       };
     }
-  } catch {
-    // Fall through to open attempt
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "statSync failed during integrity check, falling through to open attempt" });
   }
   try {
     const db = new Database(dbPath, { readonly: true });
@@ -207,8 +207,8 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
           .prepare("SELECT count(*) as n FROM sqlite_master WHERE type IN ('table','view')")
           .get() as { n: number }
       ).n;
-    } catch {
-      // Reading sqlite_master itself failed — DB is unreadable. Fall through.
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "reading sqlite_master failed, DB is unreadable" });
     }
     if (schemaCount === 0) {
       db.close();

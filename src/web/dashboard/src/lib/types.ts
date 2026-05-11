@@ -407,6 +407,23 @@ export type JourneyRunEvent =
   | { type: "done"; runId: string }
   | { type: "error"; error: string };
 
+// ── Browser Harness Sessions ─────────────────────────────
+
+export interface BhSession {
+  id: string;
+  status: string;
+  startedAt: number;
+  closedAt: number | null;
+}
+
+export interface BhAuditEvent {
+  id: string;
+  action: string;
+  payload: unknown;
+  result: unknown;
+  at: number;
+}
+
 // ── Translation ─────────────────────────────────────────
 
 export type TranslationJobStatus = "pending" | "analyzing" | "translating" | "validating" | "done" | "failed";

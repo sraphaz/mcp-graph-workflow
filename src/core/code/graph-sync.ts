@@ -61,8 +61,8 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
       "SELECT symbol_count FROM code_index_meta WHERE project_id = ?",
     ).get(project.id) as { symbol_count: number } | undefined;
     hasCodeIndex = (meta?.symbol_count ?? 0) > 0;
-  } catch {
-    // code_index_meta table may not exist
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "code_index_meta table may not exist" });
   }
 
   // Get indexed files set (for fast lookup)
@@ -73,8 +73,8 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
         "SELECT DISTINCT file FROM code_symbols WHERE project_id = ?",
       ).all(project.id) as { file: string }[];
       for (const fVar of files) indexedFiles.add(normalizePath(fVar.file));
-    } catch {
-      // code_symbols table may not exist
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "code_symbols table may not exist" });
     }
   }
 
@@ -112,8 +112,8 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
       if (meta?.git_hash) {
         symbolChanges.push(`Code index at git hash: ${meta.git_hash} (indexed: ${meta.last_indexed})`);
       }
-    } catch {
-      // Best-effort
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "best-effort git hash check" });
     }
   }
 

@@ -127,8 +127,8 @@ export async function executeBuild(options: BuilderExecutorOptions): Promise<Bui
       timedOut = true;
       try {
         child.kill("SIGKILL");
-      } catch {
-        /* already gone */
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "process already gone before SIGKILL" });
       }
     }, timeoutMs);
 

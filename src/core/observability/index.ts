@@ -86,3 +86,17 @@ export type {
   ScenarioResult,
   AssertionFailure,
 } from "./scenario-runner.js";
+
+export {
+  createCounter,
+  createHistogram,
+  getSnapshot,
+  resetAll,
+  httpRequestsTotal,
+  httpErrorsTotal,
+  httpDurationMs,
+  sqliteConnectionsActive,
+  eventBusQueueDepth,
+  errorsRate,
+} from "./metrics.js";
+export type { Counter, Histogram, HistogramStats, MetricsSnapshot } from "./metrics.js";

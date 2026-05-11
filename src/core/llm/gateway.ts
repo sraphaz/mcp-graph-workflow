@@ -14,6 +14,9 @@ import type { ModelRegistry, RegistryListOptions } from "./registry.js";
 import type { CallContext, LlmRequest, LlmResponse, ModelSpec, ProviderName } from "./types.js";
 import { LlmCircuitBreaker, isCircuitOpenStatus, type CircuitState } from "./circuit-breaker-llm.js";
 import type { FailoverEntry } from "./failover-chain.js";
+import { decideRoute, type PolicyConfig, type PolicySignals } from "./policy-engine.js";
+import type { PolicyObserver } from "./policy-observer.js";
+import { createLogger } from "../utils/logger.js";
 
 export interface LlmGatewayOptions {
   registry: ModelRegistry;
@@ -27,6 +30,10 @@ export interface LlmGatewayOptions {
   failoverChain?: ReadonlyArray<FailoverEntry>;
   /** §EPIC-16.1 — circuit breaker shared across calls (per-provider). */
   circuitBreaker?: LlmCircuitBreaker;
+  /** §EPIC-policy-engine — routing policy config. mode=observe: compute+log, no behaviour change. */
+  policyConfig?: PolicyConfig;
+  /** §EPIC-policy-engine — observer that receives observations when mode=observe. */
+  policyObserver?: PolicyObserver;
 }
 
 export interface FailoverProviderStatus {
@@ -34,6 +41,8 @@ export interface FailoverProviderStatus {
   model: string;
   state: CircuitState;
 }
+
+const log = createLogger({ layer: "core", source: "gateway.ts" });
 
 export class LlmGateway {
   private readonly registry: ModelRegistry;
@@ -43,6 +52,8 @@ export class LlmGateway {
   private readonly defaultCaps: BudgetCaps;
   private readonly failoverChain: ReadonlyArray<FailoverEntry>;
   private readonly circuitBreaker: LlmCircuitBreaker | null;
+  private readonly policyConfig: PolicyConfig | null;
+  private readonly policyObserver: PolicyObserver | null;
 
   constructor(opts: LlmGatewayOptions) {
     this.registry = opts.registry;
@@ -52,6 +63,8 @@ export class LlmGateway {
     this.defaultCaps = opts.defaultCaps ?? {};
     this.failoverChain = opts.failoverChain ?? [];
     this.circuitBreaker = opts.circuitBreaker ?? null;
+    this.policyConfig = opts.policyConfig ?? null;
+    this.policyObserver = opts.policyObserver ?? null;
   }
 
   async generate(
@@ -150,6 +163,11 @@ export class LlmGateway {
       attempts.push({ provider: primaryProvider, model: req.model });
     }
 
+    // §EPIC-policy-engine Task 1.3 — observe mode: compute decision, log, no behaviour change
+    if (this.policyConfig?.mode === "observe" && this.policyObserver) {
+      this.runObserve(req, ctx, effectiveCaps, scope, attempts);
+    }
+
     let lastErr: unknown = null;
     for (let hop = 0; hop < attempts.length; hop++) {
       const { provider, model } = attempts[hop];
@@ -158,14 +176,29 @@ export class LlmGateway {
         continue;
       }
       try {
-        const response = await this.generateWithProvenance(
-          { ...req, model },
-          ctx,
-          opts.caps,
-          { providerUsed: provider, fallbackCount: hop },
-        );
+        const adapter = this.adapters.get(provider as ProviderName);
+        const useStream = req.stream === true && !!opts.streamDelta;
+        const hasGenerateStream = !!adapter?.generateStream;
+        if (useStream && !hasGenerateStream) {
+          log.warn("stream-not-supported", { provider, model, hint: "adapter lacks generateStream — falling back to generate()" });
+        }
+        const response = (useStream && hasGenerateStream)
+          ? await this.generateStreamWithProvenance(
+              { ...req, model },
+              ctx,
+              opts.caps,
+              { providerUsed: provider, fallbackCount: hop },
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- caller guards useStream && hasGenerateStream
+              opts.streamDelta!,
+            )
+          : await this.generateWithProvenance(
+              { ...req, model },
+              ctx,
+              opts.caps,
+              { providerUsed: provider, fallbackCount: hop },
+            );
         this.circuitBreaker?.recordSuccess(provider);
-        if (opts.streamDelta) {
+        if (!useStream && opts.streamDelta) {
           opts.streamDelta(response.content);
           opts.streamDelta(null);
         }
@@ -184,6 +217,131 @@ export class LlmGateway {
       }
     }
     throw lastErr ?? new Error("LlmGateway.complete: all failover attempts failed");
+  }
+
+  private runObserve(
+    req: LlmRequest,
+    _ctx: CallContext,
+    effectiveCaps: BudgetCaps,
+    scope: BudgetScopeRef,
+    attempts: Array<{ provider: string; model: string }>,
+  ): void {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- runObserve only called when policyConfig is set
+    const policyConfig = this.policyConfig!;
+
+    // Build signals from available gateway state (deterministic, zero ML)
+    const promptTokensEstimate = req.messages.reduce((n, m) => n + Math.ceil(m.content.length / 4), 0);
+
+    const agg = this.budget.aggregate(scope);
+    const capUsd = effectiveCaps.capUsdPerSession;
+    const budgetRemainingPct = capUsd && capUsd > 0
+      ? Math.max(0, 1 - agg.totalUsd / capUsd)
+      : 1.0;
+
+    const backendHealthMap = new Map<ProviderName, "online" | "degraded" | "offline">();
+    const latencyP95Map = new Map<ProviderName, number>();
+    for (const entry of this.failoverChain) {
+      const state = this.circuitBreaker?.state(entry.provider) ?? "closed";
+      const health: "online" | "degraded" | "offline" = state === "open" ? "offline" : "online";
+      backendHealthMap.set(entry.provider as ProviderName, health);
+    }
+
+    const signals: PolicySignals = {
+      promptTokensEstimate,
+      budgetRemainingPct,
+      latencyP95ByProvider: latencyP95Map,
+      backendHealth: backendHealthMap,
+    };
+
+    const decision = decideRoute(signals, policyConfig);
+    const actualUsed = attempts.map((a) => a.provider);
+    const divergence = JSON.stringify(decision.chain) !== JSON.stringify(actualUsed);
+
+    log.info("policy:observe", {
+      actualChain: actualUsed,
+      observedDecision: decision.chain,
+      appliedRule: decision.appliedRule,
+      divergence,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- runObserve only called when policyObserver is set
+    this.policyObserver!.record({
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      signalsSnapshot: {
+        promptTokensEstimate,
+        budgetRemainingPct,
+        latencyP95ByProvider: Object.fromEntries(latencyP95Map),
+        backendHealth: Object.fromEntries(backendHealthMap),
+      },
+      decision,
+      actualUsed,
+      divergence,
+    });
+  }
+
+  /**
+   * Internal: streaming variant of generateWithProvenance.
+   * Calls adapter.generateStream and pipes deltas to onDelta.
+   */
+  private async generateStreamWithProvenance(
+    req: LlmRequest,
+    ctx: CallContext,
+    caps: BudgetCaps | undefined,
+    provenance: { providerUsed: string; fallbackCount: number },
+    onDelta: (chunk: string | null) => void,
+  ): Promise<LlmResponse> {
+    const spec = this.registry.lookupModel(req.model);
+    if (!this.allowExpensive && spec.tier === "expensive") {
+      throw new LlmModelUnknown(`${req.model} (tier=expensive blocked by policy)`);
+    }
+    const adapter = this.adapters.get(spec.provider);
+    if (!adapter?.generateStream) {
+      throw new LlmModelUnknown(`${req.model} (adapter for provider=${spec.provider} lacks generateStream)`);
+    }
+    const effectiveCaps = caps ?? this.defaultCaps;
+    const scope: BudgetScopeRef = { cellId: ctx.cellId, runId: ctx.runId, sessionId: ctx.sessionId };
+    const estimateOutput = req.maxTokens ?? 1024;
+    const estimateUsd = (estimateOutput / 1_000_000) * spec.pricing.outputPerMtok;
+    this.budget.guard(scope, estimateUsd, effectiveCaps);
+
+    const t0 = Date.now();
+    try {
+      const response = await adapter.generateStream(req, onDelta);
+      const cost = calcCost(response.usage, spec);
+      this.budget.record({
+        caller: ctx.caller,
+        provider: spec.provider,
+        model: req.model,
+        usage: response.usage,
+        costUsd: cost,
+        latencyMs: Date.now() - t0,
+        status: "ok",
+        cellId: ctx.cellId,
+        runId: ctx.runId,
+        sessionId: ctx.sessionId,
+        providerUsed: provenance.providerUsed,
+        fallbackCount: provenance.fallbackCount,
+      });
+      return response;
+    } catch (err) {
+      this.budget.record({
+        caller: ctx.caller,
+        provider: spec.provider,
+        model: req.model,
+        usage: { inputTokens: 0, outputTokens: 0 },
+        costUsd: 0,
+        latencyMs: Date.now() - t0,
+        status: "error",
+        errorKind: err instanceof Error ? err.name : "unknown",
+        cellId: ctx.cellId,
+        runId: ctx.runId,
+        sessionId: ctx.sessionId,
+        providerUsed: spec.provider,
+        fallbackCount: provenance.fallbackCount,
+      });
+      throw err;
+    }
   }
 
   /**

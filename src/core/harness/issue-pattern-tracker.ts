@@ -76,6 +76,22 @@ Include context, approach, and any constraints.`,
   missing_estimate: `# Rule: Estimation Required
 Every task must have xpSize (XS/S/M/L/XL) or estimateMinutes set
 before moving to in_progress.`,
+
+  gate_blocking_too_often: `# Rule: Investigate Lifecycle Gate Blocks
+The lifecycle gate is blocking the same tool repeatedly.
+Check if the current lifecycle phase is correct and that prerequisites for that tool are satisfied.`,
+
+  tool_failing_for_input_kind: `# Rule: Review Tool Input Validation
+The same tool is failing repeatedly with isError:true.
+Audit input validation and ensure callers provide valid payloads before invoking the tool.`,
+
+  sqlite_lock_storm: `# Rule: Reduce SQLite Contention
+Multiple SQLite lock errors are occurring in a short window.
+Review concurrent DB access patterns and ensure transactions are short and properly serialized.`,
+
+  mcp_adapter_flaky: `# Rule: Stabilize MCP Adapter
+An MCP adapter is experiencing repeated uncaught exceptions.
+Check adapter health, ensure proper error handling, and consider adding restart logic.`,
 };
 
 // ── Types ───────────────────────────────────────────────
@@ -237,4 +253,151 @@ export class IssuePatternTracker {
 
     return { total, recurring };
   }
+}
+
+// ── Signal Classifier ────────────────────────────────────
+
+export interface ClassifierSignal {
+  source: string;
+  signalKind: string;
+  context: {
+    toolName?: string;
+    phase?: string;
+    nodeId?: string;
+    adapterName?: string;
+  };
+  timestamp: string;
+  rawError?: string;
+}
+
+export interface ClassifierConfig {
+  gateBlockingThreshold?: number;
+  gateBlockingWindowMs?: number;
+  toolFailingThreshold?: number;
+  sqliteLockStormThreshold?: number;
+  sqliteLockStormWindowMs?: number;
+  mcpAdapterFlakyThreshold?: number;
+  dodCheckChronicThreshold?: number;
+}
+
+export interface ClassifiedPattern {
+  patternType: string;
+  context: Record<string, unknown>;
+}
+
+type ResolvedConfig = Required<ClassifierConfig>;
+
+function resolveConfig(config: ClassifierConfig): ResolvedConfig {
+  return {
+    gateBlockingThreshold: config.gateBlockingThreshold ?? 5,
+    gateBlockingWindowMs: config.gateBlockingWindowMs ?? 3_600_000,
+    toolFailingThreshold: config.toolFailingThreshold ?? 3,
+    sqliteLockStormThreshold: config.sqliteLockStormThreshold ?? 3,
+    sqliteLockStormWindowMs: config.sqliteLockStormWindowMs ?? 300_000,
+    mcpAdapterFlakyThreshold: config.mcpAdapterFlakyThreshold ?? 3,
+    dodCheckChronicThreshold: config.dodCheckChronicThreshold ?? 3,
+  };
+}
+
+function detectGateBlocking(signals: ClassifierSignal[], cfg: ResolvedConfig): ClassifiedPattern[] {
+  const windowStart = Date.now() - cfg.gateBlockingWindowMs;
+  const counts = new Map<string, number>();
+  for (const s of signals) {
+    if (s.source !== "lifecycle_gate" || s.signalKind !== "gate_blocked") continue;
+    if (new Date(s.timestamp).getTime() < windowStart) continue;
+    const tool = s.context.toolName ?? "__unknown__";
+    counts.set(tool, (counts.get(tool) ?? 0) + 1);
+  }
+  const result: ClassifiedPattern[] = [];
+  for (const [toolName, count] of counts) {
+    if (count >= cfg.gateBlockingThreshold) {
+      result.push({ patternType: "gate_blocking_too_often", context: { toolName, count } });
+    }
+  }
+  return result;
+}
+
+function detectToolFailing(signals: ClassifierSignal[], cfg: ResolvedConfig): ClassifiedPattern[] {
+  const counts = new Map<string, number>();
+  for (const s of signals) {
+    if (s.source !== "tool_invocation" || s.signalKind !== "tool_isError") continue;
+    const tool = s.context.toolName ?? "__unknown__";
+    counts.set(tool, (counts.get(tool) ?? 0) + 1);
+  }
+  const result: ClassifiedPattern[] = [];
+  for (const [toolName, count] of counts) {
+    if (count >= cfg.toolFailingThreshold) {
+      result.push({ patternType: "tool_failing_for_input_kind", context: { toolName, count } });
+    }
+  }
+  return result;
+}
+
+function detectLockStorm(signals: ClassifierSignal[], cfg: ResolvedConfig): ClassifiedPattern[] {
+  const ts = signals
+    .filter((s) => s.source === "sqlite" && (s.signalKind === "SQLITE_BUSY" || s.signalKind === "SQLITE_LOCKED"))
+    .map((s) => new Date(s.timestamp).getTime())
+    .sort((a, b) => a - b);
+
+  for (let i = 0; i <= ts.length - cfg.sqliteLockStormThreshold; i++) {
+    const windowEnd = ts[i] + cfg.sqliteLockStormWindowMs;
+    let count = 1;
+    for (let j = i + 1; j < ts.length && ts[j] <= windowEnd; j++) {
+      count++;
+      if (count >= cfg.sqliteLockStormThreshold) {
+        return [{ patternType: "sqlite_lock_storm", context: { count } }];
+      }
+    }
+  }
+  return [];
+}
+
+function detectAdapterFlaky(signals: ClassifierSignal[], cfg: ResolvedConfig): ClassifiedPattern[] {
+  const counts = new Map<string, number>();
+  for (const s of signals) {
+    if (s.source !== "mcp_server" || s.signalKind !== "uncaught_exception") continue;
+    const adapter = s.context.adapterName ?? "__unknown__";
+    counts.set(adapter, (counts.get(adapter) ?? 0) + 1);
+  }
+  const result: ClassifiedPattern[] = [];
+  for (const [adapterName, count] of counts) {
+    if (count >= cfg.mcpAdapterFlakyThreshold) {
+      result.push({ patternType: "mcp_adapter_flaky", context: { adapterName, count } });
+    }
+  }
+  return result;
+}
+
+function detectDodChronic(signals: ClassifierSignal[], cfg: ResolvedConfig): ClassifiedPattern[] {
+  const checkToNodes = new Map<string, Set<string>>();
+  for (const s of signals) {
+    if (s.source !== "dod_check" || s.signalKind !== "dod_fail" || !s.rawError) continue;
+    const nodeId = s.context.nodeId ?? "__unknown__";
+    for (const check of s.rawError.split(",").map((c) => c.trim()).filter(Boolean)) {
+      if (!checkToNodes.has(check)) checkToNodes.set(check, new Set());
+      checkToNodes.get(check)!.add(nodeId);
+    }
+  }
+  const result: ClassifiedPattern[] = [];
+  for (const [checkName, nodes] of checkToNodes) {
+    if (nodes.size >= cfg.dodCheckChronicThreshold) {
+      result.push({ patternType: `dod_check_${checkName}_chronic`, context: { checkName, distinctFeatures: nodes.size } });
+    }
+  }
+  return result;
+}
+
+/**
+ * Pure classifier: maps a batch of FailureSignal-like events to detected pattern types.
+ * Returns an empty array when no pattern matches — never guesses.
+ */
+export function classifySignals(signals: ClassifierSignal[], config: ClassifierConfig = {}): ClassifiedPattern[] {
+  const cfg = resolveConfig(config);
+  return [
+    ...detectGateBlocking(signals, cfg),
+    ...detectToolFailing(signals, cfg),
+    ...detectLockStorm(signals, cfg),
+    ...detectAdapterFlaky(signals, cfg),
+    ...detectDodChronic(signals, cfg),
+  ];
 }

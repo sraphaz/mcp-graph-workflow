@@ -8,6 +8,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { AtomicFile, AtomicFileMode, WriteResult } from "./types.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "writer-markdown.ts" });
 
 const markerStart = (id: string) => `<!-- MCP-GRAPH:MANAGED-START:${id} -->`;
 const markerEnd = (id: string) => `<!-- MCP-GRAPH:MANAGED-END:${id} -->`;
@@ -89,7 +92,7 @@ async function atomicWrite(filePath: string, content: string): Promise<void> {
     fs.writeFileSync(tmp, content, "utf8");
     fs.renameSync(tmp, filePath);
   } catch (err) {
-    try { fs.unlinkSync(tmp); } catch { /* already gone */ }
+    try { fs.unlinkSync(tmp); } catch (e) { log.debug("intentional swallow", { error: e, reason: "tmp file already gone, cleanup not needed" }); }
     throw err;
   }
 }

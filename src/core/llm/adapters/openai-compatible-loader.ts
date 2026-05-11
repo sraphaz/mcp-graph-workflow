@@ -49,7 +49,7 @@ const NULL_LOGGER: WarnLogger = {
  */
 export function loadOpenAICompatibleProviders(
   hubConfig: Record<string, unknown> | null | undefined,
-  logger: WarnLogger = NULL_LOGGER,
+  log: WarnLogger = NULL_LOGGER,
 ): OpenAICompatibleProviderConfig[] {
   if (!hubConfig || typeof hubConfig !== "object") return [];
   const section = hubConfig.openaiCompatibleProviders;
@@ -62,7 +62,7 @@ export function loadOpenAICompatibleProviders(
     const entry = section[i];
     const parsed = OpenAICompatibleProviderConfigSchema.safeParse(entry);
     if (!parsed.success) {
-      logger.warn("openai-compatible-provider:invalid-entry", {
+      log.warn("openai-compatible-provider:invalid-entry", {
         index: i,
         issues: parsed.error.issues.map((issue) => ({
           path: issue.path.join("."),
@@ -72,7 +72,7 @@ export function loadOpenAICompatibleProviders(
       continue;
     }
     if (seenNames.has(parsed.data.name)) {
-      logger.warn("openai-compatible-provider:duplicate-name", {
+      log.warn("openai-compatible-provider:duplicate-name", {
         index: i,
         name: parsed.data.name,
         action: "discard-second (first-write-wins)",

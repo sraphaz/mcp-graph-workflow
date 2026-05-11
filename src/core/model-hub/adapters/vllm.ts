@@ -101,8 +101,8 @@ export class VllmAdapter {
             const parsed = JSON.parse(trimmed) as { choices?: Array<{ delta?: { content?: string } }> };
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) yield content;
-          } catch {
-            // malformed SSE chunk — skip
+          } catch (e) {
+            log.debug("intentional swallow", { error: e, reason: "malformed SSE chunk, skip" });
           }
         }
       }

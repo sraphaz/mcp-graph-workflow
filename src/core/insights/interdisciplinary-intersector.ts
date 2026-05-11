@@ -107,7 +107,7 @@ function buildGroups(db: Database.Database): DocGroup[] {
   for (const row of rows) {
     let meta: Record<string, unknown> | null = null;
     if (row.metadata) {
-      try { meta = JSON.parse(row.metadata) as Record<string, unknown>; } catch { /* corrupted metadata — skip */ }
+      try { meta = JSON.parse(row.metadata) as Record<string, unknown>; } catch (e) { log.debug("intentional swallow", { error: e, reason: "corrupted metadata, skip deserialization" }); }
     }
     let group = byType.get(row.source_type);
     if (!group) {

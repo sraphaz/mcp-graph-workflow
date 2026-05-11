@@ -123,8 +123,8 @@ export class SessionRecallStore {
           this.db.prepare(
             "INSERT INTO session_summaries_fts(session_summaries_fts, rowid, summary, topics) VALUES('delete', ?, ?, ?)",
           ).run(row.rowid, row.summary, row.topics);
-        } catch {
-          // May not exist yet — that's fine
+        } catch (e) {
+          log.debug("intentional swallow", { error: e, reason: "FTS session_summaries index may not exist yet" });
         }
 
         // Insert current data into FTS

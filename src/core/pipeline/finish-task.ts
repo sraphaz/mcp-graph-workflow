@@ -48,7 +48,7 @@ import { runSentruxAdvisoryCheck, type SentruxAdvisoryResult } from "./sentrux-a
 import { SentruxMcpAdapter } from "../integrations/sentrux-mcp-adapter.js";
 import { analyzeTrajectory } from "../skills/trajectory-analyzer.js";
 import { proposeSkillFromTrajectory, type SkillProposal } from "../skills/auto-skill-proposer.js";
-import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branch.js";
+import { mergeShadowBranch, discardShadowBranch, type ShadowBranchHandle } from "../autonomy/shadow-branch.js";
 import { SubtaskArtifactsStore, type ArtifactKind } from "../store/subtask-artifacts-store.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
@@ -80,8 +80,8 @@ export interface FinishTaskOptions {
   leaseToken?: string;
   /** LockManager instance for teamTask mode */
   lockManager?: LockManager;
-  /** Shadow branch name from start_task (Phase D — Git Transactional Layer) */
-  shadowBranch?: string;
+  /** Shadow branch handle from start_task (Phase D — Git Transactional Layer) */
+  shadowBranch?: string | ShadowBranchHandle;
   /**
    * v11 Context-Pollination: structured outputs to persist in subtask_artifacts.
    * Optional — when omitted, behavior is identical to v10 (artifactIds = []).
@@ -248,13 +248,13 @@ export async function finishTask(
                     const relativePath = relative(cwd, fullPath);
                     files.push({ path: relativePath, content });
                   }
-                } catch {
-                  // skip unreadable files
+                } catch (e) {
+                  log.debug("intentional swallow", { error: e, reason: "skip unreadable file during finish-task scan" });
                 }
               }
             }
-          } catch {
-            // skip unreadable dirs
+          } catch (e) {
+            log.debug("intentional swallow", { error: e, reason: "skip unreadable directory during finish-task scan" });
           }
         };
 
@@ -406,8 +406,8 @@ export async function finishTask(
             for (const token of fileLeases) {
               try {
                 lockManager.release(String(token));
-              } catch {
-                // Stale or already-released token — ignore
+              } catch (e) {
+                log.debug("intentional swallow", { error: e, reason: "stale or already-released file lease token" });
               }
             }
             log.info("pipeline:finish_task:file_leases_released", { nodeId, count: fileLeases.length });
@@ -441,8 +441,8 @@ export async function finishTask(
           store.updateNode(nodeId, {
             metadata: { ...(existing?.metadata as Record<string, unknown> ?? {}), touchedFilesObserved: [] },
           });
-        } catch {
-          // non-fatal
+        } catch (e) {
+          log.debug("intentional swallow", { error: e, reason: "non-fatal error storing empty touchedFilesObserved" });
         }
       }
     } catch (err) {

@@ -97,8 +97,8 @@ export function detectBottlenecks(doc: GraphDocument): BottleneckReport {
         length: cpNodes.length,
       };
     }
-  } catch {
-    // Graph may have cycles or be empty
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "graph may have cycles or be empty" });
   }
 
   // 3. Tasks/epics without acceptance criteria

@@ -168,8 +168,8 @@ export class LspClient extends EventEmitter {
 
     try {
       await this.sendRequest("shutdown");
-    } catch {
-      // Server may already be gone — that's fine.
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "LSP server may already be gone during shutdown" });
     }
 
     this.sendNotification("exit");

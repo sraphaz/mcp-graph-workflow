@@ -8,6 +8,10 @@
  * is the snapshot used by analyze(mode='memory_health').
  */
 
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "heap-telemetry.ts" });
+
 const MB = 1024 * 1024;
 
 export const TELEMETRY_INTERVAL_MS = 30_000;
@@ -76,8 +80,8 @@ export class HeapTelemetry {
     this.timer = setInterval(() => {
       try {
         this.emit(this.sampler());
-      } catch {
-        // never let a logging error tear down the daemon
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "never let a sampling error tear down the daemon" });
       }
     }, this.intervalMs);
     if (typeof this.timer.unref === "function") this.timer.unref();

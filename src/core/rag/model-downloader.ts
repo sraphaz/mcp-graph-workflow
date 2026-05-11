@@ -148,8 +148,8 @@ export async function downloadIfMissing(
     if (existsSync(destPath)) {
       try {
         unlinkSync(destPath);
-      } catch {
-        // best-effort cleanup
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "best-effort cleanup of partial download file" });
       }
     }
     throw err;

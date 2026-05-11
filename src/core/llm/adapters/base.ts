@@ -11,6 +11,8 @@ import type { LlmRequest, LlmResponse, ModelSpec, ProviderName, EmbedRequest, Em
 export interface ProviderAdapter {
   readonly name: ProviderName;
   generate(req: LlmRequest): Promise<LlmResponse>;
+  /** Optional streaming method. Gateway dispatches to this when req.stream=true. */
+  generateStream?(req: LlmRequest, onDelta: (chunk: string | null) => void): Promise<LlmResponse>;
   models(): ModelSpec[];
   embed?(req: EmbedRequest): Promise<EmbedResponse>;
 }

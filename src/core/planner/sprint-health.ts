@@ -111,8 +111,8 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
         if (health === "healthy") health = "at_risk";
       }
     }
-  } catch {
-    // non-blocking
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "non-blocking harness delta retrieval for sprint health" });
   }
 
   return {

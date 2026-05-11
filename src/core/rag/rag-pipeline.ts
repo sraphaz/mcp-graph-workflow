@@ -434,8 +434,8 @@ export async function incrementalIndex(
           embedding: onnxVec,
         }, 'onnx');
       }
-    } catch {
-      // Graceful degradation
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "graceful degradation when ONNX embedding fails for a doc" });
     }
 
     indexed++;

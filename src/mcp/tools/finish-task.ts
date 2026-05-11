@@ -47,16 +47,20 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
       agentId: z.string().optional().describe("Agent ID for teamTask mode — verifies task ownership"),
       leaseToken: z.string().optional().describe("Lease token from start_task — used to release the lock"),
       shadowBranch: z.string().optional().describe("Shadow branch name from start_task — merged on done, discarded on blocked"),
+      shadowWorktreePath: z.string().optional().describe("Shadow worktree path from start_task — used to remove the git worktree after branch cleanup"),
       artifacts: z.array(z.object({
         kind: z.enum(["diff", "file", "interface", "decision", "note"]),
         path: z.string().nullable().optional(),
         content: z.string(),
       })).optional().describe("v11 Context-Pollination: structured outputs to persist in subtask_artifacts. Optional — omit to keep v10 behavior."),
     },
-    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, artifacts }) => {
+    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, shadowWorktreePath, artifacts }) => {
       log.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const resultValue = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts });
+      const shadowBranchInput = shadowBranch && shadowWorktreePath
+        ? { branchName: shadowBranch, worktreePath: shadowWorktreePath }
+        : shadowBranch;
+      const resultValue = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch: shadowBranchInput, artifacts });
 
       log.info("tool:finish_task:ok", {
         nodeId,

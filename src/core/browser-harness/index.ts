@@ -21,3 +21,12 @@ export {
   isDomainAllowed,
   isCdpMethodForbidden,
 } from "./guardrail-loader.js";
+export {
+  identifyBrokenStep,
+  locateStepBlock,
+  patchStepSelector,
+  patchStepRetryNeeded,
+  checkDoubleData,
+  runHeal,
+} from "./heal-engine.js";
+export type { StepBlock, StepExecutor, StepExecutorResult, HealOutcome } from "./heal-engine.js";

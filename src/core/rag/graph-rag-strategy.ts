@@ -286,8 +286,8 @@ function collectNeighbors(store: SqliteStore, nodeId: string): string[] {
     for (const child of children) {
       neighbors.push(child.id);
     }
-  } catch {
-    // No children — OK
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "no children for this node, OK" });
   }
 
   // Outgoing edges (depends_on, blocks, related_to, implements, etc.)
@@ -296,8 +296,8 @@ function collectNeighbors(store: SqliteStore, nodeId: string): string[] {
     for (const edge of outgoing) {
       neighbors.push(edge.to);
     }
-  } catch {
-    // No edges — OK
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "no outgoing edges for this node, OK" });
   }
 
   // Incoming edges (what depends on this node)
@@ -306,8 +306,8 @@ function collectNeighbors(store: SqliteStore, nodeId: string): string[] {
     for (const edge of incoming) {
       neighbors.push(edge.from);
     }
-  } catch {
-    // No edges — OK
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "no incoming edges for this node, OK" });
   }
 
   return neighbors;

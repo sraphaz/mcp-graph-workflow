@@ -32,6 +32,9 @@
 
 import fs from "node:fs";
 import { McpGraphError } from "../utils/errors.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "daemon-lockfile.ts" });
 
 export interface LockState {
   /** True iff a process with the recorded PID is currently alive. */
@@ -79,8 +82,8 @@ export function acquireLock(pidFile: string): void {
   if (state.stale) {
     try {
       fs.unlinkSync(pidFile);
-    } catch {
-      /* ignore — may have vanished between check and unlink */
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "pidfile vanished between check and unlink" });
     }
   }
 
@@ -102,7 +105,7 @@ export function acquireLock(pidFile: string): void {
 export function releaseLock(pidFile: string): void {
   try {
     fs.unlinkSync(pidFile);
-  } catch {
-    /* no-op */
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "pidfile already gone on release" });
   }
 }

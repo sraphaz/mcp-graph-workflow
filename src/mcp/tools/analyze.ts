@@ -133,8 +133,8 @@ const ANALYZE_MODES = z.enum([
   "capacity_health",
   "success_rate",
   "evolution_audit",
-  "feature_depth",
   "harness_savings",
+  "policy_observations",
 ]);
 
 function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean {
@@ -889,46 +889,21 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
           return mcpText({ ok: true, mode, ...summary });
         }
 
-        case "feature_depth": {
-          const { join: joinPath } = await import("node:path");
-          const { isGoAvailable, runFeatureDepthGo } = await import(
-            "../../core/feature-depth/runner.js"
+        case "policy_observations": {
+          const { analyzePolicyObservations } = await import(
+            "../../core/analyzer/policy-observations-analyzer.js"
           );
-          const { parseFeatureDepthAudit } = await import(
-            "../../core/analyzer/feature-depth-mode.js"
-          );
-          if (!(await isGoAvailable())) {
-            return mcpText({
-              ok: false,
-              mode,
-              error: "go_not_available",
-              hint: "Install Go ≥ 1.22 (https://go.dev/dl/) to run feature_depth",
-            });
-          }
-          const cwd = process.cwd();
-          const goResult = await runFeatureDepthGo({
-            cwd,
-            toolPath: joinPath(cwd, "tools/feature-depth"),
-            args: ["-granularity=file", "-output=json", `-dir=${cwd}`],
+          const project = store.getActiveProject();
+          const windowDays = typeof window === "number" ? window : 7;
+          const report = analyzePolicyObservations(store.getDb(), {
+            windowDays,
+            projectId: project?.id,
           });
-          if (!goResult.ok) {
-            log.warn("tool:analyze:feature_depth:go_failed", {
-              exitCode: goResult.exitCode,
-            });
-            return mcpText({
-              ok: false,
-              mode,
-              error: "go_run_failed",
-              exitCode: goResult.exitCode,
-              stderr: goResult.stderr.slice(0, 500),
-            });
-          }
-          const parsed = parseFeatureDepthAudit(goResult.stdout);
-          log.info("tool:analyze:feature_depth:ok", {
-            totalFiles: parsed.totalFiles,
-            avgScore: parsed.avgScore,
+          log.info("tool:analyze:policy_observations:ok", {
+            total: report.totalObservations,
+            divergencePct: report.divergencePct,
           });
-          return mcpText({ ok: true, mode, ...parsed });
+          return mcpText({ ok: true, mode, ...report });
         }
 
         default: {

@@ -302,8 +302,8 @@ export class EntityStore {
       if (ftsRows.length > 0) {
         return ftsRows.map(rowToEntity);
       }
-    } catch {
-      // FTS query syntax error — fall through to LIKE
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "FTS query syntax error, falling through to LIKE search" });
     }
 
     // Fallback to LIKE for substring matching

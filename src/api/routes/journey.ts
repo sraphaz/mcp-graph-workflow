@@ -398,6 +398,90 @@ export function createJourneyRouter(storeRef: StoreRef, getBasePath: () => strin
     }
   });
 
+  // ── GET /sessions — list bh_sessions DESC by started_at ──────────────────
+
+  router.get("/sessions", (_req, res, next) => {
+    try {
+      const db = storeRef.current.getDb();
+      type Row = { id: string; status: string; startedAt: number; closedAt: number | null };
+      const rows = db
+        .prepare(
+          "SELECT id, status, started_at AS startedAt, closed_at AS closedAt FROM bh_sessions ORDER BY started_at DESC LIMIT 50",
+        )
+        .all() as Row[];
+      res.json({ sessions: rows });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── GET /sessions/:sessionId — ordered audit events with cursor pagination ─
+
+  router.get("/sessions/:sessionId", (req, res, next) => {
+    try {
+      const db = storeRef.current.getDb();
+      const sessionId = req.params["sessionId"] as string;
+
+      const session = db
+        .prepare(
+          "SELECT id, status, started_at AS startedAt, closed_at AS closedAt FROM bh_sessions WHERE id = ?",
+        )
+        .get(sessionId) as { id: string; status: string; startedAt: number; closedAt: number | null } | undefined;
+
+      if (!session) {
+        res.status(404).json({ error: `session not found: ${sessionId}` });
+        return;
+      }
+
+      const rawLimit = Number(req.query["limit"] ?? 50);
+      const limit = isNaN(rawLimit) ? 50 : Math.min(Math.max(1, rawLimit), 500);
+      const cursorParam = req.query["cursor"] as string | undefined;
+
+      // Cursor encodes "at,id" for keyset pagination ordered by (at ASC, id ASC)
+      let cursorAt = 0;
+      let cursorId = "";
+      if (cursorParam) {
+        const sep = cursorParam.indexOf(",");
+        if (sep > 0) {
+          cursorAt = parseInt(cursorParam.slice(0, sep), 10) || 0;
+          cursorId = cursorParam.slice(sep + 1);
+        }
+      }
+
+      type AuditRow = { id: string; action: string; payload: string; result: string | null; at: number };
+      const rows = db
+        .prepare(
+          `SELECT id, action, payload, result, at
+           FROM bh_audit
+           WHERE session_id = ?
+             AND (at > ? OR (at = ? AND id > ?))
+           ORDER BY at ASC, id ASC
+           LIMIT ?`,
+        )
+        .all(sessionId, cursorAt, cursorAt, cursorId, limit + 1) as AuditRow[];
+
+      const hasMore = rows.length > limit;
+      const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+      const events = pageRows.map((r) => ({
+        id: r.id,
+        action: r.action,
+        payload: (() => { try { return JSON.parse(r.payload) as unknown; } catch { return r.payload; } })(),
+        result: r.result ? (() => { try { return JSON.parse(r.result) as unknown; } catch { return r.result; } })() : null,
+        at: r.at,
+      }));
+
+      const lastRow = pageRows[pageRows.length - 1];
+      const nextCursor = hasMore && lastRow
+        ? `${lastRow.at},${lastRow.id}`
+        : null;
+
+      res.json({ session, events, nextCursor });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // ── Start a journey run (SSE stream) ──────────────
 
   router.post("/maps/:id/runs", validateBody(RunJourneySchema), async (req, res, next) => {

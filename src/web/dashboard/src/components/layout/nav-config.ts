@@ -61,7 +61,6 @@ export type TabId =
   | "autopilot"
   | "browser-pilot"
   | "hooks"
-  | "lifecycle-health"
   | "agents";
 
 export type NavGroupId = "visualization" | "intelligence" | "tools" | "system";

@@ -163,8 +163,8 @@ export function generatePlanningReport(
         .map(([dim]) => dim);
       harnessContext = { score: harness.score, grade: harness.grade, weakDimensions };
     }
-  } catch {
-    // non-blocking
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "non-blocking harness context retrieval for planning report" });
   }
 
   return {

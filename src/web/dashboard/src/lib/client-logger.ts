@@ -39,14 +39,26 @@ export interface ClientLogger {
   installGlobalHandlers(): void;
   flush(): void;
   destroy(): void;
+  newSpan(): string;
+  getTraceId(): string;
+}
+
+function randomId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
 export function createClientLogger(opts: ClientLoggerOptions): ClientLogger {
   const buffer: ClientLogEntry[] = [];
   let timer: ReturnType<typeof setInterval> | null = null;
+  const sessionTraceId = randomId();
+  let currentSpanId = randomId();
 
   function enqueue(level: LogLevel, msg: string, ctx?: Record<string, unknown>): void {
-    buffer.push({ level, message: msg, timestamp: new Date().toISOString(), context: ctx });
+    const traceCtx: Record<string, unknown> = { "trace.id": sessionTraceId, "span.id": currentSpanId };
+    buffer.push({ level, message: msg, timestamp: new Date().toISOString(), context: { ...traceCtx, ...(ctx ?? {}) } });
     if (buffer.length >= opts.maxBuffer) {
       send();
     }
@@ -116,6 +128,15 @@ export function createClientLogger(opts: ClientLoggerOptions): ClientLogger {
       }
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    },
+
+    newSpan(): string {
+      currentSpanId = randomId();
+      return currentSpanId;
+    },
+
+    getTraceId(): string {
+      return sessionTraceId;
     },
   };
 }

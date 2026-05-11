@@ -57,12 +57,12 @@ export async function scanSkills(basePath: string): Promise<SkillInfo[]> {
           const content = await readFile(skillMdPath, "utf-8");
           const info = parseSkillFrontmatter(content, entry.name, skillMdPath);
           if (info) skills.push(info);
-        } catch {
-          // No SKILL.md in this directory
+        } catch (e) {
+          log.debug("intentional swallow", { error: e, reason: "no SKILL.md in this directory" });
         }
       }
-    } catch {
-      // Directory doesn't exist
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "skill directory does not exist" });
     }
   }
 

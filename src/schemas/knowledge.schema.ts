@@ -37,6 +37,8 @@ export const KnowledgeSourceTypeSchema = z.enum([
   "challenge_report",
   // Agent indexing (E1.T04)
   "agent",
+  // Vendor scan / Sentrux integration
+  "architectural_signal",
 ]);
 
 export const KnowledgeDocumentSchema = z.object({

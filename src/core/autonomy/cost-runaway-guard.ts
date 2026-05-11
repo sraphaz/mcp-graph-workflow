@@ -11,6 +11,9 @@
  */
 
 import type Database from "better-sqlite3";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "cost-runaway-guard.ts" });
 
 export interface CostRunawayPayload {
   sprintId?: string;
@@ -64,8 +67,8 @@ export function handleCostRunaway(
         .prepare(`UPDATE sprints SET status = 'blocked' WHERE id = ? AND status != 'blocked'`)
         .run(payload.sprintId);
       sprintBlocked = info.changes > 0;
-    } catch {
-      // Sprint table may not exist in test envs — best-effort, do not throw.
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "sprint table may not exist in test env" });
     }
   }
 

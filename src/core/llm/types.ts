@@ -72,8 +72,8 @@ export const LlmRequestSchema = z.object({
   messages: z.array(ChatMessageSchema).min(1),
   maxTokens: z.number().int().positive().optional(),
   temperature: z.number().min(0).max(2).optional(),
-  /** v1 supports only non-streaming. SSE deferred to v12.1 (ADR-proxy-04). */
-  stream: z.literal(false).optional(),
+  /** stream:true requires an adapter that implements generateStream (ADR-proxy-04 v2). */
+  stream: z.boolean().optional(),
   providerExtras: z.record(z.string(), z.unknown()).optional(),
 });
 export type LlmRequest = z.infer<typeof LlmRequestSchema>;

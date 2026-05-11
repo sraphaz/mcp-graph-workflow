@@ -262,8 +262,8 @@ function parseYamlOrJson(content: string): Record<string, unknown> {
   if (trimmed.startsWith("{")) {
     try {
       return JSON.parse(trimmed) as Record<string, unknown>;
-    } catch {
-      // Fall through to YAML
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "not valid JSON, falling through to YAML" });
     }
   }
 
@@ -273,8 +273,8 @@ function parseYamlOrJson(content: string): Record<string, unknown> {
     if (parsed && typeof parsed === "object") {
       return parsed as Record<string, unknown>;
     }
-  } catch {
-    // Fall through
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "not valid YAML either, will throw validation error" });
   }
 
   throw new ValidationError("Failed to parse content as YAML or JSON", [

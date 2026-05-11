@@ -9,6 +9,20 @@ forbidden = ["src/cli/**"]
 severity = "error"
 
 [[rules]]
+id = "core-no-mcp"
+description = "src/core must not import from src/mcp — dependency direction enforcement"
+guard = "src/core/**"
+forbidden = ["src/mcp/**"]
+severity = "error"
+
+[[rules]]
+id = "core-no-api"
+description = "src/core must not import from src/api — dependency direction enforcement"
+guard = "src/core/**"
+forbidden = ["src/api/**"]
+severity = "error"
+
+[[rules]]
 id = "provider-sdk-confinement"
 description = "openai / anthropic SDK imports confined to src/core/llm/adapters — §ADR-deterministic-first"
 guard = "src/**"

@@ -66,12 +66,12 @@ function getSourceFiles(dir: string, basePath: string): Array<{ path: string; co
 
       try {
         files.push({ path: relative(basePath, fullPath), content: readFileSync(fullPath, "utf-8") });
-      } catch {
-        // Skip unreadable files
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "skip unreadable source file" });
       }
     }
-  } catch {
-    // Skip unreadable directories
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "skip unreadable directory" });
   }
 
   return files;

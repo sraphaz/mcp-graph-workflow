@@ -91,13 +91,33 @@ describe("core/llm/types — Zod schemas", () => {
     expect(typed.stream).toBeUndefined();
   });
 
-  it("LlmRequestSchema rejects stream:true (v1 non-streaming only)", () => {
+  it("LlmRequestSchema accepts stream:true (streaming opt-in, AC1)", () => {
     const result = LlmRequestSchema.safeParse({
       model: "x/y",
       messages: [{ role: "user", content: "h" }],
       stream: true,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.stream).toBe(true);
+  });
+
+  it("LlmRequestSchema accepts stream:false (retrocompat, AC2)", () => {
+    const result = LlmRequestSchema.safeParse({
+      model: "x/y",
+      messages: [{ role: "user", content: "h" }],
+      stream: false,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.stream).toBe(false);
+  });
+
+  it("LlmRequestSchema default stream is undefined when omitted (AC3)", () => {
+    const result = LlmRequestSchema.safeParse({
+      model: "x/y",
+      messages: [{ role: "user", content: "h" }],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.stream).toBeUndefined();
   });
 
   it("LlmRequestSchema accepts providerExtras passthrough", () => {

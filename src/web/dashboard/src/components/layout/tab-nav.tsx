@@ -18,7 +18,7 @@
 import { memo } from "react";
 import { BetaBadge } from "./beta-badge";
 
-export type TabId = "graph" | "prd-backlog" | "journey" | "memories" | "insights" | "skills" | "context" | "benchmark" | "logs" | "siebel" | "hooks" | "lifecycle-health" | "agents";
+export type TabId = "graph" | "prd-backlog" | "journey" | "memories" | "insights" | "skills" | "context" | "benchmark" | "logs" | "siebel" | "hooks" | "agents";
 
 interface TabNavProps {
   activeTab: TabId;
@@ -37,7 +37,6 @@ const TABS: Array<{ id: TabId; label: string; beta?: boolean }> = [
   { id: "benchmark", label: "Benchmark" },
   { id: "logs", label: "Logs" },
   { id: "hooks", label: "Hooks", beta: true },
-  { id: "lifecycle-health", label: "Lifecycle Health", beta: true },
   { id: "agents", label: "Agents", beta: true },
 ];
 

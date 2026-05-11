@@ -48,6 +48,7 @@
     "harness:scan": "tsx scripts/harness-scan-run.js",
     "harness:provenance:backfill": "tsx scripts/provenance-backfill-run.ts",
     "benchmark:daemon-rss": "node scripts/benchmark-daemon-rss.mjs",
+    "audit:catches": "tsx scripts/audit-catches.ts",
     "prepare": "node scripts/prepare-husky.mjs"
   },
   "keywords": [

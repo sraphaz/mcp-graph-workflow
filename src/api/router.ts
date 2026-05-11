@@ -39,6 +39,7 @@ import { createBenchmarkRouter } from "./routes/benchmark.js";
 import { createHarnessRouter } from "./routes/harness.js";
 import { createLifecycleHealthRouter } from "./routes/lifecycle-health.js";
 import { createBrowserHarnessRouter } from "./routes/browser-harness.js";
+import { createObservabilityRouter } from "./routes/observability.js";
 import { createBrowserTestsRouter } from "./routes/browser-tests.js";
 import { createAutonomyRouter } from "./routes/autonomy.js";
 import { createLogsRouter } from "./routes/logs.js";
@@ -56,6 +57,7 @@ import { createEventsSseRouter } from "./routes/events-sse.js";
 import { createAgentsRouter } from "./routes/agents.js";
 import { createEconomyRouter } from "./routes/economy.js";
 import { createEvalsRouter } from "./routes/evals.js";
+import { createModelHubRouter } from "./routes/model-hub.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -120,6 +122,8 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/davinci", createDavinciRouter());
   router.use("/kanban", createKanbanRouter(storeRef));
   router.use("/events", createEventsSseRouter(eventBus ?? undefined));
+  router.use("/observability", createObservabilityRouter(storeRef.current.getDb()));
+  router.use("/model-hub", createModelHubRouter(eventBus ?? undefined));
   router.use("/agents", createAgentsRouter(storeRef));
   router.use("/swarm", createSwarmRouter(storeRef));
 

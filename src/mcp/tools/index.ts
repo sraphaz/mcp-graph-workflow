@@ -109,8 +109,7 @@ export async function registerAllTools(
   if (visible("spec")) (await import("./spec.js")).registerSpec(server, store);
   if (visible("spec_sync")) (await import("./spec-sync.js")).registerSpecSync(server, store);
   if (visible("agent_format")) (await import("./agent-format.js")).registerAgentFormat(server, store);
-  if (visible("feature_depth")) (await import("./feature-depth.js")).registerFeatureDepth(server, store);
-  if (visible("delegate")) (await import("./delegate.js")).registerDelegate(server, store);
+if (visible("delegate")) (await import("./delegate.js")).registerDelegate(server, store);
   if (visible("pipeline")) (await import("./pipeline.js")).registerPipeline(server, store);
   if (visible("daemon_status")) (await import("./daemon-status.js")).registerDaemonStatus(server);
   if (visible("browser_harness")) (await import("./browser-harness.js")).registerBrowserHarnessTool(server, store);

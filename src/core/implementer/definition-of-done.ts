@@ -202,8 +202,8 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     try {
       const content = readFileSync(abs, "utf8");
       if (!hasCitation(content)) citationViolations++;
-    } catch {
-      // unreadable — skip, do not block on FS hiccup
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "unreadable file during citation check, skip to avoid FS hiccup" });
     }
   }
   const citationsPass = citationViolations === 0;

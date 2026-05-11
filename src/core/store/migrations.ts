@@ -2355,6 +2355,25 @@ const migrations: Migration[] = [
         ON failure_signals(timestamp);
     `,
   },
+  {
+    version: 92,
+    description: "policy_observations table for §EPIC-policy-engine-context-routing observe mode",
+    sql: `
+      CREATE TABLE IF NOT EXISTS policy_observations (
+        id               TEXT PRIMARY KEY,
+        project_id       TEXT NOT NULL,
+        timestamp        TEXT NOT NULL,
+        signals_snapshot TEXT NOT NULL DEFAULT '{}',
+        decision         TEXT NOT NULL DEFAULT '{}',
+        actual_used      TEXT NOT NULL DEFAULT '[]',
+        divergence       INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_policy_obs_project
+        ON policy_observations(project_id);
+      CREATE INDEX IF NOT EXISTS idx_policy_obs_timestamp
+        ON policy_observations(timestamp);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

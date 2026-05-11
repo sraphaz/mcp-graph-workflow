@@ -115,7 +115,7 @@ function enforceFileGate(opts: WipGateOptions): string[] {
 
         // Roll back all already-acquired file locks
         for (const token of acquiredTokens) {
-          try { lockManager.release(token); } catch { /* ignore release errors during rollback */ }
+          try { lockManager.release(token); } catch (e) { log.debug("intentional swallow", { error: e, reason: "ignore lock release errors during rollback" }); }
         }
 
         const heldBy = Array.from(heldByMap.entries()).map(([fId, ownerId]) => ({

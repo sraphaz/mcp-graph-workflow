@@ -98,8 +98,8 @@ export function removeNodeFromKnowledge(db: Database.Database, nodeId: string): 
       // Clean up orphaned entity mentions before deleting the doc
       try {
         db.prepare("DELETE FROM kg_mentions WHERE doc_id = ?").run(doc.id);
-      } catch {
-        // kg_mentions table may not exist yet — safe to ignore
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "kg_mentions table may not exist yet, safe to ignore" });
       }
       ks.delete(doc.id);
     }

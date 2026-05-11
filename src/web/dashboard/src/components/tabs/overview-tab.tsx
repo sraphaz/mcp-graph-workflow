@@ -30,6 +30,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useInsights } from "@/hooks/use-insights";
+import { useLifecycleTrend, useLifecycleSnapshots } from "@/hooks/use-lifecycle-health";
 import { HealthGauge } from "@/components/charts/health-gauge";
 import { STATUS_COLORS } from "@/lib/constants";
 import { safePercentage } from "@/lib/runtime-guards";
@@ -95,6 +96,8 @@ function BlockerItem({ title, nodeId }: BlockerItemProps): React.JSX.Element {
 
 export const OverviewTab = memo(function OverviewTab({ onNavigate }: OverviewTabProps) {
   const { data, loading } = useInsights();
+  const { data: lcTrend, loading: lcTrendLoading } = useLifecycleTrend(10);
+  const { data: lcSnaps, loading: lcSnapsLoading } = useLifecycleSnapshots(undefined, 20);
   const [blockersExpanded, setBlockersExpanded] = useState(false);
 
   if (loading || !data) {
@@ -388,6 +391,65 @@ export const OverviewTab = memo(function OverviewTab({ onNavigate }: OverviewTab
           </div>
         </div>
       )}
+
+      {/* Lifecycle Health ──────────────────────────────────── */}
+      <section className="p-4 rounded-xl border border-edge bg-surface-alt space-y-4" aria-labelledby="lh-heading">
+        <h2 id="lh-heading" className="text-sm font-semibold text-foreground">Lifecycle Health</h2>
+
+        {/* Success rate */}
+        <div>
+          <h3 className="text-xs font-medium text-muted mb-2">Rolling success rate (last 10 snapshots)</h3>
+          {lcTrendLoading ? (
+            <p className="text-xs text-muted">Loading…</p>
+          ) : lcTrend && lcTrend.samples > 0 ? (
+            <div className="flex items-baseline gap-4">
+              <span className="text-2xl font-semibold text-foreground">
+                {Math.round(lcTrend.successRate * 100)}%
+              </span>
+              <span className="text-xs text-muted">
+                {lcTrend.passed}/{lcTrend.samples} passed all 9 phases
+              </span>
+              {lcTrend.latestPassedAll !== null && (
+                <span className={
+                  lcTrend.latestPassedAll
+                    ? "text-xs px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-800"
+                    : "text-xs px-2 py-0.5 rounded bg-red-900/30 text-red-400 border border-red-800"
+                }>
+                  {lcTrend.latestPassedAll ? "latest: pass" : "latest: fail"}
+                </span>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted">
+              No snapshots yet. Run <code>analyze(prd_lifecycle_health)</code> to seed.
+            </p>
+          )}
+        </div>
+
+        {/* Recent snapshots */}
+        {!lcSnapsLoading && lcSnaps.length > 0 && (
+          <div>
+            <h3 className="text-xs font-medium text-muted mb-2">Recent snapshots</h3>
+            <ul className="divide-y divide-edge">
+              {lcSnaps.slice(0, 5).map((s) => (
+                <li key={s.id} className="py-1.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      aria-label={s.passedAll ? "passed" : "failed"}
+                      className={s.passedAll ? "h-2 w-2 rounded-full bg-emerald-500 shrink-0" : "h-2 w-2 rounded-full bg-red-500 shrink-0"}
+                    />
+                    <span className="text-xs text-foreground truncate">{s.epicId ?? "(project)"}</span>
+                    {s.report?.summary && (
+                      <span className="text-[10px] text-muted truncate">— {s.report.summary}</span>
+                    )}
+                  </div>
+                  <time dateTime={s.takenAt} className="text-[10px] text-muted shrink-0">{s.takenOn}</time>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
     </div>
   );
 });

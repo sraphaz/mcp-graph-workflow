@@ -6,7 +6,7 @@ and ported from upstream `karpathy-skills/CLAUDE.md` (MIT).
 
 **Tradeoff:** these guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-## 1. Think Before Coding
+## 1. Think Before Coding §karpathy-1
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
@@ -15,7 +15,7 @@ and ported from upstream `karpathy-skills/CLAUDE.md` (MIT).
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop, name what's confusing, ask.
 
-## 2. Simplicity First
+## 2. Simplicity First §karpathy-2
 
 **Minimum code that solves the problem. Nothing speculative.**
 
@@ -27,7 +27,7 @@ and ported from upstream `karpathy-skills/CLAUDE.md` (MIT).
 
 Self-test: "Would a senior engineer call this overcomplicated?" If yes, simplify.
 
-## 3. Surgical Changes
+## 3. Surgical Changes §karpathy-3
 
 **Touch only what you must. Clean up only your own mess.**
 
@@ -43,7 +43,7 @@ When your changes create orphans:
 
 The test: every changed line should trace directly to the user's request.
 
-## 4. Goal-Driven Execution
+## 4. Goal-Driven Execution §karpathy-4
 
 **Define success criteria. Loop until verified.**
 

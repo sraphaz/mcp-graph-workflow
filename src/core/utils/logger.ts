@@ -17,6 +17,7 @@
 
 import type { LogEntry, LogLayer, LogLevel } from "../../schemas/log.schema.js";
 import { extractErrorContext } from "./ecs-formatter.js";
+import { getTraceContext } from "./trace-store.js";
 
 export interface BusinessEvent {
   action: string;
@@ -31,12 +32,17 @@ let nextId = 1;
 let logListener: ((entry: LogEntry) => void) | null = null;
 
 function appendToBuffer(level: LogLevel, message: string, context?: Record<string, unknown>): void {
+  const trace = getTraceContext();
+  const traceFields: Record<string, unknown> = trace
+    ? { "trace.id": trace.traceId, "span.id": trace.spanId }
+    : {};
+  const merged = { ...traceFields, ...(context ?? {}) };
   const entry: LogEntry = {
     id: nextId++,
     level,
     message,
     timestamp: new Date().toISOString(),
-    ...(context && Object.keys(context).length > 0 ? { context } : {}),
+    ...(Object.keys(merged).length > 0 ? { context: merged } : {}),
   };
 
   logBuffer.push(entry);

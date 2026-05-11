@@ -104,12 +104,12 @@ function scanDirectory(dir: string, basePath: string): SecurityFinding[] {
             });
           }
         }
-      } catch {
-        // Skip files that can't be read
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "skip unreadable file during secret scan" });
       }
     }
-  } catch {
-    // Skip directories that can't be listed
+  } catch (e) {
+    log.debug("intentional swallow", { error: e, reason: "skip unreadable directory during security scan" });
   }
 
   return findings;

@@ -131,8 +131,8 @@ function searchExistingObjects(
           summaries.push(docToSummary(rVar));
         }
       }
-    } catch {
-      // FTS5 may throw on empty index — safe to ignore
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "FTS5 may throw on empty index, safe to ignore" });
     }
   }
 
@@ -151,8 +151,8 @@ function searchExistingObjects(
           }
         }
       }
-    } catch {
-      // Ignore FTS5 errors
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "FTS5 search error for description keyword" });
     }
   }
 
@@ -195,8 +195,8 @@ function searchRelatedDocs(
           summaries.push(docToSummary(rVar));
         }
       }
-    } catch {
-      // Ignore FTS5 errors
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "FTS5 search error for description word in context search" });
     }
   }
 
@@ -209,8 +209,8 @@ function searchRelatedDocs(
           summaries.push(docToSummary(rVar));
         }
       }
-    } catch {
-      // Ignore
+    } catch (e) {
+      log.debug("intentional swallow", { error: e, reason: "FTS5 search error for object type in context search" });
     }
   }
 

@@ -138,8 +138,8 @@ export class OtsClient {
           payload: { hash, status: receipt.status, flushedFromQueue: true },
         });
         flushed++;
-      } catch {
-        // Still offline — leave in queue
+      } catch (e) {
+        log.debug("intentional swallow", { error: e, reason: "still offline, leaving hash in OTS queue" });
       }
     }
     return flushed;

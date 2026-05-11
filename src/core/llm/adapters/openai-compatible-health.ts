@@ -60,7 +60,7 @@ export async function probeHealth(
   options: ProbeOptions = {},
 ): Promise<ProbeResult> {
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
-  const logger = options.logger ?? NULL_LOGGER;
+  const log = options.logger ?? NULL_LOGGER;
   const url = joinUrl(config.baseUrl, config.healthEndpoint);
   const headers: Record<string, string> = {};
   if (config.apiKey) headers.authorization = `Bearer ${config.apiKey}`;
@@ -71,7 +71,7 @@ export async function probeHealth(
   try {
     const response = await fetchImpl(url, { method: "GET", headers });
     if (!response.ok) {
-      logger.warn("openai-compatible-health:non-ok", {
+      log.warn("openai-compatible-health:non-ok", {
         provider: config.name,
         baseUrl: config.baseUrl,
         status: response.status,
@@ -82,7 +82,7 @@ export async function probeHealth(
         body = JSON.parse(text) as ModelsBody;
         connected = Array.isArray(body.data);
       } catch {
-        logger.warn("openai-compatible-health:malformed-body", {
+        log.warn("openai-compatible-health:malformed-body", {
           provider: config.name,
           baseUrl: config.baseUrl,
           snippet: text.slice(0, 100),
@@ -90,7 +90,7 @@ export async function probeHealth(
       }
     }
   } catch (cause) {
-    logger.warn("openai-compatible-health:transport", {
+    log.warn("openai-compatible-health:transport", {
       provider: config.name,
       baseUrl: config.baseUrl,
       cause: cause instanceof Error ? cause.message : String(cause),
@@ -109,7 +109,7 @@ export async function probeHealth(
     const available = new Set(modelsAvailable);
     const missing = config.models.filter((m) => !available.has(m));
     if (missing.length > 0) {
-      logger.warn("openai-compatible-health:declared-models-missing", {
+      log.warn("openai-compatible-health:declared-models-missing", {
         provider: config.name,
         missing,
         hint: "model possivelmente não-carregado no servidor",

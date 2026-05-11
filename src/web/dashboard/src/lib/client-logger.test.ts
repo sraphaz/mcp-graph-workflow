@@ -18,6 +18,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   createClientLogger,
+  type ClientLogger,
   type ClientLoggerOptions,
 } from "./client-logger.js";
 
@@ -160,6 +161,65 @@ describe("clientLogger — reportError", () => {
     expect(payload.entries[0].context.errorType).toBe("TypeError");
     expect(typeof payload.entries[0].context.errorStack).toBe("string");
     logger.destroy();
+  });
+});
+
+// ── trace.id + span.id injection (Story 5 subtask) ───────────────────────────
+
+describe("clientLogger — trace.id and span.id injection", () => {
+  let beacon: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    beacon = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("navigator", { sendBeacon: beacon });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function getEntries(log: ClientLogger): Promise<Array<Record<string, unknown>>> {
+    log.flush();
+    const blob = beacon.mock.calls.at(-1)?.[1] as Blob;
+    const text = await blob.text();
+    return (JSON.parse(text) as { entries: Array<Record<string, unknown>> }).entries;
+  }
+
+  it("AC1: every log entry has a non-empty trace.id in its context", async () => {
+    const log = createClientLogger(makeOptions());
+    log.info("hello");
+    const [entry] = await getEntries(log);
+    const ctx = entry?.context as Record<string, unknown>;
+    expect(typeof ctx?.["trace.id"]).toBe("string");
+    expect((ctx?.["trace.id"] as string).length).toBeGreaterThan(0);
+    log.destroy();
+  });
+
+  it("AC2: two entries from same logger share the same trace.id", async () => {
+    const log = createClientLogger(makeOptions());
+    log.info("entry 1");
+    log.info("entry 2");
+    const entries = await getEntries(log);
+    const ids = entries.map((e) => (e.context as Record<string, unknown>)?.["trace.id"]);
+    expect(ids[0]).toBe(ids[1]);
+    log.destroy();
+  });
+
+  it("AC3: after newSpan(), subsequent entries have the new span.id", async () => {
+    const log = createClientLogger(makeOptions());
+    const spanId = log.newSpan();
+    log.info("post-span");
+    const [entry] = await getEntries(log);
+    expect((entry?.context as Record<string, unknown>)?.["span.id"]).toBe(spanId);
+    log.destroy();
+  });
+
+  it("AC4: two logger instances have distinct trace.ids", () => {
+    const log1 = createClientLogger(makeOptions());
+    const log2 = createClientLogger(makeOptions());
+    expect(log1.getTraceId()).not.toBe(log2.getTraceId());
+    log1.destroy();
+    log2.destroy();
   });
 });
 
