@@ -2,6 +2,13 @@
 
 All notable changes to the v11 CLI. Format: [Keep a Changelog](https://keepachangelog.com/) · Versioning: SemVer.
 
+## [13.1.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v13.0.1...cli-v13.1.0) (2026-05-11)
+
+
+### Features
+
+* **epic:** browser-harness MCP rewrite + policy-engine + self-healing ([#385](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/385)) ([9aea1b1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/9aea1b19084720c3cef0c1edc253987fd1e7c5e4))
+
 ## [13.0.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/cli-v13.0.0...cli-v13.0.1) (2026-05-02)
 
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## [13.14.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.13.0...mcp-graph-v13.14.0) (2026-05-11)
+
+
+### Features
+
+* **atomic-files:** central registry with duplicate_file_id guard (Task 2.1) ([#372](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/372)) ([c5e7d48](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c5e7d4817fe3067fdfee191a117e4bbd9ea26570))
+* **atomic-files:** markdown writer with managed block markers (Task 1.2) ([#361](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/361)) ([b1191aa](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b1191aaf26860d883c603e50373e22b90bb04ab9))
+* **browser-tests:** REST router /api/browser-tests/* (Task 1.1) ([#373](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/373)) ([21edc6f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/21edc6fd1df566ef4486520a573a48e20af4b79a))
+* **browser-tests:** SSE coalescing + EventCoalescer (Task 1.2) ([#374](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/374)) ([01853f5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/01853f59cbb99a279877a825f9d2339c2d1b17f0))
+* **browser-tests:** use-browser-tests hook (Task 2.1) ([#375](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/375)) ([4611ce1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/4611ce1689c6f4c2a3db501de54f77c9c05fe4bb))
+* **dashboard:** Task 1.2 — delete gitnexus-tab (dead tab from audit) ([#381](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/381)) ([85eef3c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/85eef3ced9abcac390432fa200cc199ad0a34f35))
+* **embed:** add embed() to OpenAICompatibleAdapter (Task 1.2) ([#368](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/368)) ([276e840](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/276e84077964354562362668329bdae96311160d))
+* **embeddings:** add embeddingModels field to openai-compatible config schema (Task 1.3) ([#364](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/364)) ([bcd882c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/bcd882c5906093963d3292c775f7f17b6babd050))
+* **epic:** browser-harness MCP rewrite + policy-engine + self-healing ([#385](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/385)) ([9aea1b1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/9aea1b19084720c3cef0c1edc253987fd1e7c5e4))
+* **excision:** Epic — Excisão do stack LLM (Tasks 1.1–1.4) ([#384](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/384)) ([0437668](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/04376686c8e3eb598bee8a28b569812b75365d52))
+* **local-hub:** add "local-hub" to ProviderNameSchema (Task 3.1) ([#365](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/365)) ([ec36d7f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ec36d7f2e71edbc36b5699291b670d7a25b23508))
+* **local-hub:** LocalHubAdapter wraps OpenAI-compat protocol with BackendUnreachable (Task 3.2) ([#366](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/366)) ([48e3309](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/48e3309039d15f96fff44dfd0b6957789173f8fe))
+* **model-hub:** OpenAI-compat HTTP router ([3bc3ba0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3bc3ba0ada691688c2f9fd154b7858d290adce4c))
+* **model-hub:** OpenAI-compat HTTP router (Task 1.2) ([#342](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/342)) ([3bc3ba0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3bc3ba0ada691688c2f9fd154b7858d290adce4c))
+* **model-hub:** register model-hub.config.json as atomic file (Task 5.1) ([#367](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/367)) ([3c8dbb8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3c8dbb8bb93c84a413e1ea226a560b1b7d949a87))
+* **playwright:** passed→artifact promoter — spec.ts + recipe.json + manifest (Task 1.3) ([#371](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/371)) ([f2c0696](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f2c06961be966a9c8273050ecd21545a1228f9bc))
+* **playwright:** recipe → spec.ts generator with zero mcp-graph deps (Task 1.2) ([#370](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/370)) ([f1f1e08](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f1f1e08366189c6a858074addb4bc0a8d974000f))
+* **policy-engine:** Task 1.1 — PolicySignals/PolicyConfig/RouteDecision types ([#383](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/383)) ([a16acc7](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/a16acc71bf80f51c26208558061b7bfeced32ce3))
+* **recipe:** Zod schema for recipe.json with evidence-required steps (Task 1.1) ([#369](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/369)) ([b46baea](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/b46baea2774eeba4fdbb49d18bac44d32077732b))
+* **self-healing:** Tasks 1.1 + 1.2 — FailureSignal schema + failure_signals migration ([#382](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/382)) ([fb9a304](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/fb9a3045ab61bebbbb4d55591419f47c03b4a101))
+* **sentrux:** register in IntegrationOrchestrator + scan_complete event (Task 1.1) ([#376](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/376)) ([f385b1c](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f385b1c80fc51877c31d45bc30ca93d0d4fb3d1a))
+* **sentrux:** Task 1.2 — presence detection with soft-fail ([#377](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/377)) ([71eecd1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/71eecd171dc9d567610f84b5e8668656add6398e))
+* **sentrux:** Task 1.3 — wire 4 MCP tools via adapter with Zod schemas ([#378](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/378)) ([da5b359](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/da5b3596077b66323c277fe4bbcb7bab15eb448f))
+* **sentrux:** Task 2.5 — replace feature-depth gate with Sentrux advisory ([#379](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/379)) ([220b6d3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/220b6d39f71f54b1148f3ae95c28207b974c8c1a))
+* **story10:** AgentMonitor trail/now/next components + API endpoints ([#386](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/386)) ([63f185e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/63f185e5d59e89c67842563c883102df8352d153))
+* **streaming-sse:** generateStream() in OpenAICompatibleAdapter (Task 1.1) ([#363](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/363)) ([10cbe51](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/10cbe512a4480ffc16f94c23b4b4c7f685f8b9d6))
+* **streaming-sse:** Task 1.2 — SSE mock fixtures for adapter tests ([#380](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/380)) ([e72cba1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/e72cba1bce7a68065c656cd5297d9cc23306664f))
+
 ## [13.13.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.12.0...mcp-graph-v13.13.0) (2026-05-09)
 
 
