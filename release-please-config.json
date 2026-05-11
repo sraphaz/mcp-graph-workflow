@@ -6,13 +6,6 @@
       "package-name": "@mcp-graph-workflow/mcp-graph",
       "changelog-path": "CHANGELOG.md"
     },
-    "tools/cli": {
-      "release-type": "node",
-      "package-name": "@mcp-graph-workflow/cli",
-      "changelog-path": "CHANGELOG.md",
-      "prerelease": true,
-      "prerelease-type": "beta"
-    }
   },
   "changelog-sections": [
     { "type": "feat", "section": "Features" },

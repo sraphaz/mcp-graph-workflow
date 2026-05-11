@@ -221,7 +221,6 @@ export const apiClient = {
     return request<{ logs: LogEntry[]; total: number }>(`/logs${query ? "?" + query : ""}`);
   },
   clearLogs: () => request<null>("/logs", { method: "DELETE" }),
-  getSystemMetrics: () => request<{ counters: Record<string, number>; histograms: Record<string, { p50: number; p95: number; p99: number; count: number }> }>("/metrics"),
 
   // Journey
   getJourneyMaps: () => request<{ maps: JourneyMap[] }>("/journey/maps"),
@@ -535,4 +534,8 @@ export const apiClient = {
       method: "PUT",
       body: JSON.stringify(config),
     }),
+
+  // ── Metrics ────────────────────────────────────────────────────────────────
+  getSystemMetrics: () =>
+    request<{ counters: Record<string, number>; histograms: Record<string, { p50: number; p95: number; p99: number; count: number }> }>("/metrics"),
 };
