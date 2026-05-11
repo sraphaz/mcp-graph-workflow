@@ -38,10 +38,11 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 function clientIp(req: Request): string {
   const fwd = req.headers["x-forwarded-for"];
   if (typeof fwd === "string" && fwd.length > 0) {
-    return fwd.split(",")[0]!.trim();
+    return (fwd.split(",")[0] ?? fwd).trim();
   }
   if (Array.isArray(fwd) && fwd.length > 0) {
-    return fwd[0]!.split(",")[0]!.trim();
+    const first = fwd[0] ?? "";
+    return (first.split(",")[0] ?? first).trim();
   }
   return req.ip ?? req.socket.remoteAddress ?? "unknown";
 }
@@ -122,7 +123,7 @@ export function createLogsRouter(): Router {
   router.get("/", (req, res) => {
     let logs = getLogBuffer();
 
-    const { level, since, search, format } = req.query;
+    const { level, since, search, format, category } = req.query;
 
     if (typeof level === "string" && level.length > 0) {
       logs = logs.filter((entry) => entry.level === level);
@@ -138,6 +139,10 @@ export function createLogsRouter(): Router {
     if (typeof search === "string" && search.length > 0) {
       const term = search.toLowerCase();
       logs = logs.filter((entry) => entry.message.toLowerCase().includes(term));
+    }
+
+    if (typeof category === "string" && category.length > 0) {
+      logs = logs.filter((entry) => entry.context?.["eventCategory"] === category);
     }
 
     const sanitized = logs.map(sanitizeLogEntry);

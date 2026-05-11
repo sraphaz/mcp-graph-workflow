@@ -33,6 +33,7 @@ import { now } from "../utils/time.js";
 import { configureDb, runMigrations } from "./migrations.js";
 import { createLogger } from "../utils/logger.js";
 import { GraphNotInitializedError, ValidationError, SnapshotNotFoundError, McpGraphError, ConflictError } from "../utils/errors.js";
+import { sqliteConnectionsActive } from "../observability/metrics.js";
 import { GraphNodeSchema } from "../../schemas/node.schema.js";
 import { GraphEdgeSchema } from "../../schemas/edge.schema.js";
 import { z } from "zod/v4";
@@ -351,6 +352,7 @@ export class SqliteStore {
       .get() as { id: string } | undefined;
     if (row) store.projectId = row.id;
 
+    sqliteConnectionsActive.increment();
     log.info(`Store opened${basePath === ":memory:" ? " (in-memory)" : ` at ${basePath}`}`);
     return store;
   }
@@ -376,6 +378,7 @@ export class SqliteStore {
       .get() as { id: string } | undefined;
     if (row) store.projectId = row.id;
 
+    sqliteConnectionsActive.increment();
     log.info(`Store opened at ${dbPath}`);
     return store;
   }
@@ -399,6 +402,7 @@ export class SqliteStore {
   close(): void {
     this.statements.clear();
     this.db.close();
+    sqliteConnectionsActive.decrement();
   }
 
   // ── Project ──────────────────────────────────────

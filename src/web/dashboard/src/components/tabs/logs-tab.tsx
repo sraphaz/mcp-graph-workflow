@@ -18,6 +18,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLogs } from "@/hooks/use-logs";
 import type { LogEntry, LogLevel } from "@/lib/types";
+import { MetricsCard } from "./metrics-card.js";
 
 const LEVEL_COLORS: Record<LogLevel, string> = {
   info: "bg-blue-500/20 text-blue-400",
@@ -55,6 +56,7 @@ export function LogsTab(): React.JSX.Element {
   const { logs, loading, clearLogs, refresh } = useLogs();
   const [levelFilter, setLevelFilter] = useState<LogLevel | "all">("all");
   const [searchText, setSearchText] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<"health" | "all">("all");
   const [autoScroll, setAutoScroll] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -70,8 +72,12 @@ export function LogsTab(): React.JSX.Element {
       result = result.filter((entry) => entry.message.toLowerCase().includes(term));
     }
 
+    if (categoryFilter === "health") {
+      result = result.filter((entry) => entry.context?.["eventCategory"] === "health");
+    }
+
     return result;
-  }, [logs, levelFilter, searchText]);
+  }, [logs, levelFilter, searchText, categoryFilter]);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -117,6 +123,8 @@ export function LogsTab(): React.JSX.Element {
 
   return (
     <div className="flex flex-col h-full" data-testid="logs-tab">
+      {/* RED/USE metrics summary */}
+      <MetricsCard />
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-edge bg-surface-alt">
         {/* Level filter */}
@@ -143,6 +151,20 @@ export function LogsTab(): React.JSX.Element {
           className="flex-1 px-2 py-1 text-sm rounded border border-edge bg-surface text-foreground placeholder:text-muted"
           data-testid="log-search"
         />
+
+        {/* Category filter — Health chip */}
+        <button
+          onClick={() => setCategoryFilter(categoryFilter === "health" ? "all" : "health")}
+          className={`px-2 py-1 text-xs rounded border ${
+            categoryFilter === "health"
+              ? "border-green-500 text-green-400 bg-green-500/10"
+              : "border-edge text-muted"
+          }`}
+          data-testid="log-category-health"
+          title="Show only health events"
+        >
+          Health
+        </button>
 
         {/* Auto-scroll toggle */}
         <button

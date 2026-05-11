@@ -103,6 +103,14 @@ export async function runDoctor(basePath: string): Promise<DoctorReport> {
     }
   }
 
+  for (const result of checks) {
+    log.event(
+      { action: "health.check", category: "health", outcome: result.level === "ok" ? "success" : "failure" },
+      `health.check.${result.name}`,
+      { check: result.name },
+    );
+  }
+
   const summary = buildSummary(checks);
 
   return {

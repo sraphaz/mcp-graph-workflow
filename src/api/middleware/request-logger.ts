@@ -17,9 +17,11 @@
 
 import type { Request, Response, NextFunction } from "express";
 import { logger } from "../../core/utils/logger.js";
+import { httpRequestsTotal, httpErrorsTotal, httpDurationMs } from "../../core/observability/metrics.js";
 
 /**
  * Express middleware that logs every HTTP request with method, path, status, and duration.
+ * Also increments RED metrics: http.requests.total, http.errors.total, http.duration.ms.
  */
 export function requestLogger(req: Request, res: Response, next: NextFunction): void {
   const start = performance.now();
@@ -34,6 +36,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
       status: res.statusCode,
       durationMs,
     });
+
+    httpRequestsTotal.increment();
+    if (res.statusCode >= 400) httpErrorsTotal.increment();
+    httpDurationMs.observe(durationMs);
   });
 
   next();

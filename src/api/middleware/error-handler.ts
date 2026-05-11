@@ -26,6 +26,7 @@ import {
   FileNotFoundError,
 } from "../../core/utils/errors.js";
 import { createLogger } from "../../core/utils/logger.js";
+import { errorsRate } from "../../core/observability/metrics.js";
 
 const log = createLogger({ layer: "api", source: "error-handler.ts" });
 
@@ -77,5 +78,6 @@ export function errorHandler(
     });
   }
 
+  errorsRate.increment();
   res.status(status).json(body);
 }

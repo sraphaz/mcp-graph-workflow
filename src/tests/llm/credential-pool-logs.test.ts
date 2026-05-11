@@ -19,7 +19,7 @@ function makeEntry(overrides: Partial<CredentialPoolEntry> = {}): CredentialPool
 }
 
 function mockLogger(): ContextualLogger {
-  return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), success: vi.fn() };
+  return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), success: vi.fn(), event: vi.fn() };
 }
 
 // ── AC1: pool:select ──────────────────────────────────────────────────────────

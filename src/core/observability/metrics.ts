@@ -13,6 +13,7 @@
 
 export interface Counter {
   increment(value?: number): void;
+  decrement(value?: number): void;
   get(): number;
   reset(): void;
 }
@@ -46,6 +47,7 @@ class CounterImpl implements Counter {
   private _value = 0;
   constructor(readonly name: string) {}
   increment(value = 1): void { this._value += value; }
+  decrement(value = 1): void { this._value -= value; }
   get(): number { return this._value; }
   reset(): void { this._value = 0; }
 }

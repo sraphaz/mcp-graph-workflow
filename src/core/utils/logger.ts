@@ -91,6 +91,7 @@ export interface ContextualLogger {
   error(msg: string, ctx?: Record<string, unknown>): void;
   success(msg: string, ctx?: Record<string, unknown>): void;
   debug(msg: string, ctx?: Record<string, unknown>): void;
+  event(event: BusinessEvent, msg: string, ctx?: Record<string, unknown>): void;
 }
 
 /**
@@ -110,6 +111,7 @@ export function createLogger(opts: { layer: LogLayer; source: string }): Context
     error: (msg, ctx) => logger.error(msg, tag(ctx)),
     success: (msg, ctx) => logger.success(msg, tag(ctx)),
     debug: (msg, ctx) => logger.debug(msg, tag(ctx)),
+    event: (evt, msg, ctx) => logger.event(evt, msg, tag(ctx)),
   };
 }
 

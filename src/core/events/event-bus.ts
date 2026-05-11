@@ -19,6 +19,7 @@ import { EventEmitter } from "node:events";
 import { McpGraphError } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import type { GraphEvent, GraphEventType } from "./event-types.js";
+import { eventBusQueueDepth } from "../observability/metrics.js";
 
 const log = createLogger({ layer: "core", source: "event-bus.ts" });
 
@@ -45,6 +46,7 @@ export class GraphEventBus {
     log.info("Event emitted", { type: event.type });
     this.emitter.emit(event.type, event);
     this.emitter.emit("*", event);
+    eventBusQueueDepth.increment();
   }
 
   /** Listen for a specific event type */

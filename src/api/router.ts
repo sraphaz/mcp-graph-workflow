@@ -43,6 +43,7 @@ import { createObservabilityRouter } from "./routes/observability.js";
 import { createBrowserTestsRouter } from "./routes/browser-tests.js";
 import { createAutonomyRouter } from "./routes/autonomy.js";
 import { createLogsRouter } from "./routes/logs.js";
+import { createMetricsRouter } from "./routes/metrics.js";
 import { createJourneyRouter } from "./routes/journey.js";
 import { createFolderRouter } from "./routes/folder.js";
 import { createSiebelRouter } from "./routes/siebel.js";
@@ -55,9 +56,11 @@ import { createSwarmRouter } from "./routes/swarm.js";
 import { createKanbanRouter } from "./routes/kanban.js";
 import { createEventsSseRouter } from "./routes/events-sse.js";
 import { createAgentsRouter } from "./routes/agents.js";
+import { createAgentTrailRouter } from "./routes/agent-trail.js";
 import { createEconomyRouter } from "./routes/economy.js";
 import { createEvalsRouter } from "./routes/evals.js";
 import { createModelHubRouter } from "./routes/model-hub.js";
+import { createHealthRouter } from "./routes/health.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -109,11 +112,13 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/benchmark", createBenchmarkRouter(storeRef));
   router.use("/harness", createHarnessRouter(storeRef));
   router.use("/lifecycle-health", createLifecycleHealthRouter(storeRef));
+  router.use("/health", createHealthRouter(getBasePath));
   router.use("/browser-harness", createBrowserHarnessRouter(storeRef, getBasePath));
   router.use("/browser-tests", createBrowserTestsRouter(storeRef, getBasePath, eventBus ?? undefined));
   router.use("/autonomy", createAutonomyRouter(storeRef));
   router.use("/siebel", createSiebelRouter(storeRef, getBasePath));
   router.use("/logs", createLogsRouter());
+  router.use("/metrics", createMetricsRouter());
   router.use("/journey", createJourneyRouter(storeRef, getBasePath));
   router.use("/translation", createTranslationRouter(storeRef, eventBus ?? undefined));
   router.use("/translation/projects", createTranslationProjectRouter(storeRef, eventBus ?? undefined));
@@ -125,6 +130,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/observability", createObservabilityRouter(storeRef.current.getDb()));
   router.use("/model-hub", createModelHubRouter(eventBus ?? undefined));
   router.use("/agents", createAgentsRouter(storeRef));
+  router.use("/agent", createAgentTrailRouter(storeRef));
   router.use("/swarm", createSwarmRouter(storeRef));
 
   // Token Economy routes — uses an in-process stub cache until the real

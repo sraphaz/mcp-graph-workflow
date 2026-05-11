@@ -182,6 +182,45 @@ export function createAgentsRouter(storeRef: StoreRef): Router {
     }
   });
 
+  // §EPIC-agent-explode-view Task 1.3 — next planned steps
+  router.get("/next", (_req, res, next) => {
+    try {
+      const db = storeRef.current.getDb();
+      const activeSession = db.prepare<[], { id: string; tasks_completed: number }>(
+        `SELECT id, tasks_completed FROM autopilot_sessions WHERE status = 'running' ORDER BY started_at DESC LIMIT 1`
+      ).get() ?? null;
+
+      const doc = storeRef.current.toGraphDocument();
+      const STEP_LIMIT = 5;
+      const steps = doc.nodes
+        .filter((n) =>
+          (n.type === "task" || n.type === "subtask") &&
+          (n.status === "backlog" || n.status === "ready") &&
+          !n.blocked
+        )
+        .sort((a, b) => {
+          const pa = a.priority ?? 99;
+          const pb = b.priority ?? 99;
+          return pa !== pb ? pa - pb : a.title.localeCompare(b.title);
+        })
+        .slice(0, STEP_LIMIT)
+        .map((n) => ({ id: n.id, title: n.title, priority: n.priority, xpSize: n.xpSize }));
+
+      if (!activeSession) {
+        res.json({ idle: true, steps });
+        return;
+      }
+
+      res.json({
+        idle: false,
+        currentStep: activeSession.tasks_completed,
+        steps,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // §EPIC-agent-explode-view Task 1.1 — snapshot of current agent state
   router.get("/now", (_req, res, next) => {
     try {
