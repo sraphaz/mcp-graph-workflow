@@ -38,13 +38,13 @@
     "commander": "14.0.3",
     "figlet": "1.11.0",
     "ink": "5.0.1",
-    "react": "18.3.1",
+    "react": "19.2.6",
     "zod": "4.0.0"
   },
   "devDependencies": {
     "@types/figlet": "1.7.0",
     "@types/node": "20.x",
-    "@types/react": "18.3.18",
+    "@types/react": "19.2.14",
     "esbuild": "0.28.0",
     "ink-testing-library": "4.0.0",
     "rimraf": "6.0.1",
