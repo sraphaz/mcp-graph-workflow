@@ -5,7 +5,7 @@
       "release-type": "node",
       "package-name": "@mcp-graph-workflow/mcp-graph",
       "changelog-path": "CHANGELOG.md"
-    },
+    }
   },
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
