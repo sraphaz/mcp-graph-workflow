@@ -30,3 +30,32 @@ export {
   runHeal,
 } from "./heal-engine.js";
 export type { StepBlock, StepExecutor, StepExecutorResult, HealOutcome } from "./heal-engine.js";
+export {
+  validateEvidence,
+  checkBrowserTestEvidenceComplete,
+  SCREENSHOT_REQUIRED_ACTIONS,
+} from "./evidence-validator.js";
+export type { ValidationMode, EvidenceCheckInput, EvidenceValidationResult } from "./evidence-validator.js";
+export { classifyFailure } from "./failure-classifier.js";
+export type { FailureKind } from "./failure-classifier.js";
+export {
+  proposeSelectorCandidates,
+  proposeWaitIncrement,
+  proposeRecovery,
+} from "./recovery-primitives.js";
+export type {
+  DomElement,
+  DomSnapshot,
+  RecoveryProposal,
+} from "./recovery-primitives.js";
+export {
+  discoverWsEndpoint,
+  maskWsEndpoint,
+  parseDevToolsActivePort,
+  CdpUnreachableError,
+} from "./endpoint-discovery.js";
+export type {
+  DiscoveredEndpoint,
+  DiscoveryOptions,
+  DiscoveryDeps,
+} from "./endpoint-discovery.js";

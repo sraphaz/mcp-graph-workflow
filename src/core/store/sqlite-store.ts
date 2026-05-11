@@ -270,7 +270,7 @@ function rowToEdge(row: EdgeRow): GraphEdge {
   if (row.weight != null) edge.weight = row.weight;
   if (row.reason) edge.reason = row.reason;
   if (row.metadata) {
-    try { edge.metadata = JSON.parse(row.metadata); } catch { /* corrupted edge metadata — skip */ }
+    try { edge.metadata = JSON.parse(row.metadata); } catch (_err) { void _err; /* corrupted edge metadata — skip */ }
   }
 
   return edge;

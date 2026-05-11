@@ -78,8 +78,8 @@ export class AgentClaimManager {
     try {
       this.locks.release(leaseToken);
       log.debug("swarm:release", { leaseToken });
-    } catch {
-      // token already gone — idempotent
+    } catch (_err) {
+      void _err; // token already gone — idempotent
     }
   }
 

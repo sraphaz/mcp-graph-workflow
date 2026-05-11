@@ -28,8 +28,8 @@ function loadPackageMeta(): { name: string; version: string } {
       if (parent === dir) break;
       dir = parent;
     }
-  } catch {
-    // fall through
+  } catch (_err) {
+    void _err; // fall through
   }
   return fallback;
 }

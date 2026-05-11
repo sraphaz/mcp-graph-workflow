@@ -55,8 +55,8 @@ export function killProcess(proc: ChildProcess): void {
   } else {
     try {
       proc.kill("SIGTERM");
-    } catch {
-      // Process may have already exited
+    } catch (_err) {
+      void _err; // Process may have already exited
     }
   }
 }

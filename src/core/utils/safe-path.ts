@@ -48,8 +48,8 @@ function decodeUrlEncoded(input: string): string {
   } catch {
     try {
       decoded = decodeURIComponent(decoded);
-    } catch {
-      // Not URL-encoded — keep original
+    } catch (_err) {
+      void _err; // Not URL-encoded — keep original
     }
   }
   return decoded;

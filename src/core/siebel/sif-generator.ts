@@ -181,8 +181,8 @@ function checkNameCollisions(
           objectName: objValue.name,
         });
       }
-    } catch {
-      // Search might fail on empty knowledge store — that's OK
+    } catch (_err) {
+      void _err; // Search might fail on empty knowledge store — that's OK
     }
   }
 }

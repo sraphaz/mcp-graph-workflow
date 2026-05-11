@@ -166,8 +166,8 @@ function loadRecentFolders(): string[] {
         return dataValue.filter((item): item is string => typeof item === "string").slice(0, MAX_RECENT);
       }
     }
-  } catch {
-    // Ignore corrupt file
+  } catch (_err) {
+    void _err; // Ignore corrupt file
   }
   return [];
 }
