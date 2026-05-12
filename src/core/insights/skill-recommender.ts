@@ -19,7 +19,9 @@ import path from "node:path";
 import { readdir, readFile } from "node:fs/promises";
 import type { GraphDocument } from "../graph/graph-types.js";
 import type { LifecyclePhase } from "../planner/lifecycle-phase.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "skill-recommender.ts" });
 
 export interface SkillInfo {
   name: string;
@@ -56,15 +58,15 @@ export async function scanSkills(basePath: string): Promise<SkillInfo[]> {
           const info = parseSkillFrontmatter(content, entry.name, skillMdPath);
           if (info) skills.push(info);
         } catch (err) {
-          logger.debug("intentional-swallow", { error: String(err), reason: "no SKILL.md in this directory" });
+          log.debug("intentional-swallow", { error: String(err), reason: "no SKILL.md in this directory" });
         }
       }
     } catch (err) {
-      logger.debug("intentional-swallow", { error: String(err), reason: "directory doesn't exist" });
+      log.debug("intentional-swallow", { error: String(err), reason: "directory doesn't exist" });
     }
   }
 
-  logger.info("Skills scanned", { count: skills.length });
+  log.info("Skills scanned", { count: skills.length });
   return skills;
 }
 
@@ -183,7 +185,7 @@ export function recommendSkills(
     });
   }
 
-  logger.info("Skill recommendations generated", { count: recommendations.length });
+  log.info("Skill recommendations generated", { count: recommendations.length });
   return recommendations;
 }
 
@@ -369,6 +371,6 @@ export function recommendBuiltInSkills(
   }
 
   const capped = recommendations.slice(0, 5);
-  logger.info("Built-in skill recommendations generated", { phase, count: capped.length });
+  log.info("Built-in skill recommendations generated", { phase, count: capped.length });
   return capped;
 }

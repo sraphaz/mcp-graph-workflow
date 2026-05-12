@@ -56,10 +56,12 @@ import { assembleSiblingContext } from "./assemble-sibling-context.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
 import { createShadowBranch } from "../autonomy/shadow-branch.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 import { extractOfferedDocIds } from "../rag/rag-feedback.js";
 import { maybeRunMemoryDynamicsTick, type DynamicsTickResult } from "../rag/memory-dynamics-tick.js";
+
+const log = createLogger({ layer: "core", source: "start-task.ts" });
 
 // Module-level singleton for task context prefetching (CPU pipeline pattern)
 export const taskPrefetcher = new TaskPrefetcher({ ttlMs: 5 * 60 * 1000 });
@@ -167,7 +169,7 @@ export function startTask(
   if (nodeId) {
     const node = doc.nodes.find((n) => n.id === nodeId);
     if (!node) {
-      logger.warn("pipeline:start_task:node_not_found", { nodeId });
+      log.warn("pipeline:start_task:node_not_found", { nodeId });
       return null;
     }
     // Build a minimal EnhancedNextResult for the specific node
@@ -182,7 +184,7 @@ export function startTask(
   }
 
   if (!enhanced) {
-    logger.info("pipeline:start_task:no_tasks");
+    log.info("pipeline:start_task:no_tasks");
     return null;
   }
 
@@ -194,10 +196,10 @@ export function startTask(
   try {
     memoryDynamicsTick = maybeRunMemoryDynamicsTick(store);
     if (memoryDynamicsTick.ran) {
-      logger.info("pipeline:start_task:memory_dynamics_tick", { ...memoryDynamicsTick });
+      log.info("pipeline:start_task:memory_dynamics_tick", { ...memoryDynamicsTick });
     }
   } catch (err) {
-    logger.warn("pipeline:start_task:memory_dynamics_tick_failed", { error: String(err) });
+    log.warn("pipeline:start_task:memory_dynamics_tick_failed", { error: String(err) });
   }
 
   const taskNode = enhanced.task.node;
@@ -210,7 +212,7 @@ export function startTask(
     const snapshot: GraphSnapshot = { nodes: doc.nodes, edges: doc.edges };
     context = buildTaskContext(store, taskNode.id, snapshot);
   } catch (err) {
-    logger.warn("pipeline:start_task:context_failed", { error: String(err) });
+    log.warn("pipeline:start_task:context_failed", { error: String(err) });
   }
 
   // 3. Build RAG context (check prefetcher cache first — CPU pipeline pattern)
@@ -220,7 +222,7 @@ export function startTask(
   if (prefetchedData) {
     // Prefetch hit — skip RAG assembly
     prefetchHit = true;
-    logger.info("pipeline:start_task:prefetch_hit", { nodeId: taskNode.id });
+    log.info("pipeline:start_task:prefetch_hit", { nodeId: taskNode.id });
     try {
       ragContext = JSON.parse(prefetchedData.context) as AssembledContext;
     } catch {
@@ -238,7 +240,7 @@ export function startTask(
         tier: contextDetail ?? "standard",
       });
     } catch (err) {
-      logger.warn("pipeline:start_task:rag_failed", { error: String(err) });
+      log.warn("pipeline:start_task:rag_failed", { error: String(err) });
     }
   }
 
@@ -250,10 +252,10 @@ export function startTask(
       if (ragOffered.length > 0) {
         const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
         store.updateNode(taskNode.id, { metadata: { ...existingMeta, ragOffered } });
-        logger.debug("pipeline:start_task:rag_offered_persisted", { nodeId: taskNode.id, count: ragOffered.length });
+        log.debug("pipeline:start_task:rag_offered_persisted", { nodeId: taskNode.id, count: ragOffered.length });
       }
     } catch (err) {
-      logger.warn("pipeline:start_task:rag_offered_failed", { error: String(err) });
+      log.warn("pipeline:start_task:rag_offered_failed", { error: String(err) });
     }
   }
 
@@ -274,7 +276,7 @@ export function startTask(
   try {
     harnessWarning = getHarnessPreflightWarning(store.getDb());
   } catch (err) {
-    logger.warn("pipeline:start_task:harness_preflight_failed", { error: String(err) });
+    log.warn("pipeline:start_task:harness_preflight_failed", { error: String(err) });
   }
 
   // 5b. Top remediation suggestions when score < 70 (non-blocking)
@@ -287,7 +289,7 @@ export function startTask(
       }
     }
   } catch (err) {
-    logger.warn("pipeline:start_task:remediation_preflight_failed", { error: String(err) });
+    log.warn("pipeline:start_task:remediation_preflight_failed", { error: String(err) });
   }
 
   // 5c. Compute a model-routing hint from the same signals the graph already owns.
@@ -310,7 +312,7 @@ export function startTask(
         };
       }
     } catch (err) {
-      logger.debug("pipeline:start_task:empirical_hint_unavailable", { error: String(err) });
+      log.debug("pipeline:start_task:empirical_hint_unavailable", { error: String(err) });
     }
 
     modelHint = computeTaskReadinessScore(taskNode, doc, {
@@ -319,7 +321,7 @@ export function startTask(
       empiricalOverride,
     });
   } catch (err) {
-    logger.warn("pipeline:start_task:model_hint_failed", { error: String(err) });
+    log.warn("pipeline:start_task:model_hint_failed", { error: String(err) });
   }
 
   // 6. Auto-start if requested
@@ -342,7 +344,7 @@ export function startTask(
         const lock = lockManager.acquire(`task:${taskNode.id}`, agentId, 600); // 10min TTL
         store.updateNodeStatus(taskNode.id, "in_progress");
         leaseToken = lock.leaseToken;
-        logger.info("pipeline:start_task:claimed", { nodeId: taskNode.id, agentId, leaseToken });
+        log.info("pipeline:start_task:claimed", { nodeId: taskNode.id, agentId, leaseToken });
       } else {
         // Single-terminal mode: no lock
         store.updateNodeStatus(taskNode.id, "in_progress");
@@ -365,10 +367,10 @@ export function startTask(
         },
       });
       if (err instanceof LockConflictError) {
-        logger.warn("pipeline:start_task:lock_conflict", { nodeId: taskNode.id, agentId, error: String(err) });
+        log.warn("pipeline:start_task:lock_conflict", { nodeId: taskNode.id, agentId, error: String(err) });
         throw err; // Propagate lock conflicts to caller
       }
-      logger.warn("pipeline:start_task:auto_start_failed", { error: String(err) });
+      log.warn("pipeline:start_task:auto_start_failed", { error: String(err) });
     }
   }
 
@@ -381,10 +383,10 @@ export function startTask(
       if (baselineRow) {
         const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
         store.updateNode(taskNode.id, { metadata: { ...existingMeta, _harnessBaseline: baselineRow.score } });
-        logger.debug("pipeline:start_task:harness_baseline_stored", { nodeId: taskNode.id, score: baselineRow.score });
+        log.debug("pipeline:start_task:harness_baseline_stored", { nodeId: taskNode.id, score: baselineRow.score });
       }
     } catch (err) {
-      logger.warn("pipeline:start_task:harness_baseline_failed", { error: String(err) });
+      log.warn("pipeline:start_task:harness_baseline_failed", { error: String(err) });
     }
   }
 
@@ -394,9 +396,9 @@ export function startTask(
   if (startedAt) {
     try {
       checkpoint = createCheckpoint(store, taskNode.id);
-      logger.info("pipeline:start_task:checkpoint", { nodeId: taskNode.id, snapshotId: checkpoint.snapshotId });
+      log.info("pipeline:start_task:checkpoint", { nodeId: taskNode.id, snapshotId: checkpoint.snapshotId });
     } catch (err) {
-      logger.warn("pipeline:start_task:checkpoint_failed", { error: String(err) });
+      log.warn("pipeline:start_task:checkpoint_failed", { error: String(err) });
     }
 
     // 6c. Create shadow branch for isolated execution (Phase D — Git Transactional Layer)
@@ -404,10 +406,10 @@ export function startTask(
       const branchResult = createShadowBranch(taskNode.id);
       if (branchResult.created) {
         shadowBranch = branchResult.branchName;
-        logger.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: shadowBranch });
+        log.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: shadowBranch });
       }
     } catch (err) {
-      logger.warn("pipeline:start_task:shadow_branch_failed", { error: String(err) });
+      log.warn("pipeline:start_task:shadow_branch_failed", { error: String(err) });
     }
   }
 
@@ -426,14 +428,14 @@ export function startTask(
       siblingContext = assembled.markdown;
       siblingTruncatedCount = assembled.truncatedCount;
     } catch (err) {
-      logger.warn("pipeline:start_task:sibling_assembly_failed", {
+      log.warn("pipeline:start_task:sibling_assembly_failed", {
         nodeId: taskNode.id,
         error: String(err),
       });
     }
   }
 
-  logger.info("pipeline:start_task:ok", {
+  log.info("pipeline:start_task:ok", {
     nodeId: taskNode.id,
     title: taskNode.title,
     autoStart,
@@ -455,7 +457,7 @@ export function startTask(
       );
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "non-fatal — skill retrieval is advisory" });
+    log.debug("intentional-swallow", { error: String(err), reason: "non-fatal — skill retrieval is advisory" });
   }
 
   // §EPIC-13.2 — persist ambiguityAudit + emit advisory warning
@@ -471,10 +473,10 @@ export function startTask(
           metadata: { ...existingMeta, ambiguityAudit: auditedAudit },
         });
       } catch (err) {
-        logger.warn("pipeline:start_task:ambiguity_audit_persist_failed", { error: String(err) });
+        log.warn("pipeline:start_task:ambiguity_audit_persist_failed", { error: String(err) });
       }
     } else {
-      logger.warn("pipeline:start_task:ambiguity_audit_invalid", { issues: parsed.error.issues });
+      log.warn("pipeline:start_task:ambiguity_audit_invalid", { issues: parsed.error.issues });
     }
   }
   const acCountForAudit = (taskNode.acceptanceCriteria?.length ?? 0)

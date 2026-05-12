@@ -25,7 +25,9 @@
  */
 
 import { z } from "zod/v4";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "synthetic-data-gen.ts" });
 
 // ── Types ───────────────────────────────────────────────
 
@@ -129,7 +131,7 @@ export function generateEdgeCase<T extends z.ZodObject<ZodShape>>(
     }
   }
 
-  logger.debug("synthetic-data-gen:edge-cases", { count: unique.length });
+  log.debug("synthetic-data-gen:edge-cases", { count: unique.length });
   return unique;
 }
 
@@ -227,7 +229,7 @@ function getChecks(schema: z.ZodType): { min?: number; max?: number } {
       }
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "graceful fallback for constraint extraction" });
+    log.debug("intentional-swallow", { error: String(err), reason: "graceful fallback for constraint extraction" });
   }
 
   return resultValue;
@@ -247,7 +249,7 @@ function getEnumValues(schema: z.ZodType): string[] {
       return Object.values(entries);
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "graceful fallback for enum values extraction" });
+    log.debug("intentional-swallow", { error: String(err), reason: "graceful fallback for enum values extraction" });
   }
   return [];
 }

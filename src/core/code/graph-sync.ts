@@ -21,7 +21,9 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "graph-sync.ts" });
 
 export interface SyncReport {
   staleRefs: string[];
@@ -60,7 +62,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
     ).get(project.id) as { symbol_count: number } | undefined;
     hasCodeIndex = (meta?.symbol_count ?? 0) > 0;
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "code_index_meta table may not exist" });
+    log.debug("intentional-swallow", { error: String(err), reason: "code_index_meta table may not exist" });
   }
 
   // Get indexed files set (for fast lookup)
@@ -72,7 +74,7 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
       ).all(project.id) as { file: string }[];
       for (const fVar of files) indexedFiles.add(normalizePath(fVar.file));
     } catch (err) {
-      logger.debug("intentional-swallow", { error: String(err), reason: "code_symbols table may not exist" });
+      log.debug("intentional-swallow", { error: String(err), reason: "code_symbols table may not exist" });
     }
   }
 
@@ -111,11 +113,11 @@ export function syncGraphFromCode(store: SqliteStore): SyncReport {
         symbolChanges.push(`Code index at git hash: ${meta.git_hash} (indexed: ${meta.last_indexed})`);
       }
     } catch (err) {
-      logger.debug("intentional-swallow", { error: String(err), reason: "best-effort git hash check" });
+      log.debug("intentional-swallow", { error: String(err), reason: "best-effort git hash check" });
     }
   }
 
-  logger.info("graph-sync:completed", {
+  log.info("graph-sync:completed", {
     staleRefs: staleRefs.length,
     autoFilled: autoFilledTestFiles.length,
     symbolChanges: symbolChanges.length,

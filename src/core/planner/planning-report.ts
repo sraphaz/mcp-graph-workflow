@@ -27,7 +27,9 @@ import { findNextTask } from "./next-task.js";
 import { calculateVelocity } from "./velocity.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "planning-report.ts" });
 
 export interface PlanningReport {
   /** Recommended task execution order */
@@ -143,7 +145,7 @@ export function generatePlanningReport(
     ? velocity.overall.avgPointsPerSprint
     : null;
 
-  logger.info("Planning report generated", {
+  log.info("Planning report generated", {
     ready: eligibleNodes.length,
     blocked: blockedNodes.length,
     points: estimatedPoints,
@@ -162,7 +164,7 @@ export function generatePlanningReport(
       harnessContext = { score: harness.score, grade: harness.grade, weakDimensions };
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "non-blocking harness check" });
+    log.debug("intentional-swallow", { error: String(err), reason: "non-blocking harness check" });
   }
 
   return {

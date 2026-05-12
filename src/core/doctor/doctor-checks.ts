@@ -23,8 +23,10 @@ import type { SqliteStore } from "../store/sqlite-store.js";
 import { STORE_DIR, DB_FILE } from "../utils/constants.js";
 import { fileExists } from "../utils/fs.js";
 import { getIntegrationsStatus } from "../integrations/tool-status.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import type { CheckResult } from "./doctor-types.js";
+
+const log = createLogger({ layer: "core", source: "doctor-checks.ts" });
 
 const MIN_NODE_VERSION = 20;
 
@@ -134,7 +136,7 @@ export async function checkSqliteDatabase(basePath: string): Promise<CheckResult
       };
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "statSync race with deletion; fall through to open attempt" });
+    log.debug("intentional-swallow", { error: String(err), reason: "statSync race with deletion; fall through to open attempt" });
   }
   try {
     const db = new Database(dbPath, { readonly: true });
@@ -194,7 +196,7 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
       };
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "fall through to open attempt" });
+    log.debug("intentional-swallow", { error: String(err), reason: "fall through to open attempt" });
   }
   try {
     const db = new Database(dbPath, { readonly: true });
@@ -206,7 +208,7 @@ export async function checkDbIntegrity(basePath: string): Promise<CheckResult> {
           .get() as { n: number }
       ).n;
     } catch (err) {
-      logger.debug("intentional-swallow", { error: String(err), reason: "reading sqlite_master itself failed — DB is unreadable, fall through" });
+      log.debug("intentional-swallow", { error: String(err), reason: "reading sqlite_master itself failed — DB is unreadable, fall through" });
     }
     if (schemaCount === 0) {
       db.close();
@@ -399,7 +401,7 @@ export async function checkIntegrations(basePath: string): Promise<CheckResult[]
 
     return results;
   } catch (err) {
-    logger.debug("doctor:integrations:fail", {
+    log.debug("doctor:integrations:fail", {
       error: err instanceof Error ? err.message : String(err),
     });
     return [

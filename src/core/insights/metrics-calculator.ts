@@ -17,7 +17,9 @@
 
 import type { GraphDocument, GraphNode, NodeStatus } from "../graph/graph-types.js";
 import { calculateVelocity } from "../planner/velocity.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "metrics-calculator.ts" });
 
 export interface StatusDistribution {
   status: NodeStatus;
@@ -53,7 +55,7 @@ const ALL_STATUSES: NodeStatus[] = ["backlog", "ready", "in_progress", "blocked"
  * Calculate comprehensive metrics from the graph.
  */
 export function calculateMetrics(doc: GraphDocument): MetricsReport {
-  logger.info("Calculating metrics", { nodes: doc.nodes.length });
+  log.info("Calculating metrics", { nodes: doc.nodes.length });
 
   const tasks = doc.nodes.filter((n) => n.type === "task" || n.type === "subtask");
   const doneTasks = tasks.filter((n) => n.status === "done");
@@ -88,7 +90,7 @@ export function calculateMetrics(doc: GraphDocument): MetricsReport {
       avgCompletionHours: velocity.overall.avgCompletionHours ?? 0,
     };
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "velocity calculation may fail with no sprints" });
+    log.debug("intentional-swallow", { error: String(err), reason: "velocity calculation may fail with no sprints" });
   }
 
   // Sprint progress

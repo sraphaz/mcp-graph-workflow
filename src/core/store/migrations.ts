@@ -16,8 +16,10 @@
  */
 
 import type Database from "better-sqlite3";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { GraphIntegrityError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "migrations.ts" });
 
 interface Migration {
   version: number;
@@ -2422,7 +2424,7 @@ export function runMigrations(db: Database.Database): void {
   let appliedMax = 0;
   for (const v of applied) appliedMax = Math.max(appliedMax, v);
   if (appliedMax > knownMaxVersion) {
-    logger.warn("migration:newer-db", {
+    log.warn("migration:newer-db", {
       appliedMax,
       knownMaxVersion,
       message:
@@ -2437,14 +2439,14 @@ export function runMigrations(db: Database.Database): void {
   for (const migration of migrations) {
     if (applied.has(migration.version)) continue;
 
-    logger.info("migration:run", { version: migration.version, description: migration.description });
+    log.info("migration:run", { version: migration.version, description: migration.description });
     db.transaction(() => {
       db.exec(migration.sql);
       db.prepare(
         "INSERT INTO _migrations (version, description, applied_at) VALUES (?, ?, ?)",
       ).run(migration.version, migration.description, new Date().toISOString());
     })();
-    logger.info("migration:ok", { version: migration.version });
+    log.info("migration:ok", { version: migration.version });
 
     if (VACUUM_AFTER_VERSIONS.has(migration.version)) {
       needsVacuum = true;
@@ -2455,9 +2457,9 @@ export function runMigrations(db: Database.Database): void {
   if (needsVacuum) {
     try {
       db.exec("VACUUM");
-      logger.info("migration:vacuum:ok");
+      log.info("migration:vacuum:ok");
     } catch (err) {
-      logger.warn("migration:vacuum:failed", { error: err instanceof Error ? err.message : String(err) });
+      log.warn("migration:vacuum:failed", { error: err instanceof Error ? err.message : String(err) });
     }
   }
 }

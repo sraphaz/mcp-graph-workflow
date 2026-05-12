@@ -17,7 +17,9 @@
 
 import { writeFileSync, existsSync, unlinkSync, statSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "model-downloader.ts" });
 
 const DOWNLOAD_TIMEOUT_MS = 90_000;
 
@@ -74,7 +76,7 @@ export async function downloadFileWithVerify(
   destPath: string,
   expectedSha256?: string,
 ): Promise<DownloadResult> {
-  logger.info("model-downloader:start", { url, dest: destPath, hasExpectedHash: !!expectedSha256 });
+  log.info("model-downloader:start", { url, dest: destPath, hasExpectedHash: !!expectedSha256 });
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
@@ -103,12 +105,12 @@ export async function downloadFileWithVerify(
 
   if (expectedSha256 && actualSha !== expectedSha256) {
     if (existsSync(destPath)) unlinkSync(destPath);
-    logger.warn("model-downloader:checksum-mismatch", { url, expected: expectedSha256, actual: actualSha });
+    log.warn("model-downloader:checksum-mismatch", { url, expected: expectedSha256, actual: actualSha });
     throw new ChecksumMismatchError(url, expectedSha256, actualSha);
   }
 
   const verified = expectedSha256 != null && actualSha === expectedSha256;
-  logger.info("model-downloader:ok", { dest: destPath, sizeBytes, sha256: actualSha, verified });
+  log.info("model-downloader:ok", { dest: destPath, sizeBytes, sha256: actualSha, verified });
 
   return { sha256: actualSha, verified, sizeBytes };
 }
@@ -131,11 +133,11 @@ export async function downloadIfMissing(
     const actualSha = computeFileSha256(destPath);
     const sizeBytes = statSync(destPath).size;
     if (!expectedSha256 || actualSha === expectedSha256) {
-      logger.info("model-downloader:cache-hit", { dest: destPath, sha256: actualSha, sizeBytes });
+      log.info("model-downloader:cache-hit", { dest: destPath, sha256: actualSha, sizeBytes });
       return { sha256: actualSha, verified: actualSha === expectedSha256, sizeBytes, cached: true };
     }
     // Stale cached file with wrong hash — delete and re-download.
-    logger.warn("model-downloader:cache-stale", { dest: destPath, expected: expectedSha256, actual: actualSha });
+    log.warn("model-downloader:cache-stale", { dest: destPath, expected: expectedSha256, actual: actualSha });
     unlinkSync(destPath);
   }
   try {
@@ -147,7 +149,7 @@ export async function downloadIfMissing(
       try {
         unlinkSync(destPath);
       } catch (err) {
-        logger.debug("intentional-swallow", { error: String(err), reason: "best-effort cleanup" });
+        log.debug("intentional-swallow", { error: String(err), reason: "best-effort cleanup" });
       }
     }
     throw err;

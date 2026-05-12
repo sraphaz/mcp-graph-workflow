@@ -24,7 +24,9 @@
 import type Database from "better-sqlite3";
 import { generateId } from "../utils/id.js";
 import { now } from "../utils/time.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "session-recall.ts" });
 
 export interface SessionSummary {
   id: string;
@@ -122,7 +124,7 @@ export class SessionRecallStore {
             "INSERT INTO session_summaries_fts(session_summaries_fts, rowid, summary, topics) VALUES('delete', ?, ?, ?)",
           ).run(row.rowid, row.summary, row.topics);
         } catch (err) {
-          logger.debug("intentional-swallow", { error: String(err), reason: "FTS entry may not exist yet — that's fine" });
+          log.debug("intentional-swallow", { error: String(err), reason: "FTS entry may not exist yet — that's fine" });
         }
 
         // Insert current data into FTS
@@ -131,10 +133,10 @@ export class SessionRecallStore {
         ).run(row.rowid, input.summary, topicsJson);
       }
     } catch (err) {
-      logger.debug("session-recall:fts_index_failed", { error: String(err) });
+      log.debug("session-recall:fts_index_failed", { error: String(err) });
     }
 
-    logger.debug("session-recall:saved", { sessionId: input.sessionId, topics: input.topics });
+    log.debug("session-recall:saved", { sessionId: input.sessionId, topics: input.topics });
     return id;
   }
 
@@ -153,7 +155,7 @@ export class SessionRecallStore {
       return rows.map(rowToSummary);
     } catch {
       // FTS5 query may fail with complex input — fall back to LIKE
-      logger.debug("session-recall:fts_fallback", { query });
+      log.debug("session-recall:fts_fallback", { query });
       const rows = this.db.prepare(
         `SELECT * FROM session_summaries
          WHERE summary LIKE ? OR topics LIKE ?

@@ -25,7 +25,9 @@ import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { scoreToGrade } from "../utils/grading.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "security-scanner.ts" });
 
 export interface SecurityFinding {
   file?: string;
@@ -103,11 +105,11 @@ function scanDirectory(dir: string, basePath: string): SecurityFinding[] {
           }
         }
       } catch (err) {
-        logger.debug("intentional-swallow", { error: String(err), reason: "skip files that can't be read" });
+        log.debug("intentional-swallow", { error: String(err), reason: "skip files that can't be read" });
       }
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "skip directories that can't be listed" });
+    log.debug("intentional-swallow", { error: String(err), reason: "skip directories that can't be listed" });
   }
 
   return findings;
@@ -127,7 +129,7 @@ function checkDependencyAudit(projectPath: string): { check: SecurityCheck; find
     try {
       audit = JSON.parse(resultValue) as Record<string, unknown>;
     } catch {
-      logger.warn("security-scanner:audit-parse-failed", { resultLen: resultValue?.length });
+      log.warn("security-scanner:audit-parse-failed", { resultLen: resultValue?.length });
       audit = {};
     }
     const vulns = audit.vulnerabilities ?? {};
@@ -251,7 +253,7 @@ export function checkSecurityScan(projectPath: string): SecurityScanReport {
   const grade = scoreToGrade(score);
   const passed = passedRequired === totalRequired && criticalPenalty === 0;
 
-  logger.info("security-scanner:complete", {
+  log.info("security-scanner:complete", {
     score,
     grade,
     checks: checks.length,

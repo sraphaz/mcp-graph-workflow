@@ -31,7 +31,6 @@ export const MCP_SERVER_NAMES = [
   "context7",
   "playwright",
   "browser-use",
-  "sentrux",
 ] as const;
 
 export type McpServerName = (typeof MCP_SERVER_NAMES)[number];
@@ -65,11 +64,6 @@ function getDefaultServers(): Record<McpServerName, McpServerEntry> {
     "browser-use": {
       command: "uvx",
       args: ["browser-use-mcp"],
-    },
-    // §EPIC-sentrux-adoption — static analysis integration (same pattern as context7/playwright)
-    sentrux: {
-      command: "npx",
-      args: ["-y", "@sentrux/mcp-sentrux"],
     },
   };
 }

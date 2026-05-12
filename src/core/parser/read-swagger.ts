@@ -25,8 +25,10 @@
 
 import { XMLParser } from "fast-xml-parser";
 import YAML from "yaml";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
 import { ValidationError } from "../utils/errors.js";
+
+const log = createLogger({ layer: "core", source: "read-swagger.ts" });
 
 // ---- Public Types ----
 
@@ -104,14 +106,14 @@ function parseOpenApi3(doc: Record<string, unknown>): SwaggerParseResult {
   const title = String(info.title ?? "Untitled API");
   const version = String(info.version ?? "0.0.0");
 
-  logger.info("Parsing OpenAPI 3.0", { title, version });
+  log.info("Parsing OpenAPI 3.0", { title, version });
 
   const endpoints = extractPathEndpoints(doc.paths as Record<string, unknown> | undefined);
   const schemas = extractComponentSchemas(
     (doc.components as Record<string, unknown> | undefined)?.schemas as Record<string, unknown> | undefined,
   );
 
-  logger.debug("OpenAPI 3.0 parsed", {
+  log.debug("OpenAPI 3.0 parsed", {
     endpoints: String(endpoints.length),
     schemas: String(schemas.length),
   });
@@ -124,12 +126,12 @@ function parseOpenApi2(doc: Record<string, unknown>): SwaggerParseResult {
   const title = String(info.title ?? "Untitled API");
   const version = String(info.version ?? "0.0.0");
 
-  logger.info("Parsing OpenAPI 2.0 (Swagger)", { title, version });
+  log.info("Parsing OpenAPI 2.0 (Swagger)", { title, version });
 
   const endpoints = extractPathEndpoints(doc.paths as Record<string, unknown> | undefined);
   const schemas = extractComponentSchemas(doc.definitions as Record<string, unknown> | undefined);
 
-  logger.debug("OpenAPI 2.0 parsed", {
+  log.debug("OpenAPI 2.0 parsed", {
     endpoints: String(endpoints.length),
     schemas: String(schemas.length),
   });
@@ -261,7 +263,7 @@ function parseYamlOrJson(content: string): Record<string, unknown> {
     try {
       return JSON.parse(trimmed) as Record<string, unknown>;
     } catch (err) {
-      logger.debug("intentional-swallow", { error: String(err), reason: "fall through to YAML" });
+      log.debug("intentional-swallow", { error: String(err), reason: "fall through to YAML" });
     }
   }
 
@@ -272,7 +274,7 @@ function parseYamlOrJson(content: string): Record<string, unknown> {
       return parsed as Record<string, unknown>;
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "YAML parse failed — fall through" });
+    log.debug("intentional-swallow", { error: String(err), reason: "YAML parse failed — fall through" });
   }
 
   throw new ValidationError("Failed to parse content as YAML or JSON", [
@@ -323,7 +325,7 @@ export function parseWsdlContent(content: string): SwaggerParseResult {
   }
 
   const serviceName = getAttr(definitions, "name") ?? "Unknown Service";
-  logger.info("Parsing WSDL", { serviceName });
+  log.info("Parsing WSDL", { serviceName });
 
   // Extract operations from portType
   const endpoints: SwaggerEndpoint[] = [];
@@ -401,7 +403,7 @@ export function parseWsdlContent(content: string): SwaggerParseResult {
     }
   }
 
-  logger.debug("WSDL parsed", {
+  log.debug("WSDL parsed", {
     serviceName,
     operations: String(endpoints.length),
     schemas: String(schemas.length),

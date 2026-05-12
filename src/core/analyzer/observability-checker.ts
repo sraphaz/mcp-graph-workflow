@@ -23,7 +23,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { scoreToGrade } from "../utils/grading.js";
-import { logger } from "../utils/logger.js";
+import { createLogger } from "../utils/logger.js";
+
+const log = createLogger({ layer: "core", source: "observability-checker.ts" });
 
 export interface ObservabilityCheck {
   name: string;
@@ -65,11 +67,11 @@ function getSourceFiles(dir: string, basePath: string): Array<{ path: string; co
       try {
         files.push({ path: relative(basePath, fullPath), content: readFileSync(fullPath, "utf-8") });
       } catch (err) {
-        logger.debug("intentional-swallow", { error: String(err), reason: "skip unreadable file" });
+        log.debug("intentional-swallow", { error: String(err), reason: "skip unreadable file" });
       }
     }
   } catch (err) {
-    logger.debug("intentional-swallow", { error: String(err), reason: "skip unreadable directory" });
+    log.debug("intentional-swallow", { error: String(err), reason: "skip unreadable directory" });
   }
 
   return files;
@@ -157,7 +159,7 @@ export function checkObservability(projectPath: string): ObservabilityReport {
   const grade = scoreToGrade(score);
   const passed = passedRequired === totalRequired;
 
-  logger.info("observability:complete", { score, grade, loggerCoverage: Math.round(loggerCoverage * 100), passed });
+  log.info("observability:complete", { score, grade, loggerCoverage: Math.round(loggerCoverage * 100), passed });
 
   return { mode: "observability_check", score, grade, checks, findings, gaps, passed };
 }

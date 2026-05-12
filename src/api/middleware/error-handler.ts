@@ -25,7 +25,10 @@ import {
   SnapshotNotFoundError,
   FileNotFoundError,
 } from "../../core/utils/errors.js";
-import { logger } from "../../core/utils/logger.js";
+import { createLogger } from "../../core/utils/logger.js";
+import { errorsRate } from "../../core/observability/metrics.js";
+
+const log = createLogger({ layer: "core", source: "error-handler.ts" });
 
 interface ErrorResponseBody {
   error: string;
@@ -56,6 +59,7 @@ export function errorHandler(
   _next: NextFunction,
 ): void {
   const status = mapErrorToStatus(err);
+  errorsRate.increment();
   const body: ErrorResponseBody = { error: err.message };
 
   if (err instanceof ValidationError) {
@@ -65,14 +69,14 @@ export function errorHandler(
   }
 
   if (status >= 500) {
-    logger.error("Unhandled API error", {
+    log.error("Unhandled API error", {
       method: req.method,
       path: req.path,
       error: err.message,
       stack: err.stack,
     });
   } else if (status >= 400) {
-    logger.warn("API client error", {
+    log.warn("API client error", {
       method: req.method,
       path: req.path,
       status,
