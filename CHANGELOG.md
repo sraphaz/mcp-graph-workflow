@@ -1,5 +1,18 @@
 # Changelog
 
+## [13.15.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.14.0...mcp-graph-v13.15.0) (2026-05-11)
+
+
+### Features
+
+* **mcp:** Task 2.1 — rewrite browser_harness to atomic CDP primitives ([#391](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/391)) ([bd0973e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/bd0973e3da8a92eac66c94ac6b7fa84360e67af2))
+
+
+### Bug Fixes
+
+* **pipeline:** stabilize dashboard build + remove tools/cli from release-please ([#387](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/387)) ([417ba08](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/417ba086c50b27468c434a24e4a7cd152757f6c0))
+* **release:** remove trailing comma in release-please-config.json ([66fdab6](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/66fdab6dd22ecd18babc427ae424cbdbe61ef5e5))
+
 ## [13.14.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.13.0...mcp-graph-v13.14.0) (2026-05-11)
 
 
