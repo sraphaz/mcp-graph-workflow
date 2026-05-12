@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.15.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.2...mcp-graph-v13.15.3) (2026-05-12)
+
+
+### Bug Fixes
+
+* **dashboard:** add vite-env.d.ts to fix TS6 CSS module errors (TS2882) ([#397](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/397)) ([5a4d610](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/5a4d6104fd87167907c43d478e3b1de784f67a79))
+
 ## [13.15.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.1...mcp-graph-v13.15.2) (2026-05-12)
 
 
