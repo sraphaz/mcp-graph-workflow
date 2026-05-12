@@ -1,5 +1,18 @@
 # Changelog
 
+## [13.18.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.17.0...mcp-graph-v13.18.0) (2026-05-12)
+
+
+### Features
+
+* **obs-90:** Story 9 AC — mount GET /api/v1/health in createApiRouter ([#406](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/406)) ([9526056](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/9526056da4d3cc150f39831afe364fc07bfaa903))
+
+
+### Bug Fixes
+
+* **ci:** add missing migrations, wire observability/model-hub routes, fix npm audit ([#409](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/409)) ([1b971a7](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/1b971a7a6f7699b48bfe25499570606a3cc24800))
+* **mcp:** resolve TS type mismatch in shadowBranch (start-task + finish-task) ([#408](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/408)) ([45ce855](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/45ce85562c92170620be720e8b5d96734f86da05))
+
 ## [13.17.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.16.0...mcp-graph-v13.17.0) (2026-05-12)
 
 
