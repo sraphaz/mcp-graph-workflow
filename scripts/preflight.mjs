@@ -16,6 +16,10 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const SKIP_TESTS = process.env.MCP_GRAPH_PREFLIGHT_SKIP_TESTS === '1';
 const SKIP_COMMITLINT = process.env.MCP_GRAPH_PREFLIGHT_SKIP_COMMITLINT === '1';
+// FULL_TESTS=1 → runs the entire suite (same as before). Default: --changed mode,
+// which only runs tests affected by files modified since origin/master (~10-60s).
+// GitHub CI always runs the full suite via 4 shards — local preflight is early warning only.
+const FULL_TESTS = process.env.MCP_GRAPH_PREFLIGHT_FULL_TESTS === '1';
 
 const steps = [
   {
@@ -47,7 +51,9 @@ const steps = [
   {
     label: 'tests',
     cmd: 'npx',
-    args: ['vitest', 'run', '--reporter=dot'],
+    args: FULL_TESTS
+      ? ['vitest', 'run', '--reporter=dot']
+      : ['vitest', 'run', '--changed', 'origin/master', '--reporter=dot'],
     skip: SKIP_TESTS,
     skipReason: 'MCP_GRAPH_PREFLIGHT_SKIP_TESTS=1',
     hint: 'fix the failing tests above; locally `npm test` reproduces',
