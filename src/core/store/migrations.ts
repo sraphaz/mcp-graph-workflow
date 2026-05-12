@@ -2273,6 +2273,105 @@ const migrations: Migration[] = [
         ON harness_savings_ledger(session_id) WHERE session_id IS NOT NULL;
     `,
   },
+  {
+    version: 88,
+    // §EPIC-unified-observability Task 1.2 — failure signal collector.
+    // Persists structured failure signals from 5 collection hooks
+    // (tool invocation, lifecycle gate, DoD check, SQLite busy, MCP server).
+    description: "failure_signals — structured failure signal collector (obs-90)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS failure_signals (
+        id          INTEGER PRIMARY KEY,
+        source      TEXT NOT NULL,
+        signalKind  TEXT NOT NULL,
+        context     TEXT NOT NULL DEFAULT '{}',
+        severity    TEXT NOT NULL DEFAULT 'error',
+        timestamp   TEXT NOT NULL,
+        rawError    TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_failure_signals_kind
+        ON failure_signals(signalKind);
+      CREATE INDEX IF NOT EXISTS idx_failure_signals_source
+        ON failure_signals(source);
+      CREATE INDEX IF NOT EXISTS idx_failure_signals_timestamp
+        ON failure_signals(timestamp);
+    `,
+  },
+  {
+    version: 89,
+    // §EPIC-unified-observability Task 1.1 — event store for structured
+    // observability events. Buffered writes via EventWriter (best-effort,
+    // not durable across crash before flush).
+    description: "events — structured event store for observability (obs-90)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS events (
+        id              TEXT PRIMARY KEY,
+        kind            TEXT NOT NULL,
+        subjectRef_kind TEXT NOT NULL,
+        subjectRef_id   TEXT NOT NULL,
+        payload         TEXT,
+        timestamp       TEXT NOT NULL,
+        projectId       TEXT,
+        sessionId       TEXT,
+        durationMs      REAL,
+        parentEventId   TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_events_timestamp
+        ON events(timestamp);
+      CREATE INDEX IF NOT EXISTS idx_events_kind
+        ON events(kind);
+      CREATE INDEX IF NOT EXISTS idx_events_session
+        ON events(sessionId) WHERE sessionId IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_events_subject
+        ON events(subjectRef_kind, subjectRef_id);
+    `,
+  },
+  {
+    version: 90,
+    // §EPIC-policy-engine-context-routing Task 2.1 — analyze(mode:"policy_observations").
+    // Stores one row per routing decision for divergence tracking.
+    description: "policy_observations — routing decision log for divergence analysis",
+    sql: `
+      CREATE TABLE IF NOT EXISTS policy_observations (
+        id               TEXT PRIMARY KEY,
+        project_id       TEXT,
+        timestamp        TEXT NOT NULL,
+        signals_snapshot TEXT NOT NULL DEFAULT '{}',
+        decision         TEXT NOT NULL DEFAULT '{}',
+        actual_used      TEXT NOT NULL DEFAULT '[]',
+        divergence       INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_policy_obs_project_time
+        ON policy_observations(project_id, timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_policy_obs_timestamp
+        ON policy_observations(timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_policy_obs_divergence
+        ON policy_observations(divergence) WHERE divergence = 1;
+    `,
+  },
+  {
+    version: 91,
+    // §EPIC-browser-harness Task 4.1 — browser_test_runs table.
+    // Stores structured browser test run results with JSON evidence fields.
+    description: "browser_test_runs — browser test run results with JSON evidence (browser-harness)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS browser_test_runs (
+        id            TEXT PRIMARY KEY,
+        runId         TEXT NOT NULL,
+        targetUrl     TEXT NOT NULL,
+        featureNodeId TEXT NOT NULL,
+        status        TEXT NOT NULL DEFAULT 'running',
+        evidences     TEXT NOT NULL DEFAULT '[]',
+        pathTaken     TEXT NOT NULL DEFAULT '[]',
+        startedAt     TEXT NOT NULL,
+        endedAt       TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_browser_test_runs_feature
+        ON browser_test_runs(featureNodeId);
+      CREATE INDEX IF NOT EXISTS idx_browser_test_runs_status
+        ON browser_test_runs(status);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

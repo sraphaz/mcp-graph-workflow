@@ -56,6 +56,8 @@ import { createEventsSseRouter } from "./routes/events-sse.js";
 import { createAgentsRouter } from "./routes/agents.js";
 import { createEconomyRouter } from "./routes/economy.js";
 import { createEvalsRouter } from "./routes/evals.js";
+import { createObservabilityRouter } from "./routes/observability.js";
+import { createModelHubRouter } from "./routes/model-hub.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -126,6 +128,8 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/events", createEventsSseRouter(eventBus ?? undefined));
   router.use("/agents", createAgentsRouter(storeRef));
   router.use("/swarm", createSwarmRouter(storeRef));
+  router.use("/observability", createObservabilityRouter(store.getDb()));
+  router.use("/model-hub", createModelHubRouter(eventBus ?? undefined));
 
   // Token Economy routes — uses an in-process stub cache until the real
   // ResponseCache singleton is wired (see EPIC 6 follow-up).
