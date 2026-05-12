@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.15.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.0...mcp-graph-v13.15.1) (2026-05-12)
+
+
+### Bug Fixes
+
+* **api:** malformed JSON body returns HTML 400 instead of JSON 400 (B19) ([#393](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/393)) ([f7ef6f5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/f7ef6f51ecbd07294a04e6f4e564aa240684b7a8))
+
 ## [13.15.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.14.0...mcp-graph-v13.15.0) (2026-05-11)
 
 
