@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.15.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.1...mcp-graph-v13.15.2) (2026-05-12)
+
+
+### Bug Fixes
+
+* **B21:** validate graph?limit query param -- reject invalid values with 400 ([#395](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/395)) ([895a1e8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/895a1e8a8dbf55c65ff05f0c94dfccfb91f3b94c))
+
 ## [13.15.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.0...mcp-graph-v13.15.1) (2026-05-12)
 
 
