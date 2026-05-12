@@ -62,6 +62,47 @@ export function collectTsFiles(dir: string): string[] {
   return files;
 }
 
+// ---------------------------------------------------------------------------
+// findRawThrows — detects `throw new Error(...)` that should use TypedError
+// ---------------------------------------------------------------------------
+
+// Matches: throw new Error(  — excludes TypedError, InvalidArgumentError, etc.
+// Only triggers when Error is the exact constructor name (capital E, no prefix/suffix).
+const RAW_THROW_RE = /\bthrow\s+new\s+Error\s*\(/g;
+
+// Strip line comments, block comments, and string/template literals from
+// source before scanning so we don't produce false positives.
+function stripNonCode(src: string): string {
+  // Replace block comments with whitespace of the same length
+  src = src.replace(/\/\*[\s\S]*?\*\//g, (m) => " ".repeat(m.length));
+  // Replace line comments
+  src = src.replace(/\/\/[^\n]*/g, (m) => " ".repeat(m.length));
+  // Replace double-quoted strings
+  src = src.replace(/"(?:[^"\\]|\\.)*"/g, (m) => '"' + " ".repeat(m.length - 2) + '"');
+  // Replace single-quoted strings
+  src = src.replace(/'(?:[^'\\]|\\.)*'/g, (m) => "'" + " ".repeat(m.length - 2) + "'");
+  // Replace template literals (simplified — no nested template support needed)
+  src = src.replace(/`(?:[^`\\]|\\.)*`/g, (m) => "`" + " ".repeat(m.length - 2) + "`");
+  return src;
+}
+
+export function findRawThrows(content: string, file: string): CatchFinding[] {
+  const stripped = stripNonCode(content);
+  const lines = content.split("\n");
+  const findings: CatchFinding[] = [];
+
+  let match: RegExpExecArray | null;
+  RAW_THROW_RE.lastIndex = 0;
+  while ((match = RAW_THROW_RE.exec(stripped)) !== null) {
+    const upToMatch = stripped.slice(0, match.index);
+    const line = upToMatch.split("\n").length;
+    const lineText = (lines[line - 1] ?? "").trim().slice(0, 80);
+    findings.push({ file, line, snippet: lineText });
+  }
+
+  return findings;
+}
+
 if (process.argv[1]?.endsWith("audit-catches.ts") || process.argv[1]?.endsWith("audit-catches.js")) {
   const root = join(process.cwd(), "src");
   const files = collectTsFiles(root);
