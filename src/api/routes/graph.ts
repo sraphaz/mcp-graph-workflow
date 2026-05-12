@@ -16,9 +16,17 @@
  */
 
 import { Router } from "express";
+import { z } from "zod/v4";
 import type { StoreRef } from "../../core/store/store-manager.js";
 import type { NodeStatus, NodeType } from "../../core/graph/graph-types.js";
 import { graphToMermaid } from "../../core/graph/mermaid-export.js";
+
+const MAX_LIMIT = 1000;
+
+const GraphQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
 
 /** createGraphRouter — auto-generated description placeholder. */
 export function createGraphRouter(storeRef: StoreRef): Router {
@@ -28,10 +36,13 @@ export function createGraphRouter(storeRef: StoreRef): Router {
     try {
       const store = storeRef.current;
 
-      const rawLimit = req.query.limit ? Number(req.query.limit) : 100;
-      const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 1000) : 100;
-      const rawOffset = req.query.offset ? Number(req.query.offset) : 0;
-      const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0;
+      const queryResult = GraphQuerySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        res.status(400).json({ error: queryResult.error.issues.map((i) => i.message).join("; "), details: queryResult.error.issues });
+        return;
+      }
+      const limit = queryResult.data.limit ?? 100;
+      const offset = queryResult.data.offset ?? 0;
       const status = req.query.status
         ? (req.query.status as string).split(",") as NodeStatus[]
         : undefined;

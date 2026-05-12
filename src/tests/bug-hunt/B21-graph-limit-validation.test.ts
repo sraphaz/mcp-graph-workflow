@@ -18,28 +18,52 @@
 /**
  * B21 (P3): /api/v1/graph?limit= deve validar e rejeitar valores inválidos.
  *
- * Repro:
- *   $ curl 'http://localhost:3000/api/v1/graph?limit=-1'      → HTTP 200
- *   $ curl 'http://localhost:3000/api/v1/graph?limit=abc'     → HTTP 200
- *   $ curl 'http://localhost:3000/api/v1/graph?limit=999999'  → HTTP 200
- *
- * Em todos os 3 casos o param é silenciosamente ignorado.
- *
- * Esperado: HTTP 400 para limit < 1, NaN, > MAX_LIMIT (cap configurável).
- *
- * Source: mcp-graph notebook node_62ab16500cfd.
+ * §bug-hunt node_62ab16500cfd
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import request from "supertest";
+import { createTestApp, type TestContext } from "../helpers/test-app.js";
 
-describe.skip("B21 — graph limit query param validation (recon, no fix yet)", () => {
-  it("rejects limit=-1 with HTTP 400", async () => {
-    expect(true).toBe(true);
+describe("B21 — graph limit query param validation", () => {
+  let ctx: TestContext;
+
+  beforeEach(() => {
+    ctx = createTestApp();
   });
-  it("rejects limit=abc with HTTP 400", async () => {
-    expect(true).toBe(true);
+
+  afterEach(() => {
+    ctx.store.close();
   });
-  it("caps limit at MAX_LIMIT instead of accepting 999999", async () => {
-    expect(true).toBe(true);
+
+  it("rejects limit=-1 with HTTP 400 JSON", async () => {
+    const res = await request(ctx.app).get("/api/v1/graph?limit=-1");
+    expect(res.status).toBe(400);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("rejects limit=abc with HTTP 400 JSON", async () => {
+    const res = await request(ctx.app).get("/api/v1/graph?limit=abc");
+    expect(res.status).toBe(400);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("rejects limit=999999 with HTTP 400 JSON (above MAX_LIMIT=1000)", async () => {
+    const res = await request(ctx.app).get("/api/v1/graph?limit=999999");
+    expect(res.status).toBe(400);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+    expect(res.body).toHaveProperty("error");
+  });
+
+  it("accepts limit=50 with HTTP 200", async () => {
+    const res = await request(ctx.app).get("/api/v1/graph?limit=50");
+    expect(res.status).toBe(200);
+  });
+
+  it("accepts missing limit with HTTP 200 (default behaviour)", async () => {
+    const res = await request(ctx.app).get("/api/v1/graph");
+    expect(res.status).toBe(200);
   });
 });
