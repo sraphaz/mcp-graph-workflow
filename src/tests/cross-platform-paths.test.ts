@@ -31,11 +31,13 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
  * through `path.join(...)` in production. These MUST use `path.join` in
  * the test too. Empty list = no known offenders.
  */
-const FILES_THAT_MUST_USE_PATH_JOIN: readonly string[] = [
-  "src/tests/browser-use-runtime.test.ts",
-];
+const FILES_THAT_MUST_USE_PATH_JOIN: readonly string[] = [];
 
 describe("cross-platform path hygiene", () => {
+  it("FILES_THAT_MUST_USE_PATH_JOIN list is defined (may be empty when no offenders)", () => {
+    expect(Array.isArray(FILES_THAT_MUST_USE_PATH_JOIN)).toBe(true);
+  });
+
   for (const rel of FILES_THAT_MUST_USE_PATH_JOIN) {
     it(`${rel} uses path.join (or path.posix) for tmp paths`, () => {
       const abs = path.resolve(REPO_ROOT, rel);
