@@ -15,7 +15,7 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { Router } from "express";
+import express, { Router } from "express";
 import type { SqliteStore } from "../core/store/sqlite-store.js";
 import type { GraphEventBus } from "../core/events/event-bus.js";
 import type { StoreRef } from "../core/store/store-manager.js";
@@ -39,11 +39,8 @@ import { createBenchmarkRouter } from "./routes/benchmark.js";
 import { createHarnessRouter } from "./routes/harness.js";
 import { createLifecycleHealthRouter } from "./routes/lifecycle-health.js";
 import { createBrowserHarnessRouter } from "./routes/browser-harness.js";
-import { createObservabilityRouter } from "./routes/observability.js";
-import { createBrowserTestsRouter } from "./routes/browser-tests.js";
 import { createAutonomyRouter } from "./routes/autonomy.js";
 import { createLogsRouter } from "./routes/logs.js";
-import { createMetricsRouter } from "./routes/metrics.js";
 import { createJourneyRouter } from "./routes/journey.js";
 import { createFolderRouter } from "./routes/folder.js";
 import { createSiebelRouter } from "./routes/siebel.js";
@@ -56,11 +53,8 @@ import { createSwarmRouter } from "./routes/swarm.js";
 import { createKanbanRouter } from "./routes/kanban.js";
 import { createEventsSseRouter } from "./routes/events-sse.js";
 import { createAgentsRouter } from "./routes/agents.js";
-import { createAgentTrailRouter } from "./routes/agent-trail.js";
 import { createEconomyRouter } from "./routes/economy.js";
 import { createEvalsRouter } from "./routes/evals.js";
-import { createModelHubRouter } from "./routes/model-hub.js";
-import { createHealthRouter } from "./routes/health.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { setLogListener } from "../core/utils/logger.js";
@@ -91,6 +85,10 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
 
   const router = Router();
 
+  // Own body parser — errors stay inside this router and reach errorHandler below.
+  // Callers must NOT add express.json() at the app level for /api/v1 paths.
+  router.use(express.json({ limit: "50mb" }));
+
   router.use(requestLogger);
 
   router.use("/project", createProjectRouter(storeRef));
@@ -112,13 +110,10 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/benchmark", createBenchmarkRouter(storeRef));
   router.use("/harness", createHarnessRouter(storeRef));
   router.use("/lifecycle-health", createLifecycleHealthRouter(storeRef));
-  router.use("/health", createHealthRouter(getBasePath));
   router.use("/browser-harness", createBrowserHarnessRouter(storeRef, getBasePath));
-  router.use("/browser-tests", createBrowserTestsRouter(storeRef, getBasePath, eventBus ?? undefined));
   router.use("/autonomy", createAutonomyRouter(storeRef));
   router.use("/siebel", createSiebelRouter(storeRef, getBasePath));
   router.use("/logs", createLogsRouter());
-  router.use("/metrics", createMetricsRouter());
   router.use("/journey", createJourneyRouter(storeRef, getBasePath));
   router.use("/translation", createTranslationRouter(storeRef, eventBus ?? undefined));
   router.use("/translation/projects", createTranslationProjectRouter(storeRef, eventBus ?? undefined));
@@ -127,10 +122,7 @@ export function createApiRouter(storeOrOptions: SqliteStore | ApiRouterOptions):
   router.use("/davinci", createDavinciRouter());
   router.use("/kanban", createKanbanRouter(storeRef));
   router.use("/events", createEventsSseRouter(eventBus ?? undefined));
-  router.use("/observability", createObservabilityRouter(storeRef.current.getDb()));
-  router.use("/model-hub", createModelHubRouter(eventBus ?? undefined));
   router.use("/agents", createAgentsRouter(storeRef));
-  router.use("/agent", createAgentTrailRouter(storeRef));
   router.use("/swarm", createSwarmRouter(storeRef));
 
   // Token Economy routes — uses an in-process stub cache until the real

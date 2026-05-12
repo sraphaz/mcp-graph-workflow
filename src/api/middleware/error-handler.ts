@@ -25,14 +25,15 @@ import {
   SnapshotNotFoundError,
   FileNotFoundError,
 } from "../../core/utils/errors.js";
-import { createLogger } from "../../core/utils/logger.js";
-import { errorsRate } from "../../core/observability/metrics.js";
-
-const log = createLogger({ layer: "api", source: "error-handler.ts" });
+import { logger } from "../../core/utils/logger.js";
 
 interface ErrorResponseBody {
   error: string;
   details?: unknown;
+}
+
+function isBodyParserSyntaxError(err: Error): boolean {
+  return err instanceof SyntaxError && "body" in err;
 }
 
 function mapErrorToStatus(err: Error): number {
@@ -43,6 +44,7 @@ function mapErrorToStatus(err: Error): number {
   if (err instanceof ValidationError) return 400;
   if (err instanceof z.ZodError) return 400;
   if (err instanceof McpGraphError) return 400;
+  if (isBodyParserSyntaxError(err)) return 400;
   return 500;
 }
 
@@ -63,14 +65,14 @@ export function errorHandler(
   }
 
   if (status >= 500) {
-    log.error("Unhandled API error", {
+    logger.error("Unhandled API error", {
       method: req.method,
       path: req.path,
       error: err.message,
       stack: err.stack,
     });
   } else if (status >= 400) {
-    log.warn("API client error", {
+    logger.warn("API client error", {
       method: req.method,
       path: req.path,
       status,
@@ -78,6 +80,5 @@ export function errorHandler(
     });
   }
 
-  errorsRate.increment();
   res.status(status).json(body);
 }

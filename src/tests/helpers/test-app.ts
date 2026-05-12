@@ -35,7 +35,6 @@ export function createTestApp(options: CreateTestAppOptions = {}): TestContext {
   store.initProject("Test Project");
 
   const app = express();
-  app.use(express.json());
   app.use(
     "/api/v1",
     createApiRouter(

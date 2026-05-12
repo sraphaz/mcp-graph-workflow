@@ -12,35 +12,64 @@
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * Commercial licenses are available — see COMMERCIAL.md.
+ * Commercial licenses and contact information are available — see COMMERCIAL.md.
  */
 
 /**
  * B19 (P1): REST POST com Content-Type application/json e body malformado
  * deve responder 400 com JSON {error,details}, não HTML stack trace.
  *
- * Repro (manual, against running mcp-graph-server):
- *   $ curl -s -X POST http://localhost:3000/api/v1/nodes \
- *       -H 'Content-Type: application/json' -d 'not-json'
- *   <!DOCTYPE html>
- *   <html lang="en">
- *   ...SyntaxError: Unexpected token 'n', "not-json" is not valid JSON...
- *
- * Esperado: HTTP 400 com Content-Type application/json e payload
- *   {"error":"Invalid JSON body","details":"..."} (mesma forma que outros
- *   400s já retornam, ex /api/v1/nodes com body Zod-inválido).
- *
- * Source: mcp-graph notebook node_50f68e898f02.
+ * §bug-hunt node_50f68e898f02
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import request from "supertest";
+import { createTestApp, type TestContext } from "../helpers/test-app.js";
 
-describe.skip("B19 — REST malformed JSON returns JSON 400 (recon, no fix yet)", () => {
+describe("B19 — REST malformed JSON returns JSON 400", () => {
+  let ctx: TestContext;
+
+  beforeEach(() => {
+    ctx = createTestApp();
+  });
+
+  afterEach(() => {
+    ctx.store.close();
+  });
+
   it("POST /api/v1/nodes with non-JSON body returns 400 application/json", async () => {
-    // PLACEHOLDER for fix verification. Currently fails with HTML 400 from
-    // the express.json default error handler. The fix wires a body-parser
-    // error middleware before the route handlers that catches SyntaxError
-    // and emits a structured JSON 400.
-    expect(true).toBe(true); // intentional no-op until fix lands
+    const res = await request(ctx.app)
+      .post("/api/v1/nodes")
+      .set("Content-Type", "application/json")
+      .send("not-json");
+
+    expect(res.status).toBe(400);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+    expect(res.body).toHaveProperty("error");
+    expect(typeof res.body.error).toBe("string");
+    expect(res.text).not.toMatch(/<!DOCTYPE/i);
+  });
+
+  it("POST /api/v1/edges with malformed JSON body returns 400 application/json", async () => {
+    const res = await request(ctx.app)
+      .post("/api/v1/edges")
+      .set("Content-Type", "application/json")
+      .send("{invalid");
+
+    expect(res.status).toBe(400);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+    expect(res.body).toHaveProperty("error");
+    expect(res.text).not.toMatch(/<!DOCTYPE/i);
+  });
+
+  it("malformed JSON error message does not expose a raw stack trace", async () => {
+    const res = await request(ctx.app)
+      .post("/api/v1/nodes")
+      .set("Content-Type", "application/json")
+      .send("{broken");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).not.toMatch(/at Object\./);
+    expect(res.body.error).not.toMatch(/at process\./);
   });
 });
