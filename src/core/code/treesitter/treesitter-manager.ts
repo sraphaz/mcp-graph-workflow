@@ -26,9 +26,7 @@
 
 import { join } from "node:path";
 import { existsSync } from "node:fs";
-import { createLogger } from "../../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "treesitter-manager.ts" });
+import { logger } from "../../utils/logger.js";
 
 // ── Types from web-tree-sitter ───────────────────────────
 
@@ -79,10 +77,10 @@ async function loadWebTreeSitter(): Promise<TreeSitterModule | null> {
     const LanguageClass = mod.Language;
     await ParserClass.init();
     tsModule = { ParserClass, LanguageClass };
-    log.info("treesitter-manager:init", { message: "web-tree-sitter WASM runtime loaded" });
+    logger.info("treesitter-manager:init", { message: "web-tree-sitter WASM runtime loaded" });
     return tsModule;
   } catch (err) {
-    log.warn("treesitter-manager:unavailable", {
+    logger.warn("treesitter-manager:unavailable", {
       message: "web-tree-sitter not found — multi-language code analysis disabled",
       error: String(err),
     });
@@ -115,11 +113,11 @@ function resolveGrammarPath(languageId: string): string | null {
     const thisDir = new URL(".", import.meta.url).pathname;
     const bundled = join(thisDir, "..", "..", "..", "wasm", entry.wasm);
     if (existsSync(bundled)) {
-      log.debug("treesitter-manager:resolved-bundled", { languageId, path: bundled });
+      logger.debug("treesitter-manager:resolved-bundled", { languageId, path: bundled });
       return bundled;
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "bundled WASM path not found, falling through to npm-package strategies" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "bundled path not found — fall through to npm-package strategies" });
   }
 
   // Strategy 1: require.resolve from CWD
@@ -128,8 +126,8 @@ function resolveGrammarPath(languageId: string): string | null {
     const pkgDir = pkgMain.replace(/[/\\]package\.json$/, "");
     const wasmPath = join(pkgDir, entry.wasm);
     if (existsSync(wasmPath)) return wasmPath;
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "WASM not found at CWD level, trying relative to this package" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "not found at CWD level — try relative to this package" });
   }
 
   // Strategy 2: resolve relative to this file (for nested node_modules)
@@ -139,11 +137,11 @@ function resolveGrammarPath(languageId: string): string | null {
     const pkgDir = pkgMain.replace(/[/\\]package\.json$/, "");
     const wasmPath = join(pkgDir, entry.wasm);
     if (existsSync(wasmPath)) {
-      log.debug("treesitter-manager:resolved-relative", { languageId, wasmPath });
+      logger.debug("treesitter-manager:resolved-relative", { languageId, wasmPath });
       return wasmPath;
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "WASM not found relative to this file either" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "not found relative to this file either" });
   }
 
   // Strategy 3: walk up from __dirname to find node_modules with the grammar
@@ -153,18 +151,18 @@ function resolveGrammarPath(languageId: string): string | null {
     for (let i = 0; i < 10; i++) {
       const candidate = join(searchDir, "node_modules", entry.pkg, entry.wasm);
       if (existsSync(candidate)) {
-        log.debug("treesitter-manager:resolved-walk", { languageId, path: candidate });
+        logger.debug("treesitter-manager:resolved-walk", { languageId, path: candidate });
         return candidate;
       }
       const parent = join(searchDir, "..");
       if (parent === searchDir) break;
       searchDir = parent;
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "node_modules walk for WASM failed" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "walk failed" });
   }
 
-  log.debug("treesitter-manager:pkg-not-found", { languageId, pkg: entry.pkg });
+  logger.debug("treesitter-manager:pkg-not-found", { languageId, pkg: entry.pkg });
   return null;
 }
 
@@ -207,7 +205,7 @@ export class TreeSitterManager {
     const wasmPath = resolveGrammarPath(languageId);
     if (!wasmPath) {
       this.failedLanguages.add(languageId);
-      log.info("treesitter-manager:grammar-unavailable", {
+      logger.info("treesitter-manager:grammar-unavailable", {
         languageId,
         message: `Grammar for ${languageId} not installed — skipping`,
       });
@@ -222,7 +220,7 @@ export class TreeSitterManager {
       // Cache the parser
       this.parsers.set(languageId, parser);
 
-      log.info("treesitter-manager:parser-loaded", {
+      logger.info("treesitter-manager:parser-loaded", {
         languageId,
         wasmPath,
       });
@@ -230,7 +228,7 @@ export class TreeSitterManager {
       return parser;
     } catch (err) {
       this.failedLanguages.add(languageId);
-      log.warn("treesitter-manager:parser-load-failed", {
+      logger.warn("treesitter-manager:parser-load-failed", {
         languageId,
         error: String(err),
       });

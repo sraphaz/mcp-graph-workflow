@@ -23,12 +23,10 @@
  */
 
 import { KnowledgeStore } from "../store/knowledge-store.js";
-import { createLogger } from "../utils/logger.js";
+import { logger } from "../utils/logger.js";
 import { getTemplate, type SifTemplate } from "./sif-templates.js";
 import type { SifGenerationRequest, SifTemplateType } from "../../schemas/siebel.schema.js";
 import type { KnowledgeDocument } from "../../schemas/knowledge.schema.js";
-
-const log = createLogger({ layer: "core", source: "sif-context-assembler.ts" });
 
 /** Summary of a knowledge document for context assembly. */
 export interface KnowledgeSummary {
@@ -74,7 +72,7 @@ export function assembleSifContext(
   knowledgeStore: KnowledgeStore,
   request: SifGenerationRequest,
 ): SifGenerationContext {
-  log.info("Assembling SIF generation context", {
+  logger.info("Assembling SIF generation context", {
     types: request.objectTypes.join(","),
     project: request.basedOnProject ?? "none",
   });
@@ -99,7 +97,7 @@ export function assembleSifContext(
   // 6. Build structured prompt
   const prompt = buildPrompt(request, templates, existingObjects, relatedDocs, exampleSif, validationRules);
 
-  log.debug("SIF context assembled", {
+  logger.debug("SIF context assembled", {
     existingObjects: String(existingObjects.length),
     templates: String(templates.length),
     relatedDocs: String(relatedDocs.length),
@@ -131,8 +129,8 @@ function searchExistingObjects(
           summaries.push(docToSummary(rVar));
         }
       }
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "FTS5 may throw on empty index, safe to ignore" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "FTS5 may throw on empty index — safe to ignore" });
     }
   }
 
@@ -151,12 +149,12 @@ function searchExistingObjects(
           }
         }
       }
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "FTS5 search error for description keyword" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "ignore FTS5 errors" });
     }
   }
 
-  log.debug("Existing objects search", { found: String(summaries.length) });
+  logger.debug("Existing objects search", { found: String(summaries.length) });
   return summaries;
 }
 
@@ -169,7 +167,8 @@ function searchExampleSif(
     const results = knowledgeStore.search(type, 3);
     const sifDoc = results.find((r) => r.sourceType === "siebel_sif");
     return sifDoc?.content ?? "";
-  } catch {
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "search example SIF failed — return empty string" });
     return "";
   }
 }
@@ -195,8 +194,8 @@ function searchRelatedDocs(
           summaries.push(docToSummary(rVar));
         }
       }
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "FTS5 search error for description word in context search" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "ignore FTS5 errors during word search" });
     }
   }
 
@@ -209,8 +208,8 @@ function searchRelatedDocs(
           summaries.push(docToSummary(rVar));
         }
       }
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "FTS5 search error for object type in context search" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "ignore FTS5 errors during object type search" });
     }
   }
 

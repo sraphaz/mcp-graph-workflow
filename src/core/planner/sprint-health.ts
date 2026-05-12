@@ -23,9 +23,7 @@
 import type { GraphDocument } from "../graph/graph-types.js";
 import { XP_SIZE_POINTS } from "../utils/xp-sizing.js";
 import { runHarnessScanCached } from "../harness/harness-cache.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "sprint-health.ts" });
+import { logger } from "../utils/logger.js";
 
 export interface SprintHealthReport {
   sprint: string | null;
@@ -98,7 +96,7 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
   if (blockedRatio > 0.3 || burndownRatio < 0.2) health = "critical";
   else if (blockedRatio > 0.1 || tasksWithoutAC > tasks.length * 0.3) health = "at_risk";
 
-  log.info("sprint-health", { sprint: sprintFilter ?? "all", health, tasks: tasks.length });
+  logger.info("sprint-health", { sprint: sprintFilter ?? "all", health, tasks: tasks.length });
 
   // Harness delta (non-blocking)
   let harnessDelta: { current: number; grade: string } | null = null;
@@ -111,8 +109,8 @@ export function analyzeSprintHealth(doc: GraphDocument, sprintFilter?: string): 
         if (health === "healthy") health = "at_risk";
       }
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "non-blocking harness delta retrieval for sprint health" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "non-blocking harness check" });
   }
 
   return {

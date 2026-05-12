@@ -28,7 +28,7 @@ import { nodeHasAc, getNodeAcTexts } from "../utils/ac-helpers.js";
 import { findTransitiveBlockers } from "../planner/dependency-chain.js";
 import { scoreToGrade } from "../utils/grading.js";
 import { XP_SIZE_ORDER } from "../utils/xp-sizing.js";
-import { createLogger } from "../utils/logger.js";
+import { logger } from "../utils/logger.js";
 import { isCorePath } from "../citations/citation-validator.js";
 import { hasCitation } from "../citations/citation-extractor.js";
 import { getTouchedFiles } from "../planner/touched-files.js";
@@ -36,8 +36,6 @@ import { evaluateComplexityBudget } from "./complexity-budget.js";
 import { evaluateSurgicalScope } from "./surgical-scope.js";
 import { existsSync, readFileSync } from "node:fs";
 import { join as joinPath, isAbsolute } from "node:path";
-
-const log = createLogger({ layer: "core", source: "definition-of-done.ts" });
 
 const LARGE_XP_THRESHOLD = 4; // L=4, XL=5
 
@@ -202,8 +200,8 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     try {
       const content = readFileSync(abs, "utf8");
       if (!hasCitation(content)) citationViolations++;
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "unreadable file during citation check, skip to avoid FS hiccup" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "unreadable — skip, do not block on FS hiccup" });
     }
   }
   const citationsPass = citationViolations === 0;
@@ -264,7 +262,7 @@ export function checkDefinitionOfDone(doc: GraphDocument, nodeId: string): Imple
     ? `DoD Ready (${grade}): ${passedChecks}/${totalChecks} checks passed, score ${score}`
     : `DoD Not Ready: ${checks.filter((c) => c.severity === "required" && !c.passed).map((c) => c.name).join(", ")} failed`;
 
-  log.info("definition-of-done", { nodeId, ready, score, grade, passed: passedChecks, total: totalChecks });
+  logger.info("definition-of-done", { nodeId, ready, score, grade, passed: passedChecks, total: totalChecks });
 
   return { nodeId, title: node.title, checks, ready, score, grade, summary };
 }

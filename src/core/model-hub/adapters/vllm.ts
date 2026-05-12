@@ -8,6 +8,7 @@
  */
 
 import { createLogger } from "../../utils/logger.js";
+import { InvalidArgumentError, OperationError } from "../../utils/errors.js";
 
 const log = createLogger({ layer: "core", source: "model-hub/adapters/vllm" });
 
@@ -72,7 +73,7 @@ export class VllmAdapter {
 
   async *stream(req: StreamRequest, signal: AbortSignal): AsyncGenerator<string> {
     if (!this.endpoint) {
-      throw new Error("vLLM endpoint not configured");
+      throw new InvalidArgumentError("vLLM endpoint not configured");
     }
 
     const res = await fetch(`${this.endpoint}/v1/chat/completions`, {
@@ -83,7 +84,7 @@ export class VllmAdapter {
     });
 
     if (!res.ok || !res.body) {
-      throw new Error(`vLLM stream request failed: ${res.status}`);
+      throw new OperationError(`vLLM stream request failed: ${res.status}`);
     }
 
     const reader = res.body.getReader();

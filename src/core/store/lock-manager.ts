@@ -25,10 +25,8 @@
 
 import type Database from "better-sqlite3";
 import { randomUUID } from "crypto";
-import { LockConflictError } from "../utils/errors.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "lock-manager.ts" });
+import { LockConflictError, OperationError } from "../utils/errors.js";
+import { logger } from "../utils/logger.js";
 
 const DEFAULT_TTL_SECONDS = 300; // 5 minutes
 
@@ -88,7 +86,7 @@ export class LockManager {
         )
         .run(leaseToken, now.toISOString(), expiresAt.toISOString(), resourceId);
 
-      log.debug("lock:acquire:upgrade", { resourceId, agentId });
+      logger.debug("lock:acquire:upgrade", { resourceId, agentId });
     } else {
       // No lock — insert new
       const resourceType = resourceId.includes(":") ? resourceId.split(":")[0] : "unknown";
@@ -99,7 +97,7 @@ export class LockManager {
         )
         .run(resourceId, resourceType, agentId, leaseToken, now.toISOString(), expiresAt.toISOString());
 
-      log.debug("lock:acquire:new", { resourceId, agentId, ttlSeconds });
+      logger.debug("lock:acquire:new", { resourceId, agentId, ttlSeconds });
     }
 
     return {
@@ -120,10 +118,10 @@ export class LockManager {
       .run(leaseToken);
 
     if (resultValue.changes === 0) {
-      throw new Error(`No lock found for lease token "${leaseToken}"`);
+      throw new OperationError(`No lock found for lease token "${leaseToken}"`);
     }
 
-    log.debug("lock:release", { leaseToken });
+    logger.debug("lock:release", { leaseToken });
   }
 
   /**
@@ -138,10 +136,10 @@ export class LockManager {
       .run(expiresAt.toISOString(), leaseToken);
 
     if (resultValue.changes === 0) {
-      throw new Error(`No lock found for lease token "${leaseToken}"`);
+      throw new OperationError(`No lock found for lease token "${leaseToken}"`);
     }
 
-    log.debug("lock:renew", { leaseToken, ttlSeconds });
+    logger.debug("lock:renew", { leaseToken, ttlSeconds });
   }
 
   /**
@@ -188,7 +186,7 @@ export class LockManager {
       .run(now.toISOString());
 
     if (deleted.changes > 0) {
-      log.debug("lock:clean_expired", { count: deleted.changes });
+      logger.debug("lock:clean_expired", { count: deleted.changes });
     }
 
     return deleted.changes;

@@ -20,9 +20,7 @@
  * Each rule has correct/incorrect examples and severity.
  */
 
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "best-practices.ts" });
+import { logger } from "../utils/logger.js";
 
 export interface BestPracticeRule {
   readonly id: string;
@@ -71,7 +69,7 @@ const RULES: BestPracticeRule[] = [
   { id: "SCR-002", category: "scripting", title: "Memory cleanup in finally", description: "Set all Siebel objects to null in finally block", severity: "error", correct: "finally { bc = null; bs = null; }", incorrect: "No null assignments in finally" },
   { id: "SCR-003", category: "scripting", title: "ActivateField before query", description: "Call ActivateField for every field read before ExecuteQuery", severity: "warning", correct: "bc.ActivateField('Name'); bc.ExecuteQuery()", incorrect: "bc.ExecuteQuery(); bc.GetFieldValue('Name')" },
   { id: "SCR-004", category: "scripting", title: "ForwardOnly queries", description: "Use ExecuteQuery(ForwardOnly) for read-only iteration", severity: "warning", correct: "bc.ExecuteQuery(ForwardOnly)", incorrect: "bc.ExecuteQuery()" },
-  { id: "SCR-005", category: "scripting", title: "No empty catch blocks", description: "Catch blocks must handle the error, not swallow it", severity: "error", correct: "catch(e) { TheApplication().RaiseErrorText(e.toString()) }", incorrect: "catch(e) {/*ignored*/}" },
+  { id: "SCR-005", category: "scripting", title: "No empty catch blocks", description: "Catch blocks must handle the error, not swallow it", severity: "error", correct: "catch(e) { TheApplication().RaiseErrorText(e.toString()) }", incorrect: "catch(e) { /* error swallowed: no RaiseErrorText call */ void e; }" },
   { id: "SCR-006", category: "scripting", title: "No hardcoded URLs", description: "Use system preferences or ProfileAttr for URLs", severity: "warning", correct: "GetProfileAttr('IntegrationURL')", incorrect: "var url = 'http://prod.example.com'" },
   { id: "SCR-007", category: "scripting", title: "No hardcoded IPs", description: "Never hardcode IP addresses in scripts", severity: "warning", correct: "Use DNS name via config", incorrect: "var host = '10.0.1.100'" },
   { id: "SCR-008", category: "scripting", title: "Cache LOV lookups", description: "Cache LookupValue results in variables outside loops", severity: "warning", correct: "var cached = LookupValue(...); for(...) use cached", incorrect: "for(...) { LookupValue(...) inside loop }" },
@@ -116,7 +114,7 @@ const RULES: BestPracticeRule[] = [
 
 /** Return all Siebel best practice rules (50+ rules across naming, config, scripting, etc.). */
 export function getSiebelBestPractices(): readonly BestPracticeRule[] {
-  log.debug("best-practices: returning all rules", { count: RULES.length });
+  logger.debug("best-practices: returning all rules", { count: RULES.length });
   return RULES;
 }
 
@@ -129,6 +127,6 @@ export function getBestPracticesByCategory(): Record<string, readonly BestPracti
     }
     categories[rule.category].push(rule);
   }
-  log.debug("best-practices: by category", { categories: Object.keys(categories).length });
+  logger.debug("best-practices: by category", { categories: Object.keys(categories).length });
   return categories;
 }

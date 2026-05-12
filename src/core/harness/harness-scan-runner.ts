@@ -36,10 +36,10 @@ import {
   checkBarrelIntegrity,
 } from "./fitness-functions.js";
 import { IssuePatternTracker, type RuleSuggestion } from "./issue-pattern-tracker.js";
-import type { ViolationDetail } from "./violation-detail.js";
 import { createLogger } from "../utils/logger.js";
 
-const log = createLogger({ layer: "core", source: "harness-scan-runner.ts" });
+const log = createLogger({ layer: "core", source: "harness-scan-runner" });
+import type { ViolationDetail } from "./violation-detail.js";
 
 export interface HarnessScanResult extends HarnessabilityResult {
   details: string[];
@@ -259,8 +259,8 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
       gitCommit = execSync("git rev-parse HEAD", { cwd: process.cwd(), stdio: "pipe" })
         .toString()
         .trim();
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "not a git repo or git unavailable" });
+    } catch (err) {
+      log.debug("intentional-swallow", { error: String(err), reason: "not a git repo or git unavailable" });
     }
 
     db.prepare(
@@ -293,8 +293,8 @@ export function runHarnessScan(rootDir: string, db?: Database.Database, eventBus
           payload: { before, after: finalResult.score, delta: resultValue.regressionDelta },
         });
       }
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "EventBus handler crashed, non-blocking" });
+    } catch (err) {
+      log.debug("intentional-swallow", { error: String(err), reason: "EventBus handler crashed — non-blocking" });
     }
   }
 

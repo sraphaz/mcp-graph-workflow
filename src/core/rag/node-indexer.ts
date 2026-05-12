@@ -27,9 +27,7 @@ import type Database from "better-sqlite3";
 import type { GraphNode, NodeType, NodeStatus } from "../graph/graph-types.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { indexEntitiesForDoc } from "./entity-index-hook.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "rag", source: "node-indexer.ts" });
+import { logger } from "../utils/logger.js";
 
 /**
  * Index a single graph node as a knowledge document.
@@ -81,9 +79,9 @@ export function indexNodeAsKnowledge(db: Database.Database, node: GraphNode): vo
     // Extract entities from the node content
     indexEntitiesForDoc(db, doc.id);
 
-    log.debug("node-indexer:indexed", { nodeId: node.id, docId: doc.id });
+    logger.debug("node-indexer:indexed", { nodeId: node.id, docId: doc.id });
   } catch (err) {
-    log.warn("node-indexer:index-failed", { nodeId: node.id, error: String(err) });
+    logger.warn("node-indexer:index-failed", { nodeId: node.id, error: String(err) });
   }
 }
 
@@ -98,13 +96,13 @@ export function removeNodeFromKnowledge(db: Database.Database, nodeId: string): 
       // Clean up orphaned entity mentions before deleting the doc
       try {
         db.prepare("DELETE FROM kg_mentions WHERE doc_id = ?").run(doc.id);
-      } catch (e) {
-        log.debug("intentional swallow", { error: e, reason: "kg_mentions table may not exist yet, safe to ignore" });
+      } catch (err) {
+        logger.debug("intentional-swallow", { error: String(err), reason: "kg_mentions table may not exist yet — safe to ignore" });
       }
       ks.delete(doc.id);
     }
   } catch (err) {
-    log.warn("node-indexer:remove-failed", { nodeId, error: String(err) });
+    logger.warn("node-indexer:remove-failed", { nodeId, error: String(err) });
   }
 }
 
@@ -138,14 +136,14 @@ export function indexAllNodes(db: Database.Database, projectId?: string): { inde
         indexNodeAsKnowledge(db, node);
         indexed++;
       } catch (rowErr) {
-        log.warn("node-indexer:row-parse-failed", { rowId: row.id, error: String(rowErr) });
+        logger.warn("node-indexer:row-parse-failed", { rowId: row.id, error: String(rowErr) });
       }
     }
 
-    log.info("node-indexer:all-indexed", { indexed });
+    logger.info("node-indexer:all-indexed", { indexed });
     return { indexed };
   } catch (err) {
-    log.warn("node-indexer:index-all-failed", { error: String(err) });
+    logger.warn("node-indexer:index-all-failed", { error: String(err) });
     return { indexed: 0 };
   }
 }

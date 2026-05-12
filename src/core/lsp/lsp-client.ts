@@ -25,10 +25,8 @@
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { createLogger } from "../utils/logger.js";
+import { logger } from "../utils/logger.js";
 import { McpGraphError } from "../utils/errors.js";
-
-const log = createLogger({ layer: "core", source: "lsp-client.ts" });
 
 // ---------------------------------------------------------------------------
 // JSON-RPC 2.0 message types
@@ -104,13 +102,13 @@ export class LspClient extends EventEmitter {
   /** Spawn the child process. Does NOT send `initialize`. */
   async start(): Promise<void> {
     if (this.process) {
-      log.warn("LspClient.start called but process already running", {
+      logger.warn("LspClient.start called but process already running", {
         command: this.command,
       });
       return;
     }
 
-    log.info("LspClient spawning server", {
+    logger.info("LspClient spawning server", {
       command: this.command,
       args: this.args.join(" "),
     });
@@ -126,14 +124,14 @@ export class LspClient extends EventEmitter {
     });
 
     child.stderr?.on("data", (data: Buffer) => {
-      log.debug("LSP stderr", {
+      logger.debug("LSP stderr", {
         command: this.command,
         data: data.toString("utf8").trim(),
       });
     });
 
     child.on("error", (err: Error) => {
-      log.error("LSP process error", {
+      logger.error("LSP process error", {
         command: this.command,
         error: err.message,
       });
@@ -146,7 +144,7 @@ export class LspClient extends EventEmitter {
     });
 
     child.on("exit", (code: number | null, signal: string | null) => {
-      log.info("LSP process exited", {
+      logger.info("LSP process exited", {
         command: this.command,
         code: String(code ?? "null"),
         signal: String(signal ?? "null"),
@@ -168,15 +166,15 @@ export class LspClient extends EventEmitter {
 
     try {
       await this.sendRequest("shutdown");
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "LSP server may already be gone during shutdown" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "server may already be gone — that's fine" });
     }
 
     this.sendNotification("exit");
 
     await new Promise<void>((resolve) => {
       const killTimer = setTimeout(() => {
-        log.warn("LSP process did not exit gracefully, killing", {
+        logger.warn("LSP process did not exit gracefully, killing", {
           command: this.command,
         });
         this.kill();
@@ -231,7 +229,7 @@ export class LspClient extends EventEmitter {
   /** Send a JSON-RPC notification (fire-and-forget, no response expected). */
   sendNotification(method: string, params?: unknown): void {
     if (!this.process?.stdin?.writable) {
-      log.warn("LspClient.sendNotification: stdin not writable", { method });
+      logger.warn("LspClient.sendNotification: stdin not writable", { method });
       return;
     }
 
@@ -279,7 +277,7 @@ export class LspClient extends EventEmitter {
 
     // Guard: kill LSP if buffer exceeds max size (DoS prevention)
     if (this.buffer.byteLength > LspClient.MAX_BUFFER_SIZE) {
-      log.error("LSP buffer overflow — killing process", {
+      logger.error("LSP buffer overflow — killing process", {
         bufferSize: this.buffer.byteLength,
         maxSize: LspClient.MAX_BUFFER_SIZE,
         command: this.command,
@@ -301,7 +299,7 @@ export class LspClient extends EventEmitter {
 
       // Guard: reject oversized Content-Length
       if (contentLength > LspClient.MAX_BUFFER_SIZE) {
-        log.error("LSP Content-Length exceeds max buffer size — discarding", {
+        logger.error("LSP Content-Length exceeds max buffer size — discarding", {
           contentLength,
           maxSize: LspClient.MAX_BUFFER_SIZE,
         });
@@ -323,7 +321,7 @@ export class LspClient extends EventEmitter {
         const parsed: unknown = JSON.parse(bodyBytes.toString("utf8"));
         this.handleMessage(parsed as JsonRpcResponse | JsonRpcNotification);
       } catch (err) {
-        log.error("Failed to parse LSP JSON-RPC message", {
+        logger.error("Failed to parse LSP JSON-RPC message", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -336,7 +334,7 @@ export class LspClient extends EventEmitter {
     if ("id" in msg && typeof msg.id === "number") {
       const pending = this.pending.get(msg.id);
       if (!pending) {
-        log.warn("Received response for unknown request id", { id: msg.id });
+        logger.warn("Received response for unknown request id", { id: msg.id });
         return;
       }
 
@@ -363,7 +361,7 @@ export class LspClient extends EventEmitter {
       return;
     }
 
-    log.warn("Received unrecognized JSON-RPC message", {
+    logger.warn("Received unrecognized JSON-RPC message", {
       keys: Object.keys(msg as unknown as Record<string, unknown>).join(","),
     });
   }

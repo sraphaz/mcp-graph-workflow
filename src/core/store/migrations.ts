@@ -16,9 +16,8 @@
  */
 
 import type Database from "better-sqlite3";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "migrations.ts" });
+import { logger } from "../utils/logger.js";
+import { GraphIntegrityError } from "../utils/errors.js";
 
 interface Migration {
   version: number;
@@ -2274,106 +2273,6 @@ const migrations: Migration[] = [
         ON harness_savings_ledger(session_id) WHERE session_id IS NOT NULL;
     `,
   },
-  {
-    version: 88,
-    // §EPIC-unified-observability — Task 1.1: event store for observability
-    // events. Indexed on (subjectRef_kind, subjectRef_id) for efficient
-    // per-subject queries. subjectRef columns are flat for SQLite indexability.
-    description: "events table — unified observability event store",
-    sql: `
-      CREATE TABLE IF NOT EXISTS events (
-        id               TEXT PRIMARY KEY,
-        kind             TEXT NOT NULL,
-        subjectRef_kind  TEXT NOT NULL,
-        subjectRef_id    TEXT NOT NULL,
-        payload          TEXT,
-        timestamp        TEXT NOT NULL,
-        projectId        TEXT,
-        sessionId        TEXT
-      );
-      CREATE INDEX IF NOT EXISTS idx_events_subject
-        ON events(subjectRef_kind, subjectRef_id);
-      CREATE INDEX IF NOT EXISTS idx_events_kind_time
-        ON events(kind, timestamp DESC);
-    `,
-  },
-  {
-    version: 89,
-    // §EPIC-unified-observability — Task 1.3: add parentEventId and durationMs
-    // to events table for causality chain traversal and latency metrics.
-    description: "events: parentEventId + durationMs columns",
-    sql: `
-      ALTER TABLE events ADD COLUMN parentEventId TEXT;
-      ALTER TABLE events ADD COLUMN durationMs INTEGER;
-      CREATE INDEX IF NOT EXISTS idx_events_parent
-        ON events(parentEventId) WHERE parentEventId IS NOT NULL;
-    `,
-  },
-  {
-    version: 90,
-    // §EPIC-browser-harness — Task 4.1: browser_test_runs table stores
-    // execution records with evidences and pathTaken as JSON columns.
-    description: "browser_test_runs table for browser harness execution nodes",
-    sql: `
-      CREATE TABLE IF NOT EXISTS browser_test_runs (
-        id            TEXT PRIMARY KEY,
-        runId         TEXT NOT NULL,
-        targetUrl     TEXT NOT NULL,
-        featureNodeId TEXT NOT NULL,
-        adrNodeId     TEXT,
-        unitTestPath  TEXT,
-        status        TEXT NOT NULL CHECK(status IN ('running','pass','fail','broken')),
-        evidences     TEXT NOT NULL DEFAULT '[]',
-        pathTaken     TEXT NOT NULL DEFAULT '[]',
-        startedAt     TEXT NOT NULL,
-        endedAt       TEXT NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS idx_browser_test_feature
-        ON browser_test_runs(featureNodeId);
-      CREATE INDEX IF NOT EXISTS idx_browser_test_status
-        ON browser_test_runs(status);
-    `,
-  },
-  {
-    version: 91,
-    description: "failure_signals table for §EPIC-self-healing collector",
-    sql: `
-      CREATE TABLE IF NOT EXISTS failure_signals (
-        id          TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-        source      TEXT NOT NULL,
-        signalKind  TEXT NOT NULL,
-        context     TEXT NOT NULL DEFAULT '{}',
-        severity    TEXT NOT NULL,
-        timestamp   TEXT NOT NULL,
-        rawError    TEXT
-      );
-      CREATE INDEX IF NOT EXISTS idx_failure_signals_kind
-        ON failure_signals(signalKind);
-      CREATE INDEX IF NOT EXISTS idx_failure_signals_source
-        ON failure_signals(source);
-      CREATE INDEX IF NOT EXISTS idx_failure_signals_timestamp
-        ON failure_signals(timestamp);
-    `,
-  },
-  {
-    version: 92,
-    description: "policy_observations table for §EPIC-policy-engine-context-routing observe mode",
-    sql: `
-      CREATE TABLE IF NOT EXISTS policy_observations (
-        id               TEXT PRIMARY KEY,
-        project_id       TEXT NOT NULL,
-        timestamp        TEXT NOT NULL,
-        signals_snapshot TEXT NOT NULL DEFAULT '{}',
-        decision         TEXT NOT NULL DEFAULT '{}',
-        actual_used      TEXT NOT NULL DEFAULT '[]',
-        divergence       INTEGER NOT NULL DEFAULT 0
-      );
-      CREATE INDEX IF NOT EXISTS idx_policy_obs_project
-        ON policy_observations(project_id);
-      CREATE INDEX IF NOT EXISTS idx_policy_obs_timestamp
-        ON policy_observations(timestamp);
-    `,
-  },
 ];
 
 /** Apply pending schema migrations to the database. */
@@ -2393,7 +2292,7 @@ export function runMigrations(db: Database.Database): void {
         .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nodes'")
         .get() !== undefined;
     if (dataTableExists) {
-      throw new Error(
+      throw new GraphIntegrityError(
         "Database has data tables but the _migrations tracking table is missing — orphaned schema. " +
           "Re-initialize with 'mcp-graph init' or restore from a snapshot.",
       );
@@ -2424,7 +2323,7 @@ export function runMigrations(db: Database.Database): void {
   let appliedMax = 0;
   for (const v of applied) appliedMax = Math.max(appliedMax, v);
   if (appliedMax > knownMaxVersion) {
-    log.warn("migration:newer-db", {
+    logger.warn("migration:newer-db", {
       appliedMax,
       knownMaxVersion,
       message:
@@ -2439,14 +2338,14 @@ export function runMigrations(db: Database.Database): void {
   for (const migration of migrations) {
     if (applied.has(migration.version)) continue;
 
-    log.info("migration:run", { version: migration.version, description: migration.description });
+    logger.info("migration:run", { version: migration.version, description: migration.description });
     db.transaction(() => {
       db.exec(migration.sql);
       db.prepare(
         "INSERT INTO _migrations (version, description, applied_at) VALUES (?, ?, ?)",
       ).run(migration.version, migration.description, new Date().toISOString());
     })();
-    log.info("migration:ok", { version: migration.version });
+    logger.info("migration:ok", { version: migration.version });
 
     if (VACUUM_AFTER_VERSIONS.has(migration.version)) {
       needsVacuum = true;
@@ -2457,9 +2356,9 @@ export function runMigrations(db: Database.Database): void {
   if (needsVacuum) {
     try {
       db.exec("VACUUM");
-      log.info("migration:vacuum:ok");
+      logger.info("migration:vacuum:ok");
     } catch (err) {
-      log.warn("migration:vacuum:failed", { error: err instanceof Error ? err.message : String(err) });
+      logger.warn("migration:vacuum:failed", { error: err instanceof Error ? err.message : String(err) });
     }
   }
 }

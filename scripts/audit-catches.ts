@@ -73,16 +73,17 @@ const RAW_THROW_RE = /\bthrow\s+new\s+Error\s*\(/g;
 // Strip line comments, block comments, and string/template literals from
 // source before scanning so we don't produce false positives.
 function stripNonCode(src: string): string {
-  // Replace block comments with whitespace of the same length
-  src = src.replace(/\/\*[\s\S]*?\*\//g, (m) => " ".repeat(m.length));
-  // Replace line comments
+  // Preserve newlines inside multi-line constructs so line numbers stay accurate.
+  // Block comments (can span lines) — replace each non-newline char with a space
+  src = src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
+  // Line comments (single line, no newline inside) — replace whole match
   src = src.replace(/\/\/[^\n]*/g, (m) => " ".repeat(m.length));
-  // Replace double-quoted strings
+  // Double-quoted strings (cannot span newlines in TS) — blank the content
   src = src.replace(/"(?:[^"\\]|\\.)*"/g, (m) => '"' + " ".repeat(m.length - 2) + '"');
-  // Replace single-quoted strings
+  // Single-quoted strings (cannot span newlines in TS) — blank the content
   src = src.replace(/'(?:[^'\\]|\\.)*'/g, (m) => "'" + " ".repeat(m.length - 2) + "'");
-  // Replace template literals (simplified — no nested template support needed)
-  src = src.replace(/`(?:[^`\\]|\\.)*`/g, (m) => "`" + " ".repeat(m.length - 2) + "`");
+  // Template literals (can span lines) — replace non-newline chars with spaces
+  src = src.replace(/`(?:[^`\\]|\\.)*`/g, (m) => m.replace(/[^\n]/g, " "));
   return src;
 }
 

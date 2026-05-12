@@ -10,7 +10,7 @@
 
 import { createLogger } from "../utils/logger.js";
 
-const log = createLogger({ layer: "core", source: "heap-telemetry.ts" });
+const log = createLogger({ layer: "core", source: "heap-telemetry" });
 
 const MB = 1024 * 1024;
 
@@ -80,8 +80,8 @@ export class HeapTelemetry {
     this.timer = setInterval(() => {
       try {
         this.emit(this.sampler());
-      } catch (e) {
-        log.debug("intentional swallow", { error: e, reason: "never let a sampling error tear down the daemon" });
+      } catch (err) {
+        log.debug("intentional-swallow", { error: String(err), reason: "never let a logging error tear down the daemon" });
       }
     }, this.intervalMs);
     if (typeof this.timer.unref === "function") this.timer.unref();

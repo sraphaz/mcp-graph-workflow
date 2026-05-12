@@ -24,9 +24,7 @@
  */
 
 import type { SqliteStore } from "../store/sqlite-store.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "agent-role.ts" });
+import { logger } from "../utils/logger.js";
 
 // ── Types ───────────────────────────────────────────────
 
@@ -71,17 +69,17 @@ export function registerAgentRole(
       const parsed = JSON.parse(existing) as StoredAgentRole;
       if (parsed.role !== role) {
         warning = `Role already registered for ${taskId}: was '${parsed.role}', overwriting with '${role}'`;
-        log.warn("agent-role:overwrite", { taskId, oldRole: parsed.role, newRole: role });
+        logger.warn("agent-role:overwrite", { taskId, oldRole: parsed.role, newRole: role });
       }
-    } catch (e) {
-      log.debug("intentional swallow", { error: e, reason: "corrupted agent-role setting, overwriting silently" });
+    } catch (err) {
+      logger.debug("intentional-swallow", { error: String(err), reason: "corrupted setting — overwrite silently" });
     }
   }
 
   const value: StoredAgentRole = { role, registeredAt: now };
   store.setProjectSetting(key, JSON.stringify(value));
 
-  log.debug("agent-role:register", { role, taskId });
+  logger.debug("agent-role:register", { role, taskId });
 
   return { role, taskId, registeredAt: now, warning };
 }

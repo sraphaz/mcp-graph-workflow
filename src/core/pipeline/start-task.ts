@@ -28,6 +28,8 @@ import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
 import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/task-readiness-score.js";
+import { getTouchedFiles } from "../planner/touched-files.js";
+import { getBaseline } from "../feature-depth/baselines-store.js";
 import { buildTaskContext } from "../context/compact-context.js";
 import type { GraphSnapshot } from "../store/graph-snapshot-cache.js";
 import { assembleContext } from "../context/context-assembler.js";
@@ -54,13 +56,11 @@ import { enforceWipAndFileGates } from "./wip-gate.js";
 import { assembleSiblingContext } from "./assemble-sibling-context.js";
 import { TaskPrefetcher } from "../planner/task-prefetcher.js";
 import { createCheckpoint, type GraphCheckpoint } from "../autonomy/graph-rollback.js";
-import { createShadowBranch, type ShadowBranchHandle } from "../autonomy/shadow-branch.js";
-import { createLogger } from "../utils/logger.js";
+import { createShadowBranch } from "../autonomy/shadow-branch.js";
+import { logger } from "../utils/logger.js";
 import { now } from "../utils/time.js";
 import { extractOfferedDocIds } from "../rag/rag-feedback.js";
 import { maybeRunMemoryDynamicsTick, type DynamicsTickResult } from "../rag/memory-dynamics-tick.js";
-
-const log = createLogger({ layer: "core", source: "start-task.ts" });
 
 // Module-level singleton for task context prefetching (CPU pipeline pattern)
 export const taskPrefetcher = new TaskPrefetcher({ ttlMs: 5 * 60 * 1000 });
@@ -109,8 +109,8 @@ export interface StartTaskResult {
   prefetchHit?: boolean;
   /** Graph checkpoint for rollback on failure (Phase D — Autonomous Loop) */
   checkpoint?: GraphCheckpoint;
-  /** Shadow branch handle for isolated execution (Phase D — Git Transactional Layer) */
-  shadowBranch?: ShadowBranchHandle;
+  /** Shadow branch name for isolated execution (Phase D — Git Transactional Layer) */
+  shadowBranch?: string;
   /**
    * Model routing hint — combines xpSize, AC quality, harness, dependency depth
    * and issue-pattern history into a preferred Claude model (haiku/sonnet/opus).
@@ -168,7 +168,7 @@ export function startTask(
   if (nodeId) {
     const node = doc.nodes.find((n) => n.id === nodeId);
     if (!node) {
-      log.warn("pipeline:start_task:node_not_found", { nodeId });
+      logger.warn("pipeline:start_task:node_not_found", { nodeId });
       return null;
     }
     // Build a minimal EnhancedNextResult for the specific node
@@ -183,7 +183,7 @@ export function startTask(
   }
 
   if (!enhanced) {
-    log.info("pipeline:start_task:no_tasks");
+    logger.info("pipeline:start_task:no_tasks");
     return null;
   }
 
@@ -195,10 +195,10 @@ export function startTask(
   try {
     memoryDynamicsTick = maybeRunMemoryDynamicsTick(store);
     if (memoryDynamicsTick.ran) {
-      log.info("pipeline:start_task:memory_dynamics_tick", { ...memoryDynamicsTick });
+      logger.info("pipeline:start_task:memory_dynamics_tick", { ...memoryDynamicsTick });
     }
   } catch (err) {
-    log.warn("pipeline:start_task:memory_dynamics_tick_failed", { error: String(err) });
+    logger.warn("pipeline:start_task:memory_dynamics_tick_failed", { error: String(err) });
   }
 
   const taskNode = enhanced.task.node;
@@ -211,7 +211,7 @@ export function startTask(
     const snapshot: GraphSnapshot = { nodes: doc.nodes, edges: doc.edges };
     context = buildTaskContext(store, taskNode.id, snapshot);
   } catch (err) {
-    log.warn("pipeline:start_task:context_failed", { error: String(err) });
+    logger.warn("pipeline:start_task:context_failed", { error: String(err) });
   }
 
   // 3. Build RAG context (check prefetcher cache first — CPU pipeline pattern)
@@ -221,7 +221,7 @@ export function startTask(
   if (prefetchedData) {
     // Prefetch hit — skip RAG assembly
     prefetchHit = true;
-    log.info("pipeline:start_task:prefetch_hit", { nodeId: taskNode.id });
+    logger.info("pipeline:start_task:prefetch_hit", { nodeId: taskNode.id });
     try {
       ragContext = JSON.parse(prefetchedData.context) as AssembledContext;
     } catch {
@@ -239,7 +239,7 @@ export function startTask(
         tier: contextDetail ?? "standard",
       });
     } catch (err) {
-      log.warn("pipeline:start_task:rag_failed", { error: String(err) });
+      logger.warn("pipeline:start_task:rag_failed", { error: String(err) });
     }
   }
 
@@ -251,10 +251,10 @@ export function startTask(
       if (ragOffered.length > 0) {
         const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
         store.updateNode(taskNode.id, { metadata: { ...existingMeta, ragOffered } });
-        log.debug("pipeline:start_task:rag_offered_persisted", { nodeId: taskNode.id, count: ragOffered.length });
+        logger.debug("pipeline:start_task:rag_offered_persisted", { nodeId: taskNode.id, count: ragOffered.length });
       }
     } catch (err) {
-      log.warn("pipeline:start_task:rag_offered_failed", { error: String(err) });
+      logger.warn("pipeline:start_task:rag_offered_failed", { error: String(err) });
     }
   }
 
@@ -275,7 +275,7 @@ export function startTask(
   try {
     harnessWarning = getHarnessPreflightWarning(store.getDb());
   } catch (err) {
-    log.warn("pipeline:start_task:harness_preflight_failed", { error: String(err) });
+    logger.warn("pipeline:start_task:harness_preflight_failed", { error: String(err) });
   }
 
   // 5b. Top remediation suggestions when score < 70 (non-blocking)
@@ -288,7 +288,7 @@ export function startTask(
       }
     }
   } catch (err) {
-    log.warn("pipeline:start_task:remediation_preflight_failed", { error: String(err) });
+    logger.warn("pipeline:start_task:remediation_preflight_failed", { error: String(err) });
   }
 
   // 5c. Compute a model-routing hint from the same signals the graph already owns.
@@ -299,6 +299,10 @@ export function startTask(
   // empirical pass-rate overrides the heuristic recommendation.
   let modelHint: TaskReadinessScore | undefined;
   try {
+    const touched = getTouchedFiles(taskNode);
+    const primaryFile = touched.length > 0 ? touched[0] : null;
+    const fdBaseline = primaryFile ? getBaseline(store.getDb(), primaryFile) : null;
+
     let empiricalOverride: { model: ModelPreference; basedOn: number; passRate: number } | undefined;
     try {
       const runs = new EvalRunStore(store.getDb());
@@ -311,16 +315,16 @@ export function startTask(
         };
       }
     } catch (err) {
-      log.debug("pipeline:start_task:empirical_hint_unavailable", { error: String(err) });
+      logger.debug("pipeline:start_task:empirical_hint_unavailable", { error: String(err) });
     }
 
     modelHint = computeTaskReadinessScore(taskNode, doc, {
       harnessScore: harnessWarning ? harnessWarning.score : null,
-      featureDepthScore: null,
+      featureDepthScore: fdBaseline?.score ?? null,
       empiricalOverride,
     });
   } catch (err) {
-    log.warn("pipeline:start_task:model_hint_failed", { error: String(err) });
+    logger.warn("pipeline:start_task:model_hint_failed", { error: String(err) });
   }
 
   // 6. Auto-start if requested
@@ -343,7 +347,7 @@ export function startTask(
         const lock = lockManager.acquire(`task:${taskNode.id}`, agentId, 600); // 10min TTL
         store.updateNodeStatus(taskNode.id, "in_progress");
         leaseToken = lock.leaseToken;
-        log.info("pipeline:start_task:claimed", { nodeId: taskNode.id, agentId, leaseToken });
+        logger.info("pipeline:start_task:claimed", { nodeId: taskNode.id, agentId, leaseToken });
       } else {
         // Single-terminal mode: no lock
         store.updateNodeStatus(taskNode.id, "in_progress");
@@ -366,10 +370,10 @@ export function startTask(
         },
       });
       if (err instanceof LockConflictError) {
-        log.warn("pipeline:start_task:lock_conflict", { nodeId: taskNode.id, agentId, error: String(err) });
+        logger.warn("pipeline:start_task:lock_conflict", { nodeId: taskNode.id, agentId, error: String(err) });
         throw err; // Propagate lock conflicts to caller
       }
-      log.warn("pipeline:start_task:auto_start_failed", { error: String(err) });
+      logger.warn("pipeline:start_task:auto_start_failed", { error: String(err) });
     }
   }
 
@@ -382,33 +386,33 @@ export function startTask(
       if (baselineRow) {
         const existingMeta = (taskNode.metadata as Record<string, unknown> | undefined) ?? {};
         store.updateNode(taskNode.id, { metadata: { ...existingMeta, _harnessBaseline: baselineRow.score } });
-        log.debug("pipeline:start_task:harness_baseline_stored", { nodeId: taskNode.id, score: baselineRow.score });
+        logger.debug("pipeline:start_task:harness_baseline_stored", { nodeId: taskNode.id, score: baselineRow.score });
       }
     } catch (err) {
-      log.warn("pipeline:start_task:harness_baseline_failed", { error: String(err) });
+      logger.warn("pipeline:start_task:harness_baseline_failed", { error: String(err) });
     }
   }
 
   // 6b. Create checkpoint for rollback on failure (Phase D — Autonomous Loop)
   let checkpoint: GraphCheckpoint | undefined;
-  let shadowBranch: ShadowBranchHandle | undefined;
+  let shadowBranch: string | undefined;
   if (startedAt) {
     try {
       checkpoint = createCheckpoint(store, taskNode.id);
-      log.info("pipeline:start_task:checkpoint", { nodeId: taskNode.id, snapshotId: checkpoint.snapshotId });
+      logger.info("pipeline:start_task:checkpoint", { nodeId: taskNode.id, snapshotId: checkpoint.snapshotId });
     } catch (err) {
-      log.warn("pipeline:start_task:checkpoint_failed", { error: String(err) });
+      logger.warn("pipeline:start_task:checkpoint_failed", { error: String(err) });
     }
 
     // 6c. Create shadow branch for isolated execution (Phase D — Git Transactional Layer)
     try {
       const branchResult = createShadowBranch(taskNode.id);
       if (branchResult.created) {
-        shadowBranch = branchResult;
-        log.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: branchResult.branchName, worktreePath: branchResult.worktreePath });
+        shadowBranch = branchResult.branchName;
+        logger.info("pipeline:start_task:shadow_branch", { nodeId: taskNode.id, branch: shadowBranch });
       }
     } catch (err) {
-      log.warn("pipeline:start_task:shadow_branch_failed", { error: String(err) });
+      logger.warn("pipeline:start_task:shadow_branch_failed", { error: String(err) });
     }
   }
 
@@ -427,14 +431,14 @@ export function startTask(
       siblingContext = assembled.markdown;
       siblingTruncatedCount = assembled.truncatedCount;
     } catch (err) {
-      log.warn("pipeline:start_task:sibling_assembly_failed", {
+      logger.warn("pipeline:start_task:sibling_assembly_failed", {
         nodeId: taskNode.id,
         error: String(err),
       });
     }
   }
 
-  log.info("pipeline:start_task:ok", {
+  logger.info("pipeline:start_task:ok", {
     nodeId: taskNode.id,
     title: taskNode.title,
     autoStart,
@@ -455,8 +459,8 @@ export function startTask(
         { limit: 5 },
       );
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "non-fatal, skill retrieval is advisory" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "non-fatal — skill retrieval is advisory" });
   }
 
   // §EPIC-13.2 — persist ambiguityAudit + emit advisory warning
@@ -472,10 +476,10 @@ export function startTask(
           metadata: { ...existingMeta, ambiguityAudit: auditedAudit },
         });
       } catch (err) {
-        log.warn("pipeline:start_task:ambiguity_audit_persist_failed", { error: String(err) });
+        logger.warn("pipeline:start_task:ambiguity_audit_persist_failed", { error: String(err) });
       }
     } else {
-      log.warn("pipeline:start_task:ambiguity_audit_invalid", { issues: parsed.error.issues });
+      logger.warn("pipeline:start_task:ambiguity_audit_invalid", { issues: parsed.error.issues });
     }
   }
   const acCountForAudit = (taskNode.acceptanceCriteria?.length ?? 0)

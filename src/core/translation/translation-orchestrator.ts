@@ -50,12 +50,10 @@ import { scoreConstructs } from "./confidence/equivalence-scorer.js";
 import { detectAmbiguities } from "./confidence/ambiguity-detector.js";
 import { buildTranslationPrompt } from "./prompt-builder.js";
 import type { PromptContext } from "./prompt-builder.js";
-import { TranslationError } from "../utils/errors.js";
+import { TranslationError, OperationError } from "../utils/errors.js";
 import { extractPlaceholdersFromAst } from "./generators/ast-placeholder-extractor.js";
 import { UniversalGenerator } from "./generators/universal-generator.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "translation-orchestrator.ts" });
+import { logger } from "../utils/logger.js";
 
 /**
  * Mapping of equivalent constructs across languages.
@@ -315,7 +313,7 @@ export class TranslationOrchestrator {
           deterministicCode = genResult.code;
         }
       } catch (err) {
-        log.warn("Deterministic translation failed, falling back to AI prompt", { error: String(err) });
+        logger.warn("Deterministic translation failed, falling back to AI prompt", { error: String(err) });
       }
     }
 
@@ -364,7 +362,7 @@ export class TranslationOrchestrator {
     });
 
     const finalJob = this.store.getJob(jobId);
-    if (!finalJob) throw new Error(`Job not found after finalization: ${jobId}`);
+    if (!finalJob) throw new OperationError(`Job not found after finalization: ${jobId}`);
     return {
       job: {
         id: finalJob.id,

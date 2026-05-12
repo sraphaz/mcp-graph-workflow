@@ -17,9 +17,7 @@
 
 import type { GraphDocument } from "../graph/graph-types.js";
 import { findCriticalPath } from "../planner/dependency-chain.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "bottleneck-detector.ts" });
+import { logger } from "../utils/logger.js";
 
 export interface BlockedTaskInfo {
   id: string;
@@ -51,7 +49,7 @@ export function detectBottlenecks(doc: GraphDocument): BottleneckReport {
   if (!doc) return { blockedTasks: [], criticalPath: null, missingAcceptanceCriteria: [], oversizedTasks: [] };
   if (!doc?.nodes) return { blockedTasks: [], criticalPath: null, missingAcceptanceCriteria: [], oversizedTasks: [] };
   if (!doc?.edges) return { blockedTasks: [], criticalPath: null, missingAcceptanceCriteria: [], oversizedTasks: [] };
-  log.info("Detecting bottlenecks", { nodes: doc?.nodes?.length ?? 0, edges: doc?.edges?.length ?? 0 });
+  logger.info("Detecting bottlenecks", { nodes: doc?.nodes?.length ?? 0, edges: doc?.edges?.length ?? 0 });
 
   const nodeMap = new Map(doc?.nodes?.map((n) => [n?.id, n]) ?? []);
   const doneIds = new Set(doc?.nodes?.filter((n) => n?.status === "done")?.map((n) => n?.id) ?? []);
@@ -97,8 +95,8 @@ export function detectBottlenecks(doc: GraphDocument): BottleneckReport {
         length: cpNodes.length,
       };
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "graph may have cycles or be empty" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "graph may have cycles or be empty" });
   }
 
   // 3. Tasks/epics without acceptance criteria
@@ -139,7 +137,7 @@ export function detectBottlenecks(doc: GraphDocument): BottleneckReport {
     )
     ?.map((n) => ({ id: n?.id ?? "", title: n?.title ?? "", estimateMinutes: n?.estimateMinutes ?? 0 })) ?? [];
 
-  log.info("Bottleneck detection complete", {
+  logger.info("Bottleneck detection complete", {
     blocked: blockedTasks?.length ?? 0,
     missingAC: missingAcceptanceCriteria?.length ?? 0,
     oversized: oversizedTasks?.length ?? 0,

@@ -27,10 +27,8 @@ import type { GraphNode } from "../graph/graph-types.js";
 import { scoreFriction, scoreOptimality, scoreReversibility, computeDecisionFitness, type Jtbd } from "./decision-fitness.js";
 import { assembleChallengeReport, type ChallengeReport } from "./challenge-report.js";
 import type { Finding } from "./severity-scoring.js";
-import { NodeNotFoundError } from "../utils/errors.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "adr-challenge-runner.ts" });
+import { NodeNotFoundError, InvalidArgumentError } from "../utils/errors.js";
+import { logger } from "../utils/logger.js";
 
 // ── Types ───────────────────────────────────────────────
 
@@ -147,7 +145,7 @@ export function runAdrChallenge(store: SqliteStore, nodeId: string): AdrChalleng
   }
 
   if (node.type !== "decision") {
-    throw new Error(`InvalidNodeType: expected 'decision', got '${node.type}'`);
+    throw new InvalidArgumentError(`expected node type 'decision', got '${node.type}'`);
   }
 
   // 1. Fitness scoring
@@ -181,7 +179,7 @@ export function runAdrChallenge(store: SqliteStore, nodeId: string): AdrChalleng
   // 4. Assemble report
   const report = assembleChallengeReport({ fitness, jtbdResults, preMortemFindings });
 
-  log.info("adr-challenge:run", {
+  logger.info("adr-challenge:run", {
     mode: "adr_challenge",
     nodeId,
     verdict: report.overallVerdict.verdict,
@@ -226,7 +224,7 @@ export function runAllAdrChallenges(store: SqliteStore): AllAdrChallengesResult 
       : 0,
   };
 
-  log.info("adr-challenge:run-all", {
+  logger.info("adr-challenge:run-all", {
     mode: "adr_challenge",
     totalDecisions: summary.totalDecisions,
     passed: summary.passed,

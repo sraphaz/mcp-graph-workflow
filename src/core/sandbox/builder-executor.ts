@@ -39,9 +39,7 @@
 
 import { spawn } from "node:child_process";
 import { McpGraphError } from "../utils/errors.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "builder-executor.ts" });
+import { logger } from "../utils/logger.js";
 
 export type BuilderStatus = "success" | "failure" | "error" | "timeout";
 export type BuilderProfile = "ci-mirror" | "fast" | "full";
@@ -127,8 +125,8 @@ export async function executeBuild(options: BuilderExecutorOptions): Promise<Bui
       timedOut = true;
       try {
         child.kill("SIGKILL");
-      } catch (e) {
-        log.debug("intentional swallow", { error: e, reason: "process already gone before SIGKILL" });
+      } catch (err) {
+        logger.debug("intentional-swallow", { error: String(err), reason: "process already gone" });
       }
     }, timeoutMs);
 
@@ -138,7 +136,7 @@ export async function executeBuild(options: BuilderExecutorOptions): Promise<Bui
       clearTimeout(timer);
       const durationMs = Date.now() - startedAt;
       const success = status === "success";
-      log.debug("sandbox:builder:finished", {
+      logger.debug("sandbox:builder:finished", {
         status,
         exitCode: String(exitCode ?? "null"),
         signal: String(signal ?? "null"),
@@ -159,7 +157,7 @@ export async function executeBuild(options: BuilderExecutorOptions): Promise<Bui
     };
 
     child.on("error", (err: Error) => {
-      log.warn("sandbox:builder:spawn-error", { error: err.message });
+      logger.warn("sandbox:builder:spawn-error", { error: err.message });
       finish("error", null, null);
     });
 

@@ -28,9 +28,7 @@
 import type { SqliteStore } from "../store/sqlite-store.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { WIPLimitError, FileConflictError, LockConflictError } from "../utils/errors.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "wip-gate.ts" });
+import { logger } from "../utils/logger.js";
 
 export interface WipGateOptions {
   readonly teamTask: boolean;
@@ -73,7 +71,7 @@ export function enforceWipAndFileGates(
     const warning = `WIP limit advisory: ${current}/${opts.wipLimit} tasks in_progress. ` +
       `Task "${opts.nodeId}" will start but consider finishing existing work first.`;
 
-    log.warn("wip-gate:advisory", {
+    logger.warn("wip-gate:advisory", {
       nodeId: opts.nodeId,
       current: String(current),
       limit: String(opts.wipLimit),
@@ -115,7 +113,7 @@ function enforceFileGate(opts: WipGateOptions): string[] {
 
         // Roll back all already-acquired file locks
         for (const token of acquiredTokens) {
-          try { lockManager.release(token); } catch (e) { log.debug("intentional swallow", { error: e, reason: "ignore lock release errors during rollback" }); }
+          try { lockManager.release(token); } catch (err) { logger.debug("intentional-swallow", { error: String(err), reason: "ignore release errors during rollback" }); }
         }
 
         const heldBy = Array.from(heldByMap.entries()).map(([fId, ownerId]) => ({
@@ -123,7 +121,7 @@ function enforceFileGate(opts: WipGateOptions): string[] {
           agentId: ownerId,
         }));
 
-        log.warn("wip-gate:file_conflict", {
+        logger.warn("wip-gate:file_conflict", {
           nodeId,
           conflictingFiles: conflictingFiles.join(","),
         });

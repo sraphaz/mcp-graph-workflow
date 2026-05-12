@@ -26,9 +26,7 @@
  */
 
 import { execFile } from "node:child_process";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "test-runner.ts" });
+import { logger } from "../utils/logger.js";
 
 // ── Types ───────────────────────────────────────────────
 
@@ -98,7 +96,7 @@ export async function runTests(
   return new Promise<TestRunResult>((resolve) => {
     const args = ["vitest", "run", "--reporter=json", ...testFiles];
 
-    log.debug("test-runner:start", { testFiles, timeoutMs });
+    logger.debug("test-runner:start", { testFiles, timeoutMs });
 
     const child = execFile("npx", args, {
       cwd,
@@ -110,7 +108,7 @@ export async function runTests(
 
       // Check for timeout
       if (error && "killed" in error && error.killed) {
-        log.warn("test-runner:timeout", { testFiles, timeoutMs, durationMs });
+        logger.warn("test-runner:timeout", { testFiles, timeoutMs, durationMs });
         resolve({
           success: false,
           passed: 0,
@@ -130,7 +128,7 @@ export async function runTests(
         const passed = jsonResult.numPassedTests ?? 0;
         const failed = jsonResult.numFailedTests ?? 0;
 
-        log.debug("test-runner:done", { passed, failed, durationMs });
+        logger.debug("test-runner:done", { passed, failed, durationMs });
 
         resolve({
           success: failed === 0 && (jsonResult.success ?? true),
@@ -144,7 +142,7 @@ export async function runTests(
         // JSON parse failed — treat as error
         const errMsg = stderr?.trim() || error?.message || "Unknown test runner error";
 
-        log.warn("test-runner:parse-failed", { errMsg: errMsg.slice(0, 200), durationMs });
+        logger.warn("test-runner:parse-failed", { errMsg: errMsg.slice(0, 200), durationMs });
 
         resolve({
           success: false,
@@ -161,7 +159,7 @@ export async function runTests(
     // Safety: ensure child doesn't leak on unexpected conditions
     child.on("error", (err) => {
       const durationMs = Date.now() - startTime;
-      log.warn("test-runner:child-error", { error: err.message });
+      logger.warn("test-runner:child-error", { error: err.message });
       resolve({
         success: false,
         passed: 0,
@@ -184,8 +182,8 @@ function parseVitestJson(stdout: string): VitestJsonResult | null {
   // Try direct parse first
   try {
     return JSON.parse(stdout) as VitestJsonResult;
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "JSON may be mixed with other output, scanning for last JSON block" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "JSON might be mixed with other output — find the last { ... } block" });
   }
 
   // Find the last JSON object in the output

@@ -34,9 +34,7 @@ import type { GraphNode } from "../graph/graph-types.js";
 import { KnowledgeStore } from "../store/knowledge-store.js";
 import { computePPR } from "./personalized-pagerank.js";
 import { tokenize } from "../search/tokenizer.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "rag", source: "graph-rag-strategy.ts" });
+import { logger } from "../utils/logger.js";
 
 export interface GraphRagResult {
   id: string;
@@ -85,7 +83,7 @@ export function executionGraphSearch(
   try {
     matchedNodes = store.searchNodes(query, 5);
   } catch {
-    log.debug("graph-rag: FTS search on execution graph returned no results");
+    logger.debug("graph-rag: FTS search on execution graph returned no results");
   }
 
   // Fallback: try substring match if FTS returns nothing
@@ -107,7 +105,7 @@ export function executionGraphSearch(
         matchedNodes = matched.map((node) => ({ ...node, score: 0.5 }));
       }
     } catch {
-      log.debug("graph-rag: substring fallback also failed");
+      logger.debug("graph-rag: substring fallback also failed");
     }
   }
 
@@ -190,7 +188,7 @@ export function executionGraphSearch(
     });
     pprScores = pprResult.scores;
 
-    log.debug("graph-rag: PPR computed", {
+    logger.debug("graph-rag: PPR computed", {
       nodes: visited.size,
       edges: subgraphEdges.length,
       iterations: pprResult.iterations,
@@ -257,7 +255,7 @@ export function executionGraphSearch(
   // Sort by score descending, then limit
   results.sort((a, b) => b.score - a.score);
 
-  log.info("graph-rag: execution graph search complete", {
+  logger.info("graph-rag: execution graph search complete", {
     matchedNodes: matchedNodes.length,
     expandedNodes: nodeDistances.size,
     docsFound: results.length,
@@ -286,8 +284,8 @@ function collectNeighbors(store: SqliteStore, nodeId: string): string[] {
     for (const child of children) {
       neighbors.push(child.id);
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "no children for this node, OK" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "no children — OK" });
   }
 
   // Outgoing edges (depends_on, blocks, related_to, implements, etc.)
@@ -296,8 +294,8 @@ function collectNeighbors(store: SqliteStore, nodeId: string): string[] {
     for (const edge of outgoing) {
       neighbors.push(edge.to);
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "no outgoing edges for this node, OK" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "no outgoing edges — OK" });
   }
 
   // Incoming edges (what depends on this node)
@@ -306,8 +304,8 @@ function collectNeighbors(store: SqliteStore, nodeId: string): string[] {
     for (const edge of incoming) {
       neighbors.push(edge.from);
     }
-  } catch (e) {
-    log.debug("intentional swallow", { error: e, reason: "no incoming edges for this node, OK" });
+  } catch (err) {
+    logger.debug("intentional-swallow", { error: String(err), reason: "no incoming edges — OK" });
   }
 
   return neighbors;
@@ -577,7 +575,7 @@ export function findByCommunity(
         topTerms,
       });
 
-      log.debug("graph-rag:community", {
+      logger.debug("graph-rag:community", {
         communityId: row.community_id,
         coverage: +(coverage * 100).toFixed(1),
         matchedTerms: matchedTerms.length,

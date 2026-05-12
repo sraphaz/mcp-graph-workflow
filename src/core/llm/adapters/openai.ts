@@ -14,7 +14,7 @@ import type { ProviderAdapter } from "./base.js";
 import { OperationError } from "../../utils/errors.js";
 import { createLogger } from "../../utils/logger.js";
 
-const log = createLogger({ layer: "core", source: "llm/adapters/openai.ts" });
+const log = createLogger({ layer: "core", source: "openai-adapter" });
 
 const OPENAI_DEFAULT_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -174,7 +174,7 @@ export class OpenAIAdapter implements ProviderAdapter {
           const usage = event["usage"] as Record<string, unknown> | undefined;
           if (typeof usage?.["prompt_tokens"] === "number") inputTokens = usage["prompt_tokens"] as number;
           if (typeof usage?.["completion_tokens"] === "number") outputTokens = usage["completion_tokens"] as number;
-        } catch (e) { log.debug("intentional swallow", { error: e, reason: "ignore malformed SSE line" }); }
+        } catch (err) { log.debug("intentional-swallow", { error: String(err), reason: "ignore malformed SSE lines" }); }
       }
     }
 

@@ -22,9 +22,7 @@
 
 import Database from "better-sqlite3";
 import { exportKnowledge, importKnowledge } from "./knowledge-packager.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "cross-project-learner.ts" });
+import { logger } from "../utils/logger.js";
 
 export interface LearnOptions {
   categories?: string[];
@@ -63,7 +61,7 @@ export async function learnFromProject(
   try {
     sourceDb = new Database(sourcePath, { readonly: true });
   } catch (err) {
-    log.warn("cross-project:open_failed", { sourcePath, error: String(err) });
+    logger.warn("cross-project:open_failed", { sourcePath, error: String(err) });
     return { imported: 0, skipped: 0, categories: {}, sourceProject: sourcePath };
   }
 
@@ -99,7 +97,7 @@ export async function learnFromProject(
       catCounts[cat] = (catCounts[cat] ?? 0) + 1;
     }
 
-    log.info("cross-project:learned", {
+    logger.info("cross-project:learned", {
       sourcePath,
       imported: resultValue.documentsImported,
       skipped: resultValue.documentsSkipped,
@@ -113,9 +111,9 @@ export async function learnFromProject(
       sourceProject: sourcePath,
     };
   } catch (err) {
-    log.warn("cross-project:learn_failed", { sourcePath, error: String(err) });
+    logger.warn("cross-project:learn_failed", { sourcePath, error: String(err) });
     return { imported: 0, skipped: 0, categories: {}, sourceProject: sourcePath };
   } finally {
-    try { sourceDb.close(); } catch (e) { log.debug("intentional swallow", { error: e, reason: "best-effort close of source database" }); }
+    try { sourceDb.close(); } catch (err) { logger.debug("intentional-swallow", { error: String(err), reason: "best-effort db close" }); }
   }
 }

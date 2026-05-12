@@ -30,9 +30,7 @@
 
 import type { GraphEventBus } from "../events/event-bus.js";
 import { McpGraphError } from "../utils/errors.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "ots-client.ts" });
+import { logger } from "../utils/logger.js";
 
 export type OtsStatus = "pending" | "confirmed" | "retry_scheduled";
 
@@ -80,7 +78,7 @@ export class OtsClient {
         timestamp: new Date().toISOString(),
         payload: { hash, status: receipt.status },
       });
-      log.info("OTS hash submitted", { hash, status: receipt.status });
+      logger.info("OTS hash submitted", { hash, status: receipt.status });
       return receipt;
     } catch (err) {
       const receipt: OtsReceipt = {
@@ -95,7 +93,7 @@ export class OtsClient {
         timestamp: new Date().toISOString(),
         payload: { hash, reason: (err as Error).message },
       });
-      log.warn("OTS offline — retry scheduled", { hash });
+      logger.warn("OTS offline — retry scheduled", { hash });
       return receipt;
     }
   }
@@ -116,7 +114,7 @@ export class OtsClient {
       timestamp: new Date().toISOString(),
       payload: { hash, blockTimestamp: confirmed.blockTimestamp },
     });
-    log.info("OTS receipt confirmed", { hash, blockTimestamp: confirmed.blockTimestamp });
+    logger.info("OTS receipt confirmed", { hash, blockTimestamp: confirmed.blockTimestamp });
     return confirmed;
   }
 
@@ -138,8 +136,8 @@ export class OtsClient {
           payload: { hash, status: receipt.status, flushedFromQueue: true },
         });
         flushed++;
-      } catch (e) {
-        log.debug("intentional swallow", { error: e, reason: "still offline, leaving hash in OTS queue" });
+      } catch (err) {
+        logger.debug("intentional-swallow", { error: String(err), reason: "still offline — leave in queue" });
       }
     }
     return flushed;

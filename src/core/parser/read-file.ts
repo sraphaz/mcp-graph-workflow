@@ -18,7 +18,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileExists } from "../utils/fs.js";
-import { FileNotFoundError } from "../utils/errors.js";
+import { FileNotFoundError, InvalidArgumentError } from "../utils/errors.js";
 import { assertPathInside } from "../utils/safe-path.js";
 
 export interface PrdFileResult {
@@ -38,7 +38,7 @@ export async function readPrdFile(filePath: string): Promise<PrdFileResult> {
   // Security: reject unexpected file extensions
   const ext = path.extname(absolutePath).toLowerCase();
   if (ext && !ALLOWED_EXTENSIONS.has(ext)) {
-    throw new Error(`Unsupported file extension: ${ext}. Allowed: ${[...ALLOWED_EXTENSIONS].join(", ")}`);
+    throw new InvalidArgumentError(`Unsupported file extension: ${ext}. Allowed: ${[...ALLOWED_EXTENSIONS].join(", ")}`);
   }
 
   if (!(await fileExists(absolutePath))) {

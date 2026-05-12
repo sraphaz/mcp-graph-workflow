@@ -29,9 +29,7 @@ import { KnowledgeStore } from "../store/knowledge-store.js";
 import { jaccardSimilarity } from "../utils/similarity.js";
 import { TfIdfIndex } from "../search/tfidf.js";
 import { extractEntitiesFromText } from "../rag/entity-extractor.js";
-import { createLogger } from "../utils/logger.js";
-
-const log = createLogger({ layer: "core", source: "interdisciplinary-intersector.ts" });
+import { logger } from "../utils/logger.js";
 
 function safeParseJson(raw: string | null | undefined): Record<string, unknown> | undefined {
   if (!raw) return undefined;
@@ -107,7 +105,7 @@ function buildGroups(db: Database.Database): DocGroup[] {
   for (const row of rows) {
     let meta: Record<string, unknown> | null = null;
     if (row.metadata) {
-      try { meta = JSON.parse(row.metadata) as Record<string, unknown>; } catch (e) { log.debug("intentional swallow", { error: e, reason: "corrupted metadata, skip deserialization" }); }
+      try { meta = JSON.parse(row.metadata) as Record<string, unknown>; } catch (err) { logger.debug("intentional-swallow", { error: String(err), reason: "corrupted metadata — skip" }); }
     }
     let group = byType.get(row.source_type);
     if (!group) {
@@ -187,7 +185,7 @@ export function computeIntersections(
   const groups = buildGroups(db).filter((g) => g.docs.length >= MIN_DOCS_PER_GROUP);
 
   if (groups.length < 2) {
-    log.info("intersector:skip", { reason: "fewer than 2 source type groups", groupCount: groups.length });
+    logger.info("intersector:skip", { reason: "fewer than 2 source type groups", groupCount: groups.length });
     return [];
   }
 
@@ -240,7 +238,7 @@ export function computeIntersections(
   candidates.sort((a, b) => b.combinedScore - a.combinedScore);
 
   const capped = candidates.slice(0, limit);
-  log.info("intersector:computed", { total: candidates.length, returned: capped.length });
+  logger.info("intersector:computed", { total: candidates.length, returned: capped.length });
   return capped;
 }
 
@@ -325,7 +323,7 @@ export function generateIntersectionInsights(
     });
   }
 
-  log.info("intersector:insights_generated", { count: insights.length });
+  logger.info("intersector:insights_generated", { count: insights.length });
   return insights;
 }
 
