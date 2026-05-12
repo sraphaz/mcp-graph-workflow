@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.16.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.5...mcp-graph-v13.16.0) (2026-05-12)
+
+
+### Features
+
+* **scripts:** add findRawThrows + audit:throws CLI for Story 8 ([#402](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/402)) ([c444b0e](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/c444b0e1d167854932a944a6df79863d4518b3ba))
+
 ## [13.15.5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.4...mcp-graph-v13.15.5) (2026-05-12)
 
 
