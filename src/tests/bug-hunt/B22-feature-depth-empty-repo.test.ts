@@ -19,26 +19,63 @@
  * B22 (P2): analyze(mode: "feature_depth") deve falhar com erro acionável
  * quando o cwd não tem fontes Go (ou go.mod) — não com stderr vazio.
  *
- * Repro:
- *   $ cd /tmp/empty-project && mcp-graph init
- *   $ echo '{...analyze feature_depth...}' | mcp-graph-stdio
- *   {"ok":false,"mode":"feature_depth","error":"go_run_failed","exitCode":null,"stderr":""}
- *   [WARN] tool:analyze:feature_depth:go_failed exitCode="null"
- *
- * Go binary IS instalado (1.26.1). A falha é silenciosa — exit code null,
- * stderr vazio — e o user fica sem saber se é problema de Go ausente,
- * cwd errado, ou bug.
- *
- * Esperado: error code = "no_source_files" com hint "feature_depth requires
- * a source tree at <path> (go files, ts files)" antes de invocar go run.
- *
- * Source: mcp-graph notebook node_3741375074f4.
+ * §bug-hunt node_3741375074f4
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-describe.skip("B22 — analyze feature_depth opaque go_run_failed (recon, no fix yet)", () => {
-  it("returns no_source_files with actionable hint when cwd has no source tree", () => {
-    expect(true).toBe(true);
+describe("B22 — analyze feature_depth no-source-files pre-check", () => {
+  const tmps: string[] = [];
+
+  afterEach(async () => {
+    for (const d of tmps) {
+      await rm(d, { recursive: true, force: true });
+    }
+    tmps.length = 0;
+  });
+
+  async function makeTmpDir(): Promise<string> {
+    const d = await mkdtemp(join(tmpdir(), "b22-"));
+    tmps.push(d);
+    return d;
+  }
+
+  it("hasSourceFiles returns false for an empty directory", async () => {
+    const { hasSourceFiles } = await import(
+      "../../core/analyzer/feature-depth-mode.js"
+    );
+    const dir = await makeTmpDir();
+    expect(await hasSourceFiles(dir)).toBe(false);
+  });
+
+  it("hasSourceFiles returns false for a directory with only non-source files", async () => {
+    const { hasSourceFiles } = await import(
+      "../../core/analyzer/feature-depth-mode.js"
+    );
+    const dir = await makeTmpDir();
+    await writeFile(join(dir, "README.md"), "# hello");
+    await writeFile(join(dir, "config.json"), "{}");
+    expect(await hasSourceFiles(dir)).toBe(false);
+  });
+
+  it("hasSourceFiles returns true for a directory with a .go file", async () => {
+    const { hasSourceFiles } = await import(
+      "../../core/analyzer/feature-depth-mode.js"
+    );
+    const dir = await makeTmpDir();
+    await writeFile(join(dir, "main.go"), "package main\n");
+    expect(await hasSourceFiles(dir)).toBe(true);
+  });
+
+  it("hasSourceFiles returns true for a directory with a .ts file", async () => {
+    const { hasSourceFiles } = await import(
+      "../../core/analyzer/feature-depth-mode.js"
+    );
+    const dir = await makeTmpDir();
+    await writeFile(join(dir, "index.ts"), "export const x = 1;\n");
+    expect(await hasSourceFiles(dir)).toBe(true);
   });
 });
