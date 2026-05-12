@@ -177,11 +177,11 @@ describe("E2E — maestro loop", () => {
     }
 
     // ── AC2: total time within budget. Ubuntu CI runners are ~2x slower than
-    // local darwin/arm64 dev — budget further raised to 25s to also tolerate
-    // CPU contention when the full vitest suite (~8000 tests) runs in parallel.
+    // local darwin/arm64 dev — budget raised to 35s to tolerate CPU contention
+    // when the full vitest suite (~14000 tests) runs in parallel.
     // Catches order-of-magnitude regressions; isolated baseline ≈ 1-2s.
     const elapsed = Date.now() - t0;
-    expect(elapsed).toBeLessThan(25_000);
+    expect(elapsed).toBeLessThan(35_000);
   });
 
   it("plan postCallback contract — tool=finish_task and nodeId is preserved through the loop", async () => {

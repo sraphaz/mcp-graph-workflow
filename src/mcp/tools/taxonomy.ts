@@ -79,7 +79,6 @@ export const TOOL_TAXONOMY: Record<string, ToolProfile> = {
   delegate: "expert",
   evolve: "expert",
   delete_memory: "expert",
-  feature_depth: "expert",
   forecast: "expert",
   graph_explore_web: "expert",
   graph_health: "expert",
