@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.15.4](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.3...mcp-graph-v13.15.4) (2026-05-12)
+
+
+### Bug Fixes
+
+* **analyze:** add hasSourceFiles pre-check for feature_depth mode ([#399](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/399)) ([afe613a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/afe613aa921aecf9e6b325e010657b890ac61682))
+
 ## [13.15.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.2...mcp-graph-v13.15.3) (2026-05-12)
 
 
