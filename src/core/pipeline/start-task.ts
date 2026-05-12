@@ -28,8 +28,7 @@ import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
 import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/task-readiness-score.js";
-import { getTouchedFiles } from "../planner/touched-files.js";
-import { getBaseline } from "../feature-depth/baselines-store.js";
+// feature-depth module retired (removed in #385); baseline always null.
 import { buildTaskContext } from "../context/compact-context.js";
 import type { GraphSnapshot } from "../store/graph-snapshot-cache.js";
 import { assembleContext } from "../context/context-assembler.js";
@@ -299,10 +298,6 @@ export function startTask(
   // empirical pass-rate overrides the heuristic recommendation.
   let modelHint: TaskReadinessScore | undefined;
   try {
-    const touched = getTouchedFiles(taskNode);
-    const primaryFile = touched.length > 0 ? touched[0] : null;
-    const fdBaseline = primaryFile ? getBaseline(store.getDb(), primaryFile) : null;
-
     let empiricalOverride: { model: ModelPreference; basedOn: number; passRate: number } | undefined;
     try {
       const runs = new EvalRunStore(store.getDb());
@@ -320,7 +315,7 @@ export function startTask(
 
     modelHint = computeTaskReadinessScore(taskNode, doc, {
       harnessScore: harnessWarning ? harnessWarning.score : null,
-      featureDepthScore: fdBaseline?.score ?? null,
+      featureDepthScore: null, // feature-depth retired (#385)
       empiricalOverride,
     });
   } catch (err) {

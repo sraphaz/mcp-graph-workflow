@@ -44,13 +44,10 @@ import { runTestGate, type TestGateResult, type TestGateMode } from "../harness/
 import { checkInvariants, getBuiltInInvariants, type InvariantResult } from "../harness/property-invariants.js";
 import { discoverTestFiles } from "../harness/test-discovery.js";
 import { runSyntheticValidation, type SyntheticValidationResult } from "../harness/synthetic-validation-gate.js";
-import {
-  runFeatureDepthCheck,
-  type FeatureDepthReport,
-} from "../feature-depth/finish-task-integration.js";
+// feature-depth module retired (removed in #385); keep minimal type for result shape compat.
+type FeatureDepthReport = { blockers: string[]; warnings: string[] } | null;
 import { analyzeTrajectory } from "../skills/trajectory-analyzer.js";
 import { proposeSkillFromTrajectory, type SkillProposal } from "../skills/auto-skill-proposer.js";
-import { getTouchedFiles } from "../planner/touched-files.js";
 import { mergeShadowBranch, discardShadowBranch } from "../autonomy/shadow-branch.js";
 import { SubtaskArtifactsStore, type ArtifactKind } from "../store/subtask-artifacts-store.js";
 import type { LockManager } from "../store/lock-manager.js";
@@ -348,28 +345,8 @@ export async function finishTask(
   // for every touched file as a side effect (best-effort, errors
   // are swallowed by the DAO so a baselines issue never blocks the
   // task). See src/core/feature-depth/finish-task-integration.ts.
-  let featureDepthReport: FeatureDepthReport | null = null;
-  try {
-    const node = store.getNodeById(nodeId);
-    const touchedFiles = node ? getTouchedFiles(node) : [];
-    if (touchedFiles.length > 0) {
-      featureDepthReport = await runFeatureDepthCheck({
-        store,
-        projectRoot: process.cwd(),
-        nodeId,
-        touchedFiles,
-      });
-      // Strict mode (set_phase({ featureDepth: "strict" })) — promote
-      // regressions from advisory warnings to blockers. Mode is resolved
-      // inside the integration; the report's `blockers` array is empty
-      // when mode is "advisory" or "off".
-      if (featureDepthReport.blockers.length > 0) {
-        blockers.push(...featureDepthReport.blockers);
-      }
-    }
-  } catch (err) {
-    logger.warn("pipeline:finish_task:feature_depth_failed", { error: String(err) });
-  }
+  // feature-depth check retired (module removed in #385) — always null.
+  const featureDepthReport: FeatureDepthReport = null;
 
   // 2a. Verify task ownership in teamTask mode
   if (lockManager && agentId) {

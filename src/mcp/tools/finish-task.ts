@@ -54,13 +54,10 @@ export function registerFinishTask(server: McpServer, store: SqliteStore, lockMa
         content: z.string(),
       })).optional().describe("v11 Context-Pollination: structured outputs to persist in subtask_artifacts. Optional — omit to keep v10 behavior."),
     },
-    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, shadowWorktreePath, artifacts }) => {
+    async ({ nodeId, rationale, testFiles, autoNext, qualityGates, citations, agentId, leaseToken, shadowBranch, artifacts }) => {
       log.debug("tool:finish_task", { nodeId, rationale: rationale?.slice(0, 60), autoNext, qualityGates, agentId });
 
-      const shadowBranchInput = shadowBranch && shadowWorktreePath
-        ? { branchName: shadowBranch, worktreePath: shadowWorktreePath }
-        : shadowBranch;
-      const resultValue = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch: shadowBranchInput, artifacts });
+      const resultValue = await finishTask(store, nodeId, { rationale, testFiles, autoNext, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts });
 
       log.info("tool:finish_task:ok", {
         nodeId,
