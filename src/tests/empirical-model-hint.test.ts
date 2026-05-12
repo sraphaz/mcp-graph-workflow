@@ -23,6 +23,8 @@ interface SeedRow {
   costUsd?: number;
 }
 
+let _seedSeq = 0;
+
 function seed(
   goldens: GoldenStore,
   runs: EvalRunStore,
@@ -45,7 +47,7 @@ function seed(
       cache.set(r.tool, goldenId);
     }
     runs.record({
-      runId: "r",
+      runId: `r${++_seedSeq}`,
       goldenId,
       score: r.passed ? 1 : 0,
       passed: r.passed,

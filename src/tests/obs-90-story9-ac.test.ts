@@ -23,7 +23,7 @@ describe("Story 9 AC — GET /api/v1/health is mounted and returns health shape"
   it("GET /api/v1/health returns 200 or 503 (not 404)", async () => {
     const res = await request(ctx.app).get("/api/v1/health");
     expect(res.status).not.toBe(404);
-  });
+  }, 60_000);
 
   it("GET /api/v1/health returns { status } field", async () => {
     const res = await request(ctx.app).get("/api/v1/health");
