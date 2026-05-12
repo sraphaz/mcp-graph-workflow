@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.17.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.16.0...mcp-graph-v13.17.0) (2026-05-12)
+
+
+### Features
+
+* **obs-90:** Story 8 AC — 0 empty catches + 0 raw throws in src/core/ ([#404](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/404)) ([eb65233](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/eb652332bfcf649cd57efc95f6a24d4b0b8eeaec))
+
 ## [13.16.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.5...mcp-graph-v13.16.0) (2026-05-12)
 
 
