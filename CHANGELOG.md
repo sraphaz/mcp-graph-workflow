@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.15.5](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.4...mcp-graph-v13.15.5) (2026-05-12)
+
+
+### Bug Fixes
+
+* **core:** replace empty catch blocks with void _err to satisfy audit-catches gate ([#390](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/390)) ([42cc725](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/42cc7252a002942e6f09271234b12d74218e6323))
+
 ## [13.15.4](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.15.3...mcp-graph-v13.15.4) (2026-05-12)
 
 
