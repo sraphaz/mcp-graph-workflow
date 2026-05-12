@@ -82,16 +82,14 @@ describe.skipIf(!SETTINGS_PRESENT)(".claude/settings.json hooks wiring (E10.T03)
     for (const cmd of allCommands) {
       const path = cmd.startsWith("/") ? cmd : join(process.cwd(), cmd);
       // A hook may be intentionally disabled by renaming the script to
-      // `<path>.disabled` (project memory: feedback_hook_disabled_during_release —
-      // block-dangerous-git.sh is parked while the release cascade runs and
-      // should NOT be restored just to satisfy this assertion). Treat the
-      // disabled sibling as an acceptable alternative so the contract becomes:
-      // either the script is live, or it's deliberately parked next to it.
+      // `<path>.disabled` or `<path>.off` (project convention: git-workflow.md Rule 6
+      // uses `.sh.off`; block-dangerous-git.sh is parked during release cascades
+      // and should NOT be restored just to satisfy this assertion).
       const liveExists = existsSync(path);
-      const disabledExists = existsSync(`${path}.disabled`);
+      const disabledExists = existsSync(`${path}.disabled`) || existsSync(`${path}.off`);
       expect(
         liveExists || disabledExists,
-        `missing hook script: ${cmd} (neither ${path} nor ${path}.disabled found)`,
+        `missing hook script: ${cmd} (neither live nor .disabled/.off found at ${path})`,
       ).toBe(true);
     }
   });
