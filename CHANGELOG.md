@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.18.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.1...mcp-graph-v13.18.2) (2026-05-13)
+
+
+### Bug Fixes
+
+* **ci:** force-add provenance OTS files past gitignore ([506dd2d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/506dd2d3708020938034520da88c8bf5e95e0200))
+* **tests:** remove redundant browser-pilot smoke test failing in CI ([3fe040a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/3fe040a680555c3d9c302cd666691ecd54bdcaf0))
+
 ## [13.18.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.0...mcp-graph-v13.18.1) (2026-05-13)
 
 
