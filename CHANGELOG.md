@@ -1,5 +1,12 @@
 # Changelog
 
+## [13.19.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.3...mcp-graph-v13.19.0) (2026-05-13)
+
+
+### Features
+
+* autonomy-gap sprint 1+2 — AC evidence, ONNX default, episodic outcomes, calibration ([#424](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/issues/424)) ([abca772](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/abca772a336721367a5d6775f56607cc2d33702e))
+
 ## [13.18.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.2...mcp-graph-v13.18.3) (2026-05-13)
 
 
