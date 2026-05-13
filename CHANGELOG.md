@@ -1,5 +1,16 @@
 # Changelog
 
+## [13.18.1](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.0...mcp-graph-v13.18.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* **ci:** accept .sh.off as valid hook-disabled state in claude-settings-hooks test ([af35b2b](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/af35b2b24b7b845ba5fc50596eba80df9d3b0f78))
+* **ci:** migrate logger singleton → createLogger, wire browser-tests route, fix metrics ([127ee0d](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/127ee0da083d35c22196741a91b01292abf1604f))
+* **ci:** remove deleted modules from taxonomy, raise maestro-loop timing budget ([911bb3a](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/911bb3a106815629635ca947525a295a93106fa9))
+* **ci:** remove stale file reference from cross-platform-paths allowlist ([04d477f](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/04d477f8198ca55d317eb3cb84f2b08d4bac35e7))
+* **tests:** unique runId in empirical-model-hint seed, raise health timeout ([2217267](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/2217267fc31481a9f7d137cf4cffc8dc9a324e1b))
+
 ## [13.18.0](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.17.0...mcp-graph-v13.18.0) (2026-05-12)
 
 
