@@ -8,9 +8,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import * as mod from "../core/browser-harness/llm-planner.js";
+import * as mod from "../schemas/browser-pilot.schema.js";
 
-describe("llm-planner (smoke)", () => {
+describe("browser-pilot.schema (smoke)", () => {
   it("module imports without throwing", () => {
     expect(mod).toBeDefined();
   });

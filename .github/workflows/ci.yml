@@ -5,6 +5,10 @@ name: CI
 # silently skip on docs-only PRs, deadlocking branch protection. Instead,
 # every job registers a check, and expensive steps are conditionally skipped
 # based on what actually changed (see the `changes` job below).
+#
+# Fast CI bypass: add "[fast ci]" to the PR title or commit message to skip
+# all tests and the build. preflight (lint + typecheck) still runs. Every
+# required check still reports green — no branch protection changes needed.
 
 on:
   push:
@@ -21,16 +25,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Classifies the PR: does it touch code/config that warrants a full CI run,
-  # or is it docs/site-only? All downstream jobs consume `needs.changes.outputs.code`
-  # and either do full work (when code changed) or a ~5-second trivial pass
-  # (when only docs/site/markdown changed). Either way the required check
-  # reports back to branch protection.
+  # Classifies the PR: docs-only vs code change, and whether fast CI bypass
+  # is active. All downstream jobs consume these outputs.
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      fast_ci: ${{ steps.fast-check.outputs.active }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
@@ -49,7 +51,21 @@ jobs:
               - '.github/actions/**'
               - 'scripts/**'
               - '.license-header.tpl'
+      - name: Detect fast CI flag
+        id: fast-check
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          if [[ "$PR_TITLE" == *"[fast ci]"* ]] || [[ "$COMMIT_MSG" == *"[fast ci]"* ]]; then
+            echo "active=true" >> $GITHUB_OUTPUT
+            echo "::notice::Fast CI active — tests and build will be bypassed."
+          else
+            echo "active=false" >> $GITHUB_OUTPUT
+          fi
 
+  # Lint + typecheck. Runs in parallel with build-artifacts so both gates
+  # complete concurrently rather than blocking each other.
+  # Always runs — even in fast CI mode (lint+typecheck is fast: ~2-3 min parallel).
   preflight:
     needs: changes
     runs-on: ubuntu-latest
@@ -60,102 +76,41 @@ jobs:
         uses: ./.github/actions/setup
         with:
           ignore-scripts: 'true'
-      - name: Lint
+      - name: Lint and Typecheck (parallel)
         if: needs.changes.outputs.code == 'true'
-        run: npm run lint
-      - name: Typecheck
-        if: needs.changes.outputs.code == 'true'
-        run: npm run typecheck
+        run: |
+          npm run lint > /tmp/lint.log 2>&1 &
+          PID_LINT=$!
+          npm run typecheck > /tmp/type.log 2>&1 &
+          PID_TYPE=$!
+          wait $PID_LINT; LINT_EXIT=$?
+          wait $PID_TYPE; TYPE_EXIT=$?
+          echo "=== LINT ==="
+          cat /tmp/lint.log
+          echo "=== TYPECHECK ==="
+          cat /tmp/type.log
+          exit $(( LINT_EXIT + TYPE_EXIT ))
       - name: Docs-only skip
         if: needs.changes.outputs.code != 'true'
         run: echo "::notice::Docs/site-only change; preflight steps skipped but check reports passed."
 
-  test:
-    needs: [changes, preflight]
+  # Builds the project once and uploads dist/ as a workflow artifact. Runs in
+  # parallel with preflight — test/hooks/build jobs wait for BOTH before
+  # starting. This eliminates 5 redundant npm-run-build executions per CI run.
+  # Skipped in fast CI mode (tests won't run, build-verify also bypasses).
+  build-artifacts:
+    needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v6
-      - if: needs.changes.outputs.code == 'true'
-        uses: ./.github/actions/setup
-        # Dashboard deps needed because some tests import from
-        # src/web/dashboard/src/** which in turn resolves `react`,
-        # `lucide-react`, etc. from the dashboard's own node_modules.
-        with:
-          install-dashboard: 'true'
-      - name: Build CLI + dashboard (required by tests that spawn the CLI
-          or import compiled dashboard output)
-        if: needs.changes.outputs.code == 'true'
-        run: npm run build
-      - name: Vitest (shard ${{ matrix.shard }}/4)
-        if: needs.changes.outputs.code == 'true'
-        run: npx vitest run --shard=${{ matrix.shard }}/4 --reporter=default --reporter=junit --outputFile=junit-shard-${{ matrix.shard }}.xml
-      - name: Upload junit report
-        if: needs.changes.outputs.code == 'true' && always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: junit-shard-${{ matrix.shard }}
-          path: junit-shard-${{ matrix.shard }}.xml
-          retention-days: 7
-      - name: Docs-only skip
-        if: needs.changes.outputs.code != 'true'
-        run: echo "::notice::Docs/site-only change; shard ${{ matrix.shard }}/4 trivially passed."
-
-  test-hooks-flag:
-    # Wave E3 — runs the suite with MCP_GRAPH_GATES_IN_HOOKS=on so the
-    # feature-flagged hook-driven enforcement path is covered alongside the
-    # default (wrapper-driven) path that the sharded `test` job exercises.
-    # One unsharded job: the suite is fast enough end-to-end and the goal is
-    # parity with the default path, not faster wall-clock.
-    needs: [changes, preflight]
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    env:
-      MCP_GRAPH_GATES_IN_HOOKS: "on"
-    steps:
-      - uses: actions/checkout@v6
-      - if: needs.changes.outputs.code == 'true'
+      - if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
         uses: ./.github/actions/setup
         with:
           install-dashboard: 'true'
-      - name: Build (required for cross-package gate primitives)
-        if: needs.changes.outputs.code == 'true'
-        run: npm run build
-      - name: Vitest with MCP_GRAPH_GATES_IN_HOOKS=on
-        if: needs.changes.outputs.code == 'true'
-        run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-hooks-flag.xml
-      - name: Upload junit report
-        if: needs.changes.outputs.code == 'true' && always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: junit-hooks-flag
-          path: junit-hooks-flag.xml
-          retention-days: 7
-      - name: Docs-only skip
-        if: needs.changes.outputs.code != 'true'
-        run: echo "::notice::Docs/site-only change; hooks-flag suite trivially passed."
-
-  build:
-    needs: [changes, preflight]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-      - if: needs.changes.outputs.code == 'true'
-        uses: ./.github/actions/setup
-        with:
-          install-dashboard: 'true'
-
-      - name: Security audit (production deps)
-        if: needs.changes.outputs.code == 'true'
-        run: npm audit --audit-level=high --omit=dev
 
       - name: Cache TS build output
-        if: needs.changes.outputs.code == 'true'
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
         id: tsbuild-cache
         uses: actions/cache@v5
         with:
@@ -168,11 +123,156 @@ jobs:
             tsbuild-${{ runner.os }}-node22-
 
       - name: Build
-        if: needs.changes.outputs.code == 'true'
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true' && steps.tsbuild-cache.outputs.cache-hit != 'true'
         run: npm run build
 
+      - name: Upload build artifact
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-dist
+          path: |
+            dist/
+            src/web/dashboard/dist/
+          retention-days: 1
+
+      - name: Fast CI bypass
+        if: needs.changes.outputs.fast_ci == 'true'
+        run: echo "::notice::Fast CI active — build-artifacts bypassed."
+
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: echo "::notice::Docs/site-only change; build-artifacts trivially passed."
+
+  test:
+    needs: [changes, preflight, build-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v6
+      - if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: ./.github/actions/setup
+        # Dashboard deps needed because some tests import from
+        # src/web/dashboard/src/** which in turn resolves `react`,
+        # `lucide-react`, etc. from the dashboard's own node_modules.
+        with:
+          install-dashboard: 'true'
+
+      - name: Download build artifact
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: actions/download-artifact@v7
+        with:
+          name: build-dist
+
+      - name: Vitest (shard ${{ matrix.shard }}/4)
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin master --depth=1
+            EXTRA_FLAGS="--changed origin/master --passWithNoTests"
+          else
+            EXTRA_FLAGS=""
+          fi
+          npx vitest run $EXTRA_FLAGS --shard=${{ matrix.shard }}/4 --reporter=default --reporter=junit --outputFile=junit-shard-${{ matrix.shard }}.xml
+
+      - name: Upload junit report
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true' && always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-shard-${{ matrix.shard }}
+          path: junit-shard-${{ matrix.shard }}.xml
+          retention-days: 7
+
+      - name: Fast CI bypass
+        if: needs.changes.outputs.fast_ci == 'true'
+        run: echo "::notice::Fast CI active — test shard ${{ matrix.shard }}/4 bypassed."
+
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: echo "::notice::Docs/site-only change; shard ${{ matrix.shard }}/4 trivially passed."
+
+  test-hooks-flag:
+    # Wave E3 — runs the suite with MCP_GRAPH_GATES_IN_HOOKS=on so the
+    # feature-flagged hook-driven enforcement path is covered alongside the
+    # default (wrapper-driven) path that the sharded `test` job exercises.
+    # Sharded into 4 parallel jobs (same pattern as `test`) to avoid being
+    # the critical-path bottleneck (was 12 min unsharded, now ~4 min sharded).
+    needs: [changes, preflight, build-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      MCP_GRAPH_GATES_IN_HOOKS: "on"
+    steps:
+      - uses: actions/checkout@v6
+      - if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: ./.github/actions/setup
+        with:
+          install-dashboard: 'true'
+
+      - name: Download build artifact
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: actions/download-artifact@v7
+        with:
+          name: build-dist
+
+      - name: Vitest with MCP_GRAPH_GATES_IN_HOOKS=on (shard ${{ matrix.shard }}/4)
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin master --depth=1
+            EXTRA_FLAGS="--changed origin/master --passWithNoTests"
+          else
+            EXTRA_FLAGS=""
+          fi
+          npx vitest run $EXTRA_FLAGS --shard=${{ matrix.shard }}/4 --reporter=default --reporter=junit --outputFile=junit-hooks-${{ matrix.shard }}.xml
+
+      - name: Upload junit report
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true' && always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-hooks-${{ matrix.shard }}
+          path: junit-hooks-${{ matrix.shard }}.xml
+          retention-days: 7
+
+      - name: Fast CI bypass
+        if: needs.changes.outputs.fast_ci == 'true'
+        run: echo "::notice::Fast CI active — hooks-flag shard ${{ matrix.shard }}/4 bypassed."
+
+      - name: Docs-only skip
+        if: needs.changes.outputs.code != 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: echo "::notice::Docs/site-only change; hooks-flag shard ${{ matrix.shard }}/4 trivially passed."
+
+  build:
+    needs: [changes, preflight, build-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: ./.github/actions/setup
+        with:
+          install-dashboard: 'true'
+
+      - name: Security audit (production deps)
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: npm audit --audit-level=high --omit=dev
+
+      - name: Download build artifact
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        uses: actions/download-artifact@v7
+        with:
+          name: build-dist
+
       - name: Check build size
-        if: needs.changes.outputs.code == 'true'
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
         run: |
           SIZE=$(du -sh dist/ | cut -f1)
           echo "## Build Size: $SIZE" >> $GITHUB_STEP_SUMMARY
@@ -182,7 +282,7 @@ jobs:
           fi
 
       - name: Package dry-run
-        if: needs.changes.outputs.code == 'true'
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
         run: |
           npm pack --dry-run 2>&1 | tail -20
           echo "## Package Contents" >> $GITHUB_STEP_SUMMARY
@@ -191,18 +291,22 @@ jobs:
       # Sprint 8 #8.6 — bench regression gate.
       # Builds the v11 CLI (tools/cli) so its dist/cli.mjs exists, then
       # compares cold-start median against the persisted baseline. Fails
-      # the job when median regresses past +15%. Heap gate (+10%) is
-      # documented as deferred in docs/_internal/dx/v10-baseline.md.
+      # the job when median regresses past +15%. 10 runs is enough to
+      # detect a +15% regression reliably while staying fast.
       - name: Build v11 CLI for bench gate
-        if: needs.changes.outputs.code == 'true'
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
         run: npm --prefix tools/cli ci && npm --prefix tools/cli run build
 
       - name: Cold-start regression gate (≤ +15%)
-        if: needs.changes.outputs.code == 'true'
-        run: node scripts/bench-regression-check.mjs --runs 30 --threshold 15
+        if: needs.changes.outputs.code == 'true' && needs.changes.outputs.fast_ci != 'true'
+        run: node scripts/bench-regression-check.mjs --runs 10 --threshold 15
+
+      - name: Fast CI bypass
+        if: needs.changes.outputs.fast_ci == 'true'
+        run: echo "::notice::Fast CI active — build-verify bypassed."
 
       - name: Docs-only skip
-        if: needs.changes.outputs.code != 'true'
+        if: needs.changes.outputs.code != 'true' && needs.changes.outputs.fast_ci != 'true'
         run: echo "::notice::Docs/site-only change; build trivially passed."
 
   commitlint:

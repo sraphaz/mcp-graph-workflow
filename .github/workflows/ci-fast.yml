@@ -1,0 +1,62 @@
+name: CI Fast
+
+# Fast-track CI path for hotfixes. Triggered when:
+# - Commit message or PR title contains [fast ci]
+# - PR receives the `hotfix` label
+#
+# Runs: lint + typecheck + build + smoke only. No test suite.
+# Target: <3 min wall-clock.
+#
+# Branch protection note: to use as an emergency bypass, add "CI Fast / fast-check"
+# as an accepted required check in GitHub repo Settings → Branches → master,
+# OR use `gh pr merge --admin` for one-off admin overrides.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-check:
+    if: |
+      contains(github.event.head_commit.message, '[fast ci]') ||
+      contains(github.event.pull_request.title, '[fast ci]') ||
+      github.event.label.name == 'hotfix'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Install dependencies (with scripts for build)
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke test
+        run: node dist/cli/index.js --help

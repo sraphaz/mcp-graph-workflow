@@ -29,12 +29,25 @@ runs:
         node-version: 22
         cache: npm
 
+    # Direct node_modules cache: on hit, skips npm ci entirely (~90s saved).
+    # Key includes ignore-scripts so jobs with different install modes get
+    # independent cache entries (avoids sharing a husky-less install with jobs
+    # that need lifecycle scripts to compile native deps).
+    - name: Cache node_modules
+      id: nm-cache
+      uses: actions/cache@v5
+      with:
+        path: node_modules
+        key: nm-${{ runner.os }}-node22-${{ inputs.ignore-scripts }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          nm-${{ runner.os }}-node22-${{ inputs.ignore-scripts }}-
+
     # §pacify-ci — runner network flakes (ECONNRESET, EAI_AGAIN) hit ~1 in
     # ~50 runs of `npm ci` on GitHub-hosted runners. We retry up to 3 times
     # with a short backoff before giving up. --prefer-offline drains from
     # the npm cache when reachable so the retry is fast in the happy case.
     - name: Install dependencies (ignore scripts)
-      if: inputs.ignore-scripts == 'true'
+      if: inputs.ignore-scripts == 'true' && steps.nm-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         for attempt in 1 2 3; do
@@ -45,7 +58,7 @@ runs:
         exit 1
 
     - name: Install dependencies
-      if: inputs.ignore-scripts != 'true'
+      if: inputs.ignore-scripts != 'true' && steps.nm-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         for attempt in 1 2 3; do
