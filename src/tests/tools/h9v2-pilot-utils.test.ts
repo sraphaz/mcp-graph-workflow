@@ -7,10 +7,15 @@
  * Tests for H9v2 pilot utilities: key loading (mask safety) and response extraction.
  */
 
-import { describe, it, expect } from "vitest";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { describe, it, expect, afterAll } from "vitest";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const createdDirs: string[] = [];
+afterAll(() => {
+  for (const d of createdDirs) rmSync(d, { recursive: true, force: true });
+});
 
 import { loadApiKey, maskKey } from "../../../tools/h9v2-pilot/load-key.js";
 import { extractFiles, latestPerPath } from "../../../tools/h9v2-pilot/extract.js";
@@ -34,7 +39,7 @@ describe("maskKey", () => {
 
 describe("loadApiKey — file mode", () => {
   it("should load key from workflow-graph/key.txt when present", () => {
-    const dir = mkdtempSync(join(tmpdir(), "h9v2-"));
+    const dir = mkdtempSync(join(tmpdir(), "h9v2-")); createdDirs.push(dir);
     mkdirSync(join(dir, "workflow-graph"));
     writeFileSync(join(dir, "workflow-graph/key.txt"), "sk-or-v1-testkey12345\n");
 
@@ -47,7 +52,7 @@ describe("loadApiKey — file mode", () => {
   });
 
   it("should throw if key file is empty", () => {
-    const dir = mkdtempSync(join(tmpdir(), "h9v2-"));
+    const dir = mkdtempSync(join(tmpdir(), "h9v2-")); createdDirs.push(dir);
     mkdirSync(join(dir, "workflow-graph"));
     writeFileSync(join(dir, "workflow-graph/key.txt"), "   \n  ");
 
@@ -55,7 +60,7 @@ describe("loadApiKey — file mode", () => {
   });
 
   it("should throw descriptive error when no source available", () => {
-    const dir = mkdtempSync(join(tmpdir(), "h9v2-"));
+    const dir = mkdtempSync(join(tmpdir(), "h9v2-")); createdDirs.push(dir);
     const prev = process.env.OPENROUTER_API_KEY;
     delete process.env.OPENROUTER_API_KEY;
     try {

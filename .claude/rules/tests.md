@@ -14,3 +14,4 @@ globs: src/tests/**/*.test.ts
 - **No unnecessary mocks** — prefer real lightweight instances; mock only external boundaries
 - **Descriptive names** — `it('should return next unblocked task sorted by priority')`
 - **Test files** — colocated in `src/tests/`, named `*.test.ts`
+- **Temp cleanup obrigatório** — todo teste que cria dirs/arquivos em `/tmp` via `mkdtempSync` ou path hardcoded DEVE ter `afterAll(() => rmSync(dir, { recursive: true, force: true }))` (ou `afterEach` se criado por `beforeEach`). Nunca usar paths hardcoded em `/tmp` — sempre `mkdtempSync` para unicidade entre runs paralelos. Cache intencional (ex: modelos ONNX) vai para `~/.cache/mcp-graph/`, não `/tmp`.

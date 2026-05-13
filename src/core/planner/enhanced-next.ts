@@ -29,6 +29,7 @@ import { runHarnessScanCached } from "../harness/harness-cache.js";
 import type { LockManager } from "../store/lock-manager.js";
 import { PlannerError, getErrorMessage } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
+import { computeSizeCalibration, type XpSize } from "../analyzer/estimate-calibration-analyzer.js";
 
 const log = createLogger({ layer: "core", source: "enhanced-next.ts" });
 
@@ -61,6 +62,11 @@ export interface EnhancedNextResult {
     weakDimensions: string[];
     matchedTags: string[];
   };
+  /**
+   * Task 2.3: calibration warning when the task's xpSize has a historical bias > 30%.
+   * Example: "M tasks historically take 45% longer — consider sizing up"
+   */
+  calibrationWarning?: string;
 }
 
 export interface EnhancedNextOptions {
@@ -147,11 +153,29 @@ export function findEnhancedNextTask(
     log.debug("enhanced-next: harness scan failed", { error: getErrorMessage(err) });
   }
 
+  // Task 2.3: calibration warning — fire when xpSize has historical bias > 30%
+  // and confidence is not low (requires ≥5 samples for medium). §ADR-deterministic-first
+  let calibrationWarning: string | undefined;
+  try {
+    const taskSize = baseResult.node.xpSize as XpSize | undefined;
+    if (taskSize) {
+      const calibration = computeSizeCalibration(store);
+      const entry = calibration[taskSize];
+      if (entry && Math.abs(entry.bias_pct) > 30 && entry.confidence !== "low") {
+        const direction = entry.bias_pct > 0 ? "longer" : "shorter";
+        calibrationWarning = `${taskSize} tasks historically take ${Math.abs(entry.bias_pct)}% ${direction} — consider sizing ${entry.bias_pct > 0 ? "up" : "down"}`;
+      }
+    }
+  } catch (err) {
+    log.debug("enhanced-next: calibration warning failed", { error: getErrorMessage(err) });
+  }
+
   log.info("Enhanced next task", {
     nodeId: baseResult.node.id,
     knowledgeCoverage,
     estimatedHours: velocityContext.estimatedHours,
     harnessBonus: harnessBonus?.applied ?? false,
+    calibrationWarning: calibrationWarning ?? null,
   });
 
   return {
@@ -160,6 +184,7 @@ export function findEnhancedNextTask(
     velocityContext,
     enhancedReason: reasons.join(". "),
     ...(harnessBonus ? { harnessBonus } : {}),
+    ...(calibrationWarning ? { calibrationWarning } : {}),
   };
 }
 

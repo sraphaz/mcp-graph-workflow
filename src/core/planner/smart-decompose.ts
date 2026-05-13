@@ -288,3 +288,64 @@ export function smartDecomposeWithInvest(
 
   return { parentId: nodeId, accepted, rejected, edges };
 }
+
+// ── Auto-trigger helpers — Task 1.1: decompositionProposal in start_task ─────
+
+const LARGE_SIZES = new Set(["L", "XL"]);
+const MIN_AC_FOR_PROPOSAL = 2;
+
+/**
+ * Returns true when start_task should offer a decomposition proposal:
+ * task is L/XL, has ≥2 ACs, and has no existing task/subtask children.
+ */
+export function shouldSuggestDecomposition(
+  xpSize: string | null | undefined,
+  acCount: number,
+  childTaskCount: number,
+): boolean {
+  return LARGE_SIZES.has(xpSize ?? "") && acCount >= MIN_AC_FOR_PROPOSAL && childTaskCount === 0;
+}
+
+/**
+ * Persist a DecomposeResult to the store: inserts each subtask and their edges.
+ * Called when the agent confirms the proposal (acceptDecomposition: true).
+ */
+export function persistDecomposition(
+  store: SqliteStore,
+  result: DecomposeResult,
+  parentId: string,
+): void {
+  const subtaskIds: string[] = [];
+  for (const sub of result.subtasks) {
+    const id = generateId("sub");
+    subtaskIds.push(id);
+    store.insertNode({
+      id,
+      type: "subtask",
+      title: sub.title,
+      status: "backlog",
+      priority: 3,
+      parentId,
+      acceptanceCriteria: sub.acceptanceCriteria,
+      estimateMinutes: sub.estimateMinutes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as import("../graph/graph-types.js").GraphNode);
+  }
+
+  // Sequential dependencies from result.edges (index-based from, to)
+  for (let i = 0; i < result.edges.length; i++) {
+    const edge = result.edges[i];
+    if (edge && i < subtaskIds.length - 1) {
+      store.insertEdge({
+        id: generateId("edge"),
+        from: subtaskIds[i + 1]!,
+        to: subtaskIds[i]!,
+        relationType: "depends_on",
+        createdAt: new Date().toISOString(),
+      });
+    }
+  }
+
+  log.info("smart-decompose:persisted", { parentId, count: subtaskIds.length });
+}

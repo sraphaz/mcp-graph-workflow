@@ -16,8 +16,13 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { McpGraphError, OnnxModelNotFoundError, ConflictError, LockConflictError } from "../core/utils/errors.js";
 import { getOnnxProvider, isOnnxAvailable } from "../core/rag/onnx-embeddings.js";
+
+// Shared cache — same path as onnx-download-cache-audit.test.ts to avoid duplicate 23 MB downloads.
+const ONNX_TEST_CACHE = join(homedir(), ".cache", "mcp-graph", "onnx-test");
 
 describe("ONNX module contract", () => {
   it("OnnxModelNotFoundError is a McpGraphError", () => {
@@ -76,8 +81,8 @@ describe("ONNX module contract", () => {
     // or the same provider instance (cached). Creating two providers with the
     // same modelsDir would each load a ~23MB ONNX session — dedup is critical.
     const [p1, p2] = await Promise.all([
-      getOnnxProvider("/tmp/mcp-graph-onnx-cache-test"),
-      getOnnxProvider("/tmp/mcp-graph-onnx-cache-test"),
+      getOnnxProvider(ONNX_TEST_CACHE),
+      getOnnxProvider(ONNX_TEST_CACHE),
     ]);
     expect(p1).toBe(p2);
   });

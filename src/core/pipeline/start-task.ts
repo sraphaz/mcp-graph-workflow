@@ -27,6 +27,7 @@ import { getSharedHookBus } from "../hooks/shared-hook-bus.js";
 import type { TaskContext } from "../context/compact-context.js";
 import type { AssembledContext } from "../context/context-assembler.js";
 import { findEnhancedNextTask } from "../planner/enhanced-next.js";
+import { smartDecompose, shouldSuggestDecomposition, persistDecomposition, type DecomposeResult } from "../planner/smart-decompose.js";
 import { computeTaskReadinessScore, type TaskReadinessScore } from "../planner/task-readiness-score.js";
 // feature-depth module retired (removed in #385); baseline always null.
 import { buildTaskContext } from "../context/compact-context.js";
@@ -93,6 +94,13 @@ export interface StartTaskOptions {
    * and the task has ≥3 ACs, surfaces an `ambiguityAuditWarning` in the result.
    */
   ambiguityAudit?: AmbiguityAudit;
+  /**
+   * §EPIC-autonomy-gap — Task 1.1: when true, persists the decompositionProposal
+   * subtasks and proceeds to mark the task in_progress. When false (default) and
+   * the task qualifies (L/XL + ≥2 ACs + no children), start_task returns the
+   * proposal WITHOUT changing the task status.
+   */
+  acceptDecomposition?: boolean;
 }
 
 export interface StartTaskResult {
@@ -148,6 +156,12 @@ export interface StartTaskResult {
    * depends on this field.
    */
   memoryDynamicsTick?: import("../rag/memory-dynamics-tick.js").DynamicsTickResult;
+  /**
+   * §EPIC-autonomy-gap — Task 1.1: present when the task is L/XL with ≥2 ACs
+   * and no existing children. The task status is NOT changed; the agent must
+   * call start_task again with acceptDecomposition:true to persist and proceed.
+   */
+  decompositionProposal?: DecomposeResult;
 }
 
 /**
@@ -159,7 +173,7 @@ export function startTask(
   options?: StartTaskOptions,
 ): StartTaskResult | null {
   if (!store) return null;
-  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles, siblingBudget, ambiguityAudit } = options ?? {};
+  const { nodeId, contextDetail, ragBudget, autoStart = true, agentId, lockManager, wipLimit, wipStrict, touchedFiles, siblingBudget, ambiguityAudit, acceptDecomposition } = options ?? {};
 
   const doc = store.toGraphDocument();
   if (!doc?.nodes) return null;
@@ -270,6 +284,36 @@ export function startTask(
   const tddHints = acTexts.length > 0
     ? generateTddHintsFromTexts(acTexts)
     : generateTddHints(taskNode);
+
+  // 4b. §EPIC-autonomy-gap Task 1.1: auto-decomposition proposal for L/XL tasks
+  const childTaskCount = (doc.nodes ?? []).filter(
+    (n) => n?.parentId === taskNode.id && (n?.type === "task" || n?.type === "subtask"),
+  ).length;
+  if (shouldSuggestDecomposition(taskNode.xpSize, acTexts.length, childTaskCount)) {
+    const proposal = smartDecompose(store, taskNode.id);
+    if (proposal) {
+      if (acceptDecomposition) {
+        // Agent confirmed — persist subtasks then continue normal start flow
+        persistDecomposition(store, proposal, taskNode.id);
+      } else {
+        // Return proposal without changing status — agent must confirm first
+        log.info("pipeline:start_task:decomposition_proposed", { nodeId: taskNode.id, subtasks: proposal.subtasks.length });
+        return {
+          task: enhanced,
+          context,
+          ragContext,
+          tddHints,
+          startedAt: null,
+          harnessWarning: null,
+          siblingContext: "",
+          siblingTruncatedCount: 0,
+          domainSkills: [],
+          ambiguityAuditWarning: null,
+          decompositionProposal: proposal,
+        };
+      }
+    }
+  }
 
   // 5. Harness pre-flight warning (non-blocking, advisory)
   let harnessWarning: HarnessPreflightWarning | null = null;

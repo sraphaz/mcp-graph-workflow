@@ -3,7 +3,7 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Database from "better-sqlite3";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -36,6 +36,7 @@ describe("JourneyRunsStore", () => {
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), "journey-runs-"));
   });
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
 
   it("creates a run and reads it back", () => {
     // Arrange
@@ -59,8 +60,6 @@ describe("JourneyRunsStore", () => {
     expect(run.mapId).toBe("jmap_1");
     expect(run.verdict).toBe("running");
     expect(store.get(run.id)?.prompt).toBe("open landing");
-
-    rmSync(root, { recursive: true, force: true });
   });
 
   it("lists most-recent runs first, filters by mapId", () => {
@@ -99,8 +98,6 @@ describe("JourneyRunsStore", () => {
     // Assert
     expect(rel).toMatch(/journeys\/screenshots/);
     expect(loaded).toEqual(png);
-
-    rmSync(root, { recursive: true, force: true });
   });
 
   it("finalise() persists results, verdict, finishedAt", () => {

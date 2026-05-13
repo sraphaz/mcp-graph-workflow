@@ -3,14 +3,19 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { describe, it, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { describe, it, expect, afterAll } from "vitest";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkObservability } from "../core/analyzer/observability-checker.js";
 
+const createdDirs: string[] = [];
+afterAll(() => {
+  for (const d of createdDirs) rmSync(d, { recursive: true, force: true });
+});
+
 function makeProject(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), "obs-check-"));
+  const root = mkdtempSync(join(tmpdir(), "obs-check-")); createdDirs.push(root);
   for (const [rel, body] of Object.entries(files)) {
     const full = join(root, rel);
     mkdirSync(join(full, ".."), { recursive: true });

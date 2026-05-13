@@ -15,13 +15,19 @@
  * Commercial licenses are available — see COMMERCIAL.md.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
+import { rmSync } from "node:fs";
 import {
   checkBuildEnvironment,
   scaffoldMavenProject,
   runMavenBuild,
 } from "../../core/davinci/build-runner.js";
 import type { BuildResult as _BuildResult } from "../../core/davinci/davinci-types.js";
+
+const createdDirs: string[] = [];
+afterAll(() => {
+  for (const d of createdDirs) rmSync(d, { recursive: true, force: true });
+});
 
 // ── Environment Detection Tests ───────────────────────────────────────
 
@@ -108,8 +114,9 @@ describe("build-runner", () => {
 
   describe("scaffoldMavenProject", () => {
     it("should create Maven directory structure", async () => {
+      const dir = "/tmp/davinci-test-" + Date.now(); createdDirs.push(dir);
       const result = await scaffoldMavenProject({
-        outputDir: "/tmp/davinci-test-" + Date.now(),
+        outputDir: dir,
         javaCode: 'public class Test { }',
         pomXml: '<project></project>',
         packageName: "com.example.test",
@@ -124,8 +131,9 @@ describe("build-runner", () => {
     });
 
     it("should place Java file in correct package directory", async () => {
+      const dir2 = "/tmp/davinci-test-" + Date.now(); createdDirs.push(dir2);
       const result = await scaffoldMavenProject({
-        outputDir: "/tmp/davinci-test-" + Date.now(),
+        outputDir: dir2,
         javaCode: 'public class MyPlugin { }',
         pomXml: '<project></project>',
         packageName: "com.pingidentity.plugin",

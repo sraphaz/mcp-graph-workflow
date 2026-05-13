@@ -337,6 +337,117 @@ class OnnxEmbeddingProvider implements EmbeddingProvider {
   }
 }
 
+// ── Background download API ── §EPIC-autonomy-gap Task 2.5 ────────────────────
+
+/** Options for dependency injection (primarily for testing). */
+export interface BackgroundDownloadOptions {
+  /** Override file-existence check (default: uses fs.existsSync). */
+  checkExists?: (modelsDir: string) => boolean;
+  /** Override model download (default: ensureModelFiles). */
+  ensureFiles?: (modelsDir: string) => Promise<{ modelPath: string; tokenizerPath: string }>;
+  /** Override provider construction (default: new OnnxEmbeddingProvider). */
+  makeProvider?: (modelPath: string, tokenizerPath: string) => EmbeddingProvider;
+  /** Called when the ONNX provider becomes ready. */
+  onReady?: (provider: EmbeddingProvider) => void;
+  /** Called with a human-readable message on download failure. */
+  onWarning?: (message: string) => void;
+  /** Called with a log event key when a notable event fires (for testing). */
+  onLog?: (event: string) => void;
+}
+
+/** Module-level state for background initialization. */
+let _backgroundProvider: EmbeddingProvider | null = null;
+let _backgroundStarted = false;
+
+/** Returns the ONNX provider resolved by a background download, or null if not ready. */
+export function getBackgroundOnnxProvider(): EmbeddingProvider | null {
+  return _backgroundProvider;
+}
+
+/** Returns true when both model and tokenizer files exist in the given directory. */
+export function modelFilesExist(modelsDir: string): boolean {
+  const modelDir = join(modelsDir, MODEL_NAME);
+  return (
+    existsSync(join(modelDir, MODEL_FILENAME)) &&
+    existsSync(join(modelDir, TOKENIZER_FILENAME))
+  );
+}
+
+/**
+ * Kick off ONNX model initialization in the background — returns immediately.
+ *
+ * If model files are already present: resolves the provider quickly (no network).
+ * If absent: logs the download-start event and downloads in a fire-and-forget promise.
+ * On error: calls options.onWarning and leaves getBackgroundOnnxProvider() as null
+ * so the caller can continue using its TF-IDF fallback.
+ *
+ * Idempotent: subsequent calls while download is in flight are no-ops.
+ */
+export function startOnnxBackgroundDownload(
+  modelsDir: string,
+  options: BackgroundDownloadOptions = {},
+): void {
+  if (_backgroundStarted) return;
+  _backgroundStarted = true;
+
+  const {
+    checkExists = modelFilesExist,
+    ensureFiles = ensureModelFiles,
+    makeProvider = (modelPath, tokenizerPath) => new OnnxEmbeddingProvider(modelPath, tokenizerPath),
+    onReady,
+    onWarning,
+    onLog,
+  } = options;
+
+  const alreadyCached = checkExists(modelsDir);
+
+  const run = async (): Promise<void> => {
+    try {
+      let modelPath: string;
+      let tokenizerPath: string;
+
+      if (alreadyCached) {
+        // Fast path — files already exist, no download needed
+        const modelDir = join(modelsDir, MODEL_NAME);
+        modelPath = join(modelDir, MODEL_FILENAME);
+        tokenizerPath = join(modelDir, TOKENIZER_FILENAME);
+        const cacheEvent = 'onnx:background-ready-from-cache';
+        log.info(cacheEvent, { modelsDir });
+        onLog?.(cacheEvent);
+      } else {
+        // Download path — log start and delegate to ensureFiles
+        const startEvent = 'onnx:background-download-start';
+        log.info(startEvent, { message: 'Downloading MiniLM-L6-v2 (23MB)...', modelsDir });
+        onLog?.(startEvent);
+        ({ modelPath, tokenizerPath } = await ensureFiles(modelsDir));
+        const doneEvent = 'onnx:background-download-complete';
+        log.info(doneEvent, { modelsDir });
+        onLog?.(doneEvent);
+      }
+
+      const provider = makeProvider(modelPath, tokenizerPath);
+      _backgroundProvider = provider;
+      onReady?.(provider);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.warn('onnx:background-download-failed', { error: msg, action: 'fallback-remains-tfidf' });
+      onWarning?.(msg);
+    }
+  };
+
+  // Fire-and-forget — suppress unhandled rejection
+  run().catch(() => {});
+}
+
+/**
+ * Reset background download state. Only for use in tests.
+ * @internal
+ */
+export function _resetBackgroundDownloadState(): void {
+  _backgroundProvider = null;
+  _backgroundStarted = false;
+}
+
 // ── Public API ──
 
 /**

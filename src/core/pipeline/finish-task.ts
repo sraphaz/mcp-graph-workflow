@@ -58,6 +58,16 @@ import { LockConflictError, InvalidArgumentError } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { runSentruxAdvisoryCheck } from "./sentrux-advisory-check.js";
 import { SentruxMcpAdapter } from "../integrations/sentrux-mcp-adapter.js";
+import { computeEstimateDelta } from "../analyzer/estimate-calibration-analyzer.js";
+import {
+  insertEpisodicOutcome,
+  buildTaskType,
+  buildApproachSummary,
+  computeOutcome,
+  countReopens,
+} from "../store/episodic-outcomes-store.js";
+import { generateId } from "../utils/id.js";
+import { collectAcEvidence, type AcEvidenceReport } from "../pipeline/ac-evidence-collector.js";
 
 const log = createLogger({ layer: "core", source: "finish-task.ts" });
 
@@ -93,6 +103,8 @@ export interface FinishTaskOptions {
     path?: string | null;
     content: string;
   }>;
+  /** Task 1.4: Override soft gate when evidenceRequired=true (AC evidence not auto-verified). */
+  forceFinish?: boolean;
 }
 
 export interface FinishTaskResult {
@@ -142,6 +154,13 @@ export interface FinishTaskResult {
   skillProposal?: SkillProposal | null;
   /** Sentrux advisory check result — present when a session_end was triggered (advisory; never blocks) */
   sentruxAdvisory?: { warned: boolean; message?: string } | null;
+  /**
+   * Task 2.3: estimateDelta = completionHours - (estimateMinutes/60).
+   * Present only when both estimateMinutes > 0 and cycleTimeMs > 0.
+   */
+  estimateDelta?: number | null;
+  /** Task 1.4: GWT AC evidence report — present when node has acceptance criteria. */
+  acEvidenceReport?: AcEvidenceReport | null;
 }
 
 export interface ContractGateResult {
@@ -163,7 +182,7 @@ export async function finishTask(
   options?: FinishTaskOptions,
 ): Promise<FinishTaskResult> {
   if (!nodeId) throw new InvalidArgumentError("finishTask requires a nodeId");
-  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts } = options ?? {};
+  const { rationale, testFiles, autoNext = true, citations, agentId, leaseToken, lockManager, shadowBranch, artifacts, forceFinish } = options ?? {};
   const doc = store.toGraphDocument();
 
   // 0. Update testFiles if provided
@@ -365,6 +384,27 @@ export async function finishTask(
         expiresAt: lockInfo.expiresAt,
       });
     }
+  }
+
+  // Task 1.4: AC Evidence Collection — GWT THEN clause keyword-matched against test files.
+  // Uses only the caller-provided testFiles (options.testFiles), NOT auto-discovered files,
+  // so that the gate only fires when the caller explicitly claims test coverage.
+  // Soft gate: blocks done when caller provided testFiles but none match the THEN keywords.
+  let acEvidenceReport: AcEvidenceReport | null = null;
+  try {
+    const acNode = store.getNodeById(nodeId);
+    const acTexts = acNode?.acceptanceCriteria ?? [];
+    // Use only explicitly-provided testFiles (callerTestFiles), not auto-discovered ones
+    const callerTestFiles = testFiles ?? [];
+    if (acTexts.length > 0) {
+      acEvidenceReport = collectAcEvidence(acTexts, callerTestFiles);
+      // Only block when test files were explicitly provided (caller claimed coverage) but don't match
+      if (acEvidenceReport.evidenceRequired && callerTestFiles.length > 0 && !forceFinish) {
+        blockers.push("ac_evidence_required: GWT AC(s) have no auto-verified THEN clause — verify testFiles cover the THEN clauses or use forceFinish");
+      }
+    }
+  } catch (err) {
+    log.warn("pipeline:finish_task:ac_evidence_failed", { error: String(err) });
   }
 
   let status: "done" | "blocked";
@@ -846,6 +886,69 @@ export async function finishTask(
     log.debug("pipeline:finish_task:sentrux_advisory_skipped", { error: String(err) });
   }
 
+  // Task 2.3: Persist estimateDelta = completionHours - (estimateMinutes/60). Advisory, never blocks.
+  let estimateDelta: number | null = null;
+  if (status === "done") {
+    try {
+      const taskNode = store.getNodeById(nodeId);
+      const startedAtRaw = (taskNode?.metadata as Record<string, unknown> | undefined)?._taskStartedAt;
+      const startedAt = typeof startedAtRaw === "string" ? Date.parse(startedAtRaw) : Number(startedAtRaw ?? 0);
+      const cycleTimeMs = startedAt > 0 ? Date.now() - startedAt : 0;
+      const completionHours = cycleTimeMs / 3600000;
+      const delta = computeEstimateDelta(completionHours, taskNode?.estimateMinutes);
+      if (delta !== null) {
+        estimateDelta = delta;
+        const existingMeta = (taskNode?.metadata as Record<string, unknown>) ?? {};
+        store.updateNode(nodeId, { metadata: { ...existingMeta, estimateDelta: delta } });
+        log.info("pipeline:finish_task:estimate_delta_persisted", { nodeId, estimateDelta: delta });
+      }
+    } catch (err) {
+      log.warn("pipeline:finish_task:estimate_delta_failed", { error: String(err) });
+    }
+  }
+
+  // Task 2.1: Insert episodic outcome — only when status_flow_valid (in_progress was visited).
+  // status_skip (AC3): if the task never passed through in_progress, skip the episode.
+  if (status === "done") {
+    try {
+      const statusFlowCheck = dodReport.checks.find((c) => c.name === "status_flow_valid");
+      if (statusFlowCheck?.passed) {
+        const taskNode = store.getNodeById(nodeId);
+        const project = store.getActiveProject();
+        const projectId = project?.id ?? "";
+        const reopenCount = countReopens(store.getDb(), projectId, nodeId);
+        const touchedFiles = ((taskNode?.metadata as Record<string, unknown> | undefined)?.touchedFilesObserved as string[]) ?? [];
+        const acIds = dodReport.checks
+          .filter((c) => c.name === "has_acceptance_criteria" && c.passed)
+          .map(() => nodeId);
+        const approachSummary = buildApproachSummary(touchedFiles, acIds);
+        const tags = taskNode?.tags ?? [];
+        const taskType = buildTaskType(tags);
+        const startedAtRaw = (taskNode?.metadata as Record<string, unknown> | undefined)?._taskStartedAt;
+        const startedAt = typeof startedAtRaw === "string" ? Date.parse(startedAtRaw) : Number(startedAtRaw ?? 0);
+        const cycleTimeMs = startedAt > 0 ? Date.now() - startedAt : 0;
+        const completionHours = cycleTimeMs / 3600000;
+        const estimateHours = (taskNode?.estimateMinutes ?? 0) / 60;
+        const cycleTimeDelta = estimateHours > 0 ? completionHours - estimateHours : 0;
+
+        insertEpisodicOutcome(store.getDb(), {
+          id: generateId("ep"),
+          nodeId,
+          taskType,
+          tags: tags.join(","),
+          approachSummary,
+          outcome: computeOutcome(reopenCount),
+          cycleTimeDelta,
+          reopenCount,
+          createdAt: Date.now(),
+        });
+        log.info("pipeline:finish_task:episodic_outcome_inserted", { nodeId, taskType, outcome: computeOutcome(reopenCount) });
+      }
+    } catch (err) {
+      log.warn("pipeline:finish_task:episodic_outcome_failed", { error: String(err) });
+    }
+  }
+
   log.info("pipeline:finish_task:ok", {
     nodeId,
     status,
@@ -878,5 +981,7 @@ export async function finishTask(
     featureDepth: featureDepthReport,
     skillProposal,
     sentruxAdvisory,
+    ...(estimateDelta !== null ? { estimateDelta } : {}),
+    ...(acEvidenceReport !== null ? { acEvidenceReport } : {}),
   };
 }

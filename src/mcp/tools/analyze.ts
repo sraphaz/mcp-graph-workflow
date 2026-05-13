@@ -135,6 +135,7 @@ const ANALYZE_MODES = z.enum([
   "evolution_audit",
   "harness_savings",
   "policy_observations",
+  "estimate_calibration",
 ]);
 
 function hasNode(doc: { nodes: Array<{ id: string }> }, nodeId: string): boolean {
@@ -904,6 +905,16 @@ export function registerAnalyze(server: McpServer, store: SqliteStore): void {
             divergencePct: report.divergencePct,
           });
           return mcpText({ ok: true, mode, ...report });
+        }
+
+        case "estimate_calibration": {
+          const { computeSizeCalibration, formatCalibrationReport } = await import(
+            "../../core/analyzer/estimate-calibration-analyzer.js"
+          );
+          const calibration = computeSizeCalibration(store);
+          const summary = formatCalibrationReport(calibration);
+          log.info("tool:analyze:estimate_calibration:ok", { sizes: Object.keys(calibration).join(",") });
+          return mcpText({ ok: true, mode, calibration, summary });
         }
 
         default: {

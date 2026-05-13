@@ -2374,6 +2374,29 @@ const migrations: Migration[] = [
         ON browser_test_runs(status);
     `,
   },
+  {
+    version: 92,
+    // Task 2.1 (autonomy-gap-3-to-6 PRD): episodic memory outcome table.
+    // Stores outcome-centric tuples per completed task for cross-task learning.
+    description: "episodic_outcomes — outcome-centric memory tuples indexed by task_type (autonomy-gap Task 2.1)",
+    sql: `
+      CREATE TABLE IF NOT EXISTS episodic_outcomes (
+        id               TEXT PRIMARY KEY,
+        node_id          TEXT NOT NULL,
+        task_type        TEXT NOT NULL DEFAULT '',
+        tags             TEXT NOT NULL DEFAULT '',
+        approach_summary TEXT NOT NULL DEFAULT '',
+        outcome          TEXT NOT NULL CHECK(outcome IN ('success', 'partial', 'failure')),
+        cycle_time_delta REAL NOT NULL DEFAULT 0,
+        reopen_count     INTEGER NOT NULL DEFAULT 0,
+        created_at       INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_episodic_outcomes_task_type_created
+        ON episodic_outcomes(task_type, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_episodic_outcomes_created
+        ON episodic_outcomes(created_at DESC);
+    `,
+  },
 ];
 
 /** Apply pending schema migrations to the database. */

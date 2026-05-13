@@ -20,11 +20,11 @@
  * whose implementation already exists on disk.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { SqliteStore } from "../core/store/sqlite-store.js";
 import { detectOrphanTasks } from "../core/analyzer/orphan-task-detector.js";
 import { makeTask } from "./helpers/factories.js";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -34,8 +34,13 @@ function createStore(): SqliteStore {
   return store;
 }
 
+const createdDirs: string[] = [];
+afterAll(() => {
+  for (const d of createdDirs) rmSync(d, { recursive: true, force: true });
+});
+
 function createTempDir(): string {
-  return mkdtempSync(join(tmpdir(), "orphan-test-"));
+  const d = mkdtempSync(join(tmpdir(), "orphan-test-")); createdDirs.push(d); return d;
 }
 
 describe("OrphanTaskDetector", () => {

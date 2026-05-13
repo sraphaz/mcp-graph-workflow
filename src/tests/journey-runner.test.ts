@@ -3,9 +3,9 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Database from "better-sqlite3";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { JourneyRunsStore } from "../core/journey/journey-runs-store.js";
@@ -57,6 +57,7 @@ describe("JourneyRunner", () => {
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), "journey-runner-"));
   });
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
 
   it("plans one navigate+screenshot pair per screen in the variant path", async () => {
     // Arrange

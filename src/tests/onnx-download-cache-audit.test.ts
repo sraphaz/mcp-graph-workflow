@@ -25,9 +25,15 @@
  * AC5: Missing/corrupt tokenizer logs warning but does not break initialization.
  */
 
-import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { describe, it, expect, beforeAll } from "vitest";
+import { readFileSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { resolve, join } from "node:path";
+
+// Persistent ONNX model cache — intentionally survives test runs (avoids re-downloading 23 MB each time).
+// Lives in ~/.cache/mcp-graph/onnx-test instead of /tmp to survive OS reboots.
+const ONNX_TEST_CACHE = join(homedir(), ".cache", "mcp-graph", "onnx-test");
+beforeAll(() => { mkdirSync(ONNX_TEST_CACHE, { recursive: true }); });
 import {
   isOnnxAvailable,
   getOnnxProvider,
@@ -75,7 +81,7 @@ describe("isOnnxAvailable — AC1", () => {
 // ── AC2: getOnnxProvider() — same reference on concurrent calls ───
 describe("getOnnxProvider — AC2: no double load", () => {
   it("should return the same value for concurrent calls with the same modelsDir", async () => {
-    const path = "/tmp/mcp-graph-onnx-audit-test";
+    const path = ONNX_TEST_CACHE;
     const [p1, p2] = await Promise.all([
       getOnnxProvider(path),
       getOnnxProvider(path),
@@ -85,7 +91,7 @@ describe("getOnnxProvider — AC2: no double load", () => {
   });
 
   it("should return null gracefully when ONNX is unavailable", async () => {
-    const result = await getOnnxProvider("/tmp/mcp-graph-onnx-null-test");
+    const result = await getOnnxProvider(ONNX_TEST_CACHE);
     // null is the correct return when onnxruntime-node is not available
     expect(result === null || typeof result === "object").toBe(true);
   });

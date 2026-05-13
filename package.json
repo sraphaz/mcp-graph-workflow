@@ -50,6 +50,7 @@
     "benchmark:daemon-rss": "node scripts/benchmark-daemon-rss.mjs",
     "audit:catches": "tsx scripts/audit-catches.ts",
     "audit:throws": "tsx scripts/audit-throws.ts",
+    "audit:temp-leaks": "tsx scripts/audit-temp-leaks.ts",
     "prepare": "node scripts/prepare-husky.mjs"
   },
   "keywords": [
@@ -178,6 +179,11 @@
     "fast-xml-builder": ">=1.2.0"
   },
   "lint-staged": {
+    "src/tests/**/*.test.ts": [
+      "node scripts/license/headers.mjs --apply",
+      "tsx scripts/audit-temp-leaks.ts",
+      "eslint --no-warn-ignored --max-warnings 9"
+    ],
     "src/**/*.ts": [
       "node scripts/license/headers.mjs --apply",
       "eslint --no-warn-ignored --max-warnings 9"

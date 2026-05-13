@@ -3,9 +3,9 @@
  * Copyright © 2026 Diego Lima Nogueira de Paula
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import AdmZip from "adm-zip";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -13,13 +13,18 @@ import {
   extractZip,
 } from "../core/translation/zip-extractor.js";
 
+const createdDirs: string[] = [];
+afterAll(() => {
+  for (const d of createdDirs) rmSync(d, { recursive: true, force: true });
+});
+
 function buildZip(entries: Record<string, Buffer | string>): string {
   const zip = new AdmZip();
   for (const [name, body] of Object.entries(entries)) {
     const buf = typeof body === "string" ? Buffer.from(body, "utf-8") : body;
     zip.addFile(name, buf);
   }
-  const dir = mkdtempSync(join(tmpdir(), "zip-extractor-"));
+  const dir = mkdtempSync(join(tmpdir(), "zip-extractor-")); createdDirs.push(dir);
   const path = join(dir, "fixture.zip");
   writeFileSync(path, zip.toBuffer());
   return path;
@@ -127,7 +132,7 @@ describe("extractZip", () => {
   });
 
   it("returns empty array on a corrupted/non-zip file", () => {
-    const dir = mkdtempSync(join(tmpdir(), "zip-extractor-"));
+    const dir = mkdtempSync(join(tmpdir(), "zip-extractor-")); createdDirs.push(dir);
     const path = join(dir, "garbage.zip");
     writeFileSync(path, "this is not a zip file");
     expect(extractZip(path)).toEqual([]);

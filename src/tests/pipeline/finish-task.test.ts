@@ -124,6 +124,9 @@ describe("finishTask", () => {
     const result = await finishTask(store, taskId, {
       testFiles: ["src/tests/login.test.ts"],
       autoNext: false,
+      // forceFinish bypasses the AC evidence soft gate — this test verifies
+      // testFiles storage, not AC evidence keyword matching.
+      forceFinish: true,
     });
 
     expect(result.status).toBe("done");

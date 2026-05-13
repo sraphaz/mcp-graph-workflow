@@ -49,6 +49,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Audit temp file leaks in tests
+        run: npm run audit:temp-leaks
+
       - name: Typecheck
         run: npm run typecheck
 
