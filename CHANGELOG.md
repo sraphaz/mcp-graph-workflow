@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.18.3](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.2...mcp-graph-v13.18.3) (2026-05-13)
+
+
+### Bug Fixes
+
+* **ci:** un-ignore browser-pilot schema and track it in git ([ea21da8](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/ea21da851732b76b0ba963fb68a8fa1db1c3b47c))
+* **tests:** skipIf guards for tests requiring gitignored local files ([69e76fe](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/commit/69e76fe6669781b4b5c16143c8642ff6632e8d86))
+
 ## [13.18.2](https://github.com/DiegoNogueiraDev/mcp-graph-workflow/compare/mcp-graph-v13.18.1...mcp-graph-v13.18.2) (2026-05-13)
 
 
